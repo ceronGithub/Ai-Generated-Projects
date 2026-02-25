@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matthel-PDF | Multi-Viewer Bulk Engine</title>
+    <title>Matthel-PDF | Adaptive Dual-Path Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -25,28 +25,20 @@
     <div id="helpSection" class="fixed inset-0 z-50 help-overlay flex items-center justify-center p-6">
         <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-10 relative animate-in zoom-in duration-300">
             <button onclick="toggleHelp()" class="absolute top-6 right-6 text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
-            <h2 class="text-3xl font-black text-blue-700 mb-8 flex items-center gap-3 italic">
-                <i class="fa-solid fa-circle-info"></i> SYSTEM ARCHITECTURE
+            <h2 class="text-3xl font-black text-blue-700 mb-8 italic flex items-center gap-3">
+                <i class="fa-solid fa-compass"></i> ADAPTIVE LOGIC V3
             </h2>
             <div class="grid grid-cols-2 gap-8 text-sm text-slate-600">
                 <div class="space-y-4">
-                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">1. Multi-Viewer Stack</h4>
-                    <p>Every PDF uploaded generates its own independent viewer instance. You can navigate pages or zoom into specific files without affecting other documents.</p>
+                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">1. Path 1.1: Gap Tolerance</h4>
+                    <p>Scans 400px horizontally. If 3 white spaces are found, it keeps reading. If a 100px+ gap is found, it terminates and searches downward.</p>
                 </div>
                 <div class="space-y-4">
-                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">2. 700px Euclidean Logic</h4>
-                    <p>When scanning, the engine calculates the absolute distance between your keyword and surrounding text. It picks the nearest neighbor in a 360° radius.</p>
-                </div>
-                <div class="space-y-4">
-                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">3. Global Bulk Scan</h4>
-                    <p>Pressing <b>Enter</b> in the search box triggers a deep-scan across <b>every page</b> of <b>every document</b> simultaneously.</p>
-                </div>
-                <div class="space-y-4">
-                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">4. Smart Export</h4>
-                    <p>The queue preserves file names, page numbers, and timestamps, ensuring your Excel report is audit-ready and accurate.</p>
+                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">2. Path 2: 500px Omni Box</h4>
+                    <p>Scans both <b>Upward and Downward</b> (500px radius). It avoids geometric lines and ignores duplicate keywords.</p>
                 </div>
             </div>
-            <button onclick="toggleHelp()" class="mt-10 w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-black transition">Got it, let's work!</button>
+            <button onclick="toggleHelp()" class="mt-10 w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-black transition">Confirm Settings</button>
         </div>
     </div>
 
@@ -105,28 +97,16 @@
         let pdfInstances = [];
         let excelRows = [];
 
-        function updateClock() {
-            document.getElementById('liveClock').innerText = new Date().toLocaleString();
-        }
+        function updateClock() { document.getElementById('liveClock').innerText = new Date().toLocaleString(); }
         setInterval(updateClock, 1000);
-
-        function toggleHelp() {
-            const el = document.getElementById('helpSection');
-            el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
-        }
-
-        // Logic for Enter key
-        function handleEnter(e) {
-            if (e.key === 'Enter') bulkScan();
-        }
+        function toggleHelp() { const el = document.getElementById('helpSection'); el.style.display = (el.style.display === 'flex') ? 'none' : 'flex'; }
+        function handleEnter(e) { if (e.key === 'Enter') bulkScan(); }
 
         document.getElementById('file-input').addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             if (files.length > 0) {
                 document.getElementById('empty-state').classList.add('hidden');
-                for (const file of files) {
-                    await initPdfInstance(file);
-                }
+                for (const file of files) { await initPdfInstance(file); }
             }
         });
 
@@ -146,23 +126,16 @@
             const stack = document.getElementById('viewer-stack');
             const card = document.createElement('div');
             card.id = `viewer-${inst.id}`;
-            card.className = "viewer-card p-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-5";
-            card.innerHTML = `
-                <div class="w-full flex justify-between items-center mb-6 px-4">
-                    <div class="flex items-center gap-3">
-                        <span class="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase italic">Live Instance</span>
-                        <h3 class="text-white font-bold text-sm truncate max-w-xs uppercase tracking-tighter">${inst.name}</h3>
-                    </div>
-                    <div class="flex items-center gap-4 bg-slate-700/50 p-2 rounded-xl border border-slate-600 shadow-inner">
+            card.className = "viewer-card p-6 flex flex-col items-center animate-in fade-in";
+            card.innerHTML = `<div class="w-full flex justify-between items-center mb-6 px-4">
+                    <div class="flex items-center gap-3"><span class="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase italic">Live Instance</span><h3 class="text-white font-bold text-sm truncate max-w-xs uppercase tracking-tighter">${inst.name}</h3></div>
+                    <div class="flex items-center gap-4 bg-slate-700/50 p-2 rounded-xl border border-slate-600">
                         <button onclick="navPage('${inst.id}', -1)" class="text-white hover:text-blue-400 px-2 transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
                         <span class="text-white text-[10px] font-black uppercase tracking-widest min-w-[80px] text-center">Page <span id="pg-${inst.id}">1</span> / ${inst.doc.numPages}</span>
                         <button onclick="navPage('${inst.id}', 1)" class="text-white hover:text-blue-400 px-2 transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                     </div>
                 </div>
-                <div class="overflow-auto max-w-full custom-scrollbar bg-slate-900/50 p-4 rounded-lg border border-slate-700">
-                    <canvas id="canvas-${inst.id}"></canvas>
-                </div>
-            `;
+                <div class="overflow-auto max-w-full custom-scrollbar bg-slate-900/50 p-4 rounded-lg border border-slate-700"><canvas id="canvas-${inst.id}"></canvas></div>`;
             stack.appendChild(card);
             renderInstancePage(inst);
         }
@@ -182,10 +155,7 @@
             const inst = pdfInstances.find(i => i.id == id);
             if (inst) {
                 const target = inst.currentPage + delta;
-                if (target >= 1 && target <= inst.doc.numPages) {
-                    inst.currentPage = target;
-                    renderInstancePage(inst);
-                }
+                if (target >= 1 && target <= inst.doc.numPages) { inst.currentPage = target; renderInstancePage(inst); }
             }
         };
 
@@ -203,28 +173,61 @@
                     keywordsOnPage.forEach(kwObj => {
                         const kwX = kwObj.transform[4];
                         const kwY = kwObj.transform[5];
-                        let closestDist = Infinity;
-                        let foundText = "N/A";
+                        let foundData = null;
 
-                        items.forEach(item => {
-                            if (item === kwObj || !item.str.trim()) return;
+                        // Path 1 & 1.1: Adaptive Horizontal
+                        const rowNeighbors = items.filter(item => {
+                            if (item === kwObj || !item.str.trim()) return false;
                             const dx = item.transform[4] - kwX;
-                            const dy = item.transform[5] - kwY;
-                            const dist = Math.sqrt(dx*dx + dy*dy);
+                            const dy = Math.abs(item.transform[5] - kwY);
+                            return dx > 0 && dx <= 400 && dy < 12; // 12px row tolerance
+                        }).sort((a, b) => a.transform[4] - b.transform[4]);
 
-                            if (dist < closestDist && dist < 700) {
-                                closestDist = dist;
-                                foundText = item.str.trim();
+                        if (rowNeighbors.length > 0) {
+                            let mergedString = "";
+                            let stopPath = false;
+                            for (let i = 0; i < rowNeighbors.length; i++) {
+                                let curr = rowNeighbors[i];
+                                let prevX = (i === 0) ? kwX + (kwObj.width || 30) : rowNeighbors[i-1].transform[4] + (rowNeighbors[i-1].width || 30);
+                                let distanceGap = curr.transform[4] - prevX;
+
+                                if (distanceGap > 100) { // HUGE GAP TRIGGER
+                                    stopPath = true; 
+                                    break; 
+                                }
+                                mergedString += " " + curr.str.trim();
                             }
-                        });
+                            if (!stopPath) foundData = mergedString.trim().replace(/\s{4,}/g, ' ');
+                        }
 
-                        excelRows.push({
-                            File: inst.name,
-                            Keyword: kw.toUpperCase(),
-                            Data: foundText,
-                            Page: p,
-                            Time: new Date().toLocaleTimeString()
-                        });
+                        // Path 2: Omnidirectional 500px Box Fallback (Up/Down)
+                        if (!foundData) {
+                            const boxNeighbors = items.filter(item => {
+                                if (item === kwObj || !item.str.trim() || item.str.toLowerCase().includes(kw)) return false;
+                                const dx = Math.abs(item.transform[4] - kwX);
+                                const dy = Math.abs(item.transform[5] - kwY);
+                                return dx <= 500 && dy <= 500;
+                            });
+
+                            if (boxNeighbors.length > 0) {
+                                boxNeighbors.sort((a, b) => {
+                                    const distA = Math.sqrt(Math.pow(a.transform[4]-kwX, 2) + Math.pow(a.transform[5]-kwY, 2));
+                                    const distB = Math.sqrt(Math.pow(b.transform[4]-kwX, 2) + Math.pow(b.transform[5]-kwY, 2));
+                                    return distA - distB;
+                                });
+                                foundData = boxNeighbors[0].str.trim();
+                            }
+                        }
+
+                        if (foundData) {
+                            excelRows.push({
+                                File: inst.name,
+                                Keyword: kw.toUpperCase(),
+                                Data: foundData,
+                                Page: p,
+                                Time: new Date().toLocaleTimeString()
+                            });
+                        }
                     });
                 }
             }
@@ -237,31 +240,22 @@
             container.innerHTML = "";
             excelRows.forEach((row, idx) => {
                 const card = document.createElement('div');
-                card.className = "queue-item bg-white p-4 rounded-xl shadow-sm border border-slate-200 animate-in slide-in-from-left duration-300";
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[9px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded uppercase">${row.Keyword}</span>
-                        <button onclick="deleteRow(${idx})" class="text-slate-300 hover:text-red-500 transition"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
-                    </div>
+                card.className = "queue-item bg-white p-4 rounded-xl shadow-sm border border-slate-200 animate-in slide-in-from-left";
+                card.innerHTML = `<div class="flex justify-between items-start mb-2"><span class="text-[9px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded uppercase">${row.Keyword}</span><button onclick="deleteRow(${idx})" class="text-slate-300 hover:text-red-500 transition"><i class="fa-solid fa-trash-can text-[10px]"></i></button></div>
                     <p class="text-xs font-black text-slate-800 mb-2 leading-tight">${row.Data}</p>
-                    <div class="flex justify-between text-[8px] font-bold text-slate-400 uppercase italic">
-                        <span class="truncate max-w-[120px]">${row.File}</span>
-                        <span>Page ${row.Page}</span>
-                    </div>
-                `;
+                    <div class="flex justify-between text-[8px] font-bold text-slate-400 uppercase italic"><span class="truncate max-w-[120px]">${row.File}</span><span>Page ${row.Page}</span></div>`;
                 container.prepend(card);
             });
         }
 
         function deleteRow(idx) { excelRows.splice(idx, 1); updateQueueUI(); }
-        function clearQueue() { if(confirm("Clear all captured records?")) { excelRows = []; updateQueueUI(); } }
-
+        function clearQueue() { if(confirm("Clear current queue?")) { excelRows = []; updateQueueUI(); } }
         function exportToExcel() {
-            if (excelRows.length === 0) return;
+            if (!excelRows.length) return;
             const ws = XLSX.utils.json_to_sheet(excelRows);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Bulk_Extraction");
-            XLSX.writeFile(wb, `Matthel_Bulk_Report_${Date.now()}.xlsx`);
+            XLSX.utils.book_append_sheet(wb, ws, "Matthel_Data");
+            XLSX.writeFile(wb, `Extraction_Report_${Date.now()}.xlsx`);
         }
     </script>
 </body>
