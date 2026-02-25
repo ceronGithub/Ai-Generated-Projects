@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matthel-PDF | Multi-Viewer Bulk Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .sidebar-gradient { background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); }
+        .viewer-card { background: #1e293b; border-radius: 20px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); margin-bottom: 2rem; }
+        #viewer-stack { scroll-behavior: smooth; }
+        canvas { border-radius: 4px; background: white; max-width: 100%; height: auto !important; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .queue-item { border-left: 5px solid #2563eb; transition: all 0.2s; }
+        .help-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); display: none; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-900 overflow-hidden">
+
+    <div id="helpSection" class="fixed inset-0 z-50 help-overlay flex items-center justify-center p-6">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-10 relative animate-in zoom-in duration-300">
+            <button onclick="toggleHelp()" class="absolute top-6 right-6 text-slate-400 hover:text-red-500 transition"><i class="fa-solid fa-circle-xmark text-2xl"></i></button>
+            <h2 class="text-3xl font-black text-blue-700 mb-8 flex items-center gap-3 italic">
+                <i class="fa-solid fa-circle-info"></i> SYSTEM ARCHITECTURE
+            </h2>
+            <div class="grid grid-cols-2 gap-8 text-sm text-slate-600">
+                <div class="space-y-4">
+                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">1. Multi-Viewer Stack</h4>
+                    <p>Every PDF uploaded generates its own independent viewer instance. You can navigate pages or zoom into specific files without affecting other documents.</p>
+                </div>
+                <div class="space-y-4">
+                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">2. 700px Euclidean Logic</h4>
+                    <p>When scanning, the engine calculates the absolute distance between your keyword and surrounding text. It picks the nearest neighbor in a 360° radius.</p>
+                </div>
+                <div class="space-y-4">
+                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">3. Global Bulk Scan</h4>
+                    <p>Pressing <b>Enter</b> in the search box triggers a deep-scan across <b>every page</b> of <b>every document</b> simultaneously.</p>
+                </div>
+                <div class="space-y-4">
+                    <h4 class="font-black text-slate-900 uppercase tracking-tighter border-b pb-2">4. Smart Export</h4>
+                    <p>The queue preserves file names, page numbers, and timestamps, ensuring your Excel report is audit-ready and accurate.</p>
+                </div>
+            </div>
+            <button onclick="toggleHelp()" class="mt-10 w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-black transition">Got it, let's work!</button>
+        </div>
+    </div>
+
+    <div class="flex h-screen">
+        <aside class="w-[420px] sidebar-gradient shadow-2xl z-10 flex flex-col border-r border-slate-200">
+            <div class="p-6 border-b bg-white flex justify-between items-center">
+                <div>
+                    <h1 class="font-black text-xl tracking-tighter text-blue-700 uppercase">Matthel-PDF<span class="text-slate-400 font-light">-Bulk</span></h1>
+                    <div id="liveClock" class="text-[10px] font-bold text-slate-400 mt-1"></div>
+                </div>
+                <button onclick="toggleHelp()" class="text-slate-300 hover:text-blue-600 transition"><i class="fa-solid fa-circle-question text-2xl"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                <section>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">1. Multi-File Import</label>
+                    <input type="file" id="file-input" accept="application/pdf" multiple class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </section>
+
+                <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <label class="block text-[10px] font-black text-blue-600 uppercase mb-3 tracking-widest">2. Global Auto-Scan</label>
+                    <div class="relative">
+                        <input type="text" id="keywordInput" onkeypress="handleEnter(event)" placeholder="Type keyword + hit Enter..." class="w-full pl-4 pr-12 py-3 text-sm border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all">
+                        <button onclick="bulkScan()" class="absolute right-2 top-1.5 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i class="fa-solid fa-bolt-lightning"></i></button>
+                    </div>
+                </section>
+
+                <section class="flex-1">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest">3. Data Queue</label>
+                        <button onclick="clearQueue()" class="text-[9px] text-red-400 font-bold uppercase">Clear All</button>
+                    </div>
+                    <div id="queue-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                </section>
+            </div>
+
+            <div class="p-6 bg-white border-t">
+                <button onclick="exportToExcel()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black shadow-2xl hover:scale-[1.02] active:scale-95 transition flex items-center justify-center gap-3 uppercase tracking-tighter">
+                    <i class="fa-solid fa-file-excel text-emerald-400 text-xl"></i> Export Global Report
+                </button>
+            </div>
+        </aside>
+
+        <main id="viewer-stack" class="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
+            <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-400 space-y-4">
+                <i class="fa-solid fa-layer-group text-6xl opacity-20"></i>
+                <p class="font-bold tracking-widest uppercase text-xs opacity-50">Upload PDFs to initialize viewer instances</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        let pdfInstances = [];
+        let excelRows = [];
+
+        function updateClock() {
+            document.getElementById('liveClock').innerText = new Date().toLocaleString();
+        }
+        setInterval(updateClock, 1000);
+
+        function toggleHelp() {
+            const el = document.getElementById('helpSection');
+            el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        // Logic for Enter key
+        function handleEnter(e) {
+            if (e.key === 'Enter') bulkScan();
+        }
+
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                document.getElementById('empty-state').classList.add('hidden');
+                for (const file of files) {
+                    await initPdfInstance(file);
+                }
+            }
+        });
+
+        async function initPdfInstance(file) {
+            const reader = new FileReader();
+            reader.onload = async function() {
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                const instance = { id: Date.now() + Math.random(), name: file.name, doc: pdf, currentPage: 1, zoom: 1.0 };
+                pdfInstances.push(instance);
+                createViewerUI(instance);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function createViewerUI(inst) {
+            const stack = document.getElementById('viewer-stack');
+            const card = document.createElement('div');
+            card.id = `viewer-${inst.id}`;
+            card.className = "viewer-card p-6 flex flex-col items-center animate-in fade-in slide-in-from-bottom-5";
+            card.innerHTML = `
+                <div class="w-full flex justify-between items-center mb-6 px-4">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase italic">Live Instance</span>
+                        <h3 class="text-white font-bold text-sm truncate max-w-xs uppercase tracking-tighter">${inst.name}</h3>
+                    </div>
+                    <div class="flex items-center gap-4 bg-slate-700/50 p-2 rounded-xl border border-slate-600 shadow-inner">
+                        <button onclick="navPage('${inst.id}', -1)" class="text-white hover:text-blue-400 px-2 transition"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                        <span class="text-white text-[10px] font-black uppercase tracking-widest min-w-[80px] text-center">Page <span id="pg-${inst.id}">1</span> / ${inst.doc.numPages}</span>
+                        <button onclick="navPage('${inst.id}', 1)" class="text-white hover:text-blue-400 px-2 transition"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                    </div>
+                </div>
+                <div class="overflow-auto max-w-full custom-scrollbar bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                    <canvas id="canvas-${inst.id}"></canvas>
+                </div>
+            `;
+            stack.appendChild(card);
+            renderInstancePage(inst);
+        }
+
+        async function renderInstancePage(inst) {
+            const page = await inst.doc.getPage(inst.currentPage);
+            const canvas = document.getElementById(`canvas-${inst.id}`);
+            const ctx = canvas.getContext('2d');
+            const viewport = page.getViewport({ scale: inst.zoom });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            document.getElementById(`pg-${inst.id}`).innerText = inst.currentPage;
+        }
+
+        window.navPage = (id, delta) => {
+            const inst = pdfInstances.find(i => i.id == id);
+            if (inst) {
+                const target = inst.currentPage + delta;
+                if (target >= 1 && target <= inst.doc.numPages) {
+                    inst.currentPage = target;
+                    renderInstancePage(inst);
+                }
+            }
+        };
+
+        async function bulkScan() {
+            const kw = document.getElementById('keywordInput').value.trim().toLowerCase();
+            if (!kw || pdfInstances.length === 0) return;
+
+            for (const inst of pdfInstances) {
+                for (let p = 1; p <= inst.doc.numPages; p++) {
+                    const page = await inst.doc.getPage(p);
+                    const textContent = await page.getTextContent();
+                    const items = textContent.items;
+                    const keywordsOnPage = items.filter(i => i.str.toLowerCase().includes(kw));
+                    
+                    keywordsOnPage.forEach(kwObj => {
+                        const kwX = kwObj.transform[4];
+                        const kwY = kwObj.transform[5];
+                        let closestDist = Infinity;
+                        let foundText = "N/A";
+
+                        items.forEach(item => {
+                            if (item === kwObj || !item.str.trim()) return;
+                            const dx = item.transform[4] - kwX;
+                            const dy = item.transform[5] - kwY;
+                            const dist = Math.sqrt(dx*dx + dy*dy);
+
+                            if (dist < closestDist && dist < 700) {
+                                closestDist = dist;
+                                foundText = item.str.trim();
+                            }
+                        });
+
+                        excelRows.push({
+                            File: inst.name,
+                            Keyword: kw.toUpperCase(),
+                            Data: foundText,
+                            Page: p,
+                            Time: new Date().toLocaleTimeString()
+                        });
+                    });
+                }
+            }
+            updateQueueUI();
+            document.getElementById('keywordInput').value = "";
+        }
+
+        function updateQueueUI() {
+            const container = document.getElementById('queue-container');
+            container.innerHTML = "";
+            excelRows.forEach((row, idx) => {
+                const card = document.createElement('div');
+                card.className = "queue-item bg-white p-4 rounded-xl shadow-sm border border-slate-200 animate-in slide-in-from-left duration-300";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[9px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded uppercase">${row.Keyword}</span>
+                        <button onclick="deleteRow(${idx})" class="text-slate-300 hover:text-red-500 transition"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                    </div>
+                    <p class="text-xs font-black text-slate-800 mb-2 leading-tight">${row.Data}</p>
+                    <div class="flex justify-between text-[8px] font-bold text-slate-400 uppercase italic">
+                        <span class="truncate max-w-[120px]">${row.File}</span>
+                        <span>Page ${row.Page}</span>
+                    </div>
+                `;
+                container.prepend(card);
+            });
+        }
+
+        function deleteRow(idx) { excelRows.splice(idx, 1); updateQueueUI(); }
+        function clearQueue() { if(confirm("Clear all captured records?")) { excelRows = []; updateQueueUI(); } }
+
+        function exportToExcel() {
+            if (excelRows.length === 0) return;
+            const ws = XLSX.utils.json_to_sheet(excelRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Bulk_Extraction");
+            XLSX.writeFile(wb, `Matthel_Bulk_Report_${Date.now()}.xlsx`);
+        }
+    </script>
+</body>
+</html>
