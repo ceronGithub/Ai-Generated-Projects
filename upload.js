@@ -1,9 +1,19 @@
-document.getElementById('pdf-input').onchange = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(file => {
-        const idx = uploadedFiles.push(file) - 1;
-        const li = document.createElement('li');
-        li.innerHTML = `<span>${file.name}</span> <button class="cosmic-btn" style="padding:2px 5px; font-size:10px;" onclick="viewPdf(${idx})">VIEW</button>`;
-        document.getElementById('file-registry').appendChild(li);
-    });
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('pdf-input');
+
+dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); };
+dropZone.ondragleave = () => dropZone.classList.remove('drag-over');
+dropZone.ondrop = (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
 };
+
+fileInput.onchange = (e) => handleFiles(e.target.files);
+
+function handleFiles(files) {
+    Array.from(files).forEach(file => {
+        if (file.type === "application/pdf") uploadedFiles.push(file);
+    });
+    if (typeof refreshFileList === 'function') refreshFileList();
+}

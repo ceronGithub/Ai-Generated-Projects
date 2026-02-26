@@ -2,6 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic PDF Explorer</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,15 +15,22 @@
     </nav>
 
     <main class="container">
-        <section class="glass-card">
+        <section class="glass-card hero-section">
             <h1>Cosmic PDF Explorer</h1>
-            <div class="upload-area">
+            <div class="upload-area" id="drop-zone">
                 <input type="file" id="pdf-input" multiple accept=".pdf">
-                <p>Upload PDF Archives</p>
+                <p>Drag & Drop PDF Archives</p>
             </div>
-            <div class="search-section">
-                <input type="text" id="keyword-search" placeholder="Keywords (comma separated)...">
-                <button id="search-btn" class="cosmic-btn">Locate Fragments</button>
+            
+            <div class="keyword-engine">
+                <h3>Keyword Engine</h3>
+                <div class="keyword-input-wrapper">
+                    <div id="tag-container" class="tag-cloud">
+                        <input type="text" id="keyword-search" placeholder="Type keyword and press Enter...">
+                    </div>
+                    <button id="search-btn" class="cosmic-btn warp-btn">Initiate Deep Scan</button>
+                </div>
+                <small class="hint">Press Enter or comma to add fragments</small>
             </div>
         </section>
 
@@ -34,7 +42,7 @@
             <section class="glass-card">
                 <h3>Captured Text Blocks</h3>
                 <div id="results-output">No fragments scanned.</div>
-                <button id="download-btn" class="cosmic-btn" style="display:none; margin-top:20px;">Download Excel</button>
+                <button id="download-btn" class="cosmic-btn" style="display:none; margin-top:20px;">Download Excel Findings</button>
             </section>
         </div>
     </main>
@@ -55,6 +63,8 @@
     
     <script src="main.js"></script>
     <script src="upload.js"></script>
+    <script src="keyword-manager.js"></script>
+    <script src="pdf-remover.js"></script>
     <script src="pdf-finder.js"></script>
     <script src="pdf-viewer.js"></script>
     <script src="download.js"></script>
