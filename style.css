@@ -20,3 +20,94 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-
 .cosmic-btn { background: var(--btn-bg); color: var(--btn-text); border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-content { width: 85%; height: 90vh; overflow: auto; position: relative; }
+
+
+/* Add these at the bottom of style.css */
+
+.result-card {
+    position: relative; /* Allows absolute positioning of the delete button */
+    transition: all 0.3s ease; /* Smooth transition for removal */
+}
+
+.delete-result-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.delete-result-btn:hover {
+    color: #ff4d4d;
+    border-color: #ff4d4d;
+    background: rgba(255, 77, 77, 0.1);
+}
+
+/* Optimized PDF Viewer Layout */
+#pdf-viewer-modal.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+#pdf-viewer-modal .modal-content {
+    width: 90%;
+    max-width: 1000px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column; /* Stack controls above canvas */
+    background: var(--glass);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden; /* We handle scrolling inside canvas-container */
+}
+
+.viewer-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--accent);
+    margin-bottom: 15px;
+}
+
+#canvas-container {
+    flex-grow: 1; /* Take up remaining space */
+    overflow: auto; /* Allow scrolling if PDF is large */
+    display: flex;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+#pdf-render-canvas {
+    max-width: 100%; /* Keep within container width */
+    height: auto !important; /* Maintain aspect ratio */
+    background: white; /* Contrast for PDF content */
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 30px;
+    color: var(--text);
+    cursor: pointer;
+    z-index: 10;
+}

@@ -1,11 +1,17 @@
+/**
+ * pdf-finder.js
+ * Original logic for keyword scanning + UI Sync for deletions.
+ */
 document.getElementById('search-btn').onclick = async () => {
     if (!activeKeywords.length) return alert("Define keywords to begin scan.");
     
+    // Original Warp Speed Animation logic
     speed = 18; 
     capturedResults = [];
     const output = document.getElementById('results-output');
     output.innerHTML = "Accessing data fragments...";
 
+    // Original Scanning Loop
     for (const file of uploadedFiles) {
         const doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
         for (let i = 1; i <= doc.numPages; i++) {
@@ -28,21 +34,19 @@ document.getElementById('search-btn').onclick = async () => {
         }
     }
     
+    // Return to normal star speed
     setTimeout(() => speed = 0.5, 1200);
 
-    output.innerHTML = capturedResults.map(r => `
-        <div class="result-card">
-            <div class="result-header">
-                <div class="meta-item"><span>🔍</span> <strong>${r.keyword}</strong></div>
-                <div class="meta-item"><span>📄</span> <strong>${r.file}</strong></div>
-                <div class="meta-item"><span>📑</span> <strong>Page ${r.page}</strong></div>
-            </div>
-            <div class="captured-content">
-                <span>📡</span>
-                <div><em>"...${r.context}..."</em></div>
-            </div>
-        </div>
-    `).join('') || `<div class="glass-card">Sector scanned. No fragments located.</div>`;
+    // --- UPDATED SECTION START ---
+    // Instead of rendering static HTML here, we call the sync function 
+    // from keyword-remover.js to enable the individual "Remove" buttons.
+    if (typeof refreshResultsUI === 'function') {
+        refreshResultsUI();
+    } else {
+        // Fallback if remover script isn't loaded
+        output.innerHTML = capturedResults.length ? "Scan complete. Syncing..." : "No fragments located.";
+    }
+    // --- UPDATED SECTION END ---
 
     document.getElementById('download-btn').style.display = capturedResults.length ? 'block' : 'none';
 };
