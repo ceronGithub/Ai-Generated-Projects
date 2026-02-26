@@ -14,21 +14,14 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-
 #keyword-search { border: none; background: transparent; flex-grow: 1; outline: none; color: var(--text); }
 
 .results-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
-.result-card { border-left: 4px solid #00d4ff; background: rgba(255, 255, 255, 0.03); margin-bottom: 20px; padding: 15px; border-radius: 8px; }
+.result-card { border-left: 4px solid #00d4ff; background: rgba(255, 255, 255, 0.03); margin-bottom: 20px; padding: 15px; border-radius: 8px; position: relative; transition: all 0.3s ease; }
 .result-header { display: flex; gap: 20px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
 .meta-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #00d4ff; }
 .cosmic-btn { background: var(--btn-bg); color: var(--btn-text); border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-content { width: 85%; height: 90vh; overflow: auto; position: relative; }
 
-
-/* Add these at the bottom of style.css */
-
-.result-card {
-    position: relative; /* Allows absolute positioning of the delete button */
-    transition: all 0.3s ease; /* Smooth transition for removal */
-}
-
+/* Removal & Cleanup Styles */
 .delete-result-btn {
     position: absolute;
     top: 10px;
@@ -49,7 +42,29 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-
     background: rgba(255, 77, 77, 0.1);
 }
 
-/* Optimized PDF Viewer Layout */
+/* --- DOWNLOAD BUTTON STYLING (FIXED) --- */
+#download-btn {
+    display: none; /* Controlled by JS after scan */
+    margin-top: 20px;
+    width: 100%;
+    background: linear-gradient(45deg, #ff00d4, #7000ff);
+    color: white;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(255, 0, 212, 0.3);
+    transition: 0.3s ease;
+}
+
+#download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 0, 212, 0.5);
+    filter: brightness(1.1);
+}
+
+/* PDF Viewer Layout */
 #pdf-viewer-modal.modal {
     display: none;
     position: fixed;
@@ -67,13 +82,13 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-
     max-width: 1000px;
     height: 90vh;
     display: flex;
-    flex-direction: column; /* Stack controls above canvas */
+    flex-direction: column;
     background: var(--glass);
     border: 1px solid var(--accent);
     border-radius: 12px;
     padding: 20px;
     position: relative;
-    overflow: hidden; /* We handle scrolling inside canvas-container */
+    overflow: hidden;
 }
 
 .viewer-controls {
@@ -87,8 +102,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-
 }
 
 #canvas-container {
-    flex-grow: 1; /* Take up remaining space */
-    overflow: auto; /* Allow scrolling if PDF is large */
+    flex-grow: 1;
+    overflow: auto;
     display: flex;
     justify-content: center;
     background: rgba(0, 0, 0, 0.2);
@@ -96,9 +111,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-
 }
 
 #pdf-render-canvas {
-    max-width: 100%; /* Keep within container width */
-    height: auto !important; /* Maintain aspect ratio */
-    background: white; /* Contrast for PDF content */
+    max-width: 100%;
+    height: auto !important;
+    background: white;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
