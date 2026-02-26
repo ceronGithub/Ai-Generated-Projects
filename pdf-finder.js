@@ -34,10 +34,12 @@ document.getElementById('search-btn').onclick = async () => {
                 anchors.forEach(anchor => {
                     // Logic to remove keyword and specifically strip "$"
                     const getCleanedPreservedText = (text, kw) => {
-                        const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        // const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&#:');
                         const regex = new RegExp(escapedKw, 'gi');
                         let result = text.replace(regex, "");
-                        return result.replace(/\$/g, "").trim(); // Remove $ specifically
+                        return result.replace(/\#:/g, "").trim();
+                        // return result.replace(/\$/g, "").trim(); // Remove $ specifically
                     };
 
                     // TABLE DETECTION: Check if other text blocks exist on the same row 
