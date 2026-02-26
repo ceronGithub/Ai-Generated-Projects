@@ -10,8 +10,11 @@
     <canvas id="starfield-canvas"></canvas>
     
     <nav class="glass-card nav-bar">
-        <div id="datetime-display">Initializing...</div>
-        <button id="theme-toggle" class="cosmic-btn">🌓 Toggle Nebula</button>
+        <div id="datetime-display">Initializing Chronometer...</div>
+        <div class="nav-controls">
+            <button id="help-btn" class="cosmic-btn">❓ Help Guide</button>
+            <button id="theme-toggle" class="cosmic-btn">🌓 Toggle Nebula</button>
+        </div>
     </nav>
 
     <main class="container">
@@ -30,7 +33,6 @@
                     </div>
                     <button id="search-btn" class="cosmic-btn warp-btn">Initiate Deep Scan</button>
                 </div>
-                <small class="hint">Press Enter or comma to add fragments</small>
             </div>
         </section>
 
@@ -47,6 +49,18 @@
         </div>
     </main>
 
+    <div id="help-modal" class="modal" style="display:none;">
+        <div class="modal-content glass-card help-content">
+            <span class="close-help">&times;</span>
+            <h2>🛰️ Galactic Navigation Manual</h2>
+            <div class="help-steps">
+                <div class="step"><span class="step-num">01</span><p><strong>Initialize:</strong> Drag and drop your PDF files.</p></div>
+                <div class="step"><span class="step-num">02</span><p><strong>Coordinates:</strong> Type a keyword and press Enter.</p></div>
+                <div class="step"><span class="step-num">03</span><p><strong>Scan:</strong> Click "Initiate Deep Scan" to parse documents.</p></div>
+            </div>
+        </div>
+    </div>
+
     <div id="pdf-viewer-modal" class="modal" style="display:none;">
         <div class="modal-content glass-card">
             <span class="close-btn">&times;</span>
@@ -60,7 +74,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    
     <script src="main.js"></script>
     <script src="upload.js"></script>
     <script src="keyword-manager.js"></script>
@@ -68,5 +81,6 @@
     <script src="pdf-finder.js"></script>
     <script src="pdf-viewer.js"></script>
     <script src="download.js"></script>
+    <script src="help.js"></script>
 </body>
 </html>

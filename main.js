@@ -3,14 +3,14 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 
 let uploadedFiles = [];
 let capturedResults = [];
-let activeKeywords = []; // Global keywords list
+let activeKeywords = [];
 let speed = 0.5;
 
 function updateClock() {
     const now = new Date();
     const isWeekend = [0, 6].includes(now.getDay()) ? "Weekend" : "Weekday";
-    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    const date = now.toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' });
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+    const date = now.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
     document.getElementById('datetime-display').innerText = `${isWeekend} | ${date} | ${time}`;
 }
 setInterval(updateClock, 1000);

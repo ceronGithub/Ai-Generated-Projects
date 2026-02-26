@@ -1,10 +1,10 @@
 document.getElementById('search-btn').onclick = async () => {
-    if (!activeKeywords.length) return alert("Please add keywords first!");
+    if (!activeKeywords.length) return alert("Define keywords to begin scan.");
     
-    speed = 18; // Warp speed!
+    speed = 18; 
     capturedResults = [];
     const output = document.getElementById('results-output');
-    output.innerHTML = "Scanning Cosmic Data Streams...";
+    output.innerHTML = "Accessing data fragments...";
 
     for (const file of uploadedFiles) {
         const doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
@@ -17,7 +17,9 @@ document.getElementById('search-btn').onclick = async () => {
                 let idx = text.toLowerCase().indexOf(word);
                 while (idx !== -1) {
                     capturedResults.push({
-                        file: file.name, page: i, keyword: word, 
+                        file: file.name,
+                        page: i,
+                        keyword: word,
                         context: text.substring(idx - 60, idx + 60).trim()
                     });
                     idx = text.toLowerCase().indexOf(word, idx + 1);
@@ -25,7 +27,22 @@ document.getElementById('search-btn').onclick = async () => {
             });
         }
     }
+    
     setTimeout(() => speed = 0.5, 1200);
-    output.innerHTML = capturedResults.map(r => `<div class="glass-card" style="margin-bottom:10px; font-size:14px;"><strong>${r.file} [P.${r.page}]</strong>: ...${r.context}...</div>`).join('') || "Void.";
+
+    output.innerHTML = capturedResults.map(r => `
+        <div class="result-card">
+            <div class="result-header">
+                <div class="meta-item"><span>🔍</span> <strong>${r.keyword}</strong></div>
+                <div class="meta-item"><span>📄</span> <strong>${r.file}</strong></div>
+                <div class="meta-item"><span>📑</span> <strong>Page ${r.page}</strong></div>
+            </div>
+            <div class="captured-content">
+                <span>📡</span>
+                <div><em>"...${r.context}..."</em></div>
+            </div>
+        </div>
+    `).join('') || `<div class="glass-card">Sector scanned. No fragments located.</div>`;
+
     document.getElementById('download-btn').style.display = capturedResults.length ? 'block' : 'none';
 };
