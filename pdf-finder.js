@@ -1,6 +1,7 @@
 /**
  * pdf-finder.js 
- * Logic: Table-Aware Directional Probes with Special Character Filtering
+ * Logic: 3-Path Search Strategy (Right, Bottom, Top)
+ * Rules: Filter Special Chars, 3-Space Termination, Keyword Exclusion.
  */
 document.getElementById('search-btn').onclick = async () => {
     if (!activeKeywords.length) return alert("Define keywords to begin scan.");
@@ -8,7 +9,7 @@ document.getElementById('search-btn').onclick = async () => {
     speed = 18; 
     capturedResults = [];
     const output = document.getElementById('results-output');
-    output.innerHTML = "Mapping cosmic table coordinates...";
+    output.innerHTML = "Navigating Cosmic Paths...";
 
     for (const file of uploadedFiles) {
         const doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
@@ -22,8 +23,7 @@ document.getElementById('search-btn').onclick = async () => {
                 trimStr: item.str.trim(),
                 x: item.transform[4],
                 y: item.transform[5],
-                width: item.width,
-                rightX: item.transform[4] + item.width
+                width: item.width
             })).filter(item => item.trimStr.length > 0);
 
             activeKeywords.forEach(keyword => {
@@ -32,83 +32,94 @@ document.getElementById('search-btn').onclick = async () => {
                 );
 
                 anchors.forEach(anchor => {
-                    // Logic to remove keyword and specifically strip "$"
-                    const getCleanedPreservedText = (text, kw) => {
-                        // const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&#:');
-                        const regex = new RegExp(escapedKw, 'gi');
-                        let result = text.replace(regex, "");
-                        return result.replace(/\#:/g, "").trim();
-                        // return result.replace(/\$/g, "").trim(); // Remove $ specifically
-                    };
+                    /**
+                     * CLEANING LOGIC:
+                     * 1. Removes the keyword label.
+                     * 2. Removes special characters: $, #, :, *, &, %, @.
+                     * 3. Stops capturing if 3 consecutive white spaces are detected.
+                     */
+                    const processCapture = (text, kw) => {
+                        const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const regexKw = new RegExp(escapedKw, 'gi');
+                        
+                        // Path Rule: Stop at 3 white spaces
+                        let segment = text.split(/\s{3,}/)[0];
 
-                    // TABLE DETECTION: Check if other text blocks exist on the same row 
-                    // (Common in table structures like your invoice description/total)
-                    const rowSiblings = items.filter(item => Math.abs(item.y - anchor.y) < 5 && item.str !== anchor.str);
-                    const isTable = rowSiblings.length >= 2;
+                        // Path Rule: Remove keyword and Special Characters
+                        let result = segment.replace(regexKw, "");
+                        return result.replace(/[\$#:\*&%@]/g, "").trim(); 
+                    };
 
                     let finalOutput = "";
 
-                    if (isTable) {
-                        // --- TABLE LOGIC: 4-PATH VERTICAL PROBING ---
-                        const colItems = items.filter(item => Math.abs(item.x - anchor.x) < 40);
-                        
-                        // Path 1 & 3: Top-to-Bottom (Looking for data below)
-                        const below = colItems.filter(item => item.y < anchor.y).sort((a, b) => b.y - a.y);
-                        // Path 2 & 4: Bottom-to-Top (Looking for data above)
-                        const above = colItems.filter(item => item.y > anchor.y).sort((a, b) => a.y - b.y);
+                    // PATH 1: Left-to-Right (Same horizontal line)
+                    const rightItems = items.filter(item => 
+                        Math.abs(item.y - anchor.y) < 5 && item.x >= anchor.x
+                    ).sort((a, b) => a.x - b.x);
 
-                        if (below.length > 0) {
-                            finalOutput = getCleanedPreservedText(below[0].str, "");
-                        } else if (above.length > 0) {
-                            finalOutput = getCleanedPreservedText(above[0].str, "");
-                        }
+                    for (const item of rightItems) {
+                        let hit = processCapture(item.str, keyword);
+                        if (hit) { finalOutput = hit; break; }
+                    }
 
-                    } else {
-                        // --- STANDARD LOGIC: Priority Directional ---
-                        // Path 1: Right
-                        const rightItems = items.filter(item => Math.abs(item.y - anchor.y) < 5 && item.x >= anchor.x).sort((a, b) => a.x - b.x);
-                        for (const item of rightItems) {
-                            let hit = getCleanedPreservedText(item.str, keyword);
+                    // PATH 2: Left-to-Bottom (Vertical column below)
+                    if (!finalOutput) {
+                        const belowItems = items.filter(item => 
+                            Math.abs(item.x - anchor.x) < 40 && item.y < anchor.y
+                        ).sort((a, b) => b.y - a.y);
+
+                        for (const item of belowItems) {
+                            let hit = processCapture(item.str, "");
                             if (hit) { finalOutput = hit; break; }
-                        }
-
-                        // Path 2: Bottom (if Right is empty)
-                        if (!finalOutput) {
-                            const below = items.filter(item => Math.abs(item.x - anchor.x) < 40 && item.y <= anchor.y).sort((a, b) => b.y - a.y);
-                            for (const item of below) {
-                                let hit = getCleanedPreservedText(item.str, keyword);
-                                if (hit) { finalOutput = hit; break; }
-                            }
-                        }
-
-                        // Path 3: Top (if others are empty)
-                        if (!finalOutput) {
-                            const above = items.filter(item => Math.abs(item.x - anchor.x) < 40 && item.y >= anchor.y).sort((a, b) => a.y - b.y);
-                            for (const item of above) {
-                                let hit = getCleanedPreservedText(item.str, keyword);
-                                if (hit) { finalOutput = hit; break; }
-                            }
                         }
                     }
 
-                    capturedResults.push({
-                        file: file.name,
-                        page: i,
-                        keyword: anchor.trimStr,
-                        context: finalOutput || "No fragment captured"
-                    });
-                    // At the end of your scan logic, after the loop finishes:
-                    if (capturedResults.length > 0) {
-                        document.getElementById('download-btn').style.display = 'inline-block';
-                    } else {
-                        document.getElementById('download-btn').style.display = 'none';
+                    // PATH 3: Left-to-Top (Vertical column above)
+                    if (!finalOutput) {
+                        const aboveItems = items.filter(item => 
+                            Math.abs(item.x - anchor.x) < 40 && item.y > anchor.y
+                        ).sort((a, b) => a.y - b.y);
+
+                        for (const item of aboveItems) {
+                            let hit = processCapture(item.str, "");
+                            if (hit) { finalOutput = hit; break; }
+                        }
+                    }
+
+                    if (finalOutput) {
+                        capturedResults.push({
+                            file: file.name,
+                            page: i,
+                            keyword: anchor.trimStr.replace(/[#:]/g, ""),
+                            context: finalOutput
+                        });
                     }
                 });
             });
         }
     }
+
+    // FINAL RENDER & DOWNLOAD BUTTON TOGGLE
+    const downloadBtn = document.getElementById('download-btn');
+    if (capturedResults.length > 0) {
+        output.innerHTML = "";
+        capturedResults.forEach(res => {
+            const card = document.createElement('div');
+            card.className = "result-card";
+            card.innerHTML = `
+                <div class="result-header">
+                    <span class="meta-item">📄 ${res.file}</span>
+                    <span class="meta-item">📍 Page ${res.page}</span>
+                </div>
+                <strong>${res.keyword}</strong>: ${res.context}
+            `;
+            output.appendChild(card);
+        });
+        if (downloadBtn) downloadBtn.style.display = 'inline-block';
+    } else {
+        output.innerHTML = "No fragments found in defined paths.";
+        if (downloadBtn) downloadBtn.style.display = 'none';
+    }
     
     setTimeout(() => speed = 0.5, 1200);
-    if (typeof refreshResultsUI === 'function') refreshResultsUI();
 };
