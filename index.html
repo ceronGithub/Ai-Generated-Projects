@@ -1,272 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matthel-PDF | Studio Elite v3.5</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
-        
-        body { font-family: 'Outfit', sans-serif; background-color: #020617; color: #f8fafc; overflow-x: hidden; }
-
-        /* --- RESPONSIVE LAYOUT ENGINE --- */
-        
-        /* Mobile Default: Stacked */
-        .app-container { display: flex; flex-direction: column; height: 100vh; }
-        #sidebar { width: 100%; height: auto; max-height: 80vh; display: flex; flex-direction: column; }
-        #viewer-stack { flex: 1; width: 100%; overflow-y: auto; padding: 2rem 1rem; }
-        .pdf-viewer-fixed { width: 90vw; margin: 0 auto 2rem auto; }
-
-        /* Tablet (Medium) */
-        @media (min-width: 768px) {
-            .app-container { flex-direction: row; }
-            #sidebar { width: 380px; height: 100vh; max-height: none; }
-            .pdf-viewer-fixed { width: 50vw; }
-        }
-
-        /* Desktop (Big Screen) */
-        @media (min-width: 1280px) {
-            #sidebar { width: 450px; }
-            .pdf-viewer-fixed { width: 30vw; } /* Locked 30vw as requested */
-        }
-
-        /* Result Stream Scrolling */
-        .result-stream-area {
-            flex: 1;
-            overflow-y: auto;
-            min-height: 200px;
-            padding-right: 8px;
-        }
-
-        /* Custom Scrollbar */
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
-        .custom-scroll::-webkit-scrollbar-thumb { 
-            background: linear-gradient(#3b82f6, #1e40af); 
-            border-radius: 20px; 
-        }
-
-        /* Animations */
-        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .queue-card { animation: slideIn 0.4s ease forwards; background: rgba(15, 23, 42, 0.6); border-left: 4px solid #3b82f6; backdrop-filter: blur(10px); }
-        .holiday-glow { text-shadow: 0 0 10px rgba(239, 68, 68, 0.6); color: #fca5a5; }
-    </style>
+    <title>Cosmic PDF Explorer</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="app-container">
+<body>
+    <canvas id="starfield-canvas"></canvas>
+    
+    <nav class="glass-card nav-bar">
+        <div id="datetime-display">Initializing...</div>
+        <button id="theme-toggle" class="cosmic-btn">🌓 Toggle Nebula</button>
+    </nav>
 
-    <div id="helpModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
-        <div class="bg-slate-900 border border-slate-800 rounded-[2.5rem] max-w-lg w-full p-10">
-            <h2 class="text-2xl font-black text-white mb-6 uppercase tracking-tighter italic">System <span class="text-blue-500">Manual</span></h2>
-            <div class="space-y-4 text-slate-400 text-xs leading-relaxed">
-                <p>• <span class="text-white">Import:</span> Drop PDFs to initialize the viewer.</p>
-                <p>• <span class="text-white">Keywords:</span> Use terms like "Invoice" or "Created" for extraction.</p>
-                <p>• <span class="text-white">Flow:</span> On mobile, the viewer stays below the stream. On desktop, it moves to the right.</p>
+    <main class="container">
+        <section class="glass-card">
+            <h1>Cosmic PDF Explorer</h1>
+            <div class="upload-area">
+                <input type="file" id="pdf-input" multiple accept=".pdf">
+                <p>Upload PDF Archives</p>
             </div>
-            <button onclick="toggleHelp()" class="mt-8 w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest">Acknowledge</button>
-        </div>
-    </div>
-
-    <aside id="sidebar" class="bg-slate-950 border-r border-slate-900 shadow-2xl overflow-hidden">
-        
-        <div class="p-6 lg:p-8 space-y-6">
-            <div class="p-4 bg-slate-900/50 border border-slate-800 rounded-3xl">
-                <div class="flex justify-between items-center mb-1">
-                    <span id="liveClock" class="text-xl font-black text-white tabular-nums">00:00:00</span>
-                    <span id="dateEvent" class="text-[8px] font-black px-2 py-1 rounded bg-blue-500/10 text-blue-400 uppercase">...</span>
-                </div>
-                <p id="liveDate" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest"></p>
+            <div class="search-section">
+                <input type="text" id="keyword-search" placeholder="Keywords (comma separated)...">
+                <button id="search-btn" class="cosmic-btn">Locate Fragments</button>
             </div>
+        </section>
 
-            <div class="flex justify-between items-center">
-                <h1 class="text-xl font-black italic tracking-tighter">MATTHEL<span class="text-blue-500">PDF</span></h1>
-                <button onclick="toggleHelp()" class="text-slate-500 hover:text-blue-400"><i class="fa-solid fa-circle-question"></i></button>
-            </div>
-
-            <div class="space-y-3">
-                <div class="relative">
-                    <input type="file" id="file-input" accept="application/pdf" multiple class="absolute inset-0 opacity-0 cursor-pointer z-10">
-                    <div class="border border-dashed border-slate-800 rounded-xl p-3 text-center bg-slate-900/20 text-[9px] font-black text-slate-500 uppercase tracking-widest">
-                        + Import PDF
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <input type="text" id="keywordInput" onkeypress="handleEnter(event)" placeholder="Search keyword..." class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-blue-500 text-white">
-                    <button onclick="bulkScan()" class="bg-blue-600 px-4 rounded-xl hover:bg-blue-500 transition-all"><i class="fa-solid fa-bolt text-xs"></i></button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flex-1 flex flex-col px-6 lg:px-8 pb-4 min-h-0">
-            <div class="flex items-center gap-3 mb-4 sticky top-0 bg-slate-950 py-2 z-10">
-                <span class="text-[10px] font-black text-slate-600 uppercase tracking-widest">Live Result Stream</span>
-                <div class="h-px flex-1 bg-slate-900"></div>
-                <button onclick="clearQueue()" class="text-[9px] text-red-500/50 hover:text-red-500 uppercase font-black">Wipe</button>
-            </div>
-            
-            <div id="queue-container" class="result-stream-area custom-scroll space-y-3">
-                </div>
-        </div>
-
-        <div class="p-6 lg:p-8 bg-slate-950 border-t border-slate-900">
-            <button onclick="exportToExcel()" class="w-full bg-white text-slate-900 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
-                Export Data Feed (XLSX)
-            </button>
-        </div>
-    </aside>
-
-    <main id="viewer-stack" class="bg-[radial-gradient(circle_at_center,_#0f172a_0%,_#020617_100%)] custom-scroll">
-        <div id="empty-state" class="h-full flex flex-col items-center justify-center text-slate-800 py-20">
-            <i class="fa-solid fa-layer-group text-6xl mb-4 opacity-5"></i>
-            <p class="font-black tracking-[0.4em] uppercase text-[9px]">Awaiting Documents</p>
+        <div class="results-grid">
+            <aside class="glass-card">
+                <h3>Uploaded Crystals</h3>
+                <ul id="file-registry"></ul>
+            </aside>
+            <section class="glass-card">
+                <h3>Captured Text Blocks</h3>
+                <div id="results-output">No fragments scanned.</div>
+                <button id="download-btn" class="cosmic-btn" style="display:none; margin-top:20px;">Download Excel</button>
+            </section>
         </div>
     </main>
 
-    <script>
-        const pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    <div id="pdf-viewer-modal" class="modal" style="display:none;">
+        <div class="modal-content glass-card">
+            <span class="close-btn">&times;</span>
+            <div class="viewer-controls">
+                <button id="prev-page" class="cosmic-btn">◀</button>
+                <span>Page <span id="page-num">1</span> / <span id="page-count">-</span></span>
+                <button id="next-page" class="cosmic-btn">▶</button>
+            </div>
+            <div id="canvas-container"><canvas id="pdf-render-canvas"></canvas></div>
+        </div>
+    </div>
 
-        let pdfInstances = [], excelRows = [];
-
-        // Temporal Intelligence (PH)
-        function updateTemporal() {
-            const now = new Date();
-            document.getElementById('liveClock').innerText = now.toLocaleTimeString('en-GB');
-            document.getElementById('liveDate').innerText = now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
-            const eventKey = `${now.getMonth() + 1}-${now.getDate()}`;
-            const holiday = eventKey === "2-25" ? "EDSA Anniversary" : null;
-            const badge = document.getElementById('dateEvent');
-            if(holiday) {
-                badge.innerText = holiday; badge.className = "text-[8px] font-black px-2 py-1 rounded bg-red-500/20 holiday-glow uppercase";
-            } else {
-                badge.innerText = "Ordinary Day"; badge.className = "text-[8px] font-black px-2 py-1 rounded bg-slate-800 text-slate-500 uppercase";
-            }
-        }
-        setInterval(updateTemporal, 1000); updateTemporal();
-
-        function toggleHelp() { document.getElementById('helpModal').classList.toggle('hidden'); document.getElementById('helpModal').classList.toggle('flex'); }
-        function handleEnter(e) { if (e.key === 'Enter') bulkScan(); }
-
-        document.getElementById('file-input').addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length > 0) {
-                document.getElementById('empty-state').classList.add('hidden');
-                for (const file of files) {
-                    const reader = new FileReader();
-                    reader.onload = async function() {
-                        const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
-                        const instance = { id: Date.now() + Math.random(), name: file.name, doc: pdf, currentPage: 1, zoom: 1.1 };
-                        pdfInstances.push(instance);
-                        createViewerUI(instance);
-                    };
-                    reader.readAsArrayBuffer(file);
-                }
-            }
-        });
-
-        function createViewerUI(inst) {
-            const card = document.createElement('div');
-            card.className = "pdf-viewer-fixed animate-slide-in";
-            card.innerHTML = `
-                <div class="flex justify-between items-center mb-3 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                    <span class="text-[8px] font-bold text-slate-400 truncate w-24 uppercase tracking-tighter">${inst.name}</span>
-                    <div class="flex items-center gap-3 text-[9px] font-mono">
-                        <button onclick="navPage('${inst.id}', -1)" class="hover:text-blue-500"><i class="fa-solid fa-chevron-left"></i></button>
-                        <span id="pg-${inst.id}">1</span> / ${inst.doc.numPages}
-                        <button onclick="navPage('${inst.id}', 1)" class="hover:text-blue-500"><i class="fa-solid fa-chevron-right"></i></button>
-                    </div>
-                </div>
-                <div class="rounded-2xl border border-slate-800 shadow-2xl overflow-hidden bg-white">
-                    <canvas id="canvas-${inst.id}" class="w-full h-auto"></canvas>
-                </div>`;
-            document.getElementById('viewer-stack').appendChild(card);
-            renderPage(inst);
-        }
-
-        async function renderPage(inst) {
-            const page = await inst.doc.getPage(inst.currentPage);
-            const canvas = document.getElementById(`canvas-${inst.id}`);
-            const viewport = page.getViewport({ scale: 1.5 });
-            canvas.height = viewport.height; canvas.width = viewport.width;
-            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-            document.getElementById(`pg-${inst.id}`).innerText = inst.currentPage;
-        }
-
-        window.navPage = (id, delta) => {
-            const inst = pdfInstances.find(i => i.id == id);
-            if (inst && inst.currentPage + delta >= 1 && inst.currentPage + delta <= inst.doc.numPages) {
-                inst.currentPage += delta; renderPage(inst);
-            }
-        };
-
-        async function bulkScan() {
-            const kw = document.getElementById('keywordInput').value.trim().toLowerCase();
-            if (!kw || pdfInstances.length === 0) return;
-
-            const patterns = {
-                invoice: /INV-\d{4}-\d+/i,
-                date: /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{1,2},\s\d{4}\b/i
-            };
-            let activeRegex = kw.includes('invoice') ? patterns.invoice : (kw.includes('created') || kw.includes('date') ? patterns.date : null);
-
-            for (const inst of pdfInstances) {
-                for (let p = 1; p <= inst.doc.numPages; p++) {
-                    const page = await inst.doc.getPage(p);
-                    const text = await page.getTextContent();
-                    const markers = text.items.filter(i => i.str.toLowerCase().includes(kw));
-
-                    markers.forEach(marker => {
-                        const mX = marker.transform[4], mY = marker.transform[5];
-                        let result = null;
-                        const cands = text.items.filter(i => i !== marker && i.str.trim() && Math.abs(i.transform[4]-mX) <= 400 && Math.abs(i.transform[5]-mY) <= 40)
-                            .sort((a,b) => Math.hypot(a.transform[4]-mX, a.transform[5]-mY) - Math.hypot(b.transform[4]-mX, b.transform[5]-mY));
-
-                        for (let cand of cands) {
-                            let clean = cand.str.trim().replace(/^[:\s-]+/, '');
-                            if (activeRegex) {
-                                const match = clean.match(activeRegex);
-                                if (match) { result = match[0]; break; }
-                            } else if (clean.length > 0) { result = clean; break; }
-                        }
-                        if (result) excelRows.push({ File: inst.name, Key: kw.toUpperCase(), Value: result, Pg: p });
-                    });
-                }
-            }
-            updateQueue();
-        }
-
-        function updateQueue() {
-            const container = document.getElementById('queue-container');
-            container.innerHTML = "";
-            excelRows.forEach((row, idx) => {
-                const item = document.createElement('div');
-                item.className = "queue-card p-4 rounded-xl mb-3";
-                item.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[8px] font-black text-blue-400 uppercase tracking-widest">${row.Key}</span>
-                        <button onclick="excelRows.splice(${idx},1);updateQueue();" class="text-slate-700 hover:text-white transition-colors">×</button>
-                    </div>
-                    <p class="text-xs font-bold text-white mb-2 leading-tight">${row.Value}</p>
-                    <div class="flex justify-between text-[7px] font-bold text-slate-500 uppercase">
-                        <span class="truncate max-w-[120px]">${row.File}</span>
-                        <span>PG ${row.Pg}</span>
-                    </div>`;
-                container.prepend(item);
-            });
-        }
-
-        function clearQueue() { excelRows = []; updateQueue(); }
-        function exportToExcel() {
-            if (!excelRows.length) return;
-            const ws = XLSX.utils.json_to_sheet(excelRows);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Extraction");
-            XLSX.writeFile(wb, `Matthel_Extraction.xlsx`);
-        }
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    
+    <script src="main.js"></script>
+    <script src="upload.js"></script>
+    <script src="pdf-finder.js"></script>
+    <script src="pdf-viewer.js"></script>
+    <script src="download.js"></script>
 </body>
 </html>
