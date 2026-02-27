@@ -10,6 +10,14 @@ document.getElementById('search-btn').onclick = async () => {
     const output = document.getElementById('results-output');
     output.innerHTML = "Mapping cosmic table coordinates...";
 
+    const detectDataType = (text) => {
+        if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$|^\w{3} \d{1,2}, \d{4}$/.test(text)) return "Date";
+        if (/\d+ [A-Z][a-z]+/.test(text) && text.length > 10) return "Address";
+        if (text.includes('@')) return "Email";
+        if (/^\d+(\.\d{2})?$/.test(text.replace(/,/g, ""))) return "Currency/Number";
+        return "Text Block";
+    };
+
     for (const file of uploadedFiles) {
         const doc = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
 
@@ -93,9 +101,9 @@ document.getElementById('search-btn').onclick = async () => {
                     }
 
                     capturedResults.push({
-                        file: file.name,
-                        page: i,
                         keyword: anchor.trimStr,
+                        file: file.name,
+                        page: i,                        
                         context: finalOutput || "No fragment captured"
                     });
                     // At the end of your scan logic, after the loop finishes:

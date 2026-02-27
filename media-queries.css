@@ -1,0 +1,101 @@
+/* --- COSMIC RESPONSIVENESS --- */
+
+
+/* Small Phones (Max 480px) */
+@media (max-width: 480px) {
+    #datetime-display {
+        font-size: 0.8rem;
+    }
+
+    .cosmic-btn {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .tag {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+}
+
+/* Mobile Devices (Max 768px) */
+@media (max-width: 768px) {
+    .nav-bar {
+        flex-direction: column;
+        gap: 50px;
+        text-align: center;
+    }
+
+    .nav-controls {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px; 
+        gap: 1rem;       
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero-section {
+        padding: 15px;
+    }
+
+    .results-grid{
+        gap: 10px;
+        grid-template-areas: 
+        'head head'
+        'body body';
+    }
+
+    .keyword-input-wrapper {
+        flex-direction: column;
+    }
+
+    .warp-btn {
+        width: 100%;
+    }
+
+    /* Modal Adjustments */
+    #pdf-viewer-modal .modal-content {
+        width: 95%;
+        padding: 10px;
+    }
+
+    .viewer-controls {
+        gap: 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Tablet and Smaller (Max 1024px) */
+@media (max-width: 1024px) {
+    .container {
+        padding: 10px;
+    }
+
+    .results-grid {
+        grid-template-columns: 1fr; /* Stack Sidebar and Results */
+        grid-template-areas: 
+        'head head'
+        'body body';
+        gap: 15px;
+    }
+
+    .upload-area {
+        padding: 20px;
+    }
+}
+
+
+/* Ultra-Wide Monitors (Min 1600px) */
+@media (min-width: 1600px) {
+    .container {
+        max-width: 1400px;
+    }
+
+    .results-grid {
+        grid-template-columns: 400px 1fr;
+    }
+}

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic PDF Explorer</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="media-queries.css">
 </head>
 <body>
     <canvas id="starfield-canvas"></canvas>
@@ -37,11 +38,11 @@
         </section>
 
         <div class="results-grid">
-            <aside class="glass-card">
+            <aside class="glass-card" style="grid-area: head;">
                 <h3>Uploaded Crystals</h3>
                 <ul id="file-registry"></ul>
             </aside>
-            <section class="glass-card">
+            <section class="glass-card" style="grid-area: body;">
                 <h3>Captured Text Blocks</h3>
                 <div id="results-output">No fragments scanned.</div>
                 <button id="download-btn" class="cosmic-btn" style="display:none; margin-top:20px;">Download Excel Findings</button>
