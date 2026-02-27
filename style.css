@@ -82,6 +82,9 @@ body {
     gap: 8px; 
     font-weight: bold; 
 }
+.remove-tag{
+    cursor: pointer;
+}
 #keyword-search { 
     border: none; 
     background: transparent; 
@@ -146,13 +149,15 @@ body {
     overflow: auto; 
     position: relative; 
 }
+.close-help{
+    cursor: pointer;
+}
 
 /* Removal & Cleanup Styles */
 .delete-result-btn {
     position: absolute;
-    top: 12x;
-    right: 10px;
-    line-height: 20px;
+    top: 10x;
+    right: 10px;    
     background: transparent;
     color: rgba(255, 255, 255, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
