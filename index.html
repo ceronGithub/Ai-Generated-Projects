@@ -64,13 +64,27 @@
 
     <div id="pdf-viewer-modal" class="modal" style="display:none;">
         <div class="modal-content glass-card">
-            <span class="close-btn">&times;</span>
             <div class="viewer-controls">
-                <button id="prev-page" class="cosmic-btn">◀</button>
-                <span>Page <span id="page-num">1</span> / <span id="page-count">-</span></span>
-                <button id="next-page" class="cosmic-btn">▶</button>
+                <span class="close-btn" style="cursor:pointer; margin-right: 25px; font-size: 1.5rem;">&times;</span>
+
+                <div class="nav-group" style="display: flex; align-items: center; gap: 12px;">
+                    <button id="prev-page" class="cosmic-btn">◀</button>
+                    <span style="min-width: 90px; text-align: center; font-family: monospace;">
+                        Page <span id="page-num">1</span> / <span id="page-count">-</span>
+                    </span>
+                    <button id="next-page" class="cosmic-btn">▶</button>
+                </div>
+                
+                <div class="zoom-group" style="margin-left: 50px; display: flex; align-items: center; gap: 10px;">
+                    <button id="zoom-out" class="cosmic-btn">➖</button>
+                    <span id="zoom-percent" style="min-width: 55px; text-align: center;">150%</span>
+                    <button id="zoom-in" class="cosmic-btn">➕</button>
+                    <button id="fit-width" class="cosmic-btn" title="Fit to Width">↔️</button>
+                </div>
             </div>
-            <div id="canvas-container"><canvas id="pdf-render-canvas"></canvas></div>
+            <div id="canvas-container" style="overflow: auto; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                <canvas id="pdf-render-canvas" style="display: block; margin: 0 auto;"></canvas>
+            </div>
         </div>
     </div>
 
