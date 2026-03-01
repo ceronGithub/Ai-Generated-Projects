@@ -68,23 +68,87 @@ document.getElementById('search-btn').onclick = async () => {
                     let finalOutput = "";
 
                     if (isTable) {
-                        // --- TABLE LOGIC: 3-PATH PRIORITIZED PROBING ---
-                        // (Prioritize finding data in the cell below or to the right)
-                        
-                        const colItems = items.filter(item => Math.abs(item.x - anchor.x) < 60);
-                        const below = colItems.filter(item => item.y < anchor.y).sort((a, b) => b.y - a.y);
-                        const right = rowSiblings.filter(item => item.x > anchor.x).sort((a, b) => a.x - b.x);
-                        const above = colItems.filter(item => item.y > anchor.y).sort((a, b) => a.y - b.y);
+                    // --- REFINED TABLE LOGIC: DYNAMIC PATH PRIORITIZATION ---
+                    
+                    // Identify neighbors to determine row structure
+                    const rowSiblings = items.filter(item => Math.abs(item.y - anchor.y) < 5 && item.str !== anchor.str);
+                    const colItems = items.filter(item => Math.abs(item.x - anchor.x) < 60);
+                    
+                    // Define directional paths for probing
+                    const right = rowSiblings.filter(item => item.x > anchor.x).sort((a, b) => a.x - b.x);
+                    const below = colItems.filter(item => item.y < anchor.y).sort((a, b) => b.y - a.y);
+                    const above = colItems.filter(item => item.y > anchor.y).sort((a, b) => a.y - b.y);
 
-                        if (below.length > 0) {
-                            finalOutput = getCleanedPreservedText(below[0].str, "");
-                        } else if (right.length > 0) {
-                            finalOutput = getCleanedPreservedText(right[0].str, "");
-                        } else if (above.length > 0) {
-                            finalOutput = getCleanedPreservedText(above[0].str, "");
+                    /**
+                     * Helper to process extraction:
+                     * 1. Breaks text blocks at keyword (essential for merged blocks like "Created: Feb 25").
+                     * 2. Cleans text and filters special characters ($ # : / *).
+                     * 3. Stops at 3 spaces (grid boundary).
+                     */
+                    const extractCleanedText = (textItems, kw = "") => {
+                        if (!textItems.length) return null;
+                        let rawStr = textItems[0].str;
+                        let processingText = rawStr;
+
+                        // Break text block if keyword and value are merged
+                        if (kw) {
+                            const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const match = rawStr.match(new RegExp(escapedKw, 'i'));
+                            if (match) {
+                                processingText = rawStr.substring(match.index + match[0].length);
+                            }
                         }
 
-                    } else {
+                        let captured = "";
+                        let spaceCount = 0;
+                        for (let i = 0; i < processingText.length; i++) {
+                            let char = processingText[i];
+                            if (char === " ") {
+                                spaceCount++;
+                                if (spaceCount >= 3) break;
+                            } else {
+                                spaceCount = 0;
+                            }
+                            // Filter special characters
+                            if (/[\$#:/\*]/.test(char)) continue; 
+                            captured += char;
+                        }
+                        return captured.trim() || null;
+                    };
+
+                    // --- DYNAMIC SEARCH SELECTION ---
+
+                    // 1. If 1-2 columns (rowSiblings.length <= 1): Priority L-to-R, then Bottom, then Top
+                    // Handles: "Created: Feb 25, 2026" 
+                    if (rowSiblings.length <= 1) {
+                        // Check same block first (for merged label/value)
+                        finalOutput = extractCleanedText([anchor], keyword);
+
+                        if (!finalOutput && right.length > 0) {
+                            finalOutput = extractCleanedText(right, "");
+                        }
+                        if (!finalOutput && below.length > 0) {
+                            finalOutput = extractCleanedText(below, "");
+                        }
+                        if (!finalOutput && above.length > 0) {
+                            finalOutput = extractCleanedText(above, "");
+                        }
+                    } 
+                    // 2. If more than 2 columns (rowSiblings.length >= 2): Priority Bottom, then Top, then L-to-R
+                    // Handles: "Description", "Hours", "Total" headers 
+                    else {
+                        if (below.length > 0) {
+                            finalOutput = extractCleanedText(below, "");
+                        }
+                        if (!finalOutput && above.length > 0) {
+                            finalOutput = extractCleanedText(above, "");
+                        }
+                        // if (!finalOutput && right.length > 0) {
+                        //     finalOutput = extractCleanedText(right, "");
+                        // }
+                    }
+                }
+                    else {
                         // --- STANDARD LOGIC: 3-PATH CHARACTER-LEVEL SCANNER ---
                         // (Used for standalone labels like "Invoice #:" or "Licensee:")
                         
