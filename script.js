@@ -28,9 +28,8 @@ function startNewRound() {
     answerInput.disabled = false;
     actionBtn.innerText = "SUBMIT";
     
-    resultArea.classList.remove('visible');
-    resultArea.classList.add('invisible');
-    visualExplanation.innerHTML = ''; // Clear previous pills
+    resultArea.classList.replace('visible', 'invisible');
+    visualExplanation.innerHTML = '';
     
     setTimeout(() => answerInput.focus(), 10);
 }
@@ -45,18 +44,16 @@ function submitAnswer() {
 
     const isCorrect = userVal === correctAnswer;
 
-    // Build Visual Pills
+    // Generate Visual Pills
     visualExplanation.innerHTML = '';
     for (let i = 0; i < num2; i++) {
         const pill = document.createElement('span');
         pill.className = 'math-pill';
         pill.innerText = num1;
         visualExplanation.appendChild(pill);
-        
         if (i < num2 - 1) {
             const plus = document.createElement('span');
             plus.innerText = '+';
-            plus.style.fontSize = '1.5rem';
             plus.style.alignSelf = 'center';
             visualExplanation.appendChild(plus);
         }
@@ -67,18 +64,17 @@ function submitAnswer() {
         document.getElementById('correct-count').innerText = scoreCorrect;
         statusText.innerText = "PERFECT!";
         statusText.style.color = "#22c55e";
-        logicHint.innerText = "You have mastered this one!";
+        logicHint.innerText = "Great job!";
     } else {
         scoreErrors++;
         document.getElementById('incorrect-count').innerText = scoreErrors;
         statusText.innerText = "NOT QUITE!";
         statusText.style.color = "#ef4444";
-        logicHint.innerText = `Multiplication is just shortcut addition. Here, we added ${num1} a total of ${num2} times.`;
+        logicHint.innerText = `Multiplication is adding ${num1} exactly ${num2} times.`;
     }
 
     correctAnswerDisplay.innerText = `${num1} × ${num2} = ${correctAnswer}`;
-    resultArea.classList.remove('invisible');
-    resultArea.classList.add('visible');
+    resultArea.classList.replace('invisible', 'visible');
 }
 
 actionBtn.addEventListener('click', handleGameStep);
