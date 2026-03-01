@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Master</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="scoreboard">
+        <div class="score-box correct">✅ <span id="correct-count">0</span></div>
+        <div class="score-box incorrect">❌ <span id="incorrect-count">0</span></div>
+    </div>
+
+    <main class="game-container">
+        <section id="question-area">
+            <h1 id="math-problem">-- × --</h1>
+            <div class="input-group">
+                <input type="number" id="answer-input" placeholder="?" autofocus autocomplete="off">
+                <button id="action-btn" class="btn-main">SUBMIT</button>
+            </div>
+        </section>
+
+        <section id="result-area" class="invisible">
+            <hr>
+            <h2 id="status-text">--</h2>
+            <div class="explanation-box">
+                <h3 id="correct-answer-display">--</h3>
+                <div id="visual-explanation" class="visual-groups"></div>
+                <p id="logic-hint"></p>
+            </div>
+            <p class="tap-hint">Press Enter to Continue</p>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
