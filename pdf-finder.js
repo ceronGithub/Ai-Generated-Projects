@@ -30,8 +30,7 @@ document.getElementById('search-btn').onclick = async () => {
                 trimStr: item.str.trim(),
                 x: item.transform[4],
                 y: item.transform[5],
-                width: item.width,
-                rightX: item.transform[4] + item.width
+                width: item.width
             })).filter(item => item.trimStr.length > 0);
 
             activeKeywords.forEach(keyword => {
@@ -41,35 +40,42 @@ document.getElementById('search-btn').onclick = async () => {
                 anchors.forEach(anchor => {
                     // Logic to remove keyword and specifically strip "$"
                     const getCleanedPreservedText = (text, kw) => {
-                        const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\[\#\:\#:]&');                
+                        const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\[\#\:\#:\$]&');                
                         const regex = new RegExp(escapedKw, 'gi');
                         let result = text.replace(regex, "");                        
-                        return result.replace(/[\#\:\#:]/g, "").trim(); // Remove $ specifically
+                        return result.replace(/[\#\:\#:\$]/g, "").trim(); // Remove $ specifically
                     };
 
-                    const rowSiblings = items.filter(item => Math.abs(item.y - anchor.y) < 5 && item.str !== anchor.str);
-            
-                    // We treat it as a "Table/Header" if it has at least one neighbor 
-                    // either on the same row OR directly in its vertical column.
-                    const isTable = rowSiblings.length >= 1 || items.some(item => Math.abs(item.x - anchor.x) < 60 && item.y !== anchor.y);
+                    // --- REFINED DETECTION: TABLE HEADER vs. STANDALONE ---
+
+                    // 1. Identify neighbors on the exact same horizontal line (Row check)
+                    const rowSiblings = items.filter(item => 
+                        Math.abs(item.y - anchor.y) < 5 && item.str !== anchor.str
+                    );
+
+                    // 2. Identify neighbors in the same vertical corridor (Column check)
+                    const columnSiblings = items.filter(item => 
+                        Math.abs(item.x - anchor.x) < 60 && item.y !== anchor.y
+                    );
+
+                    /**
+                     * isTable Criteria:
+                     * - Has at least 2 other items in the same row (standard table row)
+                     * - OR has significant vertical data below it while being part of a row (table header)
+                     */
+                    const isTable = (rowSiblings.length >= 2) || (rowSiblings.length >= 1 && columnSiblings.some(c => c.y < anchor.y));
 
                     let finalOutput = "";
 
                     if (isTable) {
-                        // --- 3-PATH PRIORITIZED PROBING ---
+                        // --- TABLE LOGIC: 3-PATH PRIORITIZED PROBING ---
+                        // (Prioritize finding data in the cell below or to the right)
                         
-                        // Path 1: header-To-Bottom (Capture first text directly below)
-                        // Increased tolerance to 60px to catch "Description" -> "Document" 
                         const colItems = items.filter(item => Math.abs(item.x - anchor.x) < 60);
                         const below = colItems.filter(item => item.y < anchor.y).sort((a, b) => b.y - a.y);
-                        
-                        // Path 2: header-To-Right (Capture first text on the same row)
                         const right = rowSiblings.filter(item => item.x > anchor.x).sort((a, b) => a.x - b.x);
-
-                        // Path 3: header-To-Top (Capture first text directly above)
                         const above = colItems.filter(item => item.y > anchor.y).sort((a, b) => a.y - b.y);
 
-                        // EXECUTION PRIORITY: BOTTOM > RIGHT > TOP
                         if (below.length > 0) {
                             finalOutput = getCleanedPreservedText(below[0].str, "");
                         } else if (right.length > 0) {
@@ -78,32 +84,50 @@ document.getElementById('search-btn').onclick = async () => {
                             finalOutput = getCleanedPreservedText(above[0].str, "");
                         }
 
-                    }
-                    else {
-                        // --- STANDARD LOGIC: Priority Directional ---
-                        // Path 1: Right
+                    } else {
+                        // --- STANDARD LOGIC: 3-PATH CHARACTER-LEVEL SCANNER ---
+                        // (Used for standalone labels like "Invoice #:" or "Licensee:")
+                        
+                        const extractWithPaths = (textItems, kw) => {
+                            if (!textItems.length) return null;
+                            let rawContent = textItems.map(item => item.str).join(" ");
+                            const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const regexKw = new RegExp(escapedKw, 'gi');
+                            let processingText = rawContent.replace(regexKw, "").trimStart();
+
+                            let captured = "";
+                            let spaceCount = 0;
+
+                            for (let i = 0; i < processingText.length; i++) {
+                                let char = processingText[i];
+                                if (char === " ") {
+                                    spaceCount++;
+                                    if (spaceCount >= 3) break;
+                                } else {
+                                    spaceCount = 0;
+                                }
+
+                                if (/[\$#:/\*]/.test(char)) {
+                                    continue; // Escape special characters
+                                } else {
+                                    captured += char;
+                                }
+                            }
+                            return captured.trim() || null;
+                        };
+
+                        // Path 1: Right | Path 2: Down | Path 3: Top
                         const rightItems = items.filter(item => Math.abs(item.y - anchor.y) < 5 && item.x >= anchor.x).sort((a, b) => a.x - b.x);
-                        for (const item of rightItems) {
-                            let hit = getCleanedPreservedText(item.str, keyword);
-                            if (hit) { finalOutput = hit; break; }
+                        finalOutput = extractWithPaths(rightItems, keyword);
+
+                        if (!finalOutput) {
+                            const belowItems = items.filter(item => Math.abs(item.x - anchor.x) < 40 && item.y < anchor.y).sort((a, b) => b.y - a.y);
+                            finalOutput = extractWithPaths(belowItems, "");
                         }
 
-                        // Path 2: Bottom (if Right is empty)
                         if (!finalOutput) {
-                            const below = items.filter(item => Math.abs(item.x - anchor.x) < 40 && item.y <= anchor.y).sort((a, b) => b.y - a.y);
-                            for (const item of below) {
-                                let hit = getCleanedPreservedText(item.str, keyword);
-                                if (hit) { finalOutput = hit; break; }
-                            }
-                        }
-
-                        // Path 3: Top (if others are empty)
-                        if (!finalOutput) {
-                            const above = items.filter(item => Math.abs(item.x - anchor.x) < 40 && item.y >= anchor.y).sort((a, b) => a.y - b.y);
-                            for (const item of above) {
-                                let hit = getCleanedPreservedText(item.str, keyword);
-                                if (hit) { finalOutput = hit; break; }
-                            }
+                            const aboveItems = items.filter(item => Math.abs(item.x - anchor.x) < 40 && item.y > anchor.y).sort((a, b) => a.y - b.y);
+                            finalOutput = extractWithPaths(aboveItems, "");
                         }
                     }
 
