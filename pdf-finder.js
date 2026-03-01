@@ -143,9 +143,9 @@ document.getElementById('search-btn').onclick = async () => {
                         if (!finalOutput && above.length > 0) {
                             finalOutput = extractCleanedText(above, "");
                         }
-                        // if (!finalOutput && right.length > 0) {
-                        //     finalOutput = extractCleanedText(right, "");
-                        // }
+                        if (!finalOutput && right.length > 0) {
+                            finalOutput = extractCleanedText(right, "");
+                        }
                     }
                 }
                     else {
