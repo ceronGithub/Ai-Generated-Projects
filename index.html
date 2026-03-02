@@ -80,6 +80,7 @@
         <p class="drop-sub">or click to browse your system</p>
         <label class="btn btn-outline" for="fileInput">Browse Files</label>
         <input type="file" id="fileInput" accept=".pdf" multiple hidden />
+        <p class="drop-upload-note">⚠ Max upload is 2,000 PDF files per batch.</p>
       </div>
 
       <div class="file-list-header" id="fileListHeader" style="display:none;">
@@ -275,9 +276,7 @@
 
   </div>
   <!-- ============ /PDF VIEWER MODAL ============ -->
-
-  <!-- ZIP -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
   <!-- JS modules (order matters) -->
   <script src="pdf-processor.js"></script>
   <script src="keyword-handler.js"></script>

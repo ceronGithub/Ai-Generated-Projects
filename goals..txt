@@ -18,10 +18,11 @@ If user choose single keyword, display button "Rename PDF".
 (Done, Search the Keyword exactly according to PDF file.)update keyword search logic. see the uploaded pdf. if i search the follow : Invoice #:, Created:, From:, To:, Description, Hours, Total, Signature.
 The expected captured text or expected output should be : INV-2026-042, Feb 25..., 742 Evergreen..., Evergreen marketing..., Brand Identity..., 20, capture both 1,500 and 1,800 but each is new result-item, jordan...
 
-update logic if user choose extract all : Each keyword is new result-item. 
+(Done)Each keyword or data is in one result-item. Exaple. one result-card Invoice Number details..., another result-card Customer name.
+
 (Done)update logic if user choose multiple keyword : Each searched Keyword is new result-item.
 
-add new feature : below browse file button add a note "max upload is 2k pdf files.". check uploading logic and make sure it can accept or upload 2k pdf files.
+(Done)add new feature : below browse file button add a note "max upload is 2k pdf files.". check uploading logic and make sure it can accept or upload 2k pdf files.
 
 
 (Done)update results-list : Show only 3 result-item. enable y-scrollable inside the results-container.if User choose single keyword : click "Rename PDF" btn, compresed all renamed pdf in one folder, Named "PDF-Extractor-Rename-PDF-Result", and organized it from A to Z.

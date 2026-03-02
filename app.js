@@ -52,16 +52,62 @@
     refreshFileList();
   });
 
+  const MAX_FILES = 2000;
+
   function addFiles(incoming) {
     const pdfs = incoming.filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
     const existing = new Set(state.files.map(f => f.name + f.size));
     const newFiles = pdfs.filter(f => !existing.has(f.name + f.size));
-    state.files.push(...newFiles);
+
+    const available = MAX_FILES - state.files.length;
+
+    if (available <= 0) {
+      showUploadNote(`⛔ Limit reached — max ${MAX_FILES.toLocaleString()} PDF files allowed.`, 'error');
+      return;
+    }
+
+    const accepted = newFiles.slice(0, available);
+    const rejected = newFiles.length - accepted.length;
+
+    state.files.push(...accepted);
     refreshFileList();
+
+    if (rejected > 0) {
+      showUploadNote(`⚠ ${rejected} file${rejected !== 1 ? 's' : ''} skipped — max ${MAX_FILES.toLocaleString()} file limit reached.`, 'warn');
+    } else if (accepted.length > 0) {
+      showUploadNote(`✓ ${accepted.length} file${accepted.length !== 1 ? 's' : ''} added.`, 'ok');
+    }
 
     if (state.files.length > 0) {
       UIManager.activateStep('step-mode');
     }
+  }
+
+  /**
+   * Show a temporary feedback message on the upload note element.
+   * type: 'ok' | 'warn' | 'error'
+   */
+  function showUploadNote(msg, type) {
+    const el = document.getElementById('uploadNote');
+    if (!el) return;
+
+    const colors = {
+      ok:    'var(--green)',
+      warn:  'var(--gold)',
+      error: 'var(--danger)'
+    };
+
+    el.textContent = msg;
+    el.style.color = colors[type] || colors.ok;
+    el.style.opacity = '1';
+
+    // Reset back to default note after 4 seconds
+    clearTimeout(el._noteTimer);
+    el._noteTimer = setTimeout(() => {
+      el.textContent = '⚠ Max upload is 2,000 PDF files per batch.';
+      el.style.color = '';
+      el.style.opacity = '';
+    }, 4000);
   }
 
   function removeFile(idx) {
@@ -259,24 +305,7 @@
       if (state.mode === 'extractall') {
         UIManager.setProgress(100, 'Done!');
         UIManager.renderExtractAll(pdfData);
-
-      } else {
-        // Step 2: Search keywords
-        UIManager.setProgress(70, 'Searching keywords…');
-        const results = KeywordHandler.search(pdfData, state.keywords);
-        state.lastResults = results;
-        UIManager.setProgress(100, 'Done!');
-
-        if (state.mode === 'multiple') {
-          UIManager.renderKeywordResults(results, state.keywords);
-
-        } else if (state.mode === 'single') {
-          const keyword = state.keywords[0];
-          const renameMap = RenameHandler.buildRenameMap(results);
-          UIManager.renderSingleKeywordResults(results, keyword, state.files, renameMap);
-        }
       }
-
       // Scroll to results
       setTimeout(() => {
         stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' });

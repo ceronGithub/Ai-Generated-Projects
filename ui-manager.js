@@ -93,7 +93,7 @@ const UIManager = (() => {
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       hint.textContent = 'No keywords needed — all text will be extracted.';
-    } else {
+    }else {
       area.style.display = 'flex';
       if (mode === 'single') {
         input.placeholder = 'Enter a single keyword';
@@ -241,32 +241,51 @@ const UIManager = (() => {
   }
 
   /**
-   * Build an extract-all file block with an individual ✕ remove button.
+   * Build one result card per detected label:value field.
+   * Returns an array of cards — one per field across all pages.
    */
   function makeExtractItem(file, pages) {
-    const item = document.createElement('div');
-    item.className = 'extract-all-item';
+    const cards = [];
 
-    const pageHtml = pages.map(p =>
-      `<div><span style="color:var(--accent);font-weight:600;">Page ${p.page}</span></div>` +
-      `<div>${escapeHtml(p.text) || '<em style="color:var(--text-muted);">(no text)</em>'}</div>` +
-      `<hr class="extract-page-sep" />`
-    ).join('');
+    for (const p of pages) {
+      const fields = KeywordHandler.extractFields(p.text);
 
-    item.innerHTML = `
-      <div class="extract-all-header">
-        <span>📄 ${escapeHtml(file.name)}</span>
-        <span style="color:var(--text-muted);font-weight:400;font-size:0.7rem;">${pages.length} page(s)</span>
-        <button class="result-remove-btn result-remove-btn--ea" title="Remove this file">✕</button>
-      </div>
-      <div class="extract-all-body">${pageHtml}</div>
-    `;
+      if (fields.length === 0) {
+        // Fallback: no fields detected — show raw page text as one card
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.innerHTML = `
+          <div class="result-meta">
+            <span class="page-badge">Page ${p.page}</span>
+            <span class="result-filename">${escapeHtml(file.name)}</span>
+            <button class="result-remove-btn" title="Remove this result">✕</button>
+          </div>
+          <div class="result-keyword">Raw Text</div>
+          <div class="result-text">${escapeHtml(p.text) || '<em>(no text)</em>'}</div>
+        `;
+        item.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(item));
+        cards.push(item);
+        continue;
+      }
 
-    item.querySelector('.result-remove-btn').addEventListener('click', () => {
-      popRemove(item);
-    });
+      for (const { label, value } of fields) {
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.innerHTML = `
+          <div class="result-meta">
+            <span class="page-badge">Page ${p.page}</span>
+            <span class="result-filename">${escapeHtml(file.name)}</span>
+            <button class="result-remove-btn" title="Remove this result">✕</button>
+          </div>
+          <div class="result-keyword">${escapeHtml(label)}</div>
+          <div class="result-text">${escapeHtml(value)}</div>
+        `;
+        item.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(item));
+        cards.push(item);
+      }
+    }
 
-    return item;
+    return cards;
   }
 
   /**
@@ -520,19 +539,25 @@ const UIManager = (() => {
     actionsRow.appendChild(dlBtn);
     actionsRow.appendChild(makeClearAllBtn(list));
     actions.appendChild(actionsRow);
-
-    // Count badge (files)
-    actions.appendChild(makeCountBadge(pdfData.length, 'file'));
+    
+    // Count badge — total pages across all files
+    const totalPages = pdfData.reduce((sum, { pages }) => sum + pages.length, 0);
+    actions.appendChild(makeCountBadge(totalPages, 'page'));
 
     dlBtn.addEventListener('click', () => {
       ExcelExporter.exportExtractAll(pdfData, 'extract_all.xlsx');
     });
 
-    // File blocks
+    // One card per detected field across all files
+    let totalFields = 0;
     for (const { file, pages } of pdfData) {
-      list.appendChild(makeExtractItem(file, pages));
+      const cards = makeExtractItem(file, pages);
+      cards.forEach(card => list.appendChild(card));
+      totalFields += cards.length;
     }
-    capResultsHeight(list);
+    // Count badge — total field cards
+    actions.appendChild(makeCountBadge(totalFields, 'field'));
+    capResultsHeight(list);   
   }
 
   // =============================================

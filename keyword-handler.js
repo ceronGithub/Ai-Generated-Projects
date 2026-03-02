@@ -135,5 +135,53 @@ const KeywordHandler = (() => {
     return text.replace(regex, '<mark>$1</mark>');
   }
 
-  return { search, highlight, findContexts };
+
+  /**
+   * Extract all label:value pairs from a page of text.
+   * Returns Array<{label, value}> — one entry per detected field.
+   */
+  function extractFields(text) {
+    const fields = [];
+    const tokens = tokenize(text);
+    let i = 0;
+
+    while (i < tokens.length) {
+      const token = tokens[i];
+
+      // Detect a label: token ending in ":" or matching known label pattern
+      const isLabel = /:\s*$/.test(token) || LABEL_PATTERN.test(token);
+
+      if (isLabel) {
+        const label = token.replace(/:$/, '').trim();
+        const valueTokens = [];
+
+        let j = i + 1;
+
+        // Skip lone colons/dashes immediately after label
+        while (j < tokens.length && /^[:\-–—]+$/.test(tokens[j])) j++;
+
+        // Collect value tokens until next label or 120 chars
+        while (j < tokens.length) {
+          const t = tokens[j];
+          if (/:\s*$/.test(t) || LABEL_PATTERN.test(t)) break;
+          valueTokens.push(t);
+          if (valueTokens.join(' ').length >= 120) break;
+          j++;
+        }
+
+        const value = valueTokens.join(' ').trim();
+        if (label.length > 0 && value.length > 0) {
+          fields.push({ label, value });
+        }
+
+        i = j;
+      } else {
+        i++;
+      }
+    }
+
+    return fields;
+  }
+
+  return { search, highlight, findContexts, extractFields };
 })();

@@ -1644,3 +1644,26 @@ mark {
   overflow: hidden;
   transform-origin: top;
 }
+
+
+/* Extract-all per-page card header */
+.ea-filename {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.72rem;
+}
+
+.ea-page-badge {
+  flex-shrink: 0;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.62rem;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
