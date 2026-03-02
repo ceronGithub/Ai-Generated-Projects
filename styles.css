@@ -1301,3 +1301,162 @@ mark {
   .pvm-hints { display: none; }
   .pvm-footer { padding: 0.7rem 0.75rem 0.6rem; }
 }
+
+/* ================================================
+   RESULT — Individual Remove Button  (.result-remove-btn)
+   Appears top-right of each result card on hover.
+   ================================================ */
+
+.result-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.result-filename {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-remove-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 79, 107, 0.22);
+  background: rgba(255, 79, 107, 0.07);
+  color: rgba(255, 79, 107, 0.5);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  line-height: 1;
+  opacity: 0;               /* hidden until parent hovered */
+  transition: opacity 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.result-item:hover .result-remove-btn,
+.extract-all-item:hover .result-remove-btn {
+  opacity: 1;
+}
+.result-remove-btn:hover {
+  background: rgba(255, 79, 107, 0.22);
+  border-color: #ff4f6b;
+  color: #ff4f6b;
+  box-shadow: 0 0 8px rgba(255, 79, 107, 0.35);
+}
+
+/* Extract-All variant: always visible (lives in the coloured header bar) */
+.result-remove-btn--ea {
+  opacity: 1;
+  margin-left: auto;
+}
+
+/* ── Pop animation ────────────────────────────── */
+/* Scale up briefly then shrink + fade out and collapse height */
+@keyframes resultPop {
+  0%   { transform: scale(1);    opacity: 1;   max-height: 500px; margin-bottom: 0.5rem; }
+  18%  { transform: scale(1.04); opacity: 1; }
+  55%  { transform: scale(0.92); opacity: 0.5; }
+  100% { transform: scale(0.85); opacity: 0;   max-height: 0;    margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+}
+
+.result-item--popping {
+  animation: resultPop 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ================================================
+   RESULTS TOOLBAR — Action row + Clear All button
+   ================================================ */
+
+.results-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+/* Clear All button */
+.btn-clear-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  font-family: var(--font-head, 'Orbitron', sans-serif);
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 79, 107, 0.28);
+  background: rgba(255, 79, 107, 0.08);
+  color: #ff4f6b;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s, opacity 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-clear-all::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.07) 50%, transparent 62%);
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+.btn-clear-all:hover::after { transform: translateX(120%); }
+.btn-clear-all:hover {
+  background: rgba(255, 79, 107, 0.18);
+  border-color: #ff4f6b;
+  box-shadow: 0 0 14px rgba(255, 79, 107, 0.28);
+}
+.btn-clear-all:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ================================================
+   RESULT COUNT BADGE   e.g. "12 results"
+   ================================================ */
+
+.result-count-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(100,160,255,0.14);
+  border-radius: 20px;
+  padding: 0.2rem 0.7rem;
+  font-family: var(--font-mono, monospace);
+}
+.rcb-num {
+  font-family: var(--font-head, 'Orbitron', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: var(--cyan, #00e5ff);
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.45);
+  transition: color 0.2s;
+}
+.rcb-unit {
+  font-size: 0.62rem;
+  color: var(--text-mid, #8899cc);
+  letter-spacing: 0.08em;
+}
+
+/* ================================================
+   EMPTY STATE (cleared)
+   ================================================ */
+
+.no-results--cleared .no-results-icon { font-size: 1.8rem; }
+.no-results-sub {
+  font-size: 0.72rem;
+  color: var(--text-dim, #334466);
+  margin-top: 0.25rem;
+}

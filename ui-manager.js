@@ -1,5 +1,7 @@
 // =============================================
 // ui-manager.js — UI rendering / updates
+// NEW: Individual result remove (pop animation)
+//      + Clear All button on all result modes
 // =============================================
 
 const UIManager = (() => {
@@ -151,7 +153,157 @@ const UIManager = (() => {
     document.getElementById('runBtn').disabled = !enabled;
   }
 
-  // ----- Results: Multiple / Single keyword -----
+  // =============================================
+  // SHARED RESULT HELPERS
+  // =============================================
+
+  /**
+   * Build a keyword result card with an individual ✕ remove button.
+   * Clicking fires a "pop" animation before removing the element.
+   */
+  function makeResultItem(page, filename, keyword, highlightedHtml) {
+    const item = document.createElement('div');
+    item.className = 'result-item';
+    item.innerHTML = `
+      <div class="result-meta">
+        <span class="page-badge">Page ${page}</span>
+        <span class="result-filename">${escapeHtml(filename)}</span>
+        <button class="result-remove-btn" title="Remove this result">✕</button>
+      </div>
+      <div class="result-keyword">${escapeHtml(keyword)}</div>
+      <div class="result-text">${highlightedHtml}</div>
+    `;
+
+    item.querySelector('.result-remove-btn').addEventListener('click', () => {
+      popRemove(item);
+    });
+
+    return item;
+  }
+
+  /**
+   * Build an extract-all file block with an individual ✕ remove button.
+   */
+  function makeExtractItem(file, pages) {
+    const item = document.createElement('div');
+    item.className = 'extract-all-item';
+
+    const pageHtml = pages.map(p =>
+      `<div><span style="color:var(--accent);font-weight:600;">Page ${p.page}</span></div>` +
+      `<div>${escapeHtml(p.text) || '<em style="color:var(--text-muted);">(no text)</em>'}</div>` +
+      `<hr class="extract-page-sep" />`
+    ).join('');
+
+    item.innerHTML = `
+      <div class="extract-all-header">
+        <span>📄 ${escapeHtml(file.name)}</span>
+        <span style="color:var(--text-muted);font-weight:400;font-size:0.7rem;">${pages.length} page(s)</span>
+        <button class="result-remove-btn result-remove-btn--ea" title="Remove this file">✕</button>
+      </div>
+      <div class="extract-all-body">${pageHtml}</div>
+    `;
+
+    item.querySelector('.result-remove-btn').addEventListener('click', () => {
+      popRemove(item);
+    });
+
+    return item;
+  }
+
+  /**
+   * Animate an element out with a pop effect, then remove it.
+   * Prevents double-firing with a guard class.
+   */
+  function popRemove(item) {
+    if (item.classList.contains('result-item--popping')) return;
+    item.classList.add('result-item--popping');
+    item.addEventListener('animationend', () => {
+      item.remove();
+      syncCount();
+    }, { once: true });
+  }
+
+  /**
+   * Re-count visible result cards and update the badge.
+   * Shows an empty state and disables Clear All when nothing remains.
+   */
+  function syncCount() {
+    const list = document.getElementById('resultsList');
+    if (!list) return;
+
+    const items = list.querySelectorAll(
+      '.result-item:not(.result-item--popping), .extract-all-item:not(.result-item--popping)'
+    );
+    const n = items.length;
+
+    // Update live badge number
+    const numEl = document.querySelector('#resultCountBadge .rcb-num');
+    if (numEl) numEl.textContent = n;
+
+    // If empty → show cleared state
+    if (n === 0) {
+      list.innerHTML = `
+        <div class="no-results no-results--cleared">
+          <span class="no-results-icon">🧹</span>
+          <p>All results cleared.</p>
+          <p class="no-results-sub">Run the extraction again to generate new results.</p>
+        </div>`;
+      const clearBtn = document.getElementById('clearAllResultsBtn');
+      if (clearBtn) clearBtn.disabled = true;
+    }
+  }
+
+  /**
+   * Build the "Clear All" button that pops every card with a stagger.
+   * @param {HTMLElement} list — the #resultsList element
+   */
+  function makeClearAllBtn(list) {
+    const btn = document.createElement('button');
+    btn.className = 'btn-clear-all';
+    btn.id = 'clearAllResultsBtn';
+    btn.innerHTML = `
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="flex-shrink:0">
+        <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Clear All
+    `;
+
+    btn.addEventListener('click', () => {
+      const cards = list.querySelectorAll('.result-item, .extract-all-item');
+      if (!cards.length) return;
+      btn.disabled = true;
+
+      // Staggered pop — each card fires 45ms after the previous
+      cards.forEach((card, i) => {
+        if (card.classList.contains('result-item--popping')) return;
+        setTimeout(() => {
+          card.classList.add('result-item--popping');
+          card.addEventListener('animationend', () => {
+            card.remove();
+            syncCount();
+          }, { once: true });
+        }, i * 45);
+      });
+    });
+
+    return btn;
+  }
+
+  /**
+   * Live count badge: "12 results" or "3 files"
+   */
+  function makeCountBadge(count, unit) {
+    unit = unit || 'result';
+    const el = document.createElement('span');
+    el.className = 'result-count-badge';
+    el.id = 'resultCountBadge';
+    el.innerHTML = `<span class="rcb-num">${count}</span>&nbsp;<span class="rcb-unit">${unit}${count !== 1 ? 's' : ''}</span>`;
+    return el;
+  }
+
+  // =============================================
+  // RESULTS — MULTIPLE KEYWORDS
+  // =============================================
 
   function renderKeywordResults(results, keywords) {
     const container = document.getElementById('resultsContainer');
@@ -167,48 +319,49 @@ const UIManager = (() => {
       return;
     }
 
-    // Action buttons
+    // Action row
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+
     const excelBtn = document.createElement('button');
     excelBtn.className = 'btn-excel';
     excelBtn.textContent = '📊 Convert to Excel';
-    actions.appendChild(excelBtn);
 
     const dlBtn = document.createElement('button');
-    dlBtn.className = 'btn-excel';
-    dlBtn.style.background = '#145a32';
+    dlBtn.className = 'btn-excel btn-excel--dl';
     dlBtn.textContent = '⬇ Download';
-    actions.appendChild(dlBtn);
 
-    let exported = false;
+    actionsRow.appendChild(excelBtn);
+    actionsRow.appendChild(dlBtn);
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+
+    // Count badge
+    let total = 0;
+    for (const r of results) total += r.contexts.length;
+    actions.appendChild(makeCountBadge(total, 'result'));
+
     function doExport() {
       ExcelExporter.exportKeywordResults(results, 'keyword_results.xlsx');
     }
-    excelBtn.addEventListener('click', () => { exported = true; doExport(); });
-    dlBtn.addEventListener('click', () => doExport());
+    excelBtn.addEventListener('click', doExport);
+    dlBtn.addEventListener('click', doExport);
 
-    // Render result items
+    // Result cards
     for (const r of results) {
       for (const ctx of r.contexts) {
-        const item = document.createElement('div');
-        item.className = 'result-item';
-
-        const highlightedCtx = keywords.reduce((text, kw) =>
-          KeywordHandler.highlight(text, kw), escapeHtml(ctx));
-
-        item.innerHTML = `
-          <div class="result-meta">
-            <span class="page-badge">Page ${r.page}</span>
-            <span>${escapeHtml(r.filename)}</span>
-          </div>
-          <div class="result-keyword">${escapeHtml(r.keyword)}</div>
-          <div class="result-text">${highlightedCtx}</div>
-        `;
-        list.appendChild(item);
+        const highlighted = keywords.reduce(
+          (text, kw) => KeywordHandler.highlight(text, kw),
+          escapeHtml(ctx)
+        );
+        list.appendChild(makeResultItem(r.page, r.filename, r.keyword, highlighted));
       }
     }
   }
 
-  // ----- Results: Single keyword with rename -----
+  // =============================================
+  // RESULTS — SINGLE KEYWORD
+  // =============================================
 
   function renderSingleKeywordResults(results, keyword, files, renameMap) {
     const container = document.getElementById('resultsContainer');
@@ -224,27 +377,36 @@ const UIManager = (() => {
       return;
     }
 
-    // Excel buttons
+    // Action row
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+
     const excelBtn = document.createElement('button');
     excelBtn.className = 'btn-excel';
     excelBtn.textContent = '📊 Convert to Excel';
-    actions.appendChild(excelBtn);
 
     const dlBtn = document.createElement('button');
-    dlBtn.className = 'btn-excel';
-    dlBtn.style.background = '#145a32';
+    dlBtn.className = 'btn-excel btn-excel--dl';
     dlBtn.textContent = '⬇ Download';
-    actions.appendChild(dlBtn);
 
-    // Rename button
     const renameBtn = document.createElement('button');
     renameBtn.className = 'btn-rename';
     renameBtn.textContent = '✏ Rename Start';
-    actions.appendChild(renameBtn);
+
+    actionsRow.appendChild(excelBtn);
+    actionsRow.appendChild(dlBtn);
+    actionsRow.appendChild(renameBtn);
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
 
     const renameStatus = document.createElement('div');
     renameStatus.className = 'rename-status';
     actions.appendChild(renameStatus);
+
+    // Count badge
+    let total = 0;
+    for (const r of results) total += r.contexts.length;
+    actions.appendChild(makeCountBadge(total, 'result'));
 
     function doExport() {
       ExcelExporter.exportKeywordResults(results, 'single_keyword_results.xlsx');
@@ -262,7 +424,7 @@ const UIManager = (() => {
       renameStatus.textContent = `✓ All ${files.length} file(s) renamed and downloaded.`;
     });
 
-    // Show rename map summary
+    // Rename preview
     if (renameMap.size > 0) {
       const mapDiv = document.createElement('div');
       mapDiv.style.cssText = 'font-size:0.72rem;color:var(--text-muted);margin:0.75rem 0 0.25rem;';
@@ -273,26 +435,18 @@ const UIManager = (() => {
       actions.appendChild(mapDiv);
     }
 
-    // Render items
+    // Result cards
     for (const r of results) {
       for (const ctx of r.contexts) {
-        const item = document.createElement('div');
-        item.className = 'result-item';
         const highlighted = KeywordHandler.highlight(escapeHtml(ctx), keyword);
-        item.innerHTML = `
-          <div class="result-meta">
-            <span class="page-badge">Page ${r.page}</span>
-            <span>${escapeHtml(r.filename)}</span>
-          </div>
-          <div class="result-keyword">${escapeHtml(r.keyword)}</div>
-          <div class="result-text">${highlighted}</div>
-        `;
-        list.appendChild(item);
+        list.appendChild(makeResultItem(r.page, r.filename, r.keyword, highlighted));
       }
     }
   }
 
-  // ----- Results: Extract All -----
+  // =============================================
+  // RESULTS — EXTRACT ALL
+  // =============================================
 
   function renderExtractAll(pdfData) {
     const container = document.getElementById('resultsContainer');
@@ -303,38 +457,34 @@ const UIManager = (() => {
     list.innerHTML = '';
     actions.innerHTML = '';
 
-    // Download button
+    // Action row
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+
     const dlBtn = document.createElement('button');
     dlBtn.className = 'btn-excel';
     dlBtn.textContent = '⬇ Download Excel';
-    actions.appendChild(dlBtn);
+
+    actionsRow.appendChild(dlBtn);
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+
+    // Count badge (files)
+    actions.appendChild(makeCountBadge(pdfData.length, 'file'));
 
     dlBtn.addEventListener('click', () => {
       ExcelExporter.exportExtractAll(pdfData, 'extract_all.xlsx');
     });
 
+    // File blocks
     for (const { file, pages } of pdfData) {
-      const item = document.createElement('div');
-      item.className = 'extract-all-item';
-
-      const pageHtml = pages.map(p =>
-        `<div><span style="color:var(--accent);font-weight:600;">Page ${p.page}</span></div>` +
-        `<div>${escapeHtml(p.text) || '<em style="color:var(--text-muted);">(no text)</em>'}</div>` +
-        `<hr class="extract-page-sep" />`
-      ).join('');
-
-      item.innerHTML = `
-        <div class="extract-all-header">
-          <span>📄 ${escapeHtml(file.name)}</span>
-          <span style="color:var(--text-muted);font-weight:400;font-size:0.7rem;">${pages.length} page(s)</span>
-        </div>
-        <div class="extract-all-body">${pageHtml}</div>
-      `;
-      list.appendChild(item);
+      list.appendChild(makeExtractItem(file, pages));
     }
   }
 
-  // ----- Helpers -----
+  // =============================================
+  // HELPERS
+  // =============================================
 
   function formatBytes(bytes) {
     if (bytes < 1024) return bytes + ' B';
