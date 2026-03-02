@@ -1,13 +1,13 @@
-(ongoing)update the result toolbar : if user choose multiple keywords display button "Download in excel format" only. 
+(Done)update the result toolbar : if user choose multiple keywords display button "Download in excel format" only. 
 If user choose single keyword, display button "Rename PDF".
 
 update results-container : Show only 3 result-item. enable y-scrollable inside the results-container.
 
 (Done) Add new feature : User can individually remove existing record result (with animation like pop.). Add Clear all (delete all existing record result.). 
 
-Update result-item > result-meta feature : If user Choose single keyword. follow format Page: Icon PDFfilename.fileextension | Icon PDF-viewer | result remove-btn.
+(Done)Update result-item > result-meta feature : If user Choose single keyword. follow format Page: Icon PDFfilename.fileextension | Icon PDF-viewer | result remove-btn.
 
-Update result-item > result-keyword feature : If user Choose single keyword. follow format Page: keyword | Icon PDFfilename.fileextension icon -> capturetext.pdf.
+(Ongoing)Update result-item > result-keyword feature : If user Choose single keyword. follow format Page: keyword | Icon PDFfilename.fileextension icon -> capturetext.pdf.
 
 Add new feature on file-list : show only 5 uploaded pdf then add y-scrollable.
 

@@ -1460,3 +1460,41 @@ mark {
   color: var(--text-dim, #334466);
   margin-top: 0.25rem;
 }
+
+/* Single-keyword result meta row */
+.result-meta--single {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.result-meta--single .result-filename-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.result-meta--single .result-filename {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-meta--single .result-view-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 2px 5px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.result-meta--single .result-view-btn:hover {
+  background: var(--accent-dim, rgba(0,229,255,0.08));
+  border-color: var(--accent);
+}

@@ -182,6 +182,49 @@ const UIManager = (() => {
   }
 
   /**
+   * Single-keyword variant of result card.
+   * Meta format: Page X  |  📄 filename.pdf  |  👁 view  |  ✕ remove
+   */
+  function makeSingleResultItem(page, filename, keyword, highlightedHtml, files) {
+    const item = document.createElement('div');
+    item.className = 'result-item';
+
+    // Find the matching File object for the PDF viewer
+    const fileObj = files ? [...files].find(f => f.name === filename) : null;
+
+    item.innerHTML = `
+      <div class="result-meta result-meta--single">
+        <span class="page-badge">Page ${page}</span>
+        <span class="result-filename-icon">📄</span>
+        <span class="result-filename" title="${escapeHtml(filename)}">${escapeHtml(filename)}</span>
+        <button class="file-view result-view-btn" title="View PDF">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <ellipse cx="6.5" cy="6.5" rx="6" ry="4" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="6.5" cy="6.5" r="1.8" fill="currentColor"/>
+          </svg>
+        </button>
+        <button class="result-remove-btn" title="Remove this result">✕</button>
+      </div>
+      <div class="result-keyword">${escapeHtml(keyword)}</div>
+      <div class="result-text">${highlightedHtml}</div>
+    `;
+
+    // Wire up PDF viewer button
+    const viewBtn = item.querySelector('.result-view-btn');
+    if (fileObj && window.PDFViewer) {
+      viewBtn.addEventListener('click', () => window.PDFViewer.open(fileObj));
+    } else {
+      viewBtn.style.display = 'none';
+    }
+
+    item.querySelector('.result-remove-btn').addEventListener('click', () => {
+      popRemove(item);
+    });
+
+    return item;
+  }
+
+  /**
    * Build an extract-all file block with an individual ✕ remove button.
    */
   function makeExtractItem(file, pages) {
@@ -416,12 +459,12 @@ const UIManager = (() => {
         ).join('<br>');
       actions.appendChild(mapDiv);
     }
-
+    
     // Result cards
     for (const r of results) {
       for (const ctx of r.contexts) {
         const highlighted = KeywordHandler.highlight(escapeHtml(ctx), keyword);
-        list.appendChild(makeResultItem(r.page, r.filename, r.keyword, highlighted));
+        list.appendChild(makeSingleResultItem(r.page, r.filename, r.keyword, highlighted, files));
       }
     }
   }
