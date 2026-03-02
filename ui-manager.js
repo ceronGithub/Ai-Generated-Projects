@@ -185,7 +185,7 @@ const UIManager = (() => {
    * Single-keyword variant of result card.
    * Meta format: Page X  |  📄 filename.pdf  |  👁 view  |  ✕ remove
    */
-  function makeSingleResultItem(page, filename, keyword, highlightedHtml, files) {
+  function makeSingleResultItem(page, filename, keyword, highlightedHtml, files, renameMap) {
     const item = document.createElement('div');
     item.className = 'result-item';
 
@@ -205,7 +205,15 @@ const UIManager = (() => {
         </button>
         <button class="result-remove-btn" title="Remove this result">✕</button>
       </div>
-      <div class="result-keyword">${escapeHtml(keyword)}</div>
+      <div class="result-keyword result-keyword--single">
+        <span class="rk-label">${escapeHtml(keyword)}</span>
+        <span class="rk-divider">|</span>
+        <span class="rk-file-icon">📄</span>
+        <span class="rk-oldname">${escapeHtml(filename)}</span>
+        <span class="rk-arrow">→</span>
+        <span class="rk-file-icon">📄</span>
+        <span class="rk-newname">${escapeHtml(renameMap ? (renameMap.get(filename) || filename) : filename)}</span>
+      </div>
       <div class="result-text">${highlightedHtml}</div>
     `;
 
@@ -464,7 +472,7 @@ const UIManager = (() => {
     for (const r of results) {
       for (const ctx of r.contexts) {
         const highlighted = KeywordHandler.highlight(escapeHtml(ctx), keyword);
-        list.appendChild(makeSingleResultItem(r.page, r.filename, r.keyword, highlighted, files));
+        list.appendChild(makeSingleResultItem(r.page, r.filename, r.keyword, highlighted, files, renameMap));
       }
     }
   }

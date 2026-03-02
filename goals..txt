@@ -7,7 +7,9 @@ update results-container : Show only 3 result-item. enable y-scrollable inside t
 
 (Done)Update result-item > result-meta feature : If user Choose single keyword. follow format Page: Icon PDFfilename.fileextension | Icon PDF-viewer | result remove-btn.
 
-(Ongoing)Update result-item > result-keyword feature : If user Choose single keyword. follow format Page: keyword | Icon PDFfilename.fileextension icon -> capturetext.pdf.
+(Done)Update result-item > result-keyword feature : If user Choose single keyword. follow format Page: keyword | Icon PDFfilename.fileextension to new file which is capturetext.pdf.
+
+(Ongoing)Update If user Choose single keyword : Remove rename preview section. 
 
 Add new feature on file-list : show only 5 uploaded pdf then add y-scrollable.
 
