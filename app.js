@@ -85,10 +85,72 @@
   });
 
   changeModeBtn.addEventListener('click', () => {
-    UIManager.setModeButtonsVisible(true);
-    // Hide display but keep mode value until new selection
-    document.getElementById('modeDisplay').style.display = 'none';
-    document.querySelector('.mode-buttons').style.display = 'grid';
+    // ── Reset state immediately ───────────────────
+    state.mode = null;
+    state.keywords = [];
+    state.lastResults = null;
+    state.lastPdfData = null;
+
+    // ── Animate keyword chips wiping out ──────────
+    const chips = document.querySelectorAll('.keyword-chip');
+    chips.forEach((chip, i) => {
+      chip.style.animationDelay = `${i * 35}ms`;
+      chip.classList.add('chip-wiping');
+    });
+
+    // ── Animate results folding away (if visible) ─
+    const resultsContainer = document.getElementById('resultsContainer');
+    if (resultsContainer.style.display !== 'none') {
+      resultsContainer.classList.add('results-folding');
+    }
+
+    // ── Step-results: fold away then settle ───────
+    stepResults.classList.add('step-folding');
+    stepResults.addEventListener('animationend', () => {
+      stepResults.classList.remove('step-folding');
+
+      // Hard reset results
+      resultsContainer.classList.remove('results-folding');
+      resultsContainer.style.display = 'none';
+      document.getElementById('resultsList').innerHTML = '';
+      document.getElementById('resultsActions').innerHTML = '';
+      UIManager.hideProgress();
+      UIManager.setRunEnabled(false);
+      stepResults.classList.add('disabled-card', 'step-settling');
+      stepResults.classList.remove('active');
+
+      stepResults.addEventListener('animationend', () => {
+        stepResults.classList.remove('step-settling');
+      }, { once: true });
+    }, { once: true });
+
+    // ── Step-keywords: fold away with slight delay then settle ──
+    setTimeout(() => {
+      stepKeywords.classList.add('step-folding');
+      stepKeywords.addEventListener('animationend', () => {
+        stepKeywords.classList.remove('step-folding');
+
+        // Hard reset keywords
+        keywordInput.value = '';
+        document.getElementById('keywordChips').innerHTML = '';
+        document.getElementById('keywordHint').textContent = '';
+        document.getElementById('keywordInputArea').style.display = 'flex';
+        keywordInput.placeholder = 'Type a keyword and press Enter…';
+        stepKeywords.classList.add('disabled-card', 'step-settling');
+        stepKeywords.classList.remove('active');
+
+        stepKeywords.addEventListener('animationend', () => {
+          stepKeywords.classList.remove('step-settling');
+        }, { once: true });
+      }, { once: true });
+    }, 80); // 80ms stagger — results folds first, then keywords
+
+    // ── Show mode buttons after animations complete ──
+    setTimeout(() => {
+      UIManager.setModeButtonsVisible(true);
+      document.getElementById('modeDisplay').style.display = 'none';
+      document.querySelector('.mode-buttons').style.display = 'grid';
+    }, 420); // after both fold animations finish
   });
 
   function selectMode(mode) {

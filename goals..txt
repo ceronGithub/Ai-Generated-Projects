@@ -23,8 +23,10 @@ update logic if user choose extract all : Each keyword is new result-item.
 
 add new feature : below browse file button add a note "max upload is 2k pdf files.". check uploading logic and make sure it can accept or upload 2k pdf files.
 
-new
+
 (Done)update results-list : Show only 3 result-item. enable y-scrollable inside the results-container.if User choose single keyword : click "Rename PDF" btn, compresed all renamed pdf in one folder, Named "PDF-Extractor-Rename-PDF-Result", and organized it from A to Z.
 (Done)add new feature : prompt or show a message how many remaining pdf files are ongoing to rename, if possible include how long can the user have to wait. So User will know. 	
 
-Add new Feature show user the directory of all export files.
+Add new Feature show user the directory of all export files Help modal.
+
+(Done)Change mode : If user click change mode. step-keywords and step-results go back to pristine state or reset all. or first state when user are first time choosing on extraction mode.
