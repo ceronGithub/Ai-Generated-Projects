@@ -42,20 +42,38 @@ const ExcelExporter = (() => {
 
   /**
    * Export extract-all results to Excel.
-   * Format: Filename | Page | Text
+   * Each card shown in the UI = one row in Excel.
+   * Format: Filename | Page | Label | Extracted Text
+   * Mirrors exactly what KeywordHandler.extractFields() produces per page.
+   * Falls back to "Raw Text" row when no fields are detected (same as UI fallback).
    * @param {Array<{file: File, pages: Array<{page, text}>}>} pdfData
    */
   function exportExtractAll(pdfData, filename = 'extract_all.xlsx') {
-    const rows = [['Filename', 'Page', 'Extracted Text']];
+    const rows = [['Filename', 'Page', 'Label', 'Extracted Text']];
 
     for (const { file, pages } of pdfData) {
       for (const { page, text } of pages) {
-        rows.push([file.name, `Page ${page}`, text]);
+        const fields = KeywordHandler.extractFields(text);
+
+        if (fields.length === 0) {
+          // Matches UI fallback card: show raw text as one row
+          rows.push([file.name, `Page ${page}`, 'Raw Text', text]);
+        } else {
+          // One row per field card — exactly mirrors the UI
+          for (const { label, value } of fields) {
+            rows.push([file.name, `Page ${page}`, label, value]);
+          }
+        }
       }
     }
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wch: 35 }, { wch: 10 }, { wch: 100 }];
+    ws['!cols'] = [
+      { wch: 35 },   // Filename
+      { wch: 10 },   // Page
+      { wch: 22 },   // Label
+      { wch: 100 },  // Extracted Text
+    ];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'All Text');
