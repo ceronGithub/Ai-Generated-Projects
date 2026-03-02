@@ -44,6 +44,14 @@ const UIManager = (() => {
       li.querySelector('.file-delete').addEventListener('click', () => onDelete(idx));
       list.appendChild(li);
     });
+
+    // Show 5 items max, then scroll
+    const itemHeight = 48; // px — matches .file-item height + gap
+    const maxVisible = 2;
+    list.style.maxHeight = files.length > maxVisible
+      ? `${itemHeight * maxVisible}px`
+      : '';
+    list.style.overflowY = files.length > maxVisible ? 'auto' : '';    
   }
 
   // ----- Mode Display -----

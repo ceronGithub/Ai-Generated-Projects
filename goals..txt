@@ -1,7 +1,7 @@
 (Done)update the result toolbar : if user choose multiple keywords display button "Download in excel format" only. 
 If user choose single keyword, display button "Rename PDF".
 
-update results-container : Show only 3 result-item. enable y-scrollable inside the results-container.
+(Ongoing)update results-container : Show only 3 result-item. enable y-scrollable inside the results-container.
 
 (Done) Add new feature : User can individually remove existing record result (with animation like pop.). Add Clear all (delete all existing record result.). 
 
@@ -11,7 +11,7 @@ update results-container : Show only 3 result-item. enable y-scrollable inside t
 
 (Done)Update If user Choose single keyword : Remove rename preview section. 
 
-(Ongoing)Add new feature on file-list : show only 5 uploaded pdf then add y-scrollable.
+(Done)Add new feature on file-list : show only 5 uploaded pdf then add y-scrollable.
 
 if User choose single keyword : click "Rename PDF" btn, compresed all renamed pdf, and organized it from A to Z.
 
