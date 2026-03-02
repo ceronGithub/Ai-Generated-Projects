@@ -456,17 +456,6 @@ const UIManager = (() => {
       renameStatus.className = 'rename-status rename-done';
       renameStatus.textContent = `✓ All ${files.length} file(s) renamed and downloaded.`;
     });
-
-    // Rename preview
-    if (renameMap.size > 0) {
-      const mapDiv = document.createElement('div');
-      mapDiv.style.cssText = 'font-size:0.72rem;color:var(--text-muted);margin:0.75rem 0 0.25rem;';
-      mapDiv.innerHTML = '<strong style="color:var(--accent2);">Rename Preview:</strong><br>' +
-        [...renameMap.entries()].map(([o, n]) =>
-          `<span style="color:var(--text-dim)">${escapeHtml(o)}</span> → <span style="color:var(--text)">${escapeHtml(n)}</span>`
-        ).join('<br>');
-      actions.appendChild(mapDiv);
-    }
     
     // Result cards
     for (const r of results) {
