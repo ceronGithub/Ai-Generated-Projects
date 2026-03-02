@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Extract — Cosmic</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+  <!-- Star Field Canvas -->
+  <canvas id="starCanvas"></canvas>
+
+  <!-- Nebula atmosphere wisps -->
+  <div class="nebula-wisp"></div>
+  <div class="nebula-wisp"></div>
+  <div class="nebula-wisp"></div>
+  <div class="nebula-wisp"></div>
+
+  <!-- Cursor glow follower -->
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <span class="logo-text">PDF<strong>Extract</strong></span>
+    </div>
+    <p class="tagline">Extract · Search · Export · Traverse the cosmos of your documents</p>
+
+    <!-- ── Live Widgets ── -->
+    <div class="header-widgets">
+
+      <!-- Day / Holiday widget -->
+      <div class="hw-pill" id="hw-day">
+        <span class="hw-icon" id="hw-day-icon">📅</span>
+        <div class="hw-text">
+          <span class="hw-label">TODAY</span>
+          <span class="hw-value" id="hw-day-value">—</span>
+        </div>
+      </div>
+
+      <!-- Clock widget -->
+      <div class="hw-pill" id="hw-clock">
+        <span class="hw-icon">🕐</span>
+        <div class="hw-text">
+          <span class="hw-label">TIME</span>
+          <span class="hw-value" id="hw-clock-value">—</span>
+        </div>
+      </div>
+
+      <!-- Date widget -->
+      <div class="hw-pill" id="hw-date">
+        <span class="hw-icon">🗓️</span>
+        <div class="hw-text">
+          <span class="hw-label">DATE</span>
+          <span class="hw-value" id="hw-date-value">—</span>
+        </div>
+      </div>
+
+    </div>
+    <!-- ── /Live Widgets ── -->
+  </header>
+
+  <!-- ============ MAIN ============ -->
+  <main class="container">
+
+    <!-- STEP 1: Upload -->
+    <section class="card" id="step-upload">
+      <div class="card-glow-top"></div>
+      <div class="step-label"><span>01</span> Upload PDF Files</div>
+
+      <div class="drop-zone" id="dropZone">
+        <span class="drop-icon">📄</span>
+        <p class="drop-title">Drag &amp; Drop PDF files here</p>
+        <p class="drop-sub">or click to browse your system</p>
+        <label class="btn btn-outline" for="fileInput">Browse Files</label>
+        <input type="file" id="fileInput" accept=".pdf" multiple hidden />
+      </div>
+
+      <div class="file-list-header" id="fileListHeader" style="display:none;">
+        <span class="file-count" id="fileCount">0 files uploaded</span>
+        <button class="btn btn-danger-sm" id="deleteAllBtn">⊗ Delete All</button>
+      </div>
+      <ul class="file-list" id="fileList"></ul>
+    </section>
+
+    <!-- STEP 2: Mode -->
+    <section class="card disabled-card" id="step-mode">
+      <div class="card-glow-top"></div>
+      <div class="step-label"><span>02</span> Select Extraction Mode</div>
+      <p class="step-desc">Choose how you want to extract text from your PDF files.</p>
+
+      <div class="mode-buttons" id="modeButtons">
+        <button class="mode-btn" id="modeMultiple" data-mode="multiple">
+          <span class="mode-icon">🔑</span>
+          <span class="mode-name">Multiple Keywords</span>
+          <span class="mode-desc">Search several keywords across all files</span>
+        </button>
+        <button class="mode-btn" id="modeSingle" data-mode="single">
+          <span class="mode-icon">🔍</span>
+          <span class="mode-name">Single Keyword</span>
+          <span class="mode-desc">Search one keyword &amp; rename files by result</span>
+        </button>
+        <button class="mode-btn" id="modeExtractAll" data-mode="extractall">
+          <span class="mode-icon">📋</span>
+          <span class="mode-name">Extract All</span>
+          <span class="mode-desc">Dump all text from every uploaded PDF</span>
+        </button>
+      </div>
+
+      <div class="mode-display" id="modeDisplay" style="display:none;">
+        <span class="mode-badge" id="modeBadge"></span>
+        <button class="btn-link" id="changeModeBtn">↺ Change Mode</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: Keywords -->
+    <section class="card disabled-card" id="step-keywords">
+      <div class="card-glow-top"></div>
+      <div class="step-label"><span>03</span> Keywords</div>
+
+      <div id="keywordsSection">
+        <div class="keyword-input-row" id="keywordInputArea">
+          <input type="text" class="keyword-input" id="keywordInput"
+                 placeholder="Type a keyword and press Enter…" />
+          <button class="btn btn-accent" id="addKeywordBtn">+ Add</button>
+        </div>
+        <div class="keyword-chips" id="keywordChips"></div>
+        <p class="keyword-hint" id="keywordHint"></p>
+      </div>
+    </section>
+
+    <!-- STEP 4: Run & Results -->
+    <section class="card disabled-card" id="step-results">
+      <div class="card-glow-top"></div>
+      <div class="step-label"><span>04</span> Results</div>
+
+      <div class="run-row">
+        <button class="btn btn-primary btn-lg" id="runBtn" disabled>
+          <span id="runBtnText">▶ Run Extraction</span>
+          <span id="runSpinner" class="spinner" style="display:none;"></span>
+        </button>
+      </div>
+
+      <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <span class="progress-label" id="progressLabel" style="display:none;"></span>
+
+      <div class="results-container" id="resultsContainer" style="display:none;">
+        <div class="results-toolbar">
+          <h3 class="results-title">⬡ Extraction Results</h3>
+          <div class="results-actions" id="resultsActions"></div>
+        </div>
+        <div class="results-list" id="resultsList"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    ⬡ PDF Extract — all processing is local. No files leave your browser.
+  </footer>
+
+  <!-- JS modules (order matters) -->
+  <script src="pdf-processor.js"></script>
+  <script src="keyword-handler.js"></script>
+  <script src="excel-exporter.js"></script>
+  <script src="rename-handler.js"></script>
+  <script src="ui-manager.js"></script>
+  <script src="stars.js"></script>
+  <script src="datetime-widget.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
