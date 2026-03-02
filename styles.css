@@ -1565,3 +1565,27 @@ mark {
 .file-list::-webkit-scrollbar-thumb:hover {
   background: var(--accent, #00e5ff);
 }
+
+/* Results list scrollable cap */
+.results-list {
+  transition: max-height 0.3s ease;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-dim, rgba(0,229,255,0.2)) transparent;
+}
+
+.results-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.results-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.results-list::-webkit-scrollbar-thumb {
+  background: var(--accent-dim, rgba(0,229,255,0.25));
+  border-radius: 4px;
+}
+
+.results-list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent, #00e5ff);
+}

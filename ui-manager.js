@@ -398,11 +398,9 @@ const UIManager = (() => {
     for (const r of results) total += r.contexts.length;
     actions.appendChild(makeCountBadge(total, 'result'));
 
-    function doExport() {
-      ExcelExporter.exportKeywordResults(results, 'keyword_results.xlsx');
-    }
-    excelBtn.addEventListener('click', doExport);
-    dlBtn.addEventListener('click', doExport);
+    excelBtn.addEventListener('click', () => {
+      ExcelExporter.exportKeywordResults(results, 'Multiple-Keyword-Results.xlsx');
+    });
 
     // Result cards
     for (const r of results) {
