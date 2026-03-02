@@ -906,3 +906,398 @@ mark {
 }
 
 /* Responsive rules also live in media.css */
+
+
+/* ============================================
+   FILE ITEM — View button
+   ============================================ */
+.file-view {
+  background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.22);
+  color: var(--cyan);
+  cursor: pointer;
+  border-radius: 5px;
+  padding: 0.28rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.file-view:hover {
+  background: rgba(0,229,255,0.18);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0,229,255,0.25);
+}
+
+/* ============================================
+   PDF VIEWER MODAL  (pvm-*)
+   ============================================ */
+
+/* Overlay / backdrop */
+.pvm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.pvm-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 4, 9, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: opacity 0.32s ease;
+}
+
+/* Open / close transitions */
+.pvm-overlay .pvm-panel {
+  opacity: 0;
+  transform: translateY(28px) scale(0.97);
+  transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.22,1,0.36,1);
+}
+.pvm-overlay.pvm-open .pvm-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.pvm-overlay.pvm-closing .pvm-panel {
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+/* ── Panel ── */
+.pvm-panel {
+  position: relative;
+  z-index: 1;
+  background: rgba(8, 14, 32, 0.97);
+  border: 1px solid rgba(0,229,255,0.18);
+  border-radius: 16px;
+  width: min(92vw, 900px);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 0 0 1px rgba(0,229,255,0.06),
+    0 0 60px rgba(0,229,255,0.08),
+    0 40px 100px rgba(0,0,0,0.8);
+  overflow: hidden;
+}
+
+/* Top-left corner accent */
+.pvm-panel::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 36px; height: 36px;
+  border: 2px solid var(--cyan);
+  border-right: none; border-bottom: none;
+  border-radius: 16px 0 0 0;
+  pointer-events: none;
+  z-index: 2;
+}
+/* Bottom-right corner accent */
+.pvm-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -1px; right: -1px;
+  width: 36px; height: 36px;
+  border: 2px solid var(--violet);
+  border-left: none; border-top: none;
+  border-radius: 0 0 16px 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Header bar ── */
+.pvm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem 0.85rem 1.1rem;
+  border-bottom: 1px solid rgba(0,229,255,0.1);
+  background: rgba(0,229,255,0.03);
+  flex-shrink: 0;
+}
+.pvm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.pvm-logo-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan), 0 0 16px rgba(0,229,255,0.4);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%,100% { box-shadow: 0 0 6px var(--cyan); opacity: 1; }
+  50%      { box-shadow: 0 0 16px var(--cyan), 0 0 28px rgba(0,229,255,0.4); opacity: 0.7; }
+}
+.pvm-header-title {
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+/* Close button */
+.pvm-close-btn {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,79,107,0.25);
+  background: rgba(255,79,107,0.06);
+  color: var(--text-mid);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s;
+}
+.pvm-close-btn:hover {
+  background: rgba(255,79,107,0.18);
+  border-color: var(--danger);
+  color: var(--danger);
+  box-shadow: 0 0 12px rgba(255,79,107,0.25);
+}
+
+/* ── Canvas area ── */
+.pvm-canvas-wrap {
+  flex: 1;
+  overflow: auto;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(0,229,255,0.025) 0%, transparent 70%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      rgba(0,229,255,0.025) 39px,
+      rgba(0,229,255,0.025) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 39px,
+      rgba(0,229,255,0.018) 39px,
+      rgba(0,229,255,0.018) 40px
+    ),
+    rgba(4, 8, 22, 0.9);
+  min-height: 300px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+}
+.pvm-canvas-wrap::-webkit-scrollbar { width: 4px; height: 4px; }
+.pvm-canvas-wrap::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.25); border-radius: 4px; }
+
+/* PDF canvas */
+.pvm-canvas {
+  display: block;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 1px rgba(0,229,255,0.12),
+    0 8px 40px rgba(0,0,0,0.7),
+    0 0 30px rgba(0,229,255,0.05);
+  transition: opacity 0.18s ease;
+  max-width: 100%;
+}
+
+/* Loading spinner */
+.pvm-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+.pvm-spinner {
+  width: 32px; height: 32px;
+  border: 2px solid rgba(0,229,255,0.15);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  box-shadow: 0 0 14px rgba(0,229,255,0.3);
+}
+
+/* ── Footer bar ── */
+.pvm-footer {
+  flex-shrink: 0;
+  padding: 0.9rem 1.25rem 0.75rem;
+  border-top: 1px solid rgba(0,229,255,0.1);
+  background: rgba(0,229,255,0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+/* Filename row */
+.pvm-filename-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  justify-content: center;
+}
+.pvm-file-icon { font-size: 1rem; filter: drop-shadow(0 0 5px rgba(0,229,255,0.4)); }
+.pvm-filename {
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--cyan);
+  text-shadow: 0 0 12px rgba(0,229,255,0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 500px;
+  text-align: center;
+}
+
+/* Controls row */
+.pvm-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.pvm-control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.pvm-divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(0,229,255,0.15);
+  margin: 0 0.25rem;
+}
+
+/* Nav / Zoom buttons */
+.pvm-btn {
+  font-family: var(--font-head);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  border: 1px solid rgba(0,229,255,0.2);
+  background: rgba(0,229,255,0.06);
+  color: var(--cyan);
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+.pvm-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+.pvm-btn:not(:disabled):hover {
+  background: rgba(0,229,255,0.15);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0,229,255,0.2);
+}
+
+.pvm-btn--nav {
+  width: 32px; height: 32px;
+}
+.pvm-btn--zoom {
+  width: 32px; height: 32px;
+}
+.pvm-btn--reset {
+  padding: 0 0.7rem;
+  height: 32px;
+  font-size: 0.6rem;
+  border-color: rgba(159,111,255,0.25);
+  background: rgba(159,111,255,0.06);
+  color: var(--violet);
+}
+.pvm-btn--reset:not(:disabled):hover {
+  background: rgba(159,111,255,0.15);
+  border-color: var(--violet);
+  box-shadow: 0 0 10px rgba(159,111,255,0.2);
+}
+
+/* Page indicator */
+.pvm-page-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(0,229,255,0.15);
+  border-radius: 7px;
+  padding: 0.2rem 0.6rem;
+}
+.pvm-page-input {
+  width: 36px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--cyan);
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.pvm-page-input::-webkit-outer-spin-button,
+.pvm-page-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.pvm-page-sep {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+}
+.pvm-page-total {
+  font-family: var(--font-head);
+  font-size: 0.72rem;
+  color: var(--text-mid);
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Zoom label */
+.pvm-zoom-label {
+  font-family: var(--font-head);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.05em;
+  min-width: 38px;
+  text-align: center;
+}
+
+/* Keyboard hints */
+.pvm-hints {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+}
+.pvm-dot { opacity: 0.4; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .pvm-panel { width: 98vw; max-height: 95vh; }
+  .pvm-canvas-wrap { padding: 0.75rem; }
+  .pvm-filename { max-width: 220px; font-size: 0.62rem; }
+  .pvm-hints { display: none; }
+  .pvm-footer { padding: 0.7rem 0.75rem 0.6rem; }
+}

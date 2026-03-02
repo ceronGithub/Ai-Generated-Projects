@@ -28,8 +28,17 @@ const UIManager = (() => {
         <span class="file-icon">📄</span>
         <span class="file-name" title="${file.name}">${file.name}</span>
         <span class="file-size">${formatBytes(file.size)}</span>
+        <button class="file-view" title="View PDF" data-idx="${idx}">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <ellipse cx="6.5" cy="6.5" rx="6" ry="4" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="6.5" cy="6.5" r="1.8" fill="currentColor"/>
+          </svg>
+        </button>
         <button class="file-delete" title="Remove file" data-idx="${idx}">✕</button>
       `;
+      li.querySelector('.file-view').addEventListener('click', () => {
+        if (window.PDFViewer) window.PDFViewer.open(files[idx]);
+      });
       li.querySelector('.file-delete').addEventListener('click', () => onDelete(idx));
       list.appendChild(li);
     });

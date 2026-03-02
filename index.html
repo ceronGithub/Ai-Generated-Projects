@@ -166,6 +166,115 @@
     ⬡ PDF Extract — all processing is local. No files leave your browser.
   </footer>
 
+  <!-- ============ PDF VIEWER MODAL ============ -->
+  <div id="pdfViewerOverlay" class="pvm-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="PDF Viewer">
+
+    <!-- Click-outside backdrop -->
+    <div id="pdfViewerBackdrop" class="pvm-backdrop"></div>
+
+    <!-- Modal panel -->
+    <div class="pvm-panel">
+
+      <!-- Header bar -->
+      <div class="pvm-header">
+        <div class="pvm-header-left">
+          <span class="pvm-logo-dot"></span>
+          <span class="pvm-header-title">PDF Viewer</span>
+        </div>
+        <button class="pvm-close-btn" id="pdfViewerClose" title="Close (Esc)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Canvas area (scrollable) -->
+      <div class="pvm-canvas-wrap" id="pdfViewerCanvasWrap">
+
+        <!-- Loading spinner -->
+        <div class="pvm-loader" id="pdfViewerLoader">
+          <div class="pvm-spinner"></div>
+          <span>Rendering…</span>
+        </div>
+
+        <!-- PDF Canvas -->
+        <canvas id="pdfViewerCanvas" class="pvm-canvas"></canvas>
+
+      </div>
+
+      <!-- Footer bar: filename + controls -->
+      <div class="pvm-footer">
+
+        <!-- Filename (centered) -->
+        <div class="pvm-filename-row">
+          <span class="pvm-file-icon">📄</span>
+          <span class="pvm-filename" id="pdfViewerFilename">file.pdf</span>
+        </div>
+
+        <!-- Controls row -->
+        <div class="pvm-controls">
+
+          <!-- Page navigation -->
+          <div class="pvm-control-group pvm-nav">
+            <button class="pvm-btn pvm-btn--nav" id="pdfViewerPrev" title="Previous page (←)" disabled>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="pvm-page-indicator">
+              <input type="number" id="pdfViewerPageInput" class="pvm-page-input" min="1" value="1" title="Jump to page" />
+              <span class="pvm-page-sep">/</span>
+              <span class="pvm-page-total" id="pdfViewerTotalPages">1</span>
+            </div>
+            <button class="pvm-btn pvm-btn--nav" id="pdfViewerNext" title="Next page (→)" disabled>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M5 2L10 7L5 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Divider -->
+          <div class="pvm-divider"></div>
+
+          <!-- Zoom controls -->
+          <div class="pvm-control-group pvm-zoom">
+            <button class="pvm-btn pvm-btn--zoom" id="pdfViewerZoomOut" title="Zoom out (−)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M3.5 6h5M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <span class="pvm-zoom-label" id="pdfViewerZoomLabel">120%</span>
+            <button class="pvm-btn pvm-btn--zoom" id="pdfViewerZoomIn" title="Zoom in (+)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M6 3.5v5M3.5 6h5M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="pvm-btn pvm-btn--reset" id="pdfViewerZoomReset" title="Reset zoom (Ctrl+0)">Reset</button>
+          </div>
+
+        </div>
+        <!-- /Controls -->
+
+        <!-- Keyboard hint -->
+        <div class="pvm-hints">
+          <span>← → navigate</span>
+          <span class="pvm-dot">·</span>
+          <span>+ − zoom</span>
+          <span class="pvm-dot">·</span>
+          <span>Esc close</span>
+        </div>
+
+      </div>
+      <!-- /Footer -->
+
+    </div>
+    <!-- /Panel -->
+
+  </div>
+  <!-- ============ /PDF VIEWER MODAL ============ -->
+
   <!-- JS modules (order matters) -->
   <script src="pdf-processor.js"></script>
   <script src="keyword-handler.js"></script>
@@ -174,6 +283,7 @@
   <script src="ui-manager.js"></script>
   <script src="stars.js"></script>
   <script src="datetime-widget.js"></script>
+  <script src="pdf-viewer.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
