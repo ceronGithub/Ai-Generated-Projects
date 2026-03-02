@@ -319,20 +319,18 @@ const UIManager = (() => {
       return;
     }
 
-    // Action row
+    // Action row — Download in Excel Format button only
     const actionsRow = document.createElement('div');
     actionsRow.className = 'results-actions-row';
 
     const excelBtn = document.createElement('button');
     excelBtn.className = 'btn-excel';
-    excelBtn.textContent = '📊 Convert to Excel';
-
-    const dlBtn = document.createElement('button');
-    dlBtn.className = 'btn-excel btn-excel--dl';
-    dlBtn.textContent = '⬇ Download';
+    excelBtn.textContent = '⬇ Download in Excel Format';
+    excelBtn.addEventListener('click', () => {
+      ExcelExporter.exportKeywordResults(results, 'Multiple-Keyword-Results.xlsx');
+    });
 
     actionsRow.appendChild(excelBtn);
-    actionsRow.appendChild(dlBtn);
     actionsRow.appendChild(makeClearAllBtn(list));
     actions.appendChild(actionsRow);
 
@@ -376,25 +374,15 @@ const UIManager = (() => {
       list.innerHTML = '<div class="no-results">No matches found for the keyword.</div>';
       return;
     }
-
-    // Action row
+    
+    // Action row — Rename PDF button only
     const actionsRow = document.createElement('div');
     actionsRow.className = 'results-actions-row';
 
-    const excelBtn = document.createElement('button');
-    excelBtn.className = 'btn-excel';
-    excelBtn.textContent = '📊 Convert to Excel';
-
-    const dlBtn = document.createElement('button');
-    dlBtn.className = 'btn-excel btn-excel--dl';
-    dlBtn.textContent = '⬇ Download';
-
     const renameBtn = document.createElement('button');
     renameBtn.className = 'btn-rename';
-    renameBtn.textContent = '✏ Rename Start';
+    renameBtn.textContent = '✏ Rename PDF';
 
-    actionsRow.appendChild(excelBtn);
-    actionsRow.appendChild(dlBtn);
     actionsRow.appendChild(renameBtn);
     actionsRow.appendChild(makeClearAllBtn(list));
     actions.appendChild(actionsRow);
@@ -407,12 +395,6 @@ const UIManager = (() => {
     let total = 0;
     for (const r of results) total += r.contexts.length;
     actions.appendChild(makeCountBadge(total, 'result'));
-
-    function doExport() {
-      ExcelExporter.exportKeywordResults(results, 'single_keyword_results.xlsx');
-    }
-    excelBtn.addEventListener('click', doExport);
-    dlBtn.addEventListener('click', doExport);
 
     renameBtn.addEventListener('click', async () => {
       renameBtn.disabled = true;

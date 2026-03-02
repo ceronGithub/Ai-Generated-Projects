@@ -1,7 +1,7 @@
-update the result toolbar : if user choose multiple keywords display button "Download in excel format" only. 
+(ongoing)update the result toolbar : if user choose multiple keywords display button "Download in excel format" only. 
 If user choose single keyword, display button "Rename PDF".
 
-(ongoing)update result section : Show only 3 result-item. then make a y-scrollable inside the result section.
+update results-container : Show only 3 result-item. enable y-scrollable inside the results-container.
 
 (Done) Add new feature : User can individually remove existing record result (with animation like pop.). Add Clear all (delete all existing record result.). 
 
@@ -10,6 +10,8 @@ Update result-item > result-meta feature : If user Choose single keyword. follow
 Update result-item > result-keyword feature : If user Choose single keyword. follow format Page: keyword | Icon PDFfilename.fileextension icon -> capturetext.pdf.
 
 Add new feature on file-list : show only 5 uploaded pdf then add y-scrollable.
+
+if User choose single keyword : click "Rename PDF" btn, compresed all renamed pdf, and organized it from A to Z.
 
 update keyword search logic. see the uploaded pdf. if i search the follow : Invoice #:, Created:, From:, To:, Description, Hours, Total, Signature.
 The expected captured text or expected output should be : INV-2026-042, Feb 25..., 742 Evergreen..., Evergreen marketing..., Brand Identity..., 20, capture both 1,500 and 1,800 but each is new result-item, jordan...
