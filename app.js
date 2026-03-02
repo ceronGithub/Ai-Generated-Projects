@@ -305,7 +305,23 @@
       if (state.mode === 'extractall') {
         UIManager.setProgress(100, 'Done!');
         UIManager.renderExtractAll(pdfData);
+
+      } else if (state.mode === 'multiple') {
+        UIManager.setProgress(80, 'Searching keywords…');
+        const results = KeywordHandler.search(pdfData, state.keywords);
+        state.lastResults = results;
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderKeywordResults(results, state.keywords);
+
+      } else if (state.mode === 'single') {
+        UIManager.setProgress(80, 'Searching keyword…');
+        const results = KeywordHandler.search(pdfData, state.keywords);
+        state.lastResults = results;
+        const renameMap = RenameHandler.buildRenameMap(results);
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderSingleKeywordResults(results, state.keywords[0], state.files, renameMap);
       }
+
       // Scroll to results
       setTimeout(() => {
         stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
