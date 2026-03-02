@@ -46,7 +46,7 @@ document.getElementById('rename-btn').addEventListener('click', async () => {
 
         // Generate and download the ZIP
         const content = await zip.generateAsync({ type: "blob" });
-        saveAs(content, "Matth-el-PDF-Extractor-.zip");
+        saveAs(content, "Matth-el-PDF-Extractor.zip");
 
     } catch (error) {
         console.error("Renaming failed:", error);
