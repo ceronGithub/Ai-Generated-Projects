@@ -117,10 +117,11 @@ body {
 .site-header {
   position: relative;
   z-index: 10;
-  padding: 2.5rem 2.5rem 1.5rem;
+  padding: 2rem 2.5rem 1.5rem;
   display: flex;
   align-items: center;
-  gap: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(180deg, rgba(2,4,9,0.8) 0%, transparent 100%);
   overflow: hidden;
@@ -708,7 +709,10 @@ mark {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* === HEADER WIDGETS === */
+/* ============================================
+   HEADER WIDGETS — Cosmic pill design
+   ============================================ */
+
 .header-widgets {
   display: flex;
   align-items: center;
@@ -717,6 +721,7 @@ mark {
   flex-wrap: wrap;
 }
 
+/* ── Base Pill ── */
 .hw-pill {
   display: flex;
   align-items: center;
@@ -724,22 +729,17 @@ mark {
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border);
   border-radius: 40px;
-  padding: 0.42rem 0.85rem 0.42rem 0.6rem;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: all 0.25s;
+  padding: 0.44rem 1rem 0.44rem 0.65rem;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: all 0.28s ease;
   position: relative;
   overflow: hidden;
   cursor: default;
-  min-width: 120px;
+  min-width: 0;
 }
 
-/* Per-pill accent colour on hover */
-#hw-day:hover   { border-color: rgba(57,255,160,0.5);  box-shadow: 0 0 18px rgba(57,255,160,0.12); }
-#hw-clock:hover { border-color: rgba(0,229,255,0.5);   box-shadow: 0 0 18px rgba(0,229,255,0.12); }
-#hw-date:hover  { border-color: rgba(159,111,255,0.5); box-shadow: 0 0 18px rgba(159,111,255,0.12); }
-
-/* Top shimmer stripe */
+/* Top shimmer bar (reveals on hover) */
 .hw-pill::before {
   content: '';
   position: absolute;
@@ -747,86 +747,162 @@ mark {
   height: 1px;
   opacity: 0;
   transition: opacity 0.3s;
+  pointer-events: none;
 }
-#hw-day::before   { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+/* Horizontal shimmer sweep */
+.hw-pill::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.07) 50%, transparent 65%);
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+.hw-pill:hover::after { transform: translateX(120%); }
+
+/* ── Per-widget accent colours ── */
+
+/* EVENT widget */
+#hw-day { border-color: rgba(57,255,160,0.18); }
+#hw-day::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+#hw-day:hover {
+  border-color: rgba(57,255,160,0.5);
+  background: rgba(57,255,160,0.04);
+  box-shadow: 0 0 22px rgba(57,255,160,0.12);
+}
+#hw-day:hover::before { opacity: 1; }
+#hw-day .hw-label { color: var(--green); }
+#hw-day .hw-value { color: var(--green); text-shadow: 0 0 12px rgba(57,255,160,0.45); }
+
+/* CLOCK widget */
+#hw-clock { border-color: rgba(0,229,255,0.18); }
 #hw-clock::before { background: linear-gradient(90deg, transparent, var(--cyan), transparent); }
-#hw-date::before  { background: linear-gradient(90deg, transparent, var(--violet), transparent); }
-.hw-pill:hover::before { opacity: 1; }
-
-.hw-icon {
-  font-size: 1.15rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 6px rgba(0,229,255,0.4));
-  flex-shrink: 0;
+#hw-clock:hover {
+  border-color: rgba(0,229,255,0.5);
+  background: rgba(0,229,255,0.04);
+  box-shadow: 0 0 22px rgba(0,229,255,0.12);
 }
+#hw-clock:hover::before { opacity: 1; }
+#hw-clock .hw-label { color: var(--cyan); }
+#hw-clock .hw-value { color: var(--cyan); text-shadow: 0 0 12px rgba(0,229,255,0.45); font-variant-numeric: tabular-nums; }
 
+/* DATE widget */
+#hw-date { border-color: rgba(159,111,255,0.18); }
+#hw-date::before { background: linear-gradient(90deg, transparent, var(--violet), transparent); }
+#hw-date:hover {
+  border-color: rgba(159,111,255,0.5);
+  background: rgba(159,111,255,0.04);
+  box-shadow: 0 0 22px rgba(159,111,255,0.12);
+}
+#hw-date:hover::before { opacity: 1; }
+#hw-date .hw-label { color: var(--violet); }
+#hw-date .hw-value { color: var(--violet); text-shadow: 0 0 12px rgba(159,111,255,0.45); }
+
+/* ── Icon ── */
+.hw-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 5px rgba(0,229,255,0.3));
+  transition: transform 0.25s, filter 0.25s;
+}
+.hw-pill:hover .hw-icon {
+  transform: scale(1.2) rotate(-8deg);
+}
+#hw-day:hover .hw-icon   { filter: drop-shadow(0 0 10px var(--green)); }
+#hw-clock:hover .hw-icon { filter: drop-shadow(0 0 10px var(--cyan)); }
+#hw-date:hover .hw-icon  { filter: drop-shadow(0 0 10px var(--violet)); }
+
+/* ── Text stack ── */
 .hw-text {
   display: flex;
   flex-direction: column;
-  line-height: 1.15;
+  line-height: 1.2;
   min-width: 0;
 }
-
 .hw-label {
   font-family: var(--font-mono);
-  font-size: 0.52rem;
-  letter-spacing: 0.18em;
-  color: var(--text-mid);
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  opacity: 0.65;
+  white-space: nowrap;
 }
-
 .hw-value {
   font-family: var(--font-head);
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text);
+  letter-spacing: 0.05em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 130px;
+  max-width: 150px;
 }
 
-/* Colour tints per widget */
-#hw-day   .hw-value { color: var(--green);  text-shadow: 0 0 10px rgba(57,255,160,0.4); }
-#hw-clock .hw-value { color: var(--cyan);   text-shadow: 0 0 10px rgba(0,229,255,0.4); }
-#hw-date  .hw-value { color: var(--violet); text-shadow: 0 0 10px rgba(159,111,255,0.4); }
+/* ── STATE CLASSES (set by JS) ── */
 
-/* Holiday badge pulse ring */
-.hw-pill.is-holiday .hw-icon {
-  animation: holidayRing 1.8s ease-in-out infinite;
+/* Regular Holiday — golden pulse */
+.hw-pill.is-holiday {
+  border-color: rgba(255,201,77,0.5) !important;
+  background: rgba(255,201,77,0.04) !important;
+  box-shadow: 0 0 28px rgba(255,201,77,0.15) !important;
 }
-@keyframes holidayRing {
-  0%,100% { filter: drop-shadow(0 0 6px var(--gold)); transform: scale(1); }
-  50%      { filter: drop-shadow(0 0 18px var(--gold)); transform: scale(1.18); }
+.hw-pill.is-holiday::before {
+  background: linear-gradient(90deg, transparent, var(--gold), transparent) !important;
+  opacity: 1 !important;
 }
-.hw-pill.is-holiday { border-color: rgba(255,201,77,0.5) !important; }
-.hw-pill.is-holiday .hw-value { color: var(--gold) !important; text-shadow: 0 0 12px rgba(255,201,77,0.5) !important; }
-.hw-pill.is-holiday::before { background: linear-gradient(90deg, transparent, var(--gold), transparent) !important; opacity: 1 !important; }
+.hw-pill.is-holiday .hw-label { color: var(--gold) !important; }
+.hw-pill.is-holiday .hw-value { color: var(--gold) !important; text-shadow: 0 0 14px rgba(255,201,77,0.6) !important; }
+.hw-pill.is-holiday .hw-icon  { animation: holidayPulse 1.8s ease-in-out infinite; }
 
-/* Weekend tint */
-.hw-pill.is-weekend .hw-value { color: var(--rose) !important; text-shadow: 0 0 10px rgba(255,107,157,0.4) !important; }
-.hw-pill.is-weekend { border-color: rgba(255,107,157,0.3) !important; }
-
-/* Clock tick flash */
-@keyframes tickFlash {
-  0%   { opacity: 1; }
-  45%  { opacity: 1; }
-  50%  { opacity: 0.3; }
-  55%  { opacity: 1; }
-  100% { opacity: 1; }
+@keyframes holidayPulse {
+  0%,100% { filter: drop-shadow(0 0 5px var(--gold)); transform: scale(1); }
+  50%      { filter: drop-shadow(0 0 18px var(--gold)); transform: scale(1.2) rotate(5deg); }
 }
-.colon-blink { animation: tickFlash 1s step-start infinite; }
 
-/* === RESPONSIVE === */
-@media (max-width: 700px) {
-  .site-header { flex-wrap: wrap; padding: 1.5rem 1rem 0.75rem; gap: 0.75rem; }
-  .container { padding: 1rem 0.75rem 3rem; }
-  .card { padding: 1.5rem 1.1rem; }
-  .results-toolbar { flex-direction: column; align-items: flex-start; }
-  .keyword-input-row { flex-direction: column; }
-  .logo { font-size: 1.1rem; }
-  .header-widgets { gap: 0.45rem; margin-left: 0; width: 100%; }
-  .hw-pill { min-width: 100px; padding: 0.35rem 0.7rem 0.35rem 0.5rem; }
-  .hw-value { font-size: 0.65rem; max-width: 100px; }
+/* Special Holiday — rose tint */
+.hw-pill.is-special {
+  border-color: rgba(255,107,157,0.4) !important;
+  background: rgba(255,107,157,0.03) !important;
 }
+.hw-pill.is-special::before {
+  background: linear-gradient(90deg, transparent, var(--rose), transparent) !important;
+  opacity: 1 !important;
+}
+.hw-pill.is-special .hw-label { color: var(--rose) !important; }
+.hw-pill.is-special .hw-value { color: var(--rose) !important; text-shadow: 0 0 12px rgba(255,107,157,0.5) !important; }
+.hw-pill.is-special .hw-icon  { animation: specialFloat 2.5s ease-in-out infinite; }
+
+@keyframes specialFloat {
+  0%,100% { transform: translateY(0); filter: drop-shadow(0 0 5px var(--rose)); }
+  50%      { transform: translateY(-3px); filter: drop-shadow(0 0 12px var(--rose)); }
+}
+
+/* Weekend — violet glow */
+.hw-pill.is-weekend {
+  border-color: rgba(159,111,255,0.35) !important;
+}
+.hw-pill.is-weekend .hw-label { color: var(--violet) !important; }
+.hw-pill.is-weekend .hw-value { color: var(--violet) !important; text-shadow: 0 0 10px rgba(159,111,255,0.5) !important; }
+
+/* ── Blinking colon ── */
+.colon-blink {
+  animation: colonBlink 1s step-start infinite;
+  display: inline-block;
+}
+@keyframes colonBlink {
+  0%, 49%  { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 820px) {
+  .header-widgets { gap: 0.45rem; }
+  .hw-value { font-size: 0.65rem; max-width: 120px; }
+}
+@media (max-width: 560px) {
+  .hw-value { font-size: 0.6rem; max-width: 90px; }
+  .hw-label { font-size: 0.44rem; }
+}
+
+/* Responsive rules also live in media.css */

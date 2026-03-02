@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PDF Extract — Cosmic</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="media.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -33,30 +34,30 @@
     <!-- ── Live Widgets ── -->
     <div class="header-widgets">
 
-      <!-- Day / Holiday widget -->
+      <!-- Widget 1 · EVENT — holiday / weekend / weekday -->
       <div class="hw-pill" id="hw-day">
-        <span class="hw-icon" id="hw-day-icon">📅</span>
+        <span class="hw-icon" id="hw-day-icon">💼</span>
         <div class="hw-text">
-          <span class="hw-label">TODAY</span>
-          <span class="hw-value" id="hw-day-value">—</span>
+          <span class="hw-label" id="hw-day-label">WEEKDAY</span>
+          <span class="hw-value" id="hw-day-value">Loading…</span>
         </div>
       </div>
 
-      <!-- Clock widget -->
+      <!-- Widget 2 · CLOCK — 12-hr live tick -->
       <div class="hw-pill" id="hw-clock">
-        <span class="hw-icon">🕐</span>
+        <span class="hw-icon" id="hw-clock-icon">🕐</span>
         <div class="hw-text">
           <span class="hw-label">TIME</span>
-          <span class="hw-value" id="hw-clock-value">—</span>
+          <span class="hw-value" id="hw-clock-value">Loading…</span>
         </div>
       </div>
 
-      <!-- Date widget -->
+      <!-- Widget 3 · DATE — current calendar date -->
       <div class="hw-pill" id="hw-date">
         <span class="hw-icon">🗓️</span>
         <div class="hw-text">
           <span class="hw-label">DATE</span>
-          <span class="hw-value" id="hw-date-value">—</span>
+          <span class="hw-value" id="hw-date-value">Loading…</span>
         </div>
       </div>
 

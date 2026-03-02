@@ -1,0 +1,543 @@
+/* ================================================================
+   media.css — Responsive Breakpoints for PDF Extract
+   ================================================================
+
+   Breakpoint map (Bootstrap-style):
+   ┌──────────────────────────────────────────────────────┐
+   │  XS   < 576px       — phones portrait                │
+   │  SM   576–767px     — phones landscape / small tabs  │
+   │  MD   768–991px     — tablets portrait               │
+   │  LG   992–1199px    — tablets landscape / laptops    │
+   │  XL   ≥ 1200px      — desktops / widescreen          │
+   └──────────────────────────────────────────────────────┘
+
+   Targets:
+   - Site header + logo + tagline
+   - Header widgets (4 pills)
+   - Main container width/padding
+   - Cards padding/radius
+   - Drop zone
+   - File list
+   - Mode buttons grid
+   - Keywords input row
+   - Results toolbar + actions
+   - Result items text
+   - Run button
+   - Progress bar
+   - Extract-all items
+   - Footer
+   ================================================================ */
+
+
+/* ================================================================
+   XS — max-width: 575px
+   Phones in portrait. Single-column everything.
+   Stack all widgets, hide tagline, compact spacing.
+   ================================================================ */
+@media (max-width: 575px) {
+
+  /* ── HTML root font scale ── */
+  html { font-size: 14px; }
+
+  /* ── Header ── */
+  .site-header {
+    padding: 0.9rem 0.9rem 0.8rem;
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tagline { display: none; }           /* too cramped at XS */
+
+  .logo { font-size: 1.05rem; gap: 0.5rem; }
+  .logo-icon { font-size: 1.4rem; }
+
+  /* ── Header widgets — 2-column grid ── */
+  .header-widgets {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.2rem;
+    width: 100%;
+    margin-left: 0;
+  }
+  .hw-pill {
+    padding: 0.4rem 0.65rem 0.4rem 0.5rem;
+    border-radius: 10px;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .hw-icon     { font-size: 1rem; }
+  .hw-label    { font-size: 0.44rem; letter-spacing: 0.12em; }
+  .hw-value    { font-size: 0.6rem;  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ── Container ── */
+  .container {
+    padding: 0.9rem 0.75rem 3rem;
+    gap: 1rem;
+    max-width: 100%;
+  }
+
+  /* ── Cards ── */
+  .card {
+    padding: 1.1rem 0.9rem;
+    border-radius: 10px;
+  }
+  .card::before,
+  .card::after { width: 12px; height: 12px; }
+  .card:hover::before,
+  .card:hover::after { width: 20px; height: 20px; }
+
+  /* ── Step label ── */
+  .step-label {
+    font-size: 0.68rem;
+    margin-bottom: 1rem;
+    gap: 0.6rem;
+  }
+  .step-label span { font-size: 0.55rem; padding: 2px 7px; }
+  .step-desc { font-size: 0.72rem; }
+
+  /* ── Drop zone ── */
+  .drop-zone {
+    padding: 2rem 1rem;
+  }
+  .drop-icon  { font-size: 2.2rem; }
+  .drop-title { font-size: 0.72rem; }
+  .drop-sub   { font-size: 0.68rem; }
+
+  /* ── File list ── */
+  .file-item { padding: 0.5rem 0.7rem; font-size: 0.7rem; gap: 0.5rem; }
+  .file-size { display: none; }       /* save space, not critical on mobile */
+  .file-count { font-size: 0.6rem; }
+
+  /* ── Mode buttons — single column ── */
+  .mode-buttons {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+  .mode-btn { padding: 1rem 0.85rem; flex-direction: row; text-align: left; gap: 0.75rem; }
+  .mode-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .mode-name { font-size: 0.62rem; }
+  .mode-desc { font-size: 0.62rem; }
+
+  /* ── Keywords ── */
+  .keyword-input-row { flex-direction: column; gap: 0.5rem; }
+  .keyword-input     { font-size: 0.75rem; padding: 0.55rem 0.8rem; }
+  .keyword-chip      { font-size: 0.68rem; }
+  .keyword-hint      { font-size: 0.62rem; }
+
+  /* ── Run button ── */
+  .btn-lg            { width: 100%; justify-content: center; padding: 0.75rem 1rem; font-size: 0.7rem; }
+
+  /* ── Progress ── */
+  .progress-label { font-size: 0.6rem; }
+
+  /* ── Results toolbar ── */
+  .results-toolbar    { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+  .results-title      { font-size: 0.7rem; }
+  .results-actions    { flex-wrap: wrap; gap: 0.4rem; }
+  .btn-excel,
+  .btn-rename         { font-size: 0.6rem; padding: 0.45rem 0.8rem; }
+
+  /* ── Result items ── */
+  .result-item        { padding: 0.8rem 0.85rem; }
+  .result-meta        { font-size: 0.62rem; }
+  .page-badge         { font-size: 0.58rem; }
+  .result-keyword     { font-size: 0.64rem; }
+  .result-text        { font-size: 0.68rem; padding: 0.5rem 0.65rem; }
+
+  /* ── Extract all ── */
+  .extract-all-header { font-size: 0.62rem; padding: 0.55rem 0.8rem; }
+  .extract-all-body   { font-size: 0.66rem; max-height: 160px; }
+
+  /* ── Footer ── */
+  .site-footer { font-size: 0.55rem; padding: 1rem; }
+}
+
+
+/* ================================================================
+   SM — 576px to 767px
+   Phones landscape / small tablets. 2-col mode buttons.
+   Widgets in a scrollable row.
+   ================================================================ */
+@media (min-width: 576px) and (max-width: 767px) {
+
+  html { font-size: 14.5px; }
+
+  /* ── Header ── */
+  .site-header {
+    padding: 1.1rem 1.25rem 1rem;
+    gap: 0.6rem 1.2rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tagline {
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    flex-basis: 100%;           /* push tagline to its own line */
+    order: 3;
+    color: var(--text-mid);
+  }
+
+  .logo { font-size: 1.15rem; gap: 0.6rem; }
+  .logo-icon { font-size: 1.6rem; }
+
+  /* ── Header widgets — scrollable row ── */
+  .header-widgets {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.45rem;
+    margin-left: 0;
+    width: 100%;
+    padding-bottom: 2px;
+    order: 4;
+    scrollbar-width: none;
+  }
+  .header-widgets::-webkit-scrollbar { display: none; }
+  .hw-pill {
+    flex-shrink: 0;
+    padding: 0.42rem 0.75rem 0.42rem 0.55rem;
+    gap: 0.45rem;
+    border-radius: 40px;
+  }
+  .hw-icon  { font-size: 1.05rem; }
+  .hw-label { font-size: 0.46rem; }
+  .hw-value { font-size: 0.64rem; max-width: 120px; }
+
+  /* ── Container ── */
+  .container {
+    padding: 1.1rem 1rem 3.5rem;
+    gap: 1.2rem;
+    max-width: 100%;
+  }
+
+  /* ── Cards ── */
+  .card         { padding: 1.3rem 1.1rem; border-radius: 11px; }
+  .step-label   { font-size: 0.7rem; margin-bottom: 1.1rem; }
+  .step-desc    { font-size: 0.74rem; }
+
+  /* ── Drop zone ── */
+  .drop-zone  { padding: 2.5rem 1.5rem; }
+  .drop-icon  { font-size: 2.5rem; }
+  .drop-title { font-size: 0.75rem; }
+
+  /* ── File list ── */
+  .file-item  { font-size: 0.74rem; padding: 0.55rem 0.8rem; }
+  .file-size  { font-size: 0.65rem; }
+
+  /* ── Mode buttons — 2-column ── */
+  .mode-buttons {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.7rem;
+  }
+  /* Stack extract-all full-width */
+  .mode-btn:nth-child(3) { grid-column: 1 / -1; }
+  .mode-btn   { padding: 1.1rem 0.9rem; }
+  .mode-icon  { font-size: 1.6rem; }
+  .mode-name  { font-size: 0.65rem; }
+  .mode-desc  { font-size: 0.64rem; }
+
+  /* ── Keywords ── */
+  .keyword-input-row { flex-direction: row; gap: 0.5rem; }
+  .keyword-input     { font-size: 0.76rem; }
+  .keyword-chip      { font-size: 0.7rem; }
+
+  /* ── Run button ── */
+  .btn-lg { width: 100%; justify-content: center; padding: 0.72rem 1.2rem; font-size: 0.72rem; }
+
+  /* ── Results ── */
+  .results-toolbar { flex-direction: column; align-items: flex-start; gap: 0.55rem; }
+  .results-title   { font-size: 0.72rem; }
+  .btn-excel,
+  .btn-rename      { font-size: 0.62rem; padding: 0.45rem 0.85rem; }
+
+  /* ── Result items ── */
+  .result-item    { padding: 0.85rem 0.9rem; }
+  .result-meta    { font-size: 0.64rem; }
+  .result-text    { font-size: 0.7rem; }
+
+  /* ── Footer ── */
+  .site-footer { font-size: 0.58rem; padding: 1.1rem; }
+}
+
+
+/* ================================================================
+   MD — 768px to 991px
+   Tablets portrait. 3-col mode buttons return,
+   widgets fit in one flex row with wrapping.
+   ================================================================ */
+@media (min-width: 768px) and (max-width: 991px) {
+
+  html { font-size: 15px; }
+
+  /* ── Header ── */
+  .site-header {
+    padding: 1.4rem 1.75rem 1.2rem;
+    gap: 0.75rem 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tagline {
+    font-size: 0.58rem;
+    letter-spacing: 0.22em;
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .logo       { font-size: 1.2rem; }
+  .logo-icon  { font-size: 1.7rem; }
+
+  /* ── Header widgets — flex-wrap, push right ── */
+  .header-widgets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: auto;
+    order: 2;
+  }
+  .hw-pill  { padding: 0.42rem 0.85rem 0.42rem 0.6rem; gap: 0.5rem; }
+  .hw-icon  { font-size: 1.1rem; }
+  .hw-label { font-size: 0.48rem; }
+  .hw-value { font-size: 0.66rem; max-width: 130px; }
+
+  /* ── Container ── */
+  .container {
+    padding: 1.5rem 1.25rem 4rem;
+    gap: 1.4rem;
+    max-width: 760px;
+  }
+
+  /* ── Cards ── */
+  .card       { padding: 1.6rem 1.5rem; border-radius: 12px; }
+  .step-label { font-size: 0.74rem; margin-bottom: 1.25rem; }
+  .step-desc  { font-size: 0.78rem; }
+
+  /* ── Drop zone ── */
+  .drop-zone  { padding: 2.8rem 1.75rem; }
+  .drop-icon  { font-size: 2.7rem; }
+  .drop-title { font-size: 0.78rem; }
+
+  /* ── File list ── */
+  .file-item  { font-size: 0.76rem; }
+  .file-size  { font-size: 0.67rem; }
+
+  /* ── Mode buttons — 3-col as designed ── */
+  .mode-buttons {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.85rem;
+  }
+  .mode-btn   { padding: 1.3rem 0.9rem; }
+  .mode-icon  { font-size: 1.7rem; }
+  .mode-name  { font-size: 0.67rem; }
+  .mode-desc  { font-size: 0.66rem; }
+
+  /* ── Keywords ── */
+  .keyword-input-row { flex-direction: row; }
+  .keyword-input     { font-size: 0.78rem; }
+
+  /* ── Run button ── */
+  .btn-lg { padding: 0.78rem 1.8rem; font-size: 0.74rem; }
+
+  /* ── Results ── */
+  .results-toolbar { flex-direction: row; align-items: center; }
+  .results-title   { font-size: 0.75rem; }
+  .btn-excel,
+  .btn-rename      { font-size: 0.64rem; }
+
+  /* ── Result items ── */
+  .result-item  { padding: 0.95rem 1rem; }
+  .result-meta  { font-size: 0.65rem; }
+  .result-text  { font-size: 0.72rem; }
+
+  /* ── Footer ── */
+  .site-footer { font-size: 0.6rem; }
+}
+
+
+/* ================================================================
+   LG — 992px to 1199px
+   Laptops / landscape tablets. Near-full design intent.
+   Minor tweaks from base.
+   ================================================================ */
+@media (min-width: 992px) and (max-width: 1199px) {
+
+  html { font-size: 15.5px; }
+
+  /* ── Header ── */
+  .site-header {
+    padding: 1.75rem 2rem 1.35rem;
+    gap: 0.85rem 1.75rem;
+  }
+  .tagline { font-size: 0.6rem; letter-spacing: 0.26em; }
+
+  .logo      { font-size: 1.3rem; }
+  .logo-icon { font-size: 1.85rem; }
+
+  /* ── Header widgets ── */
+  .header-widgets { gap: 0.55rem; }
+  .hw-pill  { padding: 0.44rem 0.9rem 0.44rem 0.65rem; gap: 0.5rem; }
+  .hw-icon  { font-size: 1.15rem; }
+  .hw-label { font-size: 0.5rem; }
+  .hw-value { font-size: 0.68rem; max-width: 140px; }
+
+  /* ── Container ── */
+  .container {
+    padding: 2rem 1.5rem 4.5rem;
+    gap: 1.6rem;
+    max-width: 860px;
+  }
+
+  /* ── Cards ── */
+  .card         { padding: 1.8rem 2rem; }
+  .step-label   { font-size: 0.77rem; }
+  .step-desc    { font-size: 0.8rem; }
+
+  /* ── Drop zone ── */
+  .drop-zone  { padding: 3rem 2rem; }
+  .drop-icon  { font-size: 2.85rem; }
+  .drop-title { font-size: 0.8rem; }
+
+  /* ── File list ── */
+  .file-item { font-size: 0.78rem; }
+
+  /* ── Mode buttons ── */
+  .mode-buttons { gap: 0.9rem; }
+  .mode-btn   { padding: 1.45rem 1rem; }
+  .mode-icon  { font-size: 1.85rem; }
+  .mode-name  { font-size: 0.7rem; }
+  .mode-desc  { font-size: 0.68rem; }
+
+  /* ── Keywords ── */
+  .keyword-input { font-size: 0.8rem; }
+  .keyword-chip  { font-size: 0.72rem; }
+
+  /* ── Run button ── */
+  .btn-lg { padding: 0.82rem 2rem; font-size: 0.76rem; }
+
+  /* ── Results ── */
+  .results-title { font-size: 0.78rem; }
+  .result-text   { font-size: 0.74rem; }
+
+  /* ── Footer ── */
+  .site-footer { font-size: 0.62rem; }
+}
+
+
+/* ================================================================
+   XL — min-width: 1200px
+   Desktops / widescreen. Full design, enhanced spacing,
+   wider container, larger type.
+   ================================================================ */
+@media (min-width: 1200px) {
+
+  html { font-size: 16px; }
+
+  /* ── Header ── */
+  .site-header {
+    padding: 2rem 3rem 1.5rem;
+    gap: 1rem 2.5rem;
+  }
+  .tagline {
+    font-size: 0.63rem;
+    letter-spacing: 0.3em;
+  }
+  .logo      { font-size: 1.45rem; }
+  .logo-icon { font-size: 2.1rem; }
+
+  /* ── Header widgets — all in one row, full labels ── */
+  .header-widgets {
+    gap: 0.65rem;
+    margin-left: auto;
+    flex-wrap: nowrap;
+  }
+  .hw-pill {
+    padding: 0.48rem 1.05rem 0.48rem 0.7rem;
+    gap: 0.6rem;
+    border-radius: 50px;
+  }
+  .hw-icon  { font-size: 1.25rem; }
+  .hw-label { font-size: 0.52rem; letter-spacing: 0.2em; }
+  .hw-value { font-size: 0.75rem; max-width: 180px; }
+
+  /* ── Container ── */
+  .container {
+    padding: 2.5rem 2rem 5rem;
+    gap: 1.75rem;
+    max-width: 960px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    padding: 2rem 2.5rem;
+    border-radius: 14px;
+  }
+  .card:hover::before,
+  .card:hover::after { width: 34px; height: 34px; }
+
+  .step-label { font-size: 0.82rem; margin-bottom: 1.5rem; }
+  .step-label span { font-size: 0.65rem; padding: 3px 10px; }
+  .step-desc  { font-size: 0.84rem; }
+
+  /* ── Drop zone ── */
+  .drop-zone  { padding: 4rem 2.5rem; }
+  .drop-icon  { font-size: 3.2rem; }
+  .drop-title { font-size: 0.86rem; letter-spacing: 0.14em; }
+  .drop-sub   { font-size: 0.78rem; }
+
+  /* ── File list ── */
+  .file-item  { font-size: 0.8rem; padding: 0.7rem 1.1rem; }
+  .file-size  { font-size: 0.7rem; }
+  .file-count { font-size: 0.67rem; }
+
+  /* ── Mode buttons — 3-col wider ── */
+  .mode-buttons { grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+  .mode-btn   { padding: 1.7rem 1.2rem; }
+  .mode-icon  { font-size: 2rem; }
+  .mode-name  { font-size: 0.74rem; letter-spacing: 0.13em; }
+  .mode-desc  { font-size: 0.7rem; }
+
+  /* ── Keywords ── */
+  .keyword-input { font-size: 0.83rem; padding: 0.65rem 1.1rem; }
+  .keyword-chip  { font-size: 0.75rem; padding: 0.3rem 0.95rem; }
+  .keyword-hint  { font-size: 0.7rem; }
+
+  /* ── Run button ── */
+  .btn-lg { padding: 0.88rem 2.4rem; font-size: 0.8rem; }
+
+  /* ── Progress ── */
+  .progress-bar-wrap { height: 4px; }
+  .progress-bar::after { width: 11px; height: 11px; }
+  .progress-label { font-size: 0.68rem; }
+
+  /* ── Results ── */
+  .results-title { font-size: 0.82rem; }
+  .results-actions { gap: 0.55rem; }
+  .btn-excel,
+  .btn-rename    { font-size: 0.68rem; padding: 0.55rem 1.1rem; }
+  .results-list  { max-height: 600px; }
+
+  /* ── Result items ── */
+  .result-item     { padding: 1.15rem 1.35rem; }
+  .result-meta     { font-size: 0.7rem; }
+  .page-badge      { font-size: 0.64rem; padding: 2px 8px; }
+  .result-keyword  { font-size: 0.72rem; }
+  .result-text     { font-size: 0.78rem; padding: 0.75rem 1rem; line-height: 1.7; }
+
+  /* ── Extract all ── */
+  .extract-all-header { font-size: 0.72rem; padding: 0.8rem 1.15rem; }
+  .extract-all-body   { font-size: 0.75rem; max-height: 240px; padding: 1rem 1.15rem; }
+
+  /* ── Footer ── */
+  .site-footer { font-size: 0.64rem; padding: 1.75rem; letter-spacing: 0.12em; }
+}
+
+
+/* ================================================================
+   UTILITY: Reduced motion — respect user preferences
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
