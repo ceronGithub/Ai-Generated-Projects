@@ -61,32 +61,73 @@ const RenameHandler = (() => {
   }
 
   /**
-   * Download renamed PDF files.
-   * Since browsers cannot actually rename files on disk,
-   * we trigger a download for each file with the new name.
+   * Package all renamed PDFs into a single ZIP file.
+   * Files are sorted A→Z by their new name before zipping.
+   * ZIP folder name: PDF-Extractor-Rename-PDF-Result
    *
    * @param {File[]} files - original File objects
    * @param {Map<string, string>} renameMap
    * @param {Function} onProgress - (done, total, newName) => void
    */
   async function downloadRenamed(files, renameMap, onProgress) {
-    let done = 0;
-    for (const file of files) {
-      const newName = renameMap.get(file.name) || file.name;
-      const url = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = newName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      // Small delay to avoid browser blocking multiple downloads
-      await new Promise(r => setTimeout(r, 400));
-      URL.revokeObjectURL(url);
-      done++;
-      if (onProgress) onProgress(done, files.length, newName);
+    if (typeof JSZip === 'undefined') {
+      alert('JSZip library not loaded. Please add the JSZip CDN script to index.html.');
+      return;
     }
+
+    const zip = new JSZip();
+    const folder = zip.folder('PDF-Extractor-Rename-PDF-Result');
+
+    // Build list of { file, newName } sorted A→Z by newName
+    const entries = files
+      .map(file => ({
+        file,
+        newName: renameMap.get(file.name) || file.name
+      }))
+      .sort((a, b) => a.newName.localeCompare(b.newName));
+
+    const total = entries.length;
+    let done = 0;
+    const startTime = Date.now();
+
+    for (const { file, newName } of entries) {
+      const arrayBuffer = await file.arrayBuffer();
+      folder.file(newName, arrayBuffer);
+      done++;
+
+      // ── Time estimate ─────────────────────────────
+      const elapsed   = (Date.now() - startTime) / 1000;       // seconds so far
+      const avgPerFile = elapsed / done;                        // avg seconds per file
+      const remaining  = total - done;                          // files left
+      const estSeconds = Math.ceil(avgPerFile * remaining);     // estimated wait
+
+      // Format time string: show seconds under 1 min, else "Xm Ys"
+      let timeStr = '';
+      if (remaining === 0) {
+        timeStr = '';
+      } else if (estSeconds < 60) {
+        timeStr = `~${estSeconds}s remaining`;
+      } else {
+        const m = Math.floor(estSeconds / 60);
+        const s = estSeconds % 60;
+        timeStr = `~${m}m ${s}s remaining`;
+      }
+
+      if (onProgress) onProgress(done, total, newName, remaining, timeStr);
+    }
+
+    // Generate ZIP — this can take a moment for large files
+    if (onProgress) onProgress(done, total, '📦 Compressing ZIP…', 0, 'almost done…');
+    const blob = await zip.generateAsync({ type: 'blob' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'PDF-Extractor-Rename-PDF-Result.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   return { buildRenameMap, downloadRenamed, sanitizeFilename };

@@ -13,7 +13,7 @@ If user choose single keyword, display button "Rename PDF".
 
 (Done)Add new feature on file-list : show only 5 uploaded pdf then add y-scrollable.
 
-if User choose single keyword : click "Rename PDF" btn, compresed all renamed pdf, and organized it from A to Z.
+
 
 (Done, Search the Keyword exactly according to PDF file.)update keyword search logic. see the uploaded pdf. if i search the follow : Invoice #:, Created:, From:, To:, Description, Hours, Total, Signature.
 The expected captured text or expected output should be : INV-2026-042, Feb 25..., 742 Evergreen..., Evergreen marketing..., Brand Identity..., 20, capture both 1,500 and 1,800 but each is new result-item, jordan...
@@ -23,5 +23,8 @@ update logic if user choose extract all : Each keyword is new result-item.
 
 add new feature : below browse file button add a note "max upload is 2k pdf files.". check uploading logic and make sure it can accept or upload 2k pdf files.
 
-add new feature : prompt or show a message how many remaining pdf files are ongoing to rename, if possible include how long can the user have to wait. So User will know. 	
+new
+(Done)update results-list : Show only 3 result-item. enable y-scrollable inside the results-container.if User choose single keyword : click "Rename PDF" btn, compresed all renamed pdf in one folder, Named "PDF-Extractor-Rename-PDF-Result", and organized it from A to Z.
+(Done)add new feature : prompt or show a message how many remaining pdf files are ongoing to rename, if possible include how long can the user have to wait. So User will know. 	
 
+Add new Feature show user the directory of all export files.

@@ -470,12 +470,20 @@ const UIManager = (() => {
 
     renameBtn.addEventListener('click', async () => {
       renameBtn.disabled = true;
-      renameStatus.textContent = 'Starting downloads with renamed files…';
-      await RenameHandler.downloadRenamed(files, renameMap, (done, total, newName) => {
-        renameStatus.textContent = `Renamed & downloaded ${done}/${total}: ${newName}`;
+      renameStatus.textContent = `📦 Preparing ZIP — ${files.length} file(s) to rename…`;
+      await RenameHandler.downloadRenamed(files, renameMap, (done, total, newName, remaining, timeStr) => {
+        if (remaining === 0 && newName.startsWith('📦')) {
+          // Compression phase
+          renameStatus.textContent = `${newName} ${timeStr}`;
+        } else {
+          const remainingMsg = remaining > 0
+            ? ` — ${remaining} file${remaining !== 1 ? 's' : ''} left${timeStr ? `, ${timeStr}` : ''}`
+            : '';
+          renameStatus.textContent = `📄 ${done}/${total}: ${newName}${remainingMsg}`;
+        }
       });
       renameStatus.className = 'rename-status rename-done';
-      renameStatus.textContent = `✓ All ${files.length} file(s) renamed and downloaded.`;
+      renameStatus.textContent = `✓ ZIP downloaded — ${files.length} file(s) renamed, sorted A→Z inside "PDF-Extractor-Rename-PDF-Result".`;
     });
     
     // Result cards
