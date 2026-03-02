@@ -202,10 +202,14 @@ document.getElementById('search-btn').onclick = async () => {
                         context: finalOutput || "No fragment captured"
                     });
                     // At the end of your scan logic, after the loop finishes:
+                    // ... existing logic inside search-btn.onclick ...
+                    // At the end of your scan logic:
                     if (capturedResults.length > 0) {
                         document.getElementById('download-btn').style.display = 'inline-block';
+                        document.getElementById('rename-btn').style.display = 'inline-block'; // Show rename btn
                     } else {
                         document.getElementById('download-btn').style.display = 'none';
+                        document.getElementById('rename-btn').style.display = 'none';
                     }
                 });
             });

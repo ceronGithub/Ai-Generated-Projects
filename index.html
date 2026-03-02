@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic PDF Explorer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="media-queries.css">
 </head>
@@ -45,7 +46,14 @@
             <section class="glass-card" style="grid-area: body;">
                 <h3>Captured Text Blocks</h3>
                 <div id="results-output">No fragments scanned.</div>
-                <button id="download-btn" class="cosmic-btn" style="display:none; margin-top:20px;">Download Excel Findings</button>
+                <div class="action-group">
+                    <button id="download-btn" class="cosmic-btn">
+                        <i class="fas fa-file-excel"></i> Download Excel Findings
+                    </button>
+                    <button id="rename-btn" class="cosmic-btn warp-btn">
+                        <i class="fas fa-file-signature"></i> Rename & Export Zip
+                    </button>
+                </div>                
             </section>
         </div>
     </main>
@@ -66,7 +74,6 @@
         <div class="modal-content glass-card">
             <div class="viewer-controls">
                 <span class="close-btn" style="cursor:pointer; margin-right: 25px; font-size: 1.5rem;">&times;</span>
-
                 <div class="nav-group" style="display: flex; align-items: center; gap: 12px;">
                     <button id="prev-page" class="cosmic-btn">◀</button>
                     <span style="min-width: 90px; text-align: center; font-family: monospace;">
@@ -89,6 +96,10 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <script src="main.js"></script>
     <script src="upload.js"></script>
     <script src="keyword-manager.js"></script>
@@ -98,5 +109,6 @@
     <script src="pdf-viewer.js"></script>
     <script src="download.js"></script>
     <script src="help.js"></script>
+    <script src="pdf-rename.js"></script>
 </body>
 </html>

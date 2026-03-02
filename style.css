@@ -175,7 +175,7 @@ body {
 }
 
 /* --- DOWNLOAD BUTTON STYLING (FIXED) --- */
-#download-btn {
+#download-btn, #rename-btn {
     display: none; /* Controlled by JS after scan */
     margin-top: 20px;
     width: 100%;
@@ -190,7 +190,7 @@ body {
     transition: 0.3s ease;
 }
 
-#download-btn:hover {
+#download-btn:hover, #rename-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(255, 0, 212, 0.5);
     filter: brightness(1.1);
