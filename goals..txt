@@ -13,7 +13,7 @@ If user choose single keyword, display button "Rename PDF".
 
 (Done)Add new feature on file-list : show only 5 uploaded pdf then add y-scrollable.
 
-
+(Done)Add new features. If user choose extract all and click the download. the excel format should be each card is new row line in excel file.
 
 (Done, Search the Keyword exactly according to PDF file.)update keyword search logic. see the uploaded pdf. if i search the follow : Invoice #:, Created:, From:, To:, Description, Hours, Total, Signature.
 The expected captured text or expected output should be : INV-2026-042, Feb 25..., 742 Evergreen..., Evergreen marketing..., Brand Identity..., 20, capture both 1,500 and 1,800 but each is new result-item, jordan...
@@ -31,3 +31,9 @@ The expected captured text or expected output should be : INV-2026-042, Feb 25..
 Add new Feature show user the directory of all export files Help modal.
 
 (Done)Change mode : If user click change mode. step-keywords and step-results go back to pristine state or reset all. or first state when user are first time choosing on extraction mode.
+
+
+(ONGOING)update keyword search logic. see the uploaded 1st pdf. if i search the follow : Invoice #:, Created:, From:, To:, Description, Hours, Total, Signature.
+The expected captured text or expected output should be : INV-2026-042, Feb 25..., 742 Evergreen..., Evergreen marketing..., Brand Identity..., 20, capture both 1,500 and 1,800 but each is new result-item, jordan...
+see the uploaded 2nd pdf. if i search the follow : Title, Address:, Business Style:, Tin:, Invoice Number:, Date	:, Time	:,Customer Name   :. And so on...
+The expected captured text or expected output should be : SMCX TPLEX, 11/F SAN MIGUEL..., SMC TPLEX..., 0006-887..., TPLEX0000..., 01/07/2026, 14:42..., NATIONAL GRID CORP...
