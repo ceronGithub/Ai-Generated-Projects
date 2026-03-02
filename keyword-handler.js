@@ -1,45 +1,102 @@
 // =============================================
 // keyword-handler.js — Keyword search logic
+// Smart value extraction: grabs only the value
+// that follows a keyword label, not a blob of
+// surrounding context.
 // =============================================
 
 const KeywordHandler = (() => {
 
-  const CONTEXT_CHARS = 200; // chars around match to capture
+  // ─── STOP WORDS ───────────────────────────────────────────────────────────
+  // When extracting a value we stop before these so "From:" doesn't absorb "To:" lines
+  const LABEL_PATTERN = /^(invoice\s*#|created|from|to|description|hours|total|signature|date|due|bill|pay|amount|subtotal|tax|note|terms|po\s*#|ref|attn)/i;
+
+  // ─── HELPERS ──────────────────────────────────────────────────────────────
+
+  function tokenize(text) {
+    return text.split(/\s+/).filter(t => t.length > 0);
+  }
 
   /**
-   * Find all occurrences of a keyword in text and return context snippets.
-   * @param {string} text - Full page text
-   * @param {string} keyword
-   * @returns {string[]} - Array of context snippets
+   * Given the full page text and the position just after the keyword match,
+   * extract the "value" — everything up to:
+   *   - the next keyword label, OR
+   *   - 120 char hard limit, OR
+   *   - end of text
+   */
+  function extractValueAfter(text, matchEnd) {
+    const after = text.slice(matchEnd);
+    const tokens = tokenize(after);
+    if (!tokens.length) return null;
+
+    const collected = [];
+
+    for (const token of tokens) {
+      // Stop if we hit another label keyword (but only after collecting something)
+      if (collected.length > 0 && LABEL_PATTERN.test(token)) break;
+      // Skip leading colons/dashes
+      if (/^[:\-–—]+$/.test(token)) {
+        if (collected.length === 0) continue;
+        break;
+      }
+      collected.push(token);
+      if (collected.join(' ').length >= 120) break;
+    }
+
+    const value = collected.join(' ').replace(/^[\s:]+/, '').trim();
+    return value.length > 0 ? value : null;
+  }
+
+  /**
+   * Find all value occurrences for a keyword.
+   * Returns string[] — one entry per distinct value found.
+   * Each occurrence becomes its own result-item card.
    */
   function findContexts(text, keyword) {
     const results = [];
     const lower = text.toLowerCase();
-    const kLower = keyword.toLowerCase();
+    const kLower = keyword.toLowerCase().replace(/\s*:\s*$/, ''); // strip trailing colon for search
+    const keywordWithColon = kLower + ':';
+
     let idx = 0;
+    const seen = new Set();
 
     while (true) {
-      const found = lower.indexOf(kLower, idx);
+      // Try "keyword:" first, then bare "keyword"
+      let found = lower.indexOf(keywordWithColon, idx);
+      let matchLen = keywordWithColon.length;
+
+      if (found === -1) {
+        found = lower.indexOf(kLower, idx);
+        matchLen = kLower.length;
+      }
+
       if (found === -1) break;
 
-      const start = Math.max(0, found - CONTEXT_CHARS);
-      const end = Math.min(text.length, found + keyword.length + CONTEXT_CHARS);
-      let snippet = text.slice(start, end).trim();
-      if (start > 0) snippet = '…' + snippet;
-      if (end < text.length) snippet = snippet + '…';
-      results.push(snippet);
+      // Word boundary check — skip mid-word matches
+      const charBefore = found > 0 ? text[found - 1] : ' ';
+      if (/\w/.test(charBefore)) {
+        idx = found + 1;
+        continue;
+      }
 
-      idx = found + keyword.length;
+      const matchEnd = found + matchLen;
+      const value = extractValueAfter(text, matchEnd);
+
+      if (value !== null && !seen.has(value.toLowerCase())) {
+        seen.add(value.toLowerCase());
+        results.push(value);
+      }
+
+      idx = matchEnd;
     }
 
     return results;
   }
 
   /**
-   * Search one or multiple keywords across extracted PDF data.
-   * @param {Array<{file: File, pages: Array<{page, text}>}>} pdfData
-   * @param {string[]} keywords
-   * @returns {Array<{page, filename, keyword, contexts}>}
+   * Search keywords across all PDF data.
+   * Each distinct value found becomes its own result entry (its own card).
    */
   function search(pdfData, keywords) {
     const results = [];
@@ -49,14 +106,16 @@ const KeywordHandler = (() => {
       for (const { page, text } of pages) {
         for (const keyword of keywords) {
           const contexts = findContexts(text, keyword);
-          if (contexts.length > 0) {
+          if (contexts.length === 0) continue;
+
+          // Each value → its own result-item card
+          for (const ctx of contexts) {
             results.push({
               page,
               filename,
               keyword,
-              contexts,
-              // Store closest single context (first match) for single-keyword use
-              closestContext: contexts[0]
+              contexts: [ctx],
+              closestContext: ctx
             });
           }
         }
@@ -71,7 +130,8 @@ const KeywordHandler = (() => {
    */
   function highlight(text, keyword) {
     const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escaped})`, 'gi');
+    const escapedBase = escaped.replace(/\\:$/, '');
+    const regex = new RegExp(`(${escapedBase}:?)`, 'gi');
     return text.replace(regex, '<mark>$1</mark>');
   }
 

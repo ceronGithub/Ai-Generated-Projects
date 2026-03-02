@@ -36,6 +36,11 @@
   --glow-cyan:   0 0 18px rgba(0, 229, 255, 0.5), 0 0 40px rgba(0, 229, 255, 0.2);
   --glow-violet: 0 0 18px rgba(159, 111, 255, 0.5), 0 0 40px rgba(159, 111, 255, 0.2);
   --glow-gold:   0 0 18px rgba(255, 201, 77, 0.5), 0 0 40px rgba(255, 201, 77, 0.2);
+
+  --accent:      #00e5ff;   /* same as --cyan */
+  --accent2:     #9f6fff;   /* same as --violet */
+  --accent-dim:  rgba(0, 229, 255, 0.15);
+  --text-muted:  #8899cc;   /* same as --text-mid */
 }
 
 /* === RESET === */
@@ -617,7 +622,13 @@ body {
   color: var(--cyan); text-shadow: var(--glow-cyan); text-transform: uppercase;
 }
 .results-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start; }
-.results-list { display: flex; flex-direction: column; gap: 0.75rem; max-height: 520px; overflow-y: auto; }
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 520px;
+  overflow-y: auto;
+}
 .results-list::-webkit-scrollbar { width: 3px; }
 .results-list::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.28); border-radius: 4px; }
 
@@ -628,7 +639,12 @@ body {
   padding: 1.1rem 1.3rem;
   animation: slideIn 0.25s ease;
   transition: border-color 0.2s, box-shadow 0.2s;
-  position: relative; overflow: hidden;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;        /* never compress inside scroll container */
+  min-width: 0;          /* allow content to wrap */
+  width: 100%;
+  box-sizing: border-box;
 }
 .result-item::before {
   content: '';
@@ -1566,26 +1582,13 @@ mark {
   background: var(--accent, #00e5ff);
 }
 
-/* Results list scrollable cap */
+/* Results list — scroll + flex fix */
 .results-list {
-  transition: max-height 0.3s ease;
+  flex-shrink: 0;
   scrollbar-width: thin;
-  scrollbar-color: var(--accent-dim, rgba(0,229,255,0.2)) transparent;
+  scrollbar-color: rgba(0,229,255,0.2) transparent;
 }
-
-.results-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.results-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.results-list::-webkit-scrollbar-thumb {
-  background: var(--accent-dim, rgba(0,229,255,0.25));
-  border-radius: 4px;
-}
-
-.results-list::-webkit-scrollbar-thumb:hover {
-  background: var(--accent, #00e5ff);
-}
+.results-list::-webkit-scrollbar       { width: 4px; }
+.results-list::-webkit-scrollbar-track { background: transparent; }
+.results-list::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.25); border-radius: 4px; }
+.results-list::-webkit-scrollbar-thumb:hover { background: var(--cyan); }

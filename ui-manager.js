@@ -360,6 +360,20 @@ const UIManager = (() => {
     return el;
   }
 
+  /**
+ * Cap results list to 3 visible cards, enable scroll beyond that.
+ */
+  function capResultsHeight(list) {
+    const cards = list.querySelectorAll('.result-item, .extract-all-item');
+    if (cards.length <= 3) {
+      list.style.maxHeight = '';
+      list.style.overflowY = '';
+    } else {
+      list.style.maxHeight = '600px';
+      list.style.overflowY = 'auto';
+    }
+  }
+
   // =============================================
   // RESULTS — MULTIPLE KEYWORDS
   // =============================================
@@ -412,6 +426,7 @@ const UIManager = (() => {
         list.appendChild(makeResultItem(r.page, r.filename, r.keyword, highlighted));
       }
     }
+    capResultsHeight(list);
   }
 
   // =============================================
@@ -470,6 +485,7 @@ const UIManager = (() => {
         list.appendChild(makeSingleResultItem(r.page, r.filename, r.keyword, highlighted, files, renameMap));
       }
     }
+    capResultsHeight(list);
   }
 
   // =============================================
@@ -508,6 +524,7 @@ const UIManager = (() => {
     for (const { file, pages } of pdfData) {
       list.appendChild(makeExtractItem(file, pages));
     }
+    capResultsHeight(list);
   }
 
   // =============================================
