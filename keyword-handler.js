@@ -90,10 +90,15 @@ const KeywordHandler = (() => {
     const type    = classifyKeyword(kw);
 
     let colonPart;
-    if (type === 'spaced') {
-      colonPart = '\\s{1,10}:\\s*';
-    } else if (type === 'colon') {
-      colonPart = '\\s*:?\\s*';
+    if (type === 'spaced' || type === 'colon') {
+      // Unified: allow 0–10 spaces/tabs before the colon.
+      // Handles all real-world colon styles in one pattern:
+      //   attached → "SALES INVOICE NUMBER:"  (0 spaces)
+      //   spaced   → "Date :"  "Customer Name   :"  (1–10 spaces)
+      //   tab      → "Date\t:"  "Entry\t:"
+      // Also means users can type "SALES INVOICE NUMBER :" OR "SALES INVOICE NUMBER:"
+      // and both match regardless of how the PDF renders the colon gap.
+      colonPart = '\\s{0,10}:\\s*';
     } else {
       colonPart = '\\s*';
     }
