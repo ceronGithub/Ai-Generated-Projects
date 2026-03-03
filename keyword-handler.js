@@ -165,6 +165,51 @@ const KeywordHandler = (() => {
     return value;
   }
 
+  // ─── TITLE CASE FORMATTER ───────────────────────────────────────────────────
+  //
+  // Ensures every word's first letter is uppercase and every letter immediately
+  // following a "." is uppercase. Leaves the rest of each word unchanged so that
+  // ALL-CAPS codes ("INV-2026-042", "TPLEX000045430892"), numbers ("88.39",
+  // "$1,500.00"), dates ("01/07/2026") and times ("14:42:17") are untouched
+  // while plain-text values are consistently formatted.
+  //
+  // Examples:
+  //   "national grid corporation" → "National Grid Corporation"
+  //   "ANAO TOLL PLAZA"           → "ANAO TOLL PLAZA"  (already has capital firsts)
+  //   "quezon ave. cor. bir road" → "Quezon Ave. Cor. Bir Road"
+  //   "88.39"                     → "88.39"            (no alpha → untouched)
+
+  function toTitleCase(val) {
+    if (!val) return val;
+
+    // Step 1: transform each space-separated word
+    const titled = val.split(' ').map(word => {
+      if (!word) return word;
+
+      // Find the index of the first alphabetic character
+      let firstAlpha = -1;
+      for (let i = 0; i < word.length; i++) {
+        if (/[a-zA-Z]/.test(word[i])) { firstAlpha = i; break; }
+      }
+      if (firstAlpha === -1) return word; // no letters (pure number/symbol) → unchanged
+
+      // If the word contains any digit, it is a code / ID / number token
+      // (e.g. "INV-2026-042", "TPLEX000045430892", "11/F", "01/07/2026", "14:42:17")
+      // → preserve exactly as-is
+      if (/\d/.test(word)) return word;
+
+      // Pure-text word → lowercase all, then uppercase the first alpha character
+      const lower = word.toLowerCase();
+      return lower.slice(0, firstAlpha) + lower[firstAlpha].toUpperCase() + lower.slice(firstAlpha + 1);
+    }).join(' ');
+
+    // Step 2: capitalise first alpha character after each '.'
+    // Handles "Ave. cor." → "Ave. Cor." even when the next word wasn't space-separated
+    return titled.replace(/\.([^a-zA-Z]*)([a-zA-Z])/g, (_, gap, letter) => {
+      return '.' + gap + letter.toUpperCase();
+    });
+  }
+
   // ─── VALUE EXTRACTOR ────────────────────────────────────────────────────────
   //
   // Slices text from matchEnd to the first stop AT OR AFTER matchEnd.
@@ -181,6 +226,7 @@ const KeywordHandler = (() => {
     value = value.replace(/^[\s:–—\-]+/, '').replace(/\s+/g, ' ').trim();
     value = value.replace(/[\s:–—\-,]+$/, '').trim();
     value = trimTrailingNoise(value);
+    value = toTitleCase(value);
     return value.length > 0 ? value : null;
   }
 
@@ -232,7 +278,7 @@ const KeywordHandler = (() => {
           : matchEnd + 300;
         const seg  = text.slice(matchEnd, boundary);
         const nums = [...seg.matchAll(/(?:Php\s*)?\$?[\d,]+\.\d{2}/g)];
-        return [...new Set(nums.map(n => n[0].trim()))].filter(Boolean);
+        return [...new Set(nums.map(n => toTitleCase(n[0].trim())))].filter(Boolean);
       }
       return [];
     }
@@ -248,24 +294,24 @@ const KeywordHandler = (() => {
     if (isMon) {
       const decimals = [...segment.matchAll(/(?:Php\s*)?\$?[\d,]+\.\d{2}/g)];
       if (decimals.length > 0) {
-        return [...new Set(decimals.map(n => n[0].trim()))].filter(Boolean);
+        return [...new Set(decimals.map(n => toTitleCase(n[0].trim())))].filter(Boolean);
       }
       // Fallback to bare integers if no decimals found
       const ints = [...segment.matchAll(/(?<![,\$\d\.])(\b\d{1,6}\b)(?![,\.\d])/g)];
-      return [...new Set(ints.map(n => n[1].trim()))].filter(Boolean);
+      return [...new Set(ints.map(n => toTitleCase(n[1].trim())))].filter(Boolean);
     }
 
     if (isInt) {
       // Bare integers only — not adjacent to . or , (excludes parts of "$1,500.00")
       const ints = [...segment.matchAll(/(?<![,\$\d\.])(\b\d{1,6}\b)(?![,\.\d])/g)];
-      return [...new Set(ints.map(n => n[1].trim()))].filter(Boolean);
+      return [...new Set(ints.map(n => toTitleCase(n[1].trim())))].filter(Boolean);
     }
 
     // Text column — strip trailing number columns (amounts that follow text in row)
     let value = segment.replace(/^[\s:–—\-]+/, '').trim().replace(/\s+/g, ' ');
     value = value.replace(/(\s+(?:\$?[\d,]+(?:\.\d+)?|\d+)){1,5}\s*$/, '').trim();
     value = value.replace(/[\s:–—\-,]+$/, '').trim();
-    return value.length > 0 ? [value] : [];
+    return value.length > 0 ? [toTitleCase(value)] : [];
   }
 
   // ─── MAIN SEARCH ────────────────────────────────────────────────────────────

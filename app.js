@@ -226,9 +226,36 @@
 
   // ===== KEYWORDS =====
 
+  /**
+   * Smart keyword capitalisation applied when the user confirms a keyword.
+   *
+   * Rules:
+   *   - All letters lowercase  -> Title Case each word (first letter big, rest unchanged)
+   *   - All letters uppercase  -> leave exactly as typed  (e.g. "SALES INVOICE NUMBER:")
+   *   - Mixed case             -> leave exactly as typed  (user was deliberate)
+   *
+   * Non-letter characters (colons, spaces, numbers, punctuation) are ignored
+   * when deciding which rule applies, so "invoice #:" still counts as all-lowercase.
+   */
+  function smartCapKeyword(raw) {
+    const letters = raw.replace(/[^a-zA-Z]/g, '');
+    if (!letters) return raw;
+    const allLower = letters === letters.toLowerCase();
+    if (!allLower) return raw;
+    return raw.split(' ').map(word => {
+      for (let i = 0; i < word.length; i++) {
+        if (/[a-zA-Z]/.test(word[i])) {
+          return word.slice(0, i) + word[i].toUpperCase() + word.slice(i + 1);
+        }
+      }
+      return word;
+    }).join(' ');
+  }
+
   function addKeyword() {
-    const val = keywordInput.value.trim();
-    if (!val) return;
+    const raw = keywordInput.value.trim();
+    if (!raw) return;
+    const val = smartCapKeyword(raw);
 
     if (state.mode === 'single') {
       // Only one keyword allowed
