@@ -238,11 +238,15 @@
    * when deciding which rule applies, so "invoice #:" still counts as all-lowercase.
    */
   function smartCapKeyword(raw) {
-    const letters = raw.replace(/[^a-zA-Z]/g, '');
-    if (!letters) return raw;
+    // Strip apostrophes/smart-quotes first — users sometimes type "Sale's" but
+    // PDF label text never contains apostrophes, so they only break matching.
+    const clean = raw.replace(/[\u2018\u2019\u201B'']/g, '');
+    const letters = clean.replace(/[^a-zA-Z]/g, '');
+    if (!letters) return clean;
     const allLower = letters === letters.toLowerCase();
-    if (!allLower) return raw;
-    return raw.split(' ').map(word => {
+    if (!allLower) return clean;                       // mixed or all-upper → unchanged
+    // All-lowercase → capitalise first letter of every space-separated word
+    return clean.split(' ').map(word => {
       for (let i = 0; i < word.length; i++) {
         if (/[a-zA-Z]/.test(word[i])) {
           return word.slice(0, i) + word[i].toUpperCase() + word.slice(i + 1);

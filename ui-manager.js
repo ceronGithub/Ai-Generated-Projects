@@ -190,6 +190,94 @@ const UIManager = (() => {
   }
 
   /**
+   * Result card with an inline multi-value picker.
+   * Shown when a keyword extraction returns 2+ distinct values.
+   * The user picks one option — the card then collapses to show only the chosen value.
+   */
+  function makePickerResultItem(page, filename, keyword, values) {
+    const item = document.createElement('div');
+    item.className = 'result-item result-item--picker';
+
+    const optionsHtml = values.map((v, i) => `
+      <button class="pick-option" data-idx="${i}" title="${escapeHtml(v)}">
+        <span class="pick-dot"></span>
+        <span class="pick-label">${escapeHtml(v)}</span>
+      </button>
+    `).join('');
+
+    item.innerHTML = `
+      <div class="result-meta">
+        <span class="page-badge">Page ${page}</span>
+        <span class="result-filename">${escapeHtml(filename)}</span>
+        <button class="result-remove-btn" title="Remove this result">✕</button>
+      </div>
+      <div class="result-keyword">
+        <span>${escapeHtml(keyword)}</span>
+        <span class="pick-badge">${values.length} values found — pick one</span>
+      </div>
+      <div class="pick-options">${optionsHtml}</div>
+      <button class="pick-both-btn" title="Keep all ${values.length} values">
+        <span class="pick-both-icon">⊞</span> Record Both
+      </button>
+      <div class="result-text pick-chosen" style="display:none"></div>
+    `;
+
+    // ── Option click → pick one value ──────────────────────────────────────
+    item.querySelectorAll('.pick-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const chosen = values[+btn.dataset.idx];
+
+        // Mark selected
+        item.querySelectorAll('.pick-option').forEach(b => b.classList.remove('pick-option--selected'));
+        btn.classList.add('pick-option--selected');
+
+        // Collapse options + "Record Both" btn, then show chosen value
+        const optionsEl  = item.querySelector('.pick-options');
+        const bothBtn    = item.querySelector('.pick-both-btn');
+        const chosenEl   = item.querySelector('.pick-chosen');
+
+        optionsEl.classList.add('pick-options--collapsing');
+        bothBtn.classList.add('pick-options--collapsing');
+        setTimeout(() => {
+          optionsEl.style.display = 'none';
+          bothBtn.style.display   = 'none';
+          chosenEl.textContent = chosen;
+          chosenEl.style.display = '';
+          chosenEl.classList.add('pick-chosen--in');
+          item.classList.remove('result-item--picker');
+          item.querySelector('.pick-badge').textContent = '✓ selected';
+        }, 280);
+      });
+    });
+
+    // ── "Record Both" click → show all values joined ───────────────────────
+    item.querySelector('.pick-both-btn').addEventListener('click', () => {
+      const optionsEl = item.querySelector('.pick-options');
+      const bothBtn   = item.querySelector('.pick-both-btn');
+      const chosenEl  = item.querySelector('.pick-chosen');
+
+      optionsEl.classList.add('pick-options--collapsing');
+      bothBtn.classList.add('pick-options--collapsing');
+      setTimeout(() => {
+        optionsEl.style.display = 'none';
+        bothBtn.style.display   = 'none';
+        // Display all values, one per line
+        chosenEl.textContent = values.join('\n');
+        chosenEl.style.display = '';
+        chosenEl.classList.add('pick-chosen--in');
+        item.classList.remove('result-item--picker');
+        item.querySelector('.pick-badge').textContent = `✓ ${values.length} recorded`;
+      }, 280);
+    });
+
+    item.querySelector('.result-remove-btn').addEventListener('click', () => {
+      popRemove(item);
+    });
+
+    return item;
+  }
+
+  /**
    * Single-keyword variant of result card.
    * Meta format: Page X  |  📄 filename.pdf  |  👁 view  |  ✕ remove
    */
@@ -435,14 +523,27 @@ const UIManager = (() => {
       ExcelExporter.exportKeywordResults(results, 'Multiple-Keyword-Results.xlsx');
     });
 
-    // Result cards
+    // Result cards — group by keyword+filename+page so multi-value keywords
+    // get a single picker card instead of multiple plain cards.
+    const grouped = new Map();
     for (const r of results) {
-      for (const ctx of r.contexts) {
+      const key = `${r.keyword}|||${r.filename}|||${r.page}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, { page: r.page, filename: r.filename, keyword: r.keyword, values: [] });
+      }
+      for (const ctx of r.contexts) grouped.get(key).values.push(ctx);
+    }
+
+    for (const { page, filename, keyword, values } of grouped.values()) {
+      if (values.length > 1) {
+        // 2+ distinct values → ask user to pick one
+        list.appendChild(makePickerResultItem(page, filename, keyword, values));
+      } else {
         const highlighted = keywords.reduce(
           (text, kw) => KeywordHandler.highlight(text, kw),
-          escapeHtml(ctx)
+          escapeHtml(values[0])
         );
-        list.appendChild(makeResultItem(r.page, r.filename, r.keyword, highlighted));
+        list.appendChild(makeResultItem(page, filename, keyword, highlighted));
       }
     }
     capResultsHeight(list);

@@ -626,11 +626,19 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-height: 520px;
+  /* Show exactly ~3 result cards, then scroll */
+  max-height: calc(3 * 140px + 2 * 0.75rem);
   overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.35rem;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,229,255,0.28) rgba(0,229,255,0.04);
 }
-.results-list::-webkit-scrollbar { width: 3px; }
+.results-list::-webkit-scrollbar { width: 4px; }
+.results-list::-webkit-scrollbar-track { background: rgba(0,229,255,0.04); border-radius: 4px; }
 .results-list::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.28); border-radius: 4px; }
+.results-list::-webkit-scrollbar-thumb:hover { background: rgba(0,229,255,0.65); }
 
 .result-item {
   background: var(--glass);
@@ -681,6 +689,142 @@ mark {
   text-align: center; color: var(--text-mid);
   font-family: var(--font-mono); font-size: 0.8rem;
   padding: 2.5rem; letter-spacing: 0.06em;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   MULTI-VALUE PICKER CARD
+   Appears when a keyword returns 2+ distinct values.
+   User clicks one option → options collapse → chosen value shown.
+   ═══════════════════════════════════════════════════════════ */
+
+.pick-badge {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--gold);
+  background: rgba(255,201,77,0.08);
+  border: 1px solid rgba(255,201,77,0.25);
+  border-radius: 4px;
+  padding: 1px 7px;
+  letter-spacing: 0.05em;
+  margin-left: 0.4rem;
+}
+
+.pick-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.pick-options--collapsing {
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+}
+
+.pick-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(0,229,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.73rem;
+  color: var(--text);
+  text-align: left;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  width: 100%;
+}
+
+.pick-option:hover {
+  border-color: var(--cyan);
+  background: rgba(0,229,255,0.08);
+  box-shadow: 0 0 12px rgba(0,229,255,0.12);
+}
+
+.pick-option--selected {
+  border-color: var(--violet);
+  background: rgba(155,93,229,0.1);
+  box-shadow: 0 0 14px rgba(155,93,229,0.18);
+}
+
+.pick-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--cyan);
+  flex-shrink: 0;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.pick-option--selected .pick-dot {
+  background: var(--violet);
+  border-color: var(--violet);
+}
+
+.pick-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pick-chosen {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: rgba(0,0,0,0.35);
+  border-radius: 6px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.pick-chosen--in {
+  animation: pickChoseIn 0.25s ease forwards;
+}
+
+@keyframes pickChoseIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Record Both button — sits below the pick options */
+.pick-both-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+  width: 100%;
+  padding: 0.42rem 0.9rem;
+  background: rgba(255, 201, 77, 0.05);
+  border: 1px dashed rgba(255, 201, 77, 0.35);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+
+.pick-both-btn:hover {
+  background: rgba(255, 201, 77, 0.11);
+  border-color: var(--gold);
+  box-shadow: 0 0 10px rgba(255, 201, 77, 0.14);
+}
+
+.pick-both-icon {
+  font-size: 0.82rem;
+  opacity: 0.85;
 }
 
 /* === EXTRACT ALL === */
@@ -1582,16 +1726,7 @@ mark {
   background: var(--accent, #00e5ff);
 }
 
-/* Results list — scroll + flex fix */
-.results-list {
-  flex-shrink: 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,229,255,0.2) transparent;
-}
-.results-list::-webkit-scrollbar       { width: 4px; }
-.results-list::-webkit-scrollbar-track { background: transparent; }
-.results-list::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.25); border-radius: 4px; }
-.results-list::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
 
 /* ================================================
    CHANGE MODE — Step reset animations

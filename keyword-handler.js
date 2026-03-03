@@ -42,7 +42,13 @@ const KeywordHandler = (() => {
 
   /** Strip trailing colon(s) and normalise whitespace */
   function normalizeKw(kw) {
-    return kw.replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim();
+    // Strip trailing colon + whitespace, then remove apostrophes/smart quotes
+    // (users sometimes type "Sale's" but PDF labels never contain apostrophes)
+    return kw
+      .replace(/\s*:\s*$/, '')
+      .replace(/[\u2018\u2019\u201B'']/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   /**
@@ -131,10 +137,21 @@ const KeywordHandler = (() => {
       while ((m = re.exec(text)) !== null) posSet.add(m.index);
     }
 
-    // 2. Generic single-word mixed-case label + colon (NOT time values — (?!\d) guard)
+    // 2. Generic single-word mixed-case label + colon  (NOT time values — (?!\d) guard)
     const labelRe = /(?<![a-z\d])([A-Z][a-z][A-Za-z#\-\.]{0,13})\s{0,3}:(?!\d)/g;
     let m;
     while ((m = labelRe.exec(text)) !== null) posSet.add(m.index);
+
+    // 2b. Two-word Title-Case label + colon  e.g. "Business Style :", "Customer Name :"
+    //     Catches labels that GENERIC_SINGLE misses because only the second word precedes ":"
+    const twoWordRe = /(?<![a-z\d])([A-Z][a-z][A-Za-z]{0,13}\s+[A-Za-z][A-Za-z]{1,13})\s{0,3}:(?!\d)/g;
+    while ((m = twoWordRe.exec(text)) !== null) posSet.add(m.index);
+
+    // 2c. ALL-CAPS multi-word label with attached colon  e.g. "SALES INVOICE NUMBER:"
+    //     Uses attached-colon-only (/[A-Z]+:/ not /[A-Z]+ :/) to avoid matching
+    //     ALL-CAPS value text that happens to be followed by a spaced colon field.
+    const allCapsRe = /(?<!\w)[A-Z]{2,}(?:\s+[A-Z]{2,})+:/g;
+    while ((m = allCapsRe.exec(text)) !== null) posSet.add(m.index);
 
     // 3. Spaced-colon field separator
     const spacedRe = /\s{1,10}:\s/g;
@@ -162,6 +179,8 @@ const KeywordHandler = (() => {
   function trimTrailingNoise(value) {
     value = value.replace(/\s+\d{1,2}\/\d{1,2}\/\d{2,4}.*$/, '').trim();
     value = value.replace(/\s+(Document|Page\s*\d*)\s*$/i, '').trim();
+    // Strip stray leading/trailing quote characters bleeding in from adjacent quoted text
+    value = value.replace(/^[\u201C\u201D"']+/, '').replace(/[\u201C\u201D"']+$/, '').trim();
     return value;
   }
 
