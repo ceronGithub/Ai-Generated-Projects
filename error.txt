@@ -6,7 +6,7 @@
 
 (Done)fix feature : background animate is not smooth. 
 
-add new feature : each month card have different animate background.
+(Done)add new feature : each month card have different animate background.
 
 add new feature : always check if supabase connection is strong. if not then the whole web app cannot be use. Display on Web app, ongoing-maintenance. 
 
