@@ -207,19 +207,18 @@ function calcCheckout() {
   const checkinVal = document.getElementById('bkCheckinTime').value; // "HH:MM"
 
   // Determine duration minutes
-  // Day Tour:     10 hours = 600 min
-  // Night Tour:   21 hours from check-in → check-out next day
-  // Over-Night:   21 hours from check-in → check-out next day
-  const isOvernight = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  const durationMins = isOvernight ? 21 * 60 : 10 * 60;
+  // Day Tour:     10 hours → same day check-out
+  // Night Tour:   10 hours → next day check-out (date advances, time unchanged)
+  // Over-Night:   21 hours → next day check-out
+  const isNextDay    = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
+  const durationMins = _tourType === 'Over-Night' ? 21 * 60 : 10 * 60;
 
   // Check-out date
   const nd = nextDay(_bkYear, _bkMonth, _bkDay);
 
-  if (isOvernight) {
+  if (isNextDay) {
     document.getElementById('bkCheckoutDisplay').textContent = nd.label;
   } else {
-    // Day tour: same day check-out
     document.getElementById('bkCheckoutDisplay').textContent = formatDateLabel(_bkYear, _bkMonth, _bkDay);
   }
 
@@ -230,14 +229,14 @@ function calcCheckout() {
     document.getElementById('bkDuration').textContent =
       `${durationMins / 60} hrs (${to12hr(checkinVal)} → ${to12hr(checkoutHHMM)})`;
   } else {
-    // Show default checkout times based on tour type
-    if (_tourType === 'Day Tour') {
-      document.getElementById('bkCheckoutTime').textContent = '(+10 hrs from check-in time)';
-    } else {
+    // Show default hint
+    if (_tourType === 'Over-Night') {
       document.getElementById('bkCheckoutTime').textContent = '(+21 hrs from check-in time)';
+    } else {
+      document.getElementById('bkCheckoutTime').textContent = '(+10 hrs from check-in time)';
     }
     document.getElementById('bkDuration').textContent =
-      isOvernight ? '21 hrs (overnight)' : '10 hrs (day tour)';
+      _tourType === 'Over-Night' ? '21 hrs (overnight)' : '10 hrs';
   }
 }
 
@@ -318,8 +317,8 @@ function saveBooking() {
   const dp    = parseFloat(document.getElementById('bkDownpayment').value) || 0;
   const ciTime = document.getElementById('bkCheckinTime').value;
 
-  const isOvernight = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  const durationMins = isOvernight ? 21 * 60 : 10 * 60;
+  const isNextDay    = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
+  const durationMins = _tourType === 'Over-Night' ? 21 * 60 : 10 * 60;
   const coTime = addMinutesToTime(ciTime, durationMins);
 
   const nd = nextDay(_bkYear, _bkMonth, _bkDay);
@@ -341,8 +340,8 @@ function saveBooking() {
     checkinDate:   _bkKey,
     checkinDateLabel: formatDateLabel(_bkYear, _bkMonth, _bkDay),
     tourType:      _tourType,
-    checkoutDate:  isOvernight ? nd.key : _bkKey,
-    checkoutDateLabel: isOvernight ? nd.label : formatDateLabel(_bkYear, _bkMonth, _bkDay),
+    checkoutDate:  isNextDay ? nd.key : _bkKey,
+    checkoutDateLabel: isNextDay ? nd.label : formatDateLabel(_bkYear, _bkMonth, _bkDay),
     checkinTime:   ciTime,
     checkoutTime:  coTime,
     createdAt:     new Date().toISOString(),
