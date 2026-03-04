@@ -1,0 +1,42 @@
+/* theme.css — white + colorful design tokens */
+:root {
+  --bg:           #f7f5f2;
+  --white:        #ffffff;
+  --text-dark:    #1a1a2e;
+  --text-mid:     #555570;
+  --text-light:   #9996b0;
+  --border:       rgba(0,0,0,0.07);
+  --shadow-card:  0 2px 20px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-hover: 0 8px 40px rgba(0,0,0,0.13), 0 2px 8px rgba(0,0,0,0.07);
+  --shadow-modal: 0 24px 80px rgba(0,0,0,0.18);
+  --radius-card:  20px;
+  --radius-cell:  8px;
+  --radius-modal: 24px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Nunito', sans-serif;
+  --transition:   0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 0.16s ease;
+}
+
+/* Per-month color palette */
+:root {
+  --m0-tint: #fff0f3; --m0-accent: #ff6b8a; --m0-light: #ffd6df; --m0-dark: #c0324f;
+  --m1-tint: #fff4ec; --m1-accent: #ff8c42; --m1-light: #ffd9c0; --m1-dark: #c05a1a;
+  --m2-tint: #fffbec; --m2-accent: #f4c430; --m2-light: #faedb0; --m2-dark: #9a7a00;
+  --m3-tint: #f0fff4; --m3-accent: #3cb771; --m3-light: #b8f0ce; --m3-dark: #1a7a48;
+  --m4-tint: #f0faff; --m4-accent: #29b5e8; --m4-light: #b0e4f8; --m4-dark: #0a7aaa;
+  --m5-tint: #f3f0ff; --m5-accent: #7c6af4; --m5-light: #d0caff; --m5-dark: #3a28cc;
+  --m6-tint: #fff0fb; --m6-accent: #e040c8; --m6-light: #f8b8ef; --m6-dark: #991a8a;
+  --m7-tint: #fff5f0; --m7-accent: #ff6347; --m7-light: #ffcec4; --m7-dark: #b83020;
+  --m8-tint: #f0fffe; --m8-accent: #00b8a9; --m8-light: #aaeeea; --m8-dark: #007a72;
+  --m9-tint: #f2fff0; --m9-accent: #62c82a; --m9-light: #caf2b0; --m9-dark: #3a8010;
+  --m10-tint:#fff8f0; --m10-accent:#ff9900; --m10-light:#ffdfa0; --m10-dark:#a05e00;
+  --m11-tint:#f0f4ff; --m11-accent:#4e8af4; --m11-light:#c0d4ff; --m11-dark:#1a4acc;
+}
+
+body {
+  background: var(--bg);
+  font-family: var(--font-body);
+  color: var(--text-dark);
+  min-height: 100vh;
+}
