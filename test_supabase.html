@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head><title>Supabase Connection Test</title>
+<style>
+body { font-family: monospace; padding: 24px; background: #0f0f0f; color: #eee; }
+button { padding: 10px 20px; margin: 8px; background: #3ecf8e; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold; }
+pre { background: #1a1a1a; padding: 16px; border-radius: 8px; overflow-x: auto; border-left: 4px solid #3ecf8e; white-space: pre-wrap; word-break: break-all; }
+.err { border-left-color: #ff5555; }
+.ok  { border-left-color: #3ecf8e; }
+h3 { color: #3ecf8e; }
+</style>
+</head>
+<body>
+<h2>🔌 Supabase Connection Tester</h2>
+
+<button onclick="testFetch()">1. Test GET (fetch all)</button>
+<button onclick="testInsert()">2. Test INSERT (dummy record)</button>
+<button onclick="testSchema()">3. Check Table Schema</button>
+<button onclick="clearLog()">Clear</button>
+
+<div id="log"></div>
+
+<script>
+const URL  = 'https://bibexftewatiaytyiepn.supabase.co';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpYmV4ZnRld2F0aWF5dHlpZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2MDgzOTgsImV4cCI6MjA4ODE4NDM5OH0.itFdCVwI3anEK7HBQGn9VbvQxAzZC5HeZQRZFHg-CTk';
+
+const HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': ANON,
+  'Authorization': `Bearer ${ANON}`,
+  'Prefer': 'return=representation',
+};
+
+function log(title, data, isErr = false) {
+  const el = document.getElementById('log');
+  const cls = isErr ? 'err' : 'ok';
+  el.innerHTML += `<h3>${title}</h3><pre class="${cls}">${JSON.stringify(data, null, 2)}</pre>`;
+}
+
+function clearLog() { document.getElementById('log').innerHTML = ''; }
+
+async function testFetch() {
+  log('🔄 Testing GET /bookings...', {status: 'sending...'});
+  try {
+    const res = await fetch(`${URL}/rest/v1/bookings?limit=5&order=created_at.desc`, {
+      method: 'GET', headers: HEADERS
+    });
+    const body = await res.json();
+    if (res.ok) {
+      log(`✅ GET success — ${body.length} row(s) returned`, body);
+    } else {
+      log(`❌ GET failed — HTTP ${res.status}`, body, true);
+    }
+  } catch(e) {
+    log('❌ GET error (network/CORS)', { message: e.message }, true);
+  }
+}
+
+async function testInsert() {
+  const testRow = {
+    date_key:            '2026-01-01',
+    guest_name:          'TEST RECORD — DELETE ME',
+    guest_email:         'test@test.com',
+    guest_phone:         '09000000000',
+    pax:                 1,
+    extra_pax:           0,
+    total_pax:           1,
+    pets:                0,
+    payment_date:        '2026-01-01',
+    payment_mode:        'BDO Bank Transfer',
+    total:               1000,
+    downpayment:         500,
+    balance:             500,
+    checkin_date:        '2026-01-01',
+    checkout_date:       '2026-01-01',
+    checkin_date_label:  'January 1, 2026 (Thursday)',
+    checkout_date_label: 'January 1, 2026 (Thursday)',
+    tour_type:           'Day Tour',
+    checkin_time:        '08:00',
+    checkout_time:       '18:00',
+    raw_json:            { test: true, note: 'DELETE ME' },
+  };
+
+  log('🔄 Testing INSERT...', testRow);
+  try {
+    const res = await fetch(`${URL}/rest/v1/bookings`, {
+      method: 'POST',
+      headers: HEADERS,
+      body: JSON.stringify(testRow),
+    });
+    const body = await res.text();
+    if (res.ok) {
+      log(`✅ INSERT success — HTTP ${res.status}`, JSON.parse(body));
+    } else {
+      log(`❌ INSERT failed — HTTP ${res.status}`, { raw: body }, true);
+    }
+  } catch(e) {
+    log('❌ INSERT error (network/CORS)', { message: e.message }, true);
+  }
+}
+
+async function testSchema() {
+  log('🔄 Checking table via OPTIONS...', {});
+  try {
+    const res = await fetch(`${URL}/rest/v1/bookings`, {
+      method: 'GET',
+      headers: { ...HEADERS, 'Accept': 'application/openapi+json' }
+    });
+    const body = await res.text();
+    log(`Schema check — HTTP ${res.status}`, { response: body.slice(0, 500) }, !res.ok);
+  } catch(e) {
+    log('❌ Schema check error', { message: e.message }, true);
+  }
+}
+</script>
+</body>
+</html>

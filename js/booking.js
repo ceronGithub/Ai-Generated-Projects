@@ -364,17 +364,19 @@ async function saveBooking() {
       raw_json:            bookingJSON,   // ← full JSON blob
     };
 
-    // ── Step 3: Save to Supabase ──
-    let sbId = null;
-    if (_dbOnline) {
-      try {
-        const result = await SB.insert(dbRow);
-        sbId = result[0]?.id ?? null;
-        console.log('☁️ Saved to Supabase id:', sbId);
-      } catch(e) {
-        console.warn('⚠️ Supabase save failed, saving locally.', e.message);
-        setDbStatus(false);
-      }
+    // ── Step 3: Send to Supabase (never throw — fallback to local) ──
+    let sbId   = null;
+    let sbSaved = false;
+    try {
+      console.log('📤 Sending to Supabase...', dbRow);
+      const result = await SB.insert(dbRow);
+      console.log('📥 Supabase response:', result);
+      sbId    = result[0]?.id ?? null;
+      sbSaved = true;
+      console.log('☁️ Saved to Supabase, id:', sbId);
+    } catch(e) {
+      console.error('❌ Supabase insert error:', e.message);
+      // Do NOT re-throw — fall through to localStorage save
     }
 
     // ── Step 4: Always save to localStorage ──
@@ -384,10 +386,15 @@ async function saveBooking() {
     saveBookingsLocal(Bookings);
 
     closeBookingForm();
-    refreshMonth(_bkMonth);
 
-    const dest = sbId ? '☁️ Supabase + 💾 Local' : '💾 Local only';
-    showToast(`✅ Saved: ${bookingJSON.guest.name} (${dest})`);
+    if (sbSaved) {
+      showToast(`✅ Saved: ${bookingJSON.guest.name} ☁️`);
+      await refreshFromSupabase();
+    } else {
+      showToast(`💾 Saved locally: ${bookingJSON.guest.name} (Supabase unreachable)`);
+      refreshMonth(_bkMonth);
+      applyBookingIndicators();
+    }
 
   } catch(err) {
     console.error('Save error:', err);
@@ -493,15 +500,20 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
   del.title       = 'Delete booking';
   del.addEventListener('click', async () => {
     if (!confirm(`Delete booking for ${guestName}?`)) return;
-    if (_dbOnline && sbId) {
-      try { await SB.deleteById(sbId); }
-      catch(e) { console.warn('⚠️ Supabase delete failed:', e.message); }
+    if (sbId) {
+      try {
+        await SB.deleteById(sbId);
+        console.log('🗑 Deleted from Supabase:', sbId);
+      } catch(e) {
+        console.error('⚠️ Supabase delete failed:', e.message);
+      }
+    } else {
+      console.warn('No sbId found — row may not exist in Supabase.');
     }
-    Bookings[key].splice(idx, 1);
-    if (!Bookings[key].length) delete Bookings[key];
-    saveBookingsLocal(Bookings);
-    onDelete();
+    // Re-fetch from Supabase after delete
     showToast('🗑 Booking deleted.');
+    await refreshFromSupabase();
+    onDelete();
   });
 
   card.insertBefore(hdr, card.firstChild);

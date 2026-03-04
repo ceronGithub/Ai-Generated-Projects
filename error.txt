@@ -1,0 +1,18 @@
+error encouter : save failed, check console. but when i check the console. no error has been dected.
+
+add new feature : web app responsiveness.
+
+fix feature : background animate is not smooth. 
+
+add new feature : add effects animate on each month-card.
+
+add new feature : always check if supabase connection is strong. if not then the whole web app cannot be use. Display on Web app, ongoing-maintenance.
+
+add new feature : on class "bk-summary-card". Give user options : Edit or View.
+If user choose Edit re-open the new booking section with previous data.
+If user choose view. only for viewing.
+
+add new feature : If Date is Book Put a red mark. And if has red mark, cannot add new booking.
+add new feature : Always check Check-In-Time of user. If User Put check-in-Time 8AM. Day Tour, Night Tour, Overnight all available. 
+If User put check-in-time inbetween 8AM and 4PM of the current date. Night Tour, Overnight are the only available.
+add new feature : Give user option of 3days and 2nights. 3days from the selected date. (Check-out-time: 21+21hours+check-in-time).

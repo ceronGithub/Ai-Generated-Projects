@@ -85,16 +85,7 @@
   gap: 32px;
 }
 
-@media (max-width: 1000px) {
-  .year-grid { grid-template-columns: repeat(2, 1fr); padding: 28px 28px 60px; gap: 24px; }
-}
-@media (max-width: 860px) {
-  .site-header { padding: 14px 24px; }
-  .header-year  { font-size: 34px; }
-}
-@media (max-width: 600px) {
-  .year-grid { grid-template-columns: 1fr; padding: 18px 16px 50px; gap: 18px; }
-}
+/* Responsive rules moved to responsive.css */
 
 /* ── Supabase DB status indicator ── */
 .db-status {

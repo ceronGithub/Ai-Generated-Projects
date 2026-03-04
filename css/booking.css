@@ -153,10 +153,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px 20px;
 }
-@media (max-width: 540px) {
-  .bk-grid-2 { grid-template-columns: 1fr; }
-  .bk-modal { border-radius: 18px; }
-}
+/* Responsive rules moved to responsive.css */
 
 /* ══════════════════════════
    FIELDS
