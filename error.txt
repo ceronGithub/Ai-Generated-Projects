@@ -2,7 +2,7 @@
 (Done) fix feature : add follow and add all updates. but still not working... error encounter "save failed. check the console".
 (Done)error encouter : save failed, check console. but when i check the console. no error has been dected.
 
-(ongoing)add new feature : web app responsiveness.
+(ongoing)add new feature : add responsiveness from xxsmall-screen, xsmall-screen cellphone, small-screen cellphone, meduim-screen tablet, big-screen laptop, super-big-screen.
 
 (Done)fix feature : background animate is not smooth. 
 
@@ -13,7 +13,7 @@ add new feature : always check if supabase connection is strong. if not then the
 (done)update feature : And Hide the class "db-status-label"
 (done)connection web app to firebase DB. Remove supabase
 
-add new feature : on class "bk-summary-card". Give user options : Edit or View.
+(done)add new feature : on class "bk-summary-card". Give user options : Edit or View.
 If user choose Edit re-open the new booking section with previous data.
 If user choose view. only for viewing.
 

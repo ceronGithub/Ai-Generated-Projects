@@ -550,3 +550,119 @@
   color: #a07800;
   border: 1.5px solid #ffe066;
 }
+/* ══════════════════════════════════════
+   SUMMARY CARD — ACTION BUTTONS
+══════════════════════════════════════ */
+.bk-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.bk-card-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.16s ease;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+}
+
+/* View */
+.bk-card-btn--view {
+  background: #f0f4ff;
+  color: #4e6ef2;
+  border-color: #c8d4ff;
+}
+.bk-card-btn--view:hover {
+  background: #4e6ef2;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(78,110,242,0.28);
+}
+
+/* Edit */
+.bk-card-btn--edit {
+  background: #f3f0ff;
+  color: #7c6af4;
+  border-color: #d0caff;
+}
+.bk-card-btn--edit:hover {
+  background: #7c6af4;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124,106,244,0.28);
+}
+
+/* Delete */
+.bk-card-btn--delete {
+  background: #fff0f3;
+  color: #e04060;
+  border-color: #ffc8d4;
+}
+.bk-card-btn--delete:hover {
+  background: #e04060;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224,64,96,0.28);
+}
+
+/* ══════════════════════════════════════
+   BOOKING FORM — READONLY / VIEW MODE
+══════════════════════════════════════ */
+.bk-modal--readonly .bk-body {
+  background: #fafafa;
+}
+
+.bk-modal--readonly .bk-input,
+.bk-modal--readonly input[disabled],
+.bk-modal--readonly input[readonly] {
+  background: #f5f5f8;
+  color: #555570;
+  border-color: rgba(0,0,0,0.06);
+  cursor: default;
+  pointer-events: none;
+}
+
+.bk-modal--readonly .bk-input:focus {
+  border-color: rgba(0,0,0,0.06);
+  box-shadow: none;
+}
+
+.bk-modal--readonly .bk-header-label {
+  color: #4e6ef2;
+}
+
+.bk-modal--readonly .bk-section-title {
+  opacity: 0.75;
+}
+
+/* View mode banner strip under header */
+.bk-modal--readonly .bk-modal-header::after {
+  content: '👁 View Only — No changes will be saved';
+  display: block;
+  position: absolute;
+  bottom: -1px;
+  left: 0; right: 0;
+  background: #f0f4ff;
+  color: #4e6ef2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-align: center;
+  padding: 5px;
+  border-bottom: 1px solid #c8d4ff;
+}
+
+.bk-modal-header {
+  position: relative;
+}

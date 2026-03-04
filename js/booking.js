@@ -22,12 +22,14 @@ const Bookings = loadBookingsLocal();
 /* ══════════════════════════════════════
    FORM STATE
 ══════════════════════════════════════ */
-let _bkKey    = null;
-let _bkDay    = null;
-let _bkMonth  = null;
-let _bkYear   = null;
-let _bkColor  = null;
-let _tourType = null;
+let _bkKey      = null;
+let _bkDay      = null;
+let _bkMonth    = null;
+let _bkYear     = null;
+let _bkColor    = null;
+let _tourType   = null;
+let _editFbId   = null;   // non-null when editing an existing booking
+let _editOrigCreatedAt = null;
 
 /* ══════════════════════════════════════
    HELPERS
@@ -71,6 +73,11 @@ function getVal(id) {
   return el ? el.value : '';
 }
 
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val ?? '';
+}
+
 /* ══════════════════════════════════════
    DATE EVENT INFO
 ══════════════════════════════════════ */
@@ -85,14 +92,12 @@ function getDateEventInfo(year, month, day) {
 
 /* ══════════════════════════════════════
    COMPILE BOOKING JSON
-   One structured object — also stored as
-   raw_json in Firestore for future queries.
 ══════════════════════════════════════ */
 function compileBookingJSON(pax, extraPax, pets, total, downpayment, ciTime, coTime, isNextDay, durationMins) {
   const nd = nextDay(_bkYear, _bkMonth, _bkDay);
   return {
-    id:        Date.now(),
-    createdAt: new Date().toISOString(),
+    id:        _editFbId ? (_editOrigCreatedAt ? undefined : Date.now()) : Date.now(),
+    createdAt: _editOrigCreatedAt || new Date().toISOString(),
     dateKey:   _bkKey,
     guest: {
       name:     getVal('bkGuestName').trim(),
@@ -123,15 +128,18 @@ function compileBookingJSON(pax, extraPax, pets, total, downpayment, ciTime, coT
 }
 
 /* ══════════════════════════════════════
-   OPEN / CLOSE FORM
+   OPEN / CLOSE FORM  (new booking)
 ══════════════════════════════════════ */
 function openBookingForm(key, day, month, year, color) {
   _bkKey = key; _bkDay = day; _bkMonth = month; _bkYear = year;
   _bkColor = color; _tourType = null;
+  _editFbId = null; _editOrigCreatedAt = null;
 
+  // Header
   document.getElementById('bkColorPill').style.background =
     `linear-gradient(180deg, ${color.accent}, ${color.light})`;
-  document.getElementById('bkHeaderDate').textContent = formatDateLabel(year, month, day);
+  document.getElementById('bkHeaderLabel').textContent = 'New Booking';
+  document.getElementById('bkHeaderDate').textContent  = formatDateLabel(year, month, day);
 
   const ev = getDateEventInfo(year, month, day);
   document.getElementById('bkEventIcon').textContent  = ev.icon;
@@ -139,28 +147,164 @@ function openBookingForm(key, day, month, year, color) {
   document.getElementById('bkEventBadge').className   = 'bk-event-badge is-' + ev.type;
 
   resetBookingForm();
+  setFormReadonly(false);
 
   document.getElementById('bkCheckinDisplay').textContent = formatDateLabel(year, month, day);
   const t = AppState.today;
-  document.getElementById('bkPaymentDate').value =
-    `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
+  setVal('bkPaymentDate', `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`);
 
   document.querySelectorAll('.bk-tour-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('bkCheckoutDisplay').textContent = '—';
   document.getElementById('bkCheckoutTime').textContent    = '—';
   document.getElementById('bkDuration').textContent        = '—';
 
+  _applyColor(color);
+
+  // Footer: show Save, hide Edit action
+  document.getElementById('bkBtnSave').style.display = '';
+  document.getElementById('bkBtnSave').innerHTML     = '<span>Confirm Booking</span><span class="bk-btn-arrow">→</span>';
+  document.getElementById('bkBtnCancel').textContent = 'Cancel';
+
+  document.getElementById('bookingOverlay').classList.add('open');
+}
+
+/* ══════════════════════════════════════
+   OPEN EDIT FORM  (prefill existing)
+══════════════════════════════════════ */
+function openEditForm(b, key, day, month, year, color) {
+  _bkKey   = key;  _bkDay = day; _bkMonth = month; _bkYear = year;
+  _bkColor = color;
+  _editFbId         = b.sbId || null;
+  _editOrigCreatedAt = b.createdAt || null;
+
+  const name     = b.guest?.name       || b.guestName    || '';
+  const email    = b.guest?.email      || b.guestEmail   || '';
+  const phone    = b.guest?.phone      || b.guestPhone   || '';
+  const pax      = b.guest?.pax        ?? b.pax          ?? '';
+  const extraPax = b.guest?.extraPax   ?? b.extraPax     ?? '';
+  const pets     = b.guest?.pets       ?? b.pets         ?? '';
+  const payDate  = b.payment?.date     || b.paymentDate  || '';
+  const total    = b.payment?.total    ?? b.total        ?? '';
+  const dp       = b.payment?.downpayment ?? b.downpayment ?? '';
+  const tourType = b.booking?.tourType || b.tourType     || '';
+  const ciTime   = b.booking?.checkinTime || b.checkinTime || '';
+  const ciLabel  = b.booking?.checkinDateLabel || b.checkinDateLabel || formatDateLabel(year, month, day);
+  const coLabel  = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
+  const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
+  const dur      = b.booking?.durationHrs ?? null;
+
+  // Header
+  document.getElementById('bkColorPill').style.background =
+    `linear-gradient(180deg, ${color.accent}, ${color.light})`;
+  document.getElementById('bkHeaderLabel').textContent = 'Edit Booking';
+  document.getElementById('bkHeaderDate').textContent  = formatDateLabel(year, month, day);
+
+  const ev = getDateEventInfo(year, month, day);
+  document.getElementById('bkEventIcon').textContent  = ev.icon;
+  document.getElementById('bkEventLabel').textContent = ev.label;
+  document.getElementById('bkEventBadge').className   = 'bk-event-badge is-' + ev.type;
+
+  resetBookingForm();
+  setFormReadonly(false);
+
+  // Prefill guest
+  setVal('bkGuestName',    name);
+  setVal('bkGuestEmail',   email);
+  setVal('bkGuestPhone',   phone);
+  setVal('bkPax',          pax);
+  setVal('bkExtraPax',     extraPax);
+  setVal('bkPets',         pets);
+  calcTotalPax();
+
+  // Prefill payment
+  setVal('bkPaymentDate',  payDate);
+  setVal('bkTotal',        total);
+  setVal('bkDownpayment',  dp);
+  calcBalance();
+
+  // Prefill booking
+  document.getElementById('bkCheckinDisplay').textContent  = ciLabel;
+  document.getElementById('bkCheckoutDisplay').textContent = coLabel;
+  setVal('bkCheckinTime', ciTime);
+
+  // Tour type button
+  _tourType = tourType;
+  document.querySelectorAll('.bk-tour-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.type === tourType);
+  });
+
+  // Checkout time & duration
+  if (coTime) {
+    document.getElementById('bkCheckoutTime').textContent = to12hr(coTime);
+  }
+  if (dur !== null) {
+    document.getElementById('bkDuration').textContent =
+      ciTime && coTime
+        ? `${dur} hrs (${to12hr(ciTime)} → ${to12hr(coTime)})`
+        : `${dur} hrs`;
+  }
+
+  _applyColor(color);
+
+  // Footer: Save button = "Save Changes"
+  document.getElementById('bkBtnSave').style.display = '';
+  document.getElementById('bkBtnSave').innerHTML     = '<span>Save Changes</span><span class="bk-btn-arrow">→</span>';
+  document.getElementById('bkBtnCancel').textContent = 'Cancel';
+
+  document.getElementById('bookingOverlay').classList.add('open');
+}
+
+/* ══════════════════════════════════════
+   OPEN VIEW FORM  (read-only)
+══════════════════════════════════════ */
+function openViewForm(b, key, day, month, year, color) {
+  // Re-use edit logic to prefill, then lock fields
+  openEditForm(b, key, day, month, year, color);
+
+  document.getElementById('bkHeaderLabel').textContent = 'View Booking';
+  setFormReadonly(true);
+
+  // Footer: hide Save, just Close
+  document.getElementById('bkBtnSave').style.display = 'none';
+  document.getElementById('bkBtnCancel').textContent  = 'Close';
+}
+
+/* ══════════════════════════════════════
+   READONLY TOGGLE
+══════════════════════════════════════ */
+function setFormReadonly(readonly) {
+  const inputs = document.querySelectorAll(
+    '#bookingModal input, #bookingModal select, #bookingModal textarea'
+  );
+  inputs.forEach(el => {
+    el.readOnly  = readonly;
+    el.disabled  = readonly;
+  });
+  document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+    btn.disabled = readonly;
+    btn.style.pointerEvents = readonly ? 'none' : '';
+    btn.style.opacity = readonly ? '0.65' : '';
+  });
+  // Visual cue on the modal
+  const modal = document.getElementById('bookingModal');
+  modal.classList.toggle('bk-modal--readonly', readonly);
+}
+
+/* ══════════════════════════════════════
+   APPLY COLOR THEME TO FORM
+══════════════════════════════════════ */
+function _applyColor(color) {
   document.querySelectorAll('.bk-section-title').forEach(el => {
     el.style.color = color.accent; el.style.borderColor = color.light;
   });
   document.getElementById('bkBtnSave').style.background =
     `linear-gradient(135deg, ${color.accent}, ${color.light})`;
-
-  document.getElementById('bookingOverlay').classList.add('open');
 }
 
 function closeBookingForm() {
   document.getElementById('bookingOverlay').classList.remove('open');
+  document.getElementById('bookingModal').classList.remove('bk-modal--readonly');
+  _editFbId = null; _editOrigCreatedAt = null;
 }
 
 function resetBookingForm() {
@@ -216,8 +360,7 @@ function calcCheckout() {
   } else {
     document.getElementById('bkCheckoutTime').textContent =
       `(+${durationMins/60} hrs from check-in time)`;
-    document.getElementById('bkDuration').textContent =
-      `${durationMins/60} hrs`;
+    document.getElementById('bkDuration').textContent = `${durationMins/60} hrs`;
   }
 }
 
@@ -264,7 +407,7 @@ function validate() {
 }
 
 /* ══════════════════════════════════════
-   SAVE BOOKING
+   SAVE BOOKING  (create OR update)
 ══════════════════════════════════════ */
 async function saveBooking() {
   if (!validate()) return;
@@ -273,24 +416,21 @@ async function saveBooking() {
   btn.disabled  = true;
   btn.innerHTML = '<span>Saving…</span>';
 
-  // ── 1. Read form values ──────────────────────────
-  const pax         = parseInt(getVal('bkPax'))         || 0;
-  const extraPax    = parseInt(getVal('bkExtraPax'))     || 0;
-  const pets        = parseInt(getVal('bkPets'))         || 0;
-  const total       = parseFloat(getVal('bkTotal'))      || 0;
-  const downpayment = parseFloat(getVal('bkDownpayment'))|| 0;
-  const ciTime      = getVal('bkCheckinTime');
-  const isNextDay   = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  const durationMins= _tourType === 'Over-Night' ? 21*60 : 10*60;
-  const coTime      = addMinutesToTime(ciTime, durationMins);
+  const pax          = parseInt(getVal('bkPax'))          || 0;
+  const extraPax     = parseInt(getVal('bkExtraPax'))      || 0;
+  const pets         = parseInt(getVal('bkPets'))          || 0;
+  const total        = parseFloat(getVal('bkTotal'))       || 0;
+  const downpayment  = parseFloat(getVal('bkDownpayment')) || 0;
+  const ciTime       = getVal('bkCheckinTime');
+  const isNextDay    = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
+  const durationMins = _tourType === 'Over-Night' ? 21*60 : 10*60;
+  const coTime       = addMinutesToTime(ciTime, durationMins);
 
-  // ── 2. Compile JSON ──────────────────────────────
   const bookingJSON = compileBookingJSON(
     pax, extraPax, pets, total, downpayment,
     ciTime, coTime, isNextDay, durationMins
   );
 
-  // ── 3. Build flat DB row ─────────────────────────
   const dbRow = {
     date_key:            bookingJSON.dateKey,
     guest_name:          bookingJSON.guest.name,
@@ -315,31 +455,44 @@ async function saveBooking() {
     raw_json:            bookingJSON,
   };
 
-  // ── 4. Try Firebase ──────────────────────────────
-  let fbId    = null;
+  let fbId    = _editFbId;
   let fbSaved = false;
+  const isEdit = !!_editFbId;
 
   try {
-    console.log('📤 Inserting to Firebase:', dbRow);
-    const result = await FB.insert(dbRow);
-    console.log('📥 Firebase response:', result);
-    fbId    = result?.[0]?.id ?? null;
-    fbSaved = true;
+    if (isEdit) {
+      console.log('📝 Updating Firebase doc:', fbId, dbRow);
+      await FB.updateById(fbId, dbRow);
+      fbSaved = true;
+    } else {
+      console.log('📤 Inserting to Firebase:', dbRow);
+      const result = await FB.insert(dbRow);
+      fbId    = result?.[0]?.id ?? null;
+      fbSaved = true;
+    }
   } catch (fbErr) {
     console.error('❌ Firebase error:', fbErr.message);
   }
 
-  // ── 5. Always save locally ───────────────────────
-  const entry = { ...bookingJSON, sbId: fbId };   // sbId alias kept for UI compatibility
-  if (!Bookings[_bkKey]) Bookings[_bkKey] = [];
-  Bookings[_bkKey].push(entry);
+  // Update local cache
+  const entry = { ...bookingJSON, sbId: fbId };
+  if (isEdit) {
+    // Replace the existing entry in cache
+    if (Bookings[_bkKey]) {
+      const idx = Bookings[_bkKey].findIndex(b => b.sbId === fbId);
+      if (idx > -1) Bookings[_bkKey][idx] = entry;
+      else          Bookings[_bkKey].push(entry);
+    }
+  } else {
+    if (!Bookings[_bkKey]) Bookings[_bkKey] = [];
+    Bookings[_bkKey].push(entry);
+  }
   saveBookingsLocal(Bookings);
 
-  // ── 6. Close & notify ───────────────────────────
   closeBookingForm();
 
   if (fbSaved) {
-    showToast(`✅ Saved: ${bookingJSON.guest.name} ☁️`);
+    showToast(isEdit ? `✏️ Updated: ${bookingJSON.guest.name} ☁️` : `✅ Saved: ${bookingJSON.guest.name} ☁️`);
     await refreshFromFirebase();
   } else {
     showToast(`💾 Saved locally: ${bookingJSON.guest.name} — check Firebase setup`);
@@ -370,7 +523,7 @@ function openBookingList(key, day, month, year, color) {
     inner.appendChild(empty);
   } else {
     list.forEach((b, idx) => {
-      inner.appendChild(buildSummaryCard(b, key, idx, color, () => {
+      inner.appendChild(buildSummaryCard(b, key, idx, color, day, month, year, () => {
         openBookingList(key, day, month, year, color);
         refreshMonth(month);
       }));
@@ -391,35 +544,43 @@ function closeBookingList() {
   document.getElementById('bkListOverlay').classList.remove('open');
 }
 
-function buildSummaryCard(b, key, idx, color, onDelete) {
-  const card  = document.createElement('div');
+/* ══════════════════════════════════════
+   SUMMARY CARD  (with Edit / View / Delete)
+══════════════════════════════════════ */
+function buildSummaryCard(b, key, idx, color, day, month, year, onDelete) {
+  const card = document.createElement('div');
   card.className = 'bk-summary-card';
 
-  const name        = b.guest?.name       || b.guestName       || '—';
-  const email       = b.guest?.email      || b.guestEmail      || '—';
-  const phone       = b.guest?.phone      || b.guestPhone      || '—';
-  const totalPax    = b.guest?.totalPax   || b.totalPax        || '—';
-  const pets        = b.guest?.pets       ?? b.pets            ?? 0;
-  const total       = b.payment?.total    ?? b.total           ?? 0;
-  const balance     = b.payment?.balance  ?? b.balance         ?? 0;
-  const tourType    = b.booking?.tourType || b.tourType        || '—';
-  const ciTime      = b.booking?.checkinTime  || b.checkinTime  || '';
-  const coTime      = b.booking?.checkoutTime || b.checkoutTime || '';
-  const coLabel     = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
-  const fbId        = b.sbId || null;
+  const name     = b.guest?.name       || b.guestName    || '—';
+  const email    = b.guest?.email      || b.guestEmail   || '—';
+  const phone    = b.guest?.phone      || b.guestPhone   || '—';
+  const totalPax = b.guest?.totalPax   || b.totalPax     || '—';
+  const pets     = b.guest?.pets       ?? b.pets         ?? 0;
+  const total    = b.payment?.total    ?? b.total        ?? 0;
+  const balance  = b.payment?.balance  ?? b.balance      ?? 0;
+  const tourType = b.booking?.tourType || b.tourType     || '—';
+  const ciTime   = b.booking?.checkinTime  || b.checkinTime  || '';
+  const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
+  const coLabel  = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
+  const fbId     = b.sbId || null;
 
+  // ── Header row ──
   const hdr = document.createElement('div');
   hdr.className = 'bk-summary-card-header';
 
   const nameEl = document.createElement('div');
-  nameEl.className = 'bk-summary-name'; nameEl.textContent = name;
+  nameEl.className = 'bk-summary-name';
+  nameEl.textContent = name;
 
   const badge = document.createElement('span');
-  badge.className = 'bk-summary-badge'; badge.textContent = tourType;
+  badge.className = 'bk-summary-badge';
+  badge.textContent = tourType;
   badge.style.background = color.accent;
 
   hdr.append(nameEl, badge);
+  card.appendChild(hdr);
 
+  // ── Info rows ──
   const rows = [
     [`📧 ${email}`, `📞 ${phone}`],
     [`👥 ${totalPax} Pax`, pets ? `🐾 ${pets} Pets` : null, `💳 ₱${Number(total).toLocaleString()}`],
@@ -433,15 +594,41 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
     row.className = 'bk-summary-row';
     items.filter(Boolean).forEach(text => {
       const el = document.createElement('div');
-      el.className = 'bk-summary-item'; el.textContent = text;
+      el.className = 'bk-summary-item';
+      el.textContent = text;
       row.appendChild(el);
     });
     card.appendChild(row);
   });
 
-  const del = document.createElement('button');
-  del.className = 'bk-summary-del'; del.textContent = '×'; del.title = 'Delete';
-  del.addEventListener('click', async () => {
+  // ── Action buttons row ──
+  const actions = document.createElement('div');
+  actions.className = 'bk-card-actions';
+
+  // View button
+  const viewBtn = document.createElement('button');
+  viewBtn.className = 'bk-card-btn bk-card-btn--view';
+  viewBtn.innerHTML = '👁 View';
+  viewBtn.addEventListener('click', () => {
+    closeBookingList();
+    openViewForm(b, key, day, month, year, color);
+  });
+
+  // Edit button
+  const editBtn = document.createElement('button');
+  editBtn.className = 'bk-card-btn bk-card-btn--edit';
+  editBtn.innerHTML = '✏️ Edit';
+  editBtn.style.setProperty('--edit-color', color.accent);
+  editBtn.addEventListener('click', () => {
+    closeBookingList();
+    openEditForm(b, key, day, month, year, color);
+  });
+
+  // Delete button
+  const delBtn = document.createElement('button');
+  delBtn.className = 'bk-card-btn bk-card-btn--delete';
+  delBtn.innerHTML = '🗑 Delete';
+  delBtn.addEventListener('click', async () => {
     if (!confirm(`Delete booking for ${name}?`)) return;
     if (fbId) {
       try { await FB.deleteById(fbId); }
@@ -452,8 +639,9 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
     onDelete();
   });
 
-  card.insertBefore(hdr, card.firstChild);
-  card.appendChild(del);
+  actions.append(viewBtn, editBtn, delBtn);
+  card.appendChild(actions);
+
   return card;
 }
 

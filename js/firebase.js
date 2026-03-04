@@ -142,6 +142,15 @@ const FB = {
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
+  async updateById(fbId, row) {
+    const db = getDb();
+    await db.collection('bookings').doc(fbId).update({
+      ...row,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    return [{ id: fbId, ...row }];
+  },
+
   async deleteById(fbId) {
     const db = getDb();
     await db.collection('bookings').doc(fbId).delete();
