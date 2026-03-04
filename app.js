@@ -226,40 +226,9 @@
 
   // ===== KEYWORDS =====
 
-  /**
-   * Smart keyword capitalisation applied when the user confirms a keyword.
-   *
-   * Rules:
-   *   - All letters lowercase  -> Title Case each word (first letter big, rest unchanged)
-   *   - All letters uppercase  -> leave exactly as typed  (e.g. "SALES INVOICE NUMBER:")
-   *   - Mixed case             -> leave exactly as typed  (user was deliberate)
-   *
-   * Non-letter characters (colons, spaces, numbers, punctuation) are ignored
-   * when deciding which rule applies, so "invoice #:" still counts as all-lowercase.
-   */
-  function smartCapKeyword(raw) {
-    // Strip apostrophes/smart-quotes first — users sometimes type "Sale's" but
-    // PDF label text never contains apostrophes, so they only break matching.
-    const clean = raw.replace(/[\u2018\u2019\u201B'']/g, '');
-    const letters = clean.replace(/[^a-zA-Z]/g, '');
-    if (!letters) return clean;
-    const allLower = letters === letters.toLowerCase();
-    if (!allLower) return clean;                       // mixed or all-upper → unchanged
-    // All-lowercase → capitalise first letter of every space-separated word
-    return clean.split(' ').map(word => {
-      for (let i = 0; i < word.length; i++) {
-        if (/[a-zA-Z]/.test(word[i])) {
-          return word.slice(0, i) + word[i].toUpperCase() + word.slice(i + 1);
-        }
-      }
-      return word;
-    }).join(' ');
-  }
-
   function addKeyword() {
-    const raw = keywordInput.value.trim();
-    if (!raw) return;
-    const val = smartCapKeyword(raw);
+    const val = keywordInput.value.trim();
+    if (!val) return;
 
     if (state.mode === 'single') {
       // Only one keyword allowed
@@ -342,7 +311,7 @@
         const results = KeywordHandler.search(pdfData, state.keywords);
         state.lastResults = results;
         UIManager.setProgress(100, 'Done!');
-        UIManager.renderKeywordResults(results, state.keywords);
+        UIManager.renderKeywordResults(results, state.keywords, state.files);
 
       } else if (state.mode === 'single') {
         UIManager.setProgress(80, 'Searching keyword…');

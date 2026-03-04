@@ -6,6 +6,19 @@
 
 const UIManager = (() => {
 
+  // ── Module-level file cache ─────────────────────────────────────────────
+  // Kept in sync by renderKeywordResults / renderSingleKeywordResults so that
+  // view buttons can always resolve a File object even if the closure `files`
+  // parameter somehow becomes stale.
+  let _cachedFiles = [];
+
+  // ── Helper: find a File object by filename (case-sensitive exact match) ──
+  function _findFile(filename, files) {
+    // Try the passed-in files first, then fall back to the module cache
+    const pool = (files && files.length) ? [...files] : _cachedFiles;
+    return pool.find(f => f.name === filename) || null;
+  }
+
   // ----- File List -----
 
   function renderFileList(files, onDelete) {
@@ -169,18 +182,31 @@ const UIManager = (() => {
    * Build a keyword result card with an individual ✕ remove button.
    * Clicking fires a "pop" animation before removing the element.
    */
-  function makeResultItem(page, filename, keyword, highlightedHtml) {
+  function makeResultItem(page, filename, keyword, highlightedHtml, files) {
     const item = document.createElement('div');
     item.className = 'result-item';
     item.innerHTML = `
       <div class="result-meta">
         <span class="page-badge">Page ${page}</span>
         <span class="result-filename">${escapeHtml(filename)}</span>
+        <button class="result-view-btn" title="View PDF">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <ellipse cx="6.5" cy="6.5" rx="6" ry="4" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="6.5" cy="6.5" r="1.8" fill="currentColor"/>
+          </svg><span class="result-view-label">View</span>
+        </button>
         <button class="result-remove-btn" title="Remove this result">✕</button>
       </div>
       <div class="result-keyword">${escapeHtml(keyword)}</div>
       <div class="result-text">${highlightedHtml}</div>
     `;
+
+    // Resolve file at click time so the button is always visible regardless of
+    // when files is passed or whether the array is populated at render time
+    item.querySelector('.result-view-btn').addEventListener('click', () => {
+      const fileObj = _findFile(filename, files);
+      if (fileObj && window.PDFViewer) window.PDFViewer.open(fileObj);
+    });
 
     item.querySelector('.result-remove-btn').addEventListener('click', () => {
       popRemove(item);
@@ -194,7 +220,7 @@ const UIManager = (() => {
    * Shown when a keyword extraction returns 2+ distinct values.
    * The user picks one option — the card then collapses to show only the chosen value.
    */
-  function makePickerResultItem(page, filename, keyword, values) {
+  function makePickerResultItem(page, filename, keyword, values, files) {
     const item = document.createElement('div');
     item.className = 'result-item result-item--picker';
 
@@ -217,6 +243,12 @@ const UIManager = (() => {
       <div class="result-meta">
         <span class="page-badge">Page ${page}</span>
         <span class="result-filename">${escapeHtml(filename)}</span>
+        <button class="result-view-btn" title="View PDF">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <ellipse cx="6.5" cy="6.5" rx="6" ry="4" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="6.5" cy="6.5" r="1.8" fill="currentColor"/>
+          </svg><span class="result-view-label">View</span>
+        </button>
         <button class="result-remove-btn" title="Remove this result">✕</button>
       </div>
       <div class="result-keyword">
@@ -229,6 +261,13 @@ const UIManager = (() => {
       </button>
       <div class="result-text pick-chosen" style="display:none"></div>
     `;
+
+    // Resolve file at click time so the button is always visible regardless of
+    // when files is passed or whether the array is populated at render time
+    item.querySelector('.result-view-btn').addEventListener('click', () => {
+      const fileObj = _findFile(filename, files);
+      if (fileObj && window.PDFViewer) window.PDFViewer.open(fileObj);
+    });
 
     // ── Helper: open inline editor for a pick-option-wrap ──────────────────
     function openInlineEditor(wrap) {
@@ -418,11 +457,20 @@ const UIManager = (() => {
           <div class="result-meta">
             <span class="page-badge">Page ${p.page}</span>
             <span class="result-filename">${escapeHtml(file.name)}</span>
+            <button class="result-view-btn" title="View PDF">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <ellipse cx="6.5" cy="6.5" rx="6" ry="4" stroke="currentColor" stroke-width="1.4"/>
+                <circle cx="6.5" cy="6.5" r="1.8" fill="currentColor"/>
+              </svg>
+            </button>
             <button class="result-remove-btn" title="Remove this result">✕</button>
           </div>
           <div class="result-keyword">Raw Text</div>
           <div class="result-text">${escapeHtml(p.text) || '<em>(no text)</em>'}</div>
         `;
+        if (window.PDFViewer) {
+          item.querySelector('.result-view-btn').addEventListener('click', () => window.PDFViewer.open(file));
+        }
         item.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(item));
         cards.push(item);
         continue;
@@ -435,11 +483,20 @@ const UIManager = (() => {
           <div class="result-meta">
             <span class="page-badge">Page ${p.page}</span>
             <span class="result-filename">${escapeHtml(file.name)}</span>
+            <button class="result-view-btn" title="View PDF">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <ellipse cx="6.5" cy="6.5" rx="6" ry="4" stroke="currentColor" stroke-width="1.4"/>
+                <circle cx="6.5" cy="6.5" r="1.8" fill="currentColor"/>
+              </svg>
+            </button>
             <button class="result-remove-btn" title="Remove this result">✕</button>
           </div>
           <div class="result-keyword">${escapeHtml(label)}</div>
           <div class="result-text">${escapeHtml(value)}</div>
         `;
+        if (window.PDFViewer) {
+          item.querySelector('.result-view-btn').addEventListener('click', () => window.PDFViewer.open(file));
+        }
         item.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(item));
         cards.push(item);
       }
@@ -651,7 +708,8 @@ const UIManager = (() => {
     overlay.querySelector('.elp-backdrop').addEventListener('click', closeModal);
   }
 
-  function renderKeywordResults(results, keywords) {
+  function renderKeywordResults(results, keywords, files) {
+    if (files && files.length) _cachedFiles = [...files]; // keep cache fresh
     const container = document.getElementById('resultsContainer');
     const list = document.getElementById('resultsList');
     const actions = document.getElementById('resultsActions');
@@ -702,13 +760,13 @@ const UIManager = (() => {
     for (const { page, filename, keyword, values } of grouped.values()) {
       if (values.length > 1) {
         // 2+ distinct values → ask user to pick one
-        list.appendChild(makePickerResultItem(page, filename, keyword, values));
+        list.appendChild(makePickerResultItem(page, filename, keyword, values, files));
       } else {
         const highlighted = keywords.reduce(
           (text, kw) => KeywordHandler.highlight(text, kw),
           escapeHtml(values[0])
         );
-        list.appendChild(makeResultItem(page, filename, keyword, highlighted));
+        list.appendChild(makeResultItem(page, filename, keyword, highlighted, files));
       }
     }
     capResultsHeight(list);

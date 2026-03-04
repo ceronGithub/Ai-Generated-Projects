@@ -1775,6 +1775,41 @@ mark {
   border-color: var(--accent);
 }
 
+/* View PDF button — applies to ALL modes (multiple, picker, extract-all) */
+.result-view-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--cyan);
+  cursor: pointer;
+  padding: 2px 5px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  margin-left: auto;   /* push to the right before ✕ */
+}
+
+.result-view-btn:hover {
+  background: rgba(0,229,255,0.08);
+  border-color: var(--cyan);
+  box-shadow: 0 0 8px rgba(0,229,255,0.15);
+}
+
+/* Hidden state — when file object is unavailable */
+.result-view-btn--hidden {
+  display: none !important;
+}
+
+/* "View" label shown in multiple-keyword result cards */
+.result-view-label {
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  margin-left: 0.3rem;
+  letter-spacing: 0.03em;
+  color: var(--cyan);
+}
+
 /* Single-keyword result-keyword row */
 .result-keyword--single {
   display: flex;

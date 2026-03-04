@@ -29,11 +29,13 @@ const PDFViewer = (() => {
 
   // ── Open modal with a File object ──────────
   async function open(file) {
+    if (!file) { console.warn('[PDFViewer] open() called with no file'); return; }
+
     _fileName = file.name;
     _pageNum  = 1;
     _scale    = 1.2;
 
-    // Show modal immediately (skeleton state)
+    // Show modal immediately (skeleton state) — happens synchronously
     _showModal();
     _setFileName(file.name);
     _setLoading(true);
@@ -44,6 +46,7 @@ const PDFViewer = (() => {
       _updatePageInfo();
       await _renderPage(_pageNum);
     } catch (err) {
+      console.error('[PDFViewer] Error rendering PDF:', err);
       _setError(`Could not render PDF: ${err.message}`);
     } finally {
       _setLoading(false);
