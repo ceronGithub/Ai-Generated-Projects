@@ -10,7 +10,8 @@ add new feature : each month card have different animate background.
 
 add new feature : always check if supabase connection is strong. if not then the whole web app cannot be use. Display on Web app, ongoing-maintenance. 
 
-(ongoing)update feature : And Hide the class "db-status-label"
+(done)update feature : And Hide the class "db-status-label"
+(done)connection web app to firebase DB. Remove supabase
 
 add new feature : on class "bk-summary-card". Give user options : Edit or View.
 If user choose Edit re-open the new booking section with previous data.

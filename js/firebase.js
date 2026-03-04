@@ -43,9 +43,7 @@ function setDbStatus(online, count) {
   const lbl = document.getElementById('dbStatusLabel');
   if (!dot || !lbl) return;
   dot.className   = 'db-dot ' + (online ? 'online' : 'offline');
-  lbl.textContent = online
-    ? `Firebase ✓ (${count ?? 0} booking${count !== 1 ? 's' : ''})`
-    : 'Offline — local only';
+  lbl.textContent = online ? 'Firebase ✓' : 'Offline — local only';
 }
 
 /* ══════════════════════════════════════════════════
