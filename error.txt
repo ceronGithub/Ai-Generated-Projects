@@ -20,3 +20,6 @@ add new feature : If Date is Book Put a red mark. And if has red mark, cannot ad
 add new feature : Always check Check-In-Time of user. If User Put check-in-Time 8AM. Day Tour, Night Tour, Overnight all available. 
 If User put check-in-time inbetween 8AM and 4PM of the current date. Night Tour, Overnight are the only available.
 add new feature : Give user option of 3days and 2nights. 3days from the selected date. (Check-out-time: 21+21hours+check-in-time).
+
+
+tutorial : https://www.youtube.com/watch?v=i_ud_9imKjg

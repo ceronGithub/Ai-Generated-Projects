@@ -1,21 +1,35 @@
-// supabase.js — Supabase client (lazy init, safe for file://)
-
-const SUPABASE_URL  = 'https://bibexftewatiaytyiepn.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpYmV4ZnRld2F0aWF5dHlpZXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2MDgzOTgsImV4cCI6MjA4ODE4NDM5OH0.itFdCVwI3anEK7HBQGn9VbvQxAzZC5HeZQRZFHg-CTk';
+// firebase.js — Firebase client (replace FIREBASE_CONFIG with your project values)
 
 /* ══════════════════════════════════════════════════
-   LAZY CLIENT — created on first use so we never
-   crash at parse time if the CDN hasn't loaded yet.
+   FIREBASE CONFIG
+   → Go to Firebase Console > Project Settings > Your Apps
+   → Copy your firebaseConfig object and paste it below.
 ══════════════════════════════════════════════════ */
-let _client = null;
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyD1l0ppLiZBG6f33qUMYAmcloScvv9eMRw",
+  authDomain:        "victorias-haven-book-record.firebaseapp.com",
+  projectId:         "victorias-haven-book-record",
+  storageBucket:     "victorias-haven-book-record.firebasestorage.app",
+  messagingSenderId: "338197629106",
+  appId:             "1:338197629106:web:f739ab41e0900d831121ab",
+  measurementId:     "G-EX34HHKS60",
+};
 
-function getClient() {
-  if (_client) return _client;
-  if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
-    throw new Error('Supabase SDK not loaded. Check CDN script tag.');
+/* ══════════════════════════════════════════════════
+   LAZY CLIENT — initialised on first use
+══════════════════════════════════════════════════ */
+let _db = null;
+
+function getDb() {
+  if (_db) return _db;
+  if (typeof firebase === 'undefined') {
+    throw new Error('Firebase SDK not loaded. Check CDN script tags in index.html.');
   }
-  _client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-  return _client;
+  if (!firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  }
+  _db = firebase.firestore();
+  return _db;
 }
 
 /* ══════════════════════════════════════════════════
@@ -30,48 +44,12 @@ function setDbStatus(online, count) {
   if (!dot || !lbl) return;
   dot.className   = 'db-dot ' + (online ? 'online' : 'offline');
   lbl.textContent = online
-    ? `Supabase ✓ (${count ?? 0} booking${count !== 1 ? 's' : ''})`
+    ? `Firebase ✓ (${count ?? 0} booking${count !== 1 ? 's' : ''})`
     : 'Offline — local only';
 }
 
 /* ══════════════════════════════════════════════════
-   SB — all Supabase operations
-══════════════════════════════════════════════════ */
-const SB = {
-
-  async insert(row) {
-    const db = getClient();
-    const { data, error } = await db
-      .from('bookings')
-      .insert([row])
-      .select();
-    if (error) throw new Error(error.message + (error.details ? ' | ' + error.details : ''));
-    return data;
-  },
-
-  async fetchAll() {
-    const db = getClient();
-    const { data, error } = await db
-      .from('bookings')
-      .select('*')
-      .order('checkin_date', { ascending: true })
-      .order('created_at',   { ascending: true });
-    if (error) throw new Error(error.message);
-    return data;
-  },
-
-  async deleteById(sbId) {
-    const db = getClient();
-    const { error } = await db
-      .from('bookings')
-      .delete()
-      .eq('id', sbId);
-    if (error) throw new Error(error.message);
-  },
-};
-
-/* ══════════════════════════════════════════════════
-   HELPER — 24h → 12h (self-contained, no dependency)
+   HELPER — 24h → 12h
 ══════════════════════════════════════════════════ */
 function _fmt12(hhmm) {
   if (!hhmm) return '—';
@@ -81,18 +59,17 @@ function _fmt12(hhmm) {
 }
 
 /* ══════════════════════════════════════════════════
-   FLATTEN DB ROW → in-memory booking object
+   FLATTEN Firestore doc → in-memory booking object
 ══════════════════════════════════════════════════ */
 function flattenRow(row) {
-  const rj = (typeof row.raw_json === 'object' && row.raw_json) ? row.raw_json : {};
+  const rj  = (typeof row.raw_json === 'object' && row.raw_json) ? row.raw_json : {};
 
   return {
-    sbId:      row.id,
+    sbId:      row.id,   // kept as alias so existing UI code still works
     id:        row.id,
     dateKey:   row.date_key,
     createdAt: row.created_at,
 
-    // nested (used by booking form display)
     guest: rj.guest || {
       name:     row.guest_name,
       email:    row.guest_email,
@@ -146,40 +123,68 @@ function flattenRow(row) {
 }
 
 /* ══════════════════════════════════════════════════
-   INIT — fetch all from Supabase → fill Bookings{}
+   FB — all Firestore operations
 ══════════════════════════════════════════════════ */
-async function initSupabase() {
+const FB = {
+
+  async insert(row) {
+    const db  = getDb();
+    const ref = await db.collection('bookings').add({
+      ...row,
+      created_at: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    return [{ id: ref.id, ...row }];
+  },
+
+  async fetchAll() {
+    const db      = getDb();
+    const snap    = await db.collection('bookings')
+      .orderBy('checkin_date', 'asc')
+      .get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
+
+  async deleteById(fbId) {
+    const db = getDb();
+    await db.collection('bookings').doc(fbId).delete();
+  },
+};
+
+/* ══════════════════════════════════════════════════
+   INIT — fetch all from Firestore → fill Bookings{}
+══════════════════════════════════════════════════ */
+async function initFirebase() {
   setDbStatus(false, 0);
   try {
-    const rows = await SB.fetchAll();
+    const rows = await FB.fetchAll();
 
-    // wipe cache — Supabase is source of truth
+    // wipe cache — Firestore is source of truth
     Object.keys(Bookings).forEach(k => delete Bookings[k]);
 
     rows.forEach(row => {
       const key = row.date_key;
       if (!Bookings[key]) Bookings[key] = [];
-      Bookings[key].push(flattenRow(row));
+      Bookings[key].push(flattenRow({ id: row.id, ...row }));
     });
 
     saveBookingsLocal(Bookings);
     setDbStatus(true, rows.length);
-    console.log(`✅ Supabase — ${rows.length} booking(s) loaded.`);
+    console.log(`✅ Firebase — ${rows.length} booking(s) loaded.`);
     if (rows.length) console.table(rows.map(r => ({
       id: r.id, date: r.date_key, guest: r.guest_name, tour: r.tour_type,
     })));
 
   } catch (e) {
     setDbStatus(false, Object.values(Bookings).flat().length);
-    console.error('❌ Supabase init error:', e.message);
+    console.error('❌ Firebase init error:', e.message);
   }
 }
 
 /* ══════════════════════════════════════════════════
    REFRESH — re-fetch then re-render
 ══════════════════════════════════════════════════ */
-async function refreshFromSupabase() {
-  await initSupabase();
+async function refreshFromFirebase() {
+  await initFirebase();
   renderAllMonths();
   applyBookingIndicators();
 }

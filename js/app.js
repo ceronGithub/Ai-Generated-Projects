@@ -33,8 +33,8 @@ async function init() {
   setupModalListeners();
   setupBookingListeners();
 
-  // Load bookings from Supabase into cache, then refresh indicators
-  await initSupabase();
+  // Load bookings from Firebase into cache, then refresh indicators
+  await initFirebase();
   applyBookingIndicators();
 }
 

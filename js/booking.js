@@ -86,7 +86,7 @@ function getDateEventInfo(year, month, day) {
 /* ══════════════════════════════════════
    COMPILE BOOKING JSON
    One structured object — also stored as
-   raw_json in Supabase for future queries.
+   raw_json in Firestore for future queries.
 ══════════════════════════════════════ */
 function compileBookingJSON(pax, extraPax, pets, total, downpayment, ciTime, coTime, isNextDay, durationMins) {
   const nd = nextDay(_bkYear, _bkMonth, _bkDay);
@@ -315,22 +315,22 @@ async function saveBooking() {
     raw_json:            bookingJSON,
   };
 
-  // ── 4. Try Supabase ──────────────────────────────
-  let sbId    = null;
-  let sbSaved = false;
+  // ── 4. Try Firebase ──────────────────────────────
+  let fbId    = null;
+  let fbSaved = false;
 
   try {
-    console.log('📤 Inserting to Supabase:', dbRow);
-    const result = await SB.insert(dbRow);
-    console.log('📥 Supabase response:', result);
-    sbId    = result?.[0]?.id ?? null;
-    sbSaved = true;
-  } catch (sbErr) {
-    console.error('❌ Supabase error:', sbErr.message);
+    console.log('📤 Inserting to Firebase:', dbRow);
+    const result = await FB.insert(dbRow);
+    console.log('📥 Firebase response:', result);
+    fbId    = result?.[0]?.id ?? null;
+    fbSaved = true;
+  } catch (fbErr) {
+    console.error('❌ Firebase error:', fbErr.message);
   }
 
   // ── 5. Always save locally ───────────────────────
-  const entry = { ...bookingJSON, sbId };
+  const entry = { ...bookingJSON, sbId: fbId };   // sbId alias kept for UI compatibility
   if (!Bookings[_bkKey]) Bookings[_bkKey] = [];
   Bookings[_bkKey].push(entry);
   saveBookingsLocal(Bookings);
@@ -338,11 +338,11 @@ async function saveBooking() {
   // ── 6. Close & notify ───────────────────────────
   closeBookingForm();
 
-  if (sbSaved) {
+  if (fbSaved) {
     showToast(`✅ Saved: ${bookingJSON.guest.name} ☁️`);
-    await refreshFromSupabase();
+    await refreshFromFirebase();
   } else {
-    showToast(`💾 Saved locally: ${bookingJSON.guest.name} — check Supabase setup`);
+    showToast(`💾 Saved locally: ${bookingJSON.guest.name} — check Firebase setup`);
     refreshMonth(_bkMonth);
     applyBookingIndicators();
   }
@@ -406,7 +406,7 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
   const ciTime      = b.booking?.checkinTime  || b.checkinTime  || '';
   const coTime      = b.booking?.checkoutTime || b.checkoutTime || '';
   const coLabel     = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
-  const sbId        = b.sbId || null;
+  const fbId        = b.sbId || null;
 
   const hdr = document.createElement('div');
   hdr.className = 'bk-summary-card-header';
@@ -425,7 +425,7 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
     [`👥 ${totalPax} Pax`, pets ? `🐾 ${pets} Pets` : null, `💳 ₱${Number(total).toLocaleString()}`],
     [`🕐 ${to12hr(ciTime)} → ${to12hr(coTime)}`, `📅 Out: ${coLabel}`],
     [`💰 Balance: ₱${Number(balance).toLocaleString('en-PH',{minimumFractionDigits:2})}`],
-    sbId ? [`🔗 ID: ${sbId}`] : null,
+    fbId ? [`🔗 ID: ${fbId}`] : null,
   ];
 
   rows.filter(Boolean).forEach(items => {
@@ -443,12 +443,12 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
   del.className = 'bk-summary-del'; del.textContent = '×'; del.title = 'Delete';
   del.addEventListener('click', async () => {
     if (!confirm(`Delete booking for ${name}?`)) return;
-    if (sbId) {
-      try { await SB.deleteById(sbId); }
+    if (fbId) {
+      try { await FB.deleteById(fbId); }
       catch(e) { console.error('Delete error:', e.message); }
     }
     showToast('🗑 Booking deleted.');
-    await refreshFromSupabase();
+    await refreshFromFirebase();
     onDelete();
   });
 
