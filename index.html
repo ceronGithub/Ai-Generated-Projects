@@ -150,19 +150,6 @@
               <label class="bk-label">Check-in Date</label>
               <div class="bk-auto bk-date-display" id="bkCheckinDisplay">—</div>
             </div>
-            <div class="bk-field bk-field-full">
-              <label class="bk-label">Tour Type <span class="bk-req">*</span></label>
-              <div class="bk-tour-options">
-                <button class="bk-tour-btn" data-type="Day Tour">🌤 Day Tour</button>
-                <button class="bk-tour-btn" data-type="Night Tour">🌙 Night Tour</button>
-                <button class="bk-tour-btn" data-type="Over-Night">🌕 Over-Night</button>
-              </div>
-              <span class="bk-err" id="errTourType"></span>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Check-out Date <span class="bk-opt">(auto)</span></label>
-              <div class="bk-auto bk-date-display" id="bkCheckoutDisplay">—</div>
-            </div>
             <div class="bk-field">
               <label class="bk-label">Check-in Time <span class="bk-req">*</span></label>
               <input class="bk-input" id="bkCheckinTime" type="time"/>
@@ -171,6 +158,20 @@
             <div class="bk-field">
               <label class="bk-label">Check-out Time <span class="bk-opt">(auto)</span></label>
               <div class="bk-auto" id="bkCheckoutTime">—</div>
+            </div>
+            <div class="bk-field bk-field-full">
+              <label class="bk-label">Tour Type <span class="bk-req">*</span></label>
+              <div class="bk-tour-options">
+                <button class="bk-tour-btn" data-type="Day Tour">🌤 Day Tour</button>
+                <button class="bk-tour-btn" data-type="Night Tour">🌙 Night Tour</button>
+                <button class="bk-tour-btn" data-type="Over-Night">🌕 Over-Night</button>
+              </div>
+              <div class="bk-tour-hint bk-tour-hint--neutral" id="bkTourHint">🕐 Enter check-in time to see available tour types.</div>
+              <span class="bk-err" id="errTourType"></span>
+            </div>
+            <div class="bk-field bk-field-full">
+              <label class="bk-label">Check-out Date <span class="bk-opt">(auto)</span></label>
+              <div class="bk-auto bk-date-display" id="bkCheckoutDisplay">—</div>
             </div>
             <div class="bk-field">
               <label class="bk-label">Duration</label>

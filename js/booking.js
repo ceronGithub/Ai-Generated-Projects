@@ -22,19 +22,25 @@ const Bookings = loadBookingsLocal();
 /* ══════════════════════════════════════
    FORM STATE
 ══════════════════════════════════════ */
-let _bkKey      = null;
-let _bkDay      = null;
-let _bkMonth    = null;
-let _bkYear     = null;
-let _bkColor    = null;
-let _tourType   = null;
-let _editFbId   = null;   // non-null when editing an existing booking
+let _bkKey             = null;
+let _bkDay             = null;
+let _bkMonth           = null;
+let _bkYear            = null;
+let _bkColor           = null;
+let _tourType          = null;
+let _editFbId          = null;
 let _editOrigCreatedAt = null;
 
 /* ══════════════════════════════════════
    HELPERS
 ══════════════════════════════════════ */
 function pad2(n) { return String(n).padStart(2, '0'); }
+
+function toMins(hhmm) {
+  if (!hhmm) return -1;
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
 
 function addMinutesToTime(hhmm, minutes) {
   const [h, m] = hhmm.split(':').map(Number);
@@ -90,6 +96,148 @@ function getDateEventInfo(year, month, day) {
   return { type: 'weekday', icon: '📅', label: `Weekday — ${DAY_NAMES[dow]}` };
 }
 
+/* ══════════════════════════════════════════════════════
+   CHECK-IN TIME SLOT RULES
+   ─────────────────────────────────────────────────────
+   SLOT A  08:00 – 11:00  → Day Tour ✅  Night Tour ✅  Over-Night ✅
+                            checkout: same day (Day), same day (Night), next day (OVN)
+                            cell color: YELLOW  |  "New Booking" btn: VISIBLE
+
+   SLOT B  11:30 – 14:00  → Day Tour ✗   Night Tour ✅  Over-Night ✅
+                            checkout: same day for BOTH Night & OVN
+                            cell color: RED  |  "New Booking" btn: HIDDEN
+
+   SLOT C  14:01 +        → Day Tour ✗   Night Tour ✅  Over-Night ✅
+                            checkout: NEXT day for BOTH Night & OVN
+                            cell color: RED  |  "New Booking" btn: HIDDEN
+
+   Outside 08:00–open    → nothing available (too early / invalid)
+══════════════════════════════════════════════════════ */
+const SLOT_NONE = 'none';
+const SLOT_A    = 'A';   // 08:00–11:00
+const SLOT_B    = 'B';   // 11:30–14:00
+const SLOT_C    = 'C';   // 14:01+
+
+function getTimeSlot(hhmm) {
+  const mins = toMins(hhmm);
+  if (mins < 0)            return SLOT_NONE;
+  if (mins < 8 * 60)       return SLOT_NONE;        // before 8 AM
+  if (mins <= 11 * 60)     return SLOT_A;            // 08:00–11:00
+  if (mins < 11 * 60 + 30) return SLOT_NONE;        // 11:01–11:29 gap — treat as none
+  if (mins <= 14 * 60)     return SLOT_B;            // 11:30–14:00
+  return SLOT_C;                                     // 14:01+
+}
+
+function getTourAvailability(slot) {
+  if (slot === SLOT_A) return { 'Day Tour': true,  'Night Tour': true,  'Over-Night': true  };
+  if (slot === SLOT_B) return { 'Day Tour': false, 'Night Tour': true,  'Over-Night': true  };
+  if (slot === SLOT_C) return { 'Day Tour': false, 'Night Tour': true,  'Over-Night': true  };
+  return                       { 'Day Tour': false, 'Night Tour': false, 'Over-Night': false };
+}
+
+/* Is checkout on the next calendar day for a given tour type + slot? */
+function isCheckoutNextDay(tourType, slot) {
+  if (tourType === 'Day Tour')    return false;                   // always same day
+  if (tourType === 'Night Tour')  return slot === SLOT_C;         // next day only for slot C
+  if (tourType === 'Over-Night')  return (slot === SLOT_A || slot === SLOT_C); // next day for A & C
+  return false;
+}
+
+/* Duration in minutes for each tour type */
+function getTourDuration(tourType) {
+  if (tourType === 'Day Tour')   return 10 * 60;  // 10 hrs
+  if (tourType === 'Night Tour') return 10 * 60;  // 10 hrs
+  if (tourType === 'Over-Night') return 21 * 60;  // 21 hrs
+  return 10 * 60;
+}
+
+/* ══════════════════════════════════════
+   UPDATE TOUR BUTTON AVAILABILITY
+══════════════════════════════════════ */
+function updateTourAvailability() {
+  const hhmm  = getVal('bkCheckinTime');
+  const slot  = getTimeSlot(hhmm);
+  const avail = getTourAvailability(slot);
+  const hint  = document.getElementById('bkTourHint');
+
+  document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+    const type      = btn.dataset.type;
+    const available = avail[type];
+    btn.disabled    = !available;
+    btn.classList.toggle('bk-tour-btn--locked', !available);
+
+    // Deselect if current selection is no longer valid
+    if (!available && _tourType === type) {
+      btn.classList.remove('selected');
+      _tourType = null;
+      document.getElementById('bkCheckoutDisplay').textContent = '—';
+      document.getElementById('bkCheckoutTime').textContent    = '—';
+      document.getElementById('bkDuration').textContent        = '—';
+    }
+  });
+
+  // Hint message
+  if (hint) {
+    if (slot === SLOT_NONE && hhmm) {
+      if (toMins(hhmm) < 8 * 60) {
+        hint.textContent = '⛔ Too early — check-in opens at 8:00 AM.';
+        hint.className   = 'bk-tour-hint bk-tour-hint--error';
+      } else {
+        hint.textContent = '⛔ 11:01–11:29 is a gap period — try 11:30 AM or later.';
+        hint.className   = 'bk-tour-hint bk-tour-hint--error';
+      }
+    } else if (slot === SLOT_NONE) {
+      hint.textContent = '🕐 Enter check-in time to see available tour types.';
+      hint.className   = 'bk-tour-hint bk-tour-hint--neutral';
+    } else if (slot === SLOT_A) {
+      hint.textContent = '✅ 8:00–11:00 AM — Day Tour, Night Tour & Over-Night available.';
+      hint.className   = 'bk-tour-hint bk-tour-hint--success';
+    } else if (slot === SLOT_B) {
+      hint.textContent = '🌙 11:30 AM–2:00 PM — Night Tour & Over-Night only. Check-out: same day.';
+      hint.className   = 'bk-tour-hint bk-tour-hint--warning';
+    } else if (slot === SLOT_C) {
+      hint.textContent = '🌙 After 2:00 PM — Night Tour & Over-Night only. Check-out: next day.';
+      hint.className   = 'bk-tour-hint bk-tour-hint--warning';
+    }
+  }
+
+  // Update cell color on calendar
+  _applyDayCellSlotColor(slot);
+
+  // Recalc checkout if tour type already selected
+  if (_tourType) calcCheckout();
+}
+
+/* ══════════════════════════════════════
+   APPLY DAY-CELL SLOT COLOR ON CALENDAR
+   Yellow = Slot A (still accepting, some tours)
+   Red    = Slot B or C (limited, no new-booking btn)
+══════════════════════════════════════ */
+function _applyDayCellSlotColor(slot) {
+  if (!_bkKey) return;
+  const cell = _getDayCell(_bkKey);
+  if (!cell) return;
+  cell.classList.remove('slot-yellow', 'slot-red');
+  if (slot === SLOT_A) cell.classList.add('slot-yellow');
+  if (slot === SLOT_B || slot === SLOT_C) cell.classList.add('slot-red');
+}
+
+function _getDayCell(key) {
+  const cells = document.querySelectorAll('#yearGrid .day-cell:not(.other-month)');
+  for (const cell of cells) {
+    const numEl = cell.querySelector('.day-num');
+    if (!numEl) continue;
+    const cardEl = cell.closest('.month-card');
+    if (!cardEl) continue;
+    const mEl = cardEl.querySelector('.month-name');
+    if (!mEl) continue;
+    const month = MONTH_NAMES.indexOf(mEl.textContent);
+    const cellKey = toKey(AppState.year, month, parseInt(numEl.textContent));
+    if (cellKey === key) return cell;
+  }
+  return null;
+}
+
 /* ══════════════════════════════════════
    COMPILE BOOKING JSON
 ══════════════════════════════════════ */
@@ -135,7 +283,6 @@ function openBookingForm(key, day, month, year, color) {
   _bkColor = color; _tourType = null;
   _editFbId = null; _editOrigCreatedAt = null;
 
-  // Header
   document.getElementById('bkColorPill').style.background =
     `linear-gradient(180deg, ${color.accent}, ${color.light})`;
   document.getElementById('bkHeaderLabel').textContent = 'New Booking';
@@ -160,7 +307,6 @@ function openBookingForm(key, day, month, year, color) {
 
   _applyColor(color);
 
-  // Footer: show Save, hide Edit action
   document.getElementById('bkBtnSave').style.display = '';
   document.getElementById('bkBtnSave').innerHTML     = '<span>Confirm Booking</span><span class="bk-btn-arrow">→</span>';
   document.getElementById('bkBtnCancel').textContent = 'Cancel';
@@ -172,28 +318,27 @@ function openBookingForm(key, day, month, year, color) {
    OPEN EDIT FORM  (prefill existing)
 ══════════════════════════════════════ */
 function openEditForm(b, key, day, month, year, color) {
-  _bkKey   = key;  _bkDay = day; _bkMonth = month; _bkYear = year;
+  _bkKey   = key; _bkDay = day; _bkMonth = month; _bkYear = year;
   _bkColor = color;
-  _editFbId         = b.sbId || null;
+  _editFbId          = b.sbId || null;
   _editOrigCreatedAt = b.createdAt || null;
 
-  const name     = b.guest?.name       || b.guestName    || '';
-  const email    = b.guest?.email      || b.guestEmail   || '';
-  const phone    = b.guest?.phone      || b.guestPhone   || '';
-  const pax      = b.guest?.pax        ?? b.pax          ?? '';
-  const extraPax = b.guest?.extraPax   ?? b.extraPax     ?? '';
-  const pets     = b.guest?.pets       ?? b.pets         ?? '';
-  const payDate  = b.payment?.date     || b.paymentDate  || '';
-  const total    = b.payment?.total    ?? b.total        ?? '';
-  const dp       = b.payment?.downpayment ?? b.downpayment ?? '';
-  const tourType = b.booking?.tourType || b.tourType     || '';
-  const ciTime   = b.booking?.checkinTime || b.checkinTime || '';
-  const ciLabel  = b.booking?.checkinDateLabel || b.checkinDateLabel || formatDateLabel(year, month, day);
+  const name     = b.guest?.name          || b.guestName    || '';
+  const email    = b.guest?.email         || b.guestEmail   || '';
+  const phone    = b.guest?.phone         || b.guestPhone   || '';
+  const pax      = b.guest?.pax           ?? b.pax          ?? '';
+  const extraPax = b.guest?.extraPax      ?? b.extraPax     ?? '';
+  const pets     = b.guest?.pets          ?? b.pets         ?? '';
+  const payDate  = b.payment?.date        || b.paymentDate  || '';
+  const total    = b.payment?.total       ?? b.total        ?? '';
+  const dp       = b.payment?.downpayment ?? b.downpayment  ?? '';
+  const tourType = b.booking?.tourType    || b.tourType     || '';
+  const ciTime   = b.booking?.checkinTime || b.checkinTime  || '';
+  const ciLabel  = b.booking?.checkinDateLabel  || b.checkinDateLabel  || formatDateLabel(year, month, day);
   const coLabel  = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
   const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
   const dur      = b.booking?.durationHrs ?? null;
 
-  // Header
   document.getElementById('bkColorPill').style.background =
     `linear-gradient(180deg, ${color.accent}, ${color.light})`;
   document.getElementById('bkHeaderLabel').textContent = 'Edit Booking';
@@ -207,46 +352,37 @@ function openEditForm(b, key, day, month, year, color) {
   resetBookingForm();
   setFormReadonly(false);
 
-  // Prefill guest
-  setVal('bkGuestName',    name);
-  setVal('bkGuestEmail',   email);
-  setVal('bkGuestPhone',   phone);
-  setVal('bkPax',          pax);
-  setVal('bkExtraPax',     extraPax);
-  setVal('bkPets',         pets);
+  setVal('bkGuestName',   name);
+  setVal('bkGuestEmail',  email);
+  setVal('bkGuestPhone',  phone);
+  setVal('bkPax',         pax);
+  setVal('bkExtraPax',    extraPax);
+  setVal('bkPets',        pets);
   calcTotalPax();
 
-  // Prefill payment
-  setVal('bkPaymentDate',  payDate);
-  setVal('bkTotal',        total);
-  setVal('bkDownpayment',  dp);
+  setVal('bkPaymentDate', payDate);
+  setVal('bkTotal',       total);
+  setVal('bkDownpayment', dp);
   calcBalance();
 
-  // Prefill booking
   document.getElementById('bkCheckinDisplay').textContent  = ciLabel;
   document.getElementById('bkCheckoutDisplay').textContent = coLabel;
   setVal('bkCheckinTime', ciTime);
 
-  // Tour type button
   _tourType = tourType;
+  updateTourAvailability();
   document.querySelectorAll('.bk-tour-btn').forEach(b => {
     b.classList.toggle('selected', b.dataset.type === tourType);
   });
 
-  // Checkout time & duration
-  if (coTime) {
-    document.getElementById('bkCheckoutTime').textContent = to12hr(coTime);
-  }
+  if (coTime) document.getElementById('bkCheckoutTime').textContent = to12hr(coTime);
   if (dur !== null) {
     document.getElementById('bkDuration').textContent =
-      ciTime && coTime
-        ? `${dur} hrs (${to12hr(ciTime)} → ${to12hr(coTime)})`
-        : `${dur} hrs`;
+      ciTime && coTime ? `${dur} hrs (${to12hr(ciTime)} → ${to12hr(coTime)})` : `${dur} hrs`;
   }
 
   _applyColor(color);
 
-  // Footer: Save button = "Save Changes"
   document.getElementById('bkBtnSave').style.display = '';
   document.getElementById('bkBtnSave').innerHTML     = '<span>Save Changes</span><span class="bk-btn-arrow">→</span>';
   document.getElementById('bkBtnCancel').textContent = 'Cancel';
@@ -258,13 +394,9 @@ function openEditForm(b, key, day, month, year, color) {
    OPEN VIEW FORM  (read-only)
 ══════════════════════════════════════ */
 function openViewForm(b, key, day, month, year, color) {
-  // Re-use edit logic to prefill, then lock fields
   openEditForm(b, key, day, month, year, color);
-
   document.getElementById('bkHeaderLabel').textContent = 'View Booking';
   setFormReadonly(true);
-
-  // Footer: hide Save, just Close
   document.getElementById('bkBtnSave').style.display = 'none';
   document.getElementById('bkBtnCancel').textContent  = 'Close';
 }
@@ -273,21 +405,14 @@ function openViewForm(b, key, day, month, year, color) {
    READONLY TOGGLE
 ══════════════════════════════════════ */
 function setFormReadonly(readonly) {
-  const inputs = document.querySelectorAll(
-    '#bookingModal input, #bookingModal select, #bookingModal textarea'
-  );
-  inputs.forEach(el => {
-    el.readOnly  = readonly;
-    el.disabled  = readonly;
-  });
+  document.querySelectorAll('#bookingModal input, #bookingModal select, #bookingModal textarea')
+    .forEach(el => { el.readOnly = readonly; el.disabled = readonly; });
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     btn.disabled = readonly;
     btn.style.pointerEvents = readonly ? 'none' : '';
-    btn.style.opacity = readonly ? '0.65' : '';
+    btn.style.opacity       = readonly ? '0.65' : '';
   });
-  // Visual cue on the modal
-  const modal = document.getElementById('bookingModal');
-  modal.classList.toggle('bk-modal--readonly', readonly);
+  document.getElementById('bookingModal').classList.toggle('bk-modal--readonly', readonly);
 }
 
 /* ══════════════════════════════════════
@@ -322,6 +447,7 @@ function resetBookingForm() {
   document.getElementById('bkBalance').textContent  = '—';
   document.getElementById('bkBalance').className    = 'bk-auto bk-balance';
   _tourType = null;
+  updateTourAvailability();
 }
 
 /* ══════════════════════════════════════
@@ -345,22 +471,22 @@ function calcBalance() {
 function calcCheckout() {
   if (!_tourType) return;
   const ci           = getVal('bkCheckinTime');
-  const isNextDay    = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  const durationMins = _tourType === 'Over-Night' ? 21*60 : 10*60;
+  const slot         = getTimeSlot(ci);
+  const nextDay_flag = isCheckoutNextDay(_tourType, slot);
+  const durationMins = getTourDuration(_tourType);
   const nd           = nextDay(_bkYear, _bkMonth, _bkDay);
 
   document.getElementById('bkCheckoutDisplay').textContent =
-    isNextDay ? nd.label : formatDateLabel(_bkYear, _bkMonth, _bkDay);
+    nextDay_flag ? nd.label : formatDateLabel(_bkYear, _bkMonth, _bkDay);
 
   if (ci) {
     const co = addMinutesToTime(ci, durationMins);
     document.getElementById('bkCheckoutTime').textContent = to12hr(co);
-    document.getElementById('bkDuration').textContent =
+    document.getElementById('bkDuration').textContent     =
       `${durationMins/60} hrs (${to12hr(ci)} → ${to12hr(co)})`;
   } else {
-    document.getElementById('bkCheckoutTime').textContent =
-      `(+${durationMins/60} hrs from check-in time)`;
-    document.getElementById('bkDuration').textContent = `${durationMins/60} hrs`;
+    document.getElementById('bkCheckoutTime').textContent = `(+${durationMins/60} hrs from check-in)`;
+    document.getElementById('bkDuration').textContent     = `${durationMins/60} hrs`;
   }
 }
 
@@ -370,6 +496,7 @@ function calcCheckout() {
 function setupTourButtons() {
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (btn.disabled) return;
       document.querySelectorAll('.bk-tour-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       _tourType = btn.dataset.type;
@@ -390,16 +517,16 @@ function validate() {
     if (msg) { if(er) er.textContent = msg; if(el) el.classList.add('bk-error'); ok = false; }
     else      { if(er) er.textContent = '';  if(el) el.classList.remove('bk-error'); }
   }
-  err('bkGuestName',  'errGuestName',  !getVal('bkGuestName').trim()  ? 'Required.' : '');
+  err('bkGuestName',  'errGuestName',  !getVal('bkGuestName').trim()       ? 'Required.' : '');
   const email = getVal('bkGuestEmail').trim();
   err('bkGuestEmail', 'errGuestEmail',
     !email ? 'Required.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Invalid email.' : '');
-  err('bkGuestPhone', 'errGuestPhone', !getVal('bkGuestPhone').trim() ? 'Required.' : '');
-  err('bkPax',        'errPax',        parseInt(getVal('bkPax')) < 1  ? 'Min 1.' : '');
-  err('bkPaymentDate','errPaymentDate',!getVal('bkPaymentDate')       ? 'Required.' : '');
-  err('bkTotal',      'errTotal',      parseFloat(getVal('bkTotal')) <= 0 ? 'Required.' : '');
-  err('bkDownpayment','errDownpayment',getVal('bkDownpayment') === ''  ? 'Required.' : '');
-  err('bkCheckinTime','errCheckinTime',!getVal('bkCheckinTime')        ? 'Required.' : '');
+  err('bkGuestPhone', 'errGuestPhone', !getVal('bkGuestPhone').trim()      ? 'Required.' : '');
+  err('bkPax',        'errPax',        parseInt(getVal('bkPax')) < 1       ? 'Min 1.' : '');
+  err('bkPaymentDate','errPaymentDate',!getVal('bkPaymentDate')            ? 'Required.' : '');
+  err('bkTotal',      'errTotal',      parseFloat(getVal('bkTotal')) <= 0  ? 'Required.' : '');
+  err('bkDownpayment','errDownpayment',getVal('bkDownpayment') === ''      ? 'Required.' : '');
+  err('bkCheckinTime','errCheckinTime',!getVal('bkCheckinTime')            ? 'Required.' : '');
   const te = document.getElementById('errTourType');
   if (!_tourType) { if(te) te.textContent = 'Select tour type.'; ok = false; }
   else            { if(te) te.textContent = ''; }
@@ -422,13 +549,14 @@ async function saveBooking() {
   const total        = parseFloat(getVal('bkTotal'))       || 0;
   const downpayment  = parseFloat(getVal('bkDownpayment')) || 0;
   const ciTime       = getVal('bkCheckinTime');
-  const isNextDay    = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  const durationMins = _tourType === 'Over-Night' ? 21*60 : 10*60;
+  const slot         = getTimeSlot(ciTime);
+  const nextDay_flag = isCheckoutNextDay(_tourType, slot);
+  const durationMins = getTourDuration(_tourType);
   const coTime       = addMinutesToTime(ciTime, durationMins);
 
   const bookingJSON = compileBookingJSON(
     pax, extraPax, pets, total, downpayment,
-    ciTime, coTime, isNextDay, durationMins
+    ciTime, coTime, nextDay_flag, durationMins
   );
 
   const dbRow = {
@@ -461,11 +589,9 @@ async function saveBooking() {
 
   try {
     if (isEdit) {
-      console.log('📝 Updating Firebase doc:', fbId, dbRow);
       await FB.updateById(fbId, dbRow);
       fbSaved = true;
     } else {
-      console.log('📤 Inserting to Firebase:', dbRow);
       const result = await FB.insert(dbRow);
       fbId    = result?.[0]?.id ?? null;
       fbSaved = true;
@@ -474,10 +600,8 @@ async function saveBooking() {
     console.error('❌ Firebase error:', fbErr.message);
   }
 
-  // Update local cache
   const entry = { ...bookingJSON, sbId: fbId };
   if (isEdit) {
-    // Replace the existing entry in cache
     if (Bookings[_bkKey]) {
       const idx = Bookings[_bkKey].findIndex(b => b.sbId === fbId);
       if (idx > -1) Bookings[_bkKey][idx] = entry;
@@ -488,7 +612,6 @@ async function saveBooking() {
     Bookings[_bkKey].push(entry);
   }
   saveBookingsLocal(Bookings);
-
   closeBookingForm();
 
   if (fbSaved) {
@@ -506,6 +629,8 @@ async function saveBooking() {
 
 /* ══════════════════════════════════════
    BOOKING LIST
+   Hides "+ New Booking" for Slot B & C
+   (date is already full / late check-in)
 ══════════════════════════════════════ */
 function openBookingList(key, day, month, year, color) {
   const list = Bookings[key] || [];
@@ -518,7 +643,7 @@ function openBookingList(key, day, month, year, color) {
 
   if (!list.length) {
     const empty = document.createElement('div');
-    empty.className = 'bk-list-empty';
+    empty.className   = 'bk-list-empty';
     empty.textContent = 'No bookings yet for this date.';
     inner.appendChild(empty);
   } else {
@@ -531,13 +656,49 @@ function openBookingList(key, day, month, year, color) {
   }
 
   body.appendChild(inner);
-  document.getElementById('bkListAddNew').onclick = () => {
-    closeBookingList();
-    openBookingForm(key, day, month, year, color);
-  };
-  document.getElementById('bkListAddNew').style.background =
-    `linear-gradient(135deg, ${color.accent}, ${color.light})`;
+
+  // Determine if "+ New Booking" should be shown based on the latest booking's check-in time
+  const latestCiTime = _getLatestCheckinTime(key);
+  const slot         = getTimeSlot(latestCiTime);
+  const hideAddNew   = (slot === SLOT_B || slot === SLOT_C);
+
+  const addNewBtn = document.getElementById('bkListAddNew');
+  const footer    = addNewBtn.closest('.bk-list-footer');
+
+  if (hideAddNew) {
+    addNewBtn.style.display = 'none';
+    // Show a notice instead
+    let notice = footer.querySelector('.bk-slot-notice');
+    if (!notice) {
+      notice = document.createElement('div');
+      notice.className = 'bk-slot-notice';
+      footer.appendChild(notice);
+    }
+    notice.textContent = slot === SLOT_B
+      ? '🔴 Check-in is 11:30 AM–2:00 PM — this date is no longer accepting new bookings.'
+      : '🔴 Check-in is after 2:00 PM — this date is no longer accepting new bookings.';
+    notice.style.display = '';
+  } else {
+    addNewBtn.style.display = '';
+    addNewBtn.onclick = () => {
+      closeBookingList();
+      openBookingForm(key, day, month, year, color);
+    };
+    addNewBtn.style.background = `linear-gradient(135deg, ${color.accent}, ${color.light})`;
+    const notice = footer.querySelector('.bk-slot-notice');
+    if (notice) notice.style.display = 'none';
+  }
+
   document.getElementById('bkListOverlay').classList.add('open');
+}
+
+function _getLatestCheckinTime(key) {
+  const list = Bookings[key] || [];
+  if (!list.length) return null;
+  // Return the check-in time of the most recently created booking
+  return list[list.length - 1]?.booking?.checkinTime
+      || list[list.length - 1]?.checkinTime
+      || null;
 }
 
 function closeBookingList() {
@@ -545,43 +706,46 @@ function closeBookingList() {
 }
 
 /* ══════════════════════════════════════
-   SUMMARY CARD  (with Edit / View / Delete)
+   SUMMARY CARD  (Edit / View / Delete)
 ══════════════════════════════════════ */
 function buildSummaryCard(b, key, idx, color, day, month, year, onDelete) {
   const card = document.createElement('div');
   card.className = 'bk-summary-card';
 
-  const name     = b.guest?.name       || b.guestName    || '—';
-  const email    = b.guest?.email      || b.guestEmail   || '—';
-  const phone    = b.guest?.phone      || b.guestPhone   || '—';
-  const totalPax = b.guest?.totalPax   || b.totalPax     || '—';
-  const pets     = b.guest?.pets       ?? b.pets         ?? 0;
-  const total    = b.payment?.total    ?? b.total        ?? 0;
-  const balance  = b.payment?.balance  ?? b.balance      ?? 0;
-  const tourType = b.booking?.tourType || b.tourType     || '—';
+  const name     = b.guest?.name          || b.guestName  || '—';
+  const email    = b.guest?.email         || b.guestEmail  || '—';
+  const phone    = b.guest?.phone         || b.guestPhone  || '—';
+  const totalPax = b.guest?.totalPax      || b.totalPax    || '—';
+  const pets     = b.guest?.pets          ?? b.pets        ?? 0;
+  const total    = b.payment?.total       ?? b.total       ?? 0;
+  const balance  = b.payment?.balance     ?? b.balance     ?? 0;
+  const tourType = b.booking?.tourType    || b.tourType    || '—';
   const ciTime   = b.booking?.checkinTime  || b.checkinTime  || '';
   const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
   const coLabel  = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
   const fbId     = b.sbId || null;
 
-  // ── Header row ──
+  // Slot badge on the card
+  const slot      = getTimeSlot(ciTime);
+  const slotLabel = { A: '🟡 Morning', B: '🔴 Midday', C: '🔴 Afternoon', none: '' }[slot] || '';
+
   const hdr = document.createElement('div');
   hdr.className = 'bk-summary-card-header';
 
   const nameEl = document.createElement('div');
-  nameEl.className = 'bk-summary-name';
+  nameEl.className   = 'bk-summary-name';
   nameEl.textContent = name;
 
   const badge = document.createElement('span');
-  badge.className = 'bk-summary-badge';
-  badge.textContent = tourType;
+  badge.className        = 'bk-summary-badge';
+  badge.textContent      = tourType;
   badge.style.background = color.accent;
 
   hdr.append(nameEl, badge);
   card.appendChild(hdr);
 
-  // ── Info rows ──
   const rows = [
+    slotLabel ? [`⏰ Slot: ${slotLabel}`] : null,
     [`📧 ${email}`, `📞 ${phone}`],
     [`👥 ${totalPax} Pax`, pets ? `🐾 ${pets} Pets` : null, `💳 ₱${Number(total).toLocaleString()}`],
     [`🕐 ${to12hr(ciTime)} → ${to12hr(coTime)}`, `📅 Out: ${coLabel}`],
@@ -594,46 +758,33 @@ function buildSummaryCard(b, key, idx, color, day, month, year, onDelete) {
     row.className = 'bk-summary-row';
     items.filter(Boolean).forEach(text => {
       const el = document.createElement('div');
-      el.className = 'bk-summary-item';
+      el.className   = 'bk-summary-item';
       el.textContent = text;
       row.appendChild(el);
     });
     card.appendChild(row);
   });
 
-  // ── Action buttons row ──
+  // Action buttons
   const actions = document.createElement('div');
   actions.className = 'bk-card-actions';
 
-  // View button
   const viewBtn = document.createElement('button');
   viewBtn.className = 'bk-card-btn bk-card-btn--view';
   viewBtn.innerHTML = '👁 View';
-  viewBtn.addEventListener('click', () => {
-    closeBookingList();
-    openViewForm(b, key, day, month, year, color);
-  });
+  viewBtn.addEventListener('click', () => { closeBookingList(); openViewForm(b, key, day, month, year, color); });
 
-  // Edit button
   const editBtn = document.createElement('button');
   editBtn.className = 'bk-card-btn bk-card-btn--edit';
   editBtn.innerHTML = '✏️ Edit';
-  editBtn.style.setProperty('--edit-color', color.accent);
-  editBtn.addEventListener('click', () => {
-    closeBookingList();
-    openEditForm(b, key, day, month, year, color);
-  });
+  editBtn.addEventListener('click', () => { closeBookingList(); openEditForm(b, key, day, month, year, color); });
 
-  // Delete button
   const delBtn = document.createElement('button');
   delBtn.className = 'bk-card-btn bk-card-btn--delete';
   delBtn.innerHTML = '🗑 Delete';
   delBtn.addEventListener('click', async () => {
     if (!confirm(`Delete booking for ${name}?`)) return;
-    if (fbId) {
-      try { await FB.deleteById(fbId); }
-      catch(e) { console.error('Delete error:', e.message); }
-    }
+    if (fbId) { try { await FB.deleteById(fbId); } catch(e) { console.error('Delete error:', e.message); } }
     showToast('🗑 Booking deleted.');
     await refreshFromFirebase();
     onDelete();
@@ -641,7 +792,6 @@ function buildSummaryCard(b, key, idx, color, day, month, year, onDelete) {
 
   actions.append(viewBtn, editBtn, delBtn);
   card.appendChild(actions);
-
   return card;
 }
 
@@ -658,13 +808,25 @@ function applyBookingIndicators() {
   document.querySelectorAll('#yearGrid .day-cell:not(.other-month)').forEach(cell => {
     const numEl = cell.querySelector('.day-num');
     if (!numEl) return;
-    const card = cell.closest('.month-card');
-    if (!card) return;
-    const mEl  = card.querySelector('.month-name');
+    const cardEl = cell.closest('.month-card');
+    if (!cardEl) return;
+    const mEl = cardEl.querySelector('.month-name');
     if (!mEl) return;
     const month = MONTH_NAMES.indexOf(mEl.textContent);
     const key   = toKey(AppState.year, month, parseInt(numEl.textContent));
-    cell.classList.toggle('has-booking', !!(Bookings[key]?.length > 0));
+    const list  = Bookings[key] || [];
+
+    cell.classList.toggle('has-booking', list.length > 0);
+
+    // Re-apply slot color from the last booking's check-in time
+    cell.classList.remove('slot-yellow', 'slot-red');
+    if (list.length > 0) {
+      const lastCi = list[list.length - 1]?.booking?.checkinTime
+                  || list[list.length - 1]?.checkinTime || '';
+      const slot = getTimeSlot(lastCi);
+      if (slot === SLOT_A)                      cell.classList.add('slot-yellow');
+      if (slot === SLOT_B || slot === SLOT_C)   cell.classList.add('slot-red');
+    }
   });
 }
 
@@ -689,6 +851,9 @@ function setupBookingListeners() {
   document.getElementById('bkExtraPax').addEventListener('input', calcTotalPax);
   document.getElementById('bkTotal').addEventListener('input', calcBalance);
   document.getElementById('bkDownpayment').addEventListener('input', calcBalance);
-  document.getElementById('bkCheckinTime').addEventListener('change', calcCheckout);
+  document.getElementById('bkCheckinTime').addEventListener('change', () => {
+    updateTourAvailability();
+    calcCheckout();
+  });
   setupTourButtons();
 }
