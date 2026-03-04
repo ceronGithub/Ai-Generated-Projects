@@ -22,6 +22,6 @@ multiplication, Addition, game : https://matthh-el-multiplication-game.netlify.a
 <br>
 victorias haven mailer : https://hv-mailer.netlify.app/
 <br>
-victorias haven book recorder : 
+victorias haven book recorder : https://hv-book-record.netlify.app/
 
 
