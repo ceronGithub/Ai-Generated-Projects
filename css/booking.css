@@ -50,7 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 28px 30px !important;
+  padding: 24px 28px 20px;
   border-bottom: 1px solid rgba(0,0,0,0.07);
   flex-shrink: 0;
   gap: 12px;
@@ -67,8 +67,6 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
-  padding-top: 8px;
-  padding-bottom: 8px;
 }
 .bk-color-pill {
   width: 8px;
@@ -553,215 +551,26 @@
   border: 1.5px solid #ffe066;
 }
 /* ══════════════════════════════════════
-   SUMMARY CARD — ACTION BUTTONS
+   ADDITIONAL CHARGES + FINAL TOTAL
 ══════════════════════════════════════ */
-.bk-card-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(0,0,0,0.06);
-}
-
-.bk-card-btn {
-  flex: 1;
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-family: 'Nunito', sans-serif;
+.bk-additional {
   font-size: 12px;
   font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  transition: all 0.16s ease;
-  cursor: pointer;
-  border: 1.5px solid transparent;
-}
-
-/* View */
-.bk-card-btn--view {
-  background: #f0f4ff;
-  color: #4e6ef2;
-  border-color: #c8d4ff;
-}
-.bk-card-btn--view:hover {
-  background: #4e6ef2;
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(78,110,242,0.28);
-}
-
-/* Edit */
-.bk-card-btn--edit {
-  background: #f3f0ff;
-  color: #7c6af4;
-  border-color: #d0caff;
-}
-.bk-card-btn--edit:hover {
-  background: #7c6af4;
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(124,106,244,0.28);
-}
-
-/* Delete */
-.bk-card-btn--delete {
-  background: #fff0f3;
-  color: #e04060;
-  border-color: #ffc8d4;
-}
-.bk-card-btn--delete:hover {
-  background: #e04060;
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(224,64,96,0.28);
-}
-
-/* ══════════════════════════════════════
-   BOOKING FORM — READONLY / VIEW MODE
-══════════════════════════════════════ */
-.bk-modal--readonly .bk-body {
-  background: #fafafa;
-}
-
-.bk-modal--readonly .bk-input,
-.bk-modal--readonly input[disabled],
-.bk-modal--readonly input[readonly] {
-  background: #f5f5f8;
-  color: #555570;
-  border-color: rgba(0,0,0,0.06);
-  cursor: default;
-  pointer-events: none;
-}
-
-.bk-modal--readonly .bk-input:focus {
-  border-color: rgba(0,0,0,0.06);
-  box-shadow: none;
-}
-
-.bk-modal--readonly .bk-header-label {
-  color: #4e6ef2;
-}
-
-.bk-modal--readonly .bk-section-title {
-  opacity: 0.75;
-}
-
-/* View mode banner strip under header */
-.bk-modal--readonly .bk-modal-header::after {
-  content: '👁 View Only — No changes will be saved';
-  display: block;
-  position: absolute;
-  bottom: -1px;
-  left: 0; right: 0;
-  background: #f0f4ff;
-  color: #4e6ef2;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-align: center;
-  padding: 5px;
-  border-bottom: 1px solid #c8d4ff;
-}
-
-.bk-modal-header {
-  position: relative;
-}
-
-/* ══════════════════════════════════════
-   TOUR HINT MESSAGE
-══════════════════════════════════════ */
-.bk-tour-hint {
-  margin-top: 8px;
-  padding: 9px 13px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.45;
-  letter-spacing: 0.2px;
-}
-.bk-tour-hint--neutral {
-  background: #f5f5f8;
-  color: #9996b0;
-  border: 1.5px solid #e8e8f0;
-}
-.bk-tour-hint--success {
-  background: #f0fff4;
-  color: #1a7a48;
-  border: 1.5px solid #b8f0ce;
-}
-.bk-tour-hint--warning {
-  background: #fffbe0;
-  color: #a07800;
-  border: 1.5px solid #ffe066;
-}
-.bk-tour-hint--error {
-  background: #fff0f3;
-  color: #c0324f;
-  border: 1.5px solid #ffd6df;
-}
-
-/* ══════════════════════════════════════
-   LOCKED TOUR BUTTON
-══════════════════════════════════════ */
-.bk-tour-btn--locked {
-  opacity: 0.38;
-  cursor: not-allowed !important;
-  pointer-events: none;
-  text-decoration: line-through;
-}
-
-/* ══════════════════════════════════════
-   DAY CELL SLOT COLORS
-   slot-yellow = Slot A (8–11 AM) — still open
-   slot-red    = Slot B/C (11:30 AM+) — no new bookings
-══════════════════════════════════════ */
-.day-cell.slot-yellow {
-  background: rgba(255, 214, 0, 0.22) !important;
-  box-shadow: inset 0 0 0 2px rgba(255, 193, 7, 0.55);
-}
-.day-cell.slot-yellow .day-num {
-  color: #8a6500 !important;
-  font-weight: 700;
-}
-.day-cell.slot-yellow::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-cell);
-  background: radial-gradient(circle at 50% 50%, rgba(255,214,0,0.18) 0%, transparent 75%);
-  pointer-events: none;
-}
-
-.day-cell.slot-red {
-  background: rgba(224, 64, 96, 0.15) !important;
-  box-shadow: inset 0 0 0 2px rgba(224, 64, 96, 0.45);
-}
-.day-cell.slot-red .day-num {
-  color: #c0324f !important;
-  font-weight: 700;
-}
-.day-cell.slot-red::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-cell);
-  background: radial-gradient(circle at 50% 50%, rgba(224,64,96,0.13) 0%, transparent 75%);
-  pointer-events: none;
-}
-
-/* ══════════════════════════════════════
-   BOOKING LIST — SLOT NOTICE FOOTER MSG
-══════════════════════════════════════ */
-.bk-slot-notice {
-  font-size: 12px;
-  font-weight: 700;
-  color: #c0324f;
-  background: #fff0f3;
-  border: 1.5px solid #ffd6df;
-  border-radius: 10px;
-  padding: 10px 14px;
-  text-align: center;
+  color: #ff8c42;
+  background: #fff8f0;
+  border-color: #ffd9c0;
+  flex-wrap: wrap;
+  gap: 4px;
   line-height: 1.5;
+  padding: 10px 13px;
+}
+
+.bk-final-total {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a1a2e;
+  background: linear-gradient(135deg, #f3f0ff, #fff0f3);
+  border-color: #d0caff;
+  border-width: 2px;
+  letter-spacing: -0.3px;
 }
