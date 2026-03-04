@@ -80,6 +80,95 @@ const KeywordHandler = (() => {
   }
 
   /**
+   * Is this a date keyword?
+   * e.g. "date", "date :", "printed date :", "Date:"
+   */
+  function isDateKw(kwNorm) {
+    return /\bdate\b/.test(kwNorm);
+  }
+
+  /**
+   * Is this a time keyword?
+   * e.g. "time", "time :", "Time"
+   */
+  function isTimeKw(kwNorm) {
+    return /\btime\b/.test(kwNorm);
+  }
+
+  /**
+   * Is this a zone keyword?
+   * e.g. "zone", "zone :", "Zone"
+   */
+  function isZoneKw(kwNorm) {
+    return /\bzone\b/.test(kwNorm);
+  }
+
+  // ── DATE-ONLY REGEX ──────────────────────────────────────────────────────
+  // Matches d/m/yyyy or dd/mm/yyyy — date part ONLY, no time component.
+  // No leading-digit guard — table rows jam RefNo directly against the date.
+  const DATE_ONLY_RE = /(\d{1,2}\/\d{1,2}\/\d{4})/g;
+
+  // ── TIME-ONLY REGEX ──────────────────────────────────────────────────────
+  // Matches ONLY values with exactly 2 colons: H:MM:SS or HH:MM:SS[AM/PM]
+  // This excludes dates (slashes) and single-colon values.
+  const TIME_ONLY_RE = /\b(\d{1,2}:\d{2}:\d{2}(?:\s*[AaPp][Mm])?)\b/g;
+
+  // ── ZONE-CODE REGEX ──────────────────────────────────────────────────────
+  // Extracts the highway zone code that appears immediately before "Total"
+  // in each transaction row. Zone codes are NOT followed by digits (to
+  // distinguish them from E-SI numbers like NAIAX000160425643).
+  const ZONE_CODES_RE = /(SKYWAY|NAIAX|SLEX|TPLEX|SIDC|MMSS3|MCX)(?!\d)Total/g;
+
+  /**
+   * Scan entire page text for all date-only values (no time component).
+   * Returns string[] deduplicated — e.g. ["3/2/2026", "02/01/2026"].
+   */
+  function extractAllDates(text) {
+    const seen = new Set();
+    const dates = [];
+    DATE_ONLY_RE.lastIndex = 0;
+    let m;
+    while ((m = DATE_ONLY_RE.exec(text)) !== null) {
+      const val = m[1].trim();
+      if (!seen.has(val)) { seen.add(val); dates.push(val); }
+    }
+    return dates;
+  }
+
+  /**
+   * Scan entire page text for all time-only values (exactly 2 colons).
+   * Returns string[] deduplicated — e.g. ["16:41:37", "11:24:05AM"].
+   */
+  function extractAllTimes(text) {
+    const seen = new Set();
+    const times = [];
+    TIME_ONLY_RE.lastIndex = 0;
+    let m;
+    while ((m = TIME_ONLY_RE.exec(text)) !== null) {
+      const val = m[1].trim();
+      if (!seen.has(val)) { seen.add(val); times.push(val); }
+    }
+    return times;
+  }
+
+  /**
+   * Scan entire page text for all Zone codes that appear directly before
+   * "Total" in transaction rows (e.g. NAIAX, SKYWAY, SLEX).
+   * Returns string[] deduplicated.
+   */
+  function extractAllZones(text) {
+    const seen = new Set();
+    const zones = [];
+    ZONE_CODES_RE.lastIndex = 0;
+    let m;
+    while ((m = ZONE_CODES_RE.exec(text)) !== null) {
+      const val = m[1].trim();
+      if (!seen.has(val)) { seen.add(val); zones.push(val); }
+    }
+    return zones;
+  }
+
+  /**
    * Build the regex that locates a keyword label in raw PDF text.
    *
    * colonPart strategy:
@@ -366,6 +455,57 @@ const KeywordHandler = (() => {
           const type   = classifyKeyword(keyword);
           const kwNorm = normalizeKw(keyword).toLowerCase();
 
+          // ── Special handling: DATE keyword ─────────────────────────────
+          // Scans the ENTIRE page text for all date-only values (d/m/yyyy).
+          // Outputs the date portion ONLY — no time component attached.
+          // e.g. "3/2/2026" from "Printed Date : 3/2/2026 11:24:05AM"
+          //      "02/01/2026" from table row "02/01/2026 16:41:37 ..."
+          if (isDateKw(kwNorm)) {
+            const dates = extractAllDates(text);
+            for (const val of dates) {
+              const key = val.toLowerCase().replace(/[\s,$]/g, '').slice(0, 60);
+              if (!seen.has(key)) { seen.add(key); found.push(val); }
+            }
+            for (const ctx of found) {
+              results.push({ page, filename, keyword, contexts: [ctx], closestContext: ctx });
+            }
+            continue; // next keyword
+          }
+
+          // ── Special handling: TIME keyword ─────────────────────────────
+          // Matches ONLY values with exactly 2 colons: H:MM:SS or HH:MM:SS[AM/PM].
+          // e.g. "16:41:37", "11:24:05AM" — never captures dates (slashes only).
+          if (isTimeKw(kwNorm)) {
+            const times = extractAllTimes(text);
+            for (const t of times) {
+              const tk = t.toLowerCase().replace(/[\s]/g, '');
+              if (!seen.has(tk)) {
+                seen.add(tk);
+                results.push({ page, filename, keyword, contexts: [t], closestContext: t });
+              }
+            }
+            continue; // next keyword
+          }
+
+          // ── Special handling: ZONE keyword ─────────────────────────────
+          // In this PDF the column headers are stored in reverse order in the
+          // raw text stream, so a normal label-search on "Zone" would land on
+          // the wrong column (TransNo values). Instead we extract zone codes
+          // (NAIAX, SKYWAY, SLEX, TPLEX, SIDC, MMSS3, MCX) that appear
+          // directly before "Total" at the end of each transaction row.
+          if (isZoneKw(kwNorm)) {
+            const zones = extractAllZones(text);
+            for (const z of zones) {
+              const key = z.toLowerCase();
+              if (!seen.has(key)) { seen.add(key); found.push(z); }
+            }
+            for (const ctx of found) {
+              results.push({ page, filename, keyword, contexts: [ctx], closestContext: ctx });
+            }
+            continue; // next keyword
+          }
+
+          // ── Normal keyword extraction ───────────────────────────────────
           let m;
           while ((m = regex.exec(text)) !== null) {
             const matchEnd = m.index + m[0].length;
