@@ -12,6 +12,9 @@ upload all code files. and type in "here are my codes. And save those as the ori
 # supabase 
 db password : MxacRsEwzJe51J0b
 
+# supabase db of victorias haven scheduler
+db password : 687uyruydTjFwB4e
+
 # Websites
 PDF-extractor : https://matth-el-pdf-extractor-v1.netlify.app/
 <br>
