@@ -9,6 +9,9 @@ if you meet the desired design and function "save this as the new original"
 # claude AI
 upload all code files. and type in "here are my codes. And save those as the original."
 
+# supabase 
+db password : MxacRsEwzJe51J0b
+
 # Websites
 PDF-extractor : https://matth-el-pdf-extractor-v1.netlify.app/
 <br>
