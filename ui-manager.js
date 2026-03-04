@@ -198,11 +198,19 @@ const UIManager = (() => {
     const item = document.createElement('div');
     item.className = 'result-item result-item--picker';
 
+    // Live array so edits are reflected when picking or recording both
+    const editedValues = [...values];
+
     const optionsHtml = values.map((v, i) => `
-      <button class="pick-option" data-idx="${i}" title="${escapeHtml(v)}">
-        <span class="pick-dot"></span>
-        <span class="pick-label">${escapeHtml(v)}</span>
-      </button>
+      <div class="pick-option-wrap" data-idx="${i}">
+        <button class="pick-option" data-idx="${i}" title="${escapeHtml(v)}">
+          <span class="pick-dot"></span>
+          <span class="pick-label">${escapeHtml(v)}</span>
+        </button>
+        <button class="pick-edit-btn" data-idx="${i}" title="Edit this value">
+          <span class="pick-edit-icon">✎</span><span class="pick-edit-label">Edit</span>
+        </button>
+      </div>
     `).join('');
 
     item.innerHTML = `
@@ -222,10 +230,74 @@ const UIManager = (() => {
       <div class="result-text pick-chosen" style="display:none"></div>
     `;
 
+    // ── Helper: open inline editor for a pick-option-wrap ──────────────────
+    function openInlineEditor(wrap) {
+      const idx      = +wrap.dataset.idx;
+      const pickBtn  = wrap.querySelector('.pick-option');
+      const editBtn  = wrap.querySelector('.pick-edit-btn');
+
+      // Don't open a second editor if already editing
+      if (wrap.querySelector('.pick-inline-editor')) return;
+
+      pickBtn.style.display = 'none';
+      editBtn.style.display = 'none';
+
+      const editor = document.createElement('div');
+      editor.className = 'pick-inline-editor';
+      editor.innerHTML = `
+        <input class="pick-edit-input" type="text" value="${escapeHtml(editedValues[idx])}" spellcheck="false" />
+        <div class="pick-edit-actions">
+          <button class="pick-save-btn">✓ Save</button>
+          <button class="pick-cancel-btn">✕ Cancel</button>
+        </div>
+      `;
+      wrap.appendChild(editor);
+
+      const input     = editor.querySelector('.pick-edit-input');
+      const saveBtn   = editor.querySelector('.pick-save-btn');
+      const cancelBtn = editor.querySelector('.pick-cancel-btn');
+
+      // Focus + select all
+      requestAnimationFrame(() => { input.focus(); input.select(); });
+
+      function closeEditor(save) {
+        if (save) {
+          const newVal = input.value.trim();
+          if (newVal) {
+            editedValues[idx] = newVal;
+            // Update the visible label on the pick button
+            pickBtn.querySelector('.pick-label').textContent = newVal;
+            pickBtn.title = newVal;
+          }
+        }
+        editor.remove();
+        pickBtn.style.display = '';
+        editBtn.style.display = '';
+      }
+
+      saveBtn.addEventListener('click', () => closeEditor(true));
+      cancelBtn.addEventListener('click', () => closeEditor(false));
+      // Enter = save, Escape = cancel
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  { e.preventDefault(); closeEditor(true);  }
+        if (e.key === 'Escape') { e.preventDefault(); closeEditor(false); }
+      });
+    }
+
+    // ── Edit button click ───────────────────────────────────────────────────
+    item.querySelectorAll('.pick-edit-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation(); // don't bubble to the pick-option
+        const wrap = btn.closest('.pick-option-wrap');
+        openInlineEditor(wrap);
+      });
+    });
+
     // ── Option click → pick one value ──────────────────────────────────────
     item.querySelectorAll('.pick-option').forEach(btn => {
       btn.addEventListener('click', () => {
-        const chosen = values[+btn.dataset.idx];
+        const idx    = +btn.dataset.idx;
+        const chosen = editedValues[idx];   // use edited value
 
         // Mark selected
         item.querySelectorAll('.pick-option').forEach(b => b.classList.remove('pick-option--selected'));
@@ -261,12 +333,12 @@ const UIManager = (() => {
       setTimeout(() => {
         optionsEl.style.display = 'none';
         bothBtn.style.display   = 'none';
-        // Display all values, one per line
-        chosenEl.textContent = values.join('\n');
+        // Display all edited values, one per line
+        chosenEl.textContent = editedValues.join('\n');
         chosenEl.style.display = '';
         chosenEl.classList.add('pick-chosen--in');
         item.classList.remove('result-item--picker');
-        item.querySelector('.pick-badge').textContent = `✓ ${values.length} recorded`;
+        item.querySelector('.pick-badge').textContent = `✓ ${editedValues.length} recorded`;
       }, 280);
     });
 
