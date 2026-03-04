@@ -1,9 +1,9 @@
-// booking.js — booking form logic + Supabase integration
+// booking.js — booking form logic
 
 const BOOKING_KEY = 'cal2026_bookings_v1';
 
 /* ══════════════════════════════════════
-   LOCAL STORAGE FALLBACK
+   LOCAL STORAGE
 ══════════════════════════════════════ */
 function loadBookingsLocal() {
   try {
@@ -11,17 +11,16 @@ function loadBookingsLocal() {
     return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
 }
-
 function saveBookingsLocal(data) {
   try { localStorage.setItem(BOOKING_KEY, JSON.stringify(data)); }
   catch(e) { console.warn('localStorage error:', e); }
 }
 
-// In-memory bookings cache: { 'YYYY-MM-DD': [ bookingObj, ... ] }
+// In-memory cache  { 'YYYY-MM-DD': [ bookingObj, ... ] }
 const Bookings = loadBookingsLocal();
 
 /* ══════════════════════════════════════
-   STATE
+   FORM STATE
 ══════════════════════════════════════ */
 let _bkKey    = null;
 let _bkDay    = null;
@@ -38,40 +37,38 @@ function pad2(n) { return String(n).padStart(2, '0'); }
 function addMinutesToTime(hhmm, minutes) {
   const [h, m] = hhmm.split(':').map(Number);
   const total  = h * 60 + m + minutes;
-  const nh = Math.floor(total / 60) % 24;
-  const nm = total % 60;
-  return `${pad2(nh)}:${pad2(nm)}`;
+  return `${pad2(Math.floor(total / 60) % 24)}:${pad2(total % 60)}`;
 }
 
 function to12hr(hhmm) {
   if (!hhmm || hhmm === '—') return '—';
   const [h, m] = hhmm.split(':').map(Number);
-  const ampm   = h >= 12 ? 'PM' : 'AM';
-  const hh     = h % 12 || 12;
-  return `${hh}:${pad2(m)} ${ampm}`;
+  return `${h % 12 || 12}:${pad2(m)} ${h >= 12 ? 'PM' : 'AM'}`;
 }
 
 function nextDay(year, month, day) {
   const d = new Date(year, month, day + 1);
   return {
-    year:  d.getFullYear(),
-    month: d.getMonth(),
-    day:   d.getDate(),
-    label: `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`,
     key:   toKey(d.getFullYear(), d.getMonth(), d.getDate()),
+    label: `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`,
   };
 }
 
 function formatDateLabel(year, month, day) {
-  const d = new Date(year, month, day);
-  return `${MONTH_NAMES[month]} ${day}, ${year} (${DAY_NAMES[d.getDay()]})`;
+  return `${MONTH_NAMES[month]} ${day}, ${year} (${DAY_NAMES[new Date(year,month,day).getDay()]})`;
 }
 
-function showToast(msg, duration = 2800) {
-  const toast = document.getElementById('bkToast');
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), duration);
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('bkToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
 }
 
 /* ══════════════════════════════════════
@@ -81,58 +78,39 @@ function getDateEventInfo(year, month, day) {
   const key    = toKey(year, month, day);
   const dow    = new Date(year, month, day).getDay();
   const events = AppState.events[key] || [];
-  if (events.length > 0) {
-    return { type: 'holiday', icon: '🎉', label: events[0] };
-  }
-  if (dow === 0 || dow === 6) {
-    return { type: 'weekend', icon: '🌅', label: `Weekend — ${dow === 0 ? 'Sunday' : 'Saturday'}` };
-  }
+  if (events.length > 0) return { type: 'holiday', icon: '🎉', label: events[0] };
+  if (dow === 0 || dow === 6) return { type: 'weekend', icon: '🌅', label: `Weekend — ${dow === 0 ? 'Sunday' : 'Saturday'}` };
   return { type: 'weekday', icon: '📅', label: `Weekday — ${DAY_NAMES[dow]}` };
 }
 
 /* ══════════════════════════════════════
-   COMPILE FULL BOOKING JSON
-   Single structured payload — stored as
-   raw_json in Supabase and used locally.
+   COMPILE BOOKING JSON
+   One structured object — also stored as
+   raw_json in Supabase for future queries.
 ══════════════════════════════════════ */
-function compileBookingJSON(fields) {
-  const { pax, extraPax, pets, total, downpayment,
-          ciTime, coTime, isNextDay, durationMins } = fields;
-
+function compileBookingJSON(pax, extraPax, pets, total, downpayment, ciTime, coTime, isNextDay, durationMins) {
   const nd = nextDay(_bkYear, _bkMonth, _bkDay);
-
   return {
-    // ── Meta ──────────────────────────
     id:        Date.now(),
     createdAt: new Date().toISOString(),
     dateKey:   _bkKey,
-
-    // ── Guest ─────────────────────────
     guest: {
-      name:     document.getElementById('bkGuestName').value.trim(),
-      email:    document.getElementById('bkGuestEmail').value.trim(),
-      phone:    document.getElementById('bkGuestPhone').value.trim(),
-      pax,
-      extraPax,
-      totalPax: pax + extraPax,
-      pets,
+      name:     getVal('bkGuestName').trim(),
+      email:    getVal('bkGuestEmail').trim(),
+      phone:    getVal('bkGuestPhone').trim(),
+      pax, extraPax, totalPax: pax + extraPax, pets,
     },
-
-    // ── Payment ───────────────────────
     payment: {
-      date:        document.getElementById('bkPaymentDate').value,
+      date:        getVal('bkPaymentDate'),
       mode:        'BDO Bank Transfer',
-      total,
-      downpayment,
+      total, downpayment,
       balance:     total - downpayment,
     },
-
-    // ── Booking ───────────────────────
     booking: {
       tourType:           _tourType,
       checkinDate:        _bkKey,
       checkinDateLabel:   formatDateLabel(_bkYear, _bkMonth, _bkDay),
-      checkoutDate:       isNextDay ? nd.key  : _bkKey,
+      checkoutDate:       isNextDay ? nd.key   : _bkKey,
       checkoutDateLabel:  isNextDay ? nd.label : formatDateLabel(_bkYear, _bkMonth, _bkDay),
       checkinTime:        ciTime,
       checkinTime12:      to12hr(ciTime),
@@ -140,37 +118,29 @@ function compileBookingJSON(fields) {
       checkoutTime12:     to12hr(coTime),
       durationHrs:        durationMins / 60,
     },
-
-    // ── Day info ──────────────────────
     dayInfo: getDateEventInfo(_bkYear, _bkMonth, _bkDay),
   };
 }
 
 /* ══════════════════════════════════════
-   OPEN BOOKING FORM
+   OPEN / CLOSE FORM
 ══════════════════════════════════════ */
 function openBookingForm(key, day, month, year, color) {
-  _bkKey    = key;
-  _bkDay    = day;
-  _bkMonth  = month;
-  _bkYear   = year;
-  _bkColor  = color;
-  _tourType = null;
+  _bkKey = key; _bkDay = day; _bkMonth = month; _bkYear = year;
+  _bkColor = color; _tourType = null;
 
   document.getElementById('bkColorPill').style.background =
     `linear-gradient(180deg, ${color.accent}, ${color.light})`;
   document.getElementById('bkHeaderDate').textContent = formatDateLabel(year, month, day);
 
-  const evInfo  = getDateEventInfo(year, month, day);
-  const badge   = document.getElementById('bkEventBadge');
-  document.getElementById('bkEventIcon').textContent  = evInfo.icon;
-  document.getElementById('bkEventLabel').textContent = evInfo.label;
-  badge.className = 'bk-event-badge is-' + evInfo.type;
+  const ev = getDateEventInfo(year, month, day);
+  document.getElementById('bkEventIcon').textContent  = ev.icon;
+  document.getElementById('bkEventLabel').textContent = ev.label;
+  document.getElementById('bkEventBadge').className   = 'bk-event-badge is-' + ev.type;
 
   resetBookingForm();
 
   document.getElementById('bkCheckinDisplay').textContent = formatDateLabel(year, month, day);
-
   const t = AppState.today;
   document.getElementById('bkPaymentDate').value =
     `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
@@ -180,12 +150,11 @@ function openBookingForm(key, day, month, year, color) {
   document.getElementById('bkCheckoutTime').textContent    = '—';
   document.getElementById('bkDuration').textContent        = '—';
 
-  const accent = color.accent;
   document.querySelectorAll('.bk-section-title').forEach(el => {
-    el.style.color = accent; el.style.borderColor = color.light;
+    el.style.color = color.accent; el.style.borderColor = color.light;
   });
   document.getElementById('bkBtnSave').style.background =
-    `linear-gradient(135deg, ${accent}, ${color.light})`;
+    `linear-gradient(135deg, ${color.accent}, ${color.light})`;
 
   document.getElementById('bookingOverlay').classList.add('open');
 }
@@ -195,9 +164,8 @@ function closeBookingForm() {
 }
 
 function resetBookingForm() {
-  ['bkGuestName','bkGuestEmail','bkGuestPhone',
-   'bkPax','bkExtraPax','bkPets',
-   'bkTotal','bkDownpayment','bkCheckinTime'].forEach(id => {
+  ['bkGuestName','bkGuestEmail','bkGuestPhone','bkPax','bkExtraPax',
+   'bkPets','bkTotal','bkDownpayment','bkCheckinTime'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.value = ''; el.classList.remove('bk-error'); }
   });
@@ -216,41 +184,40 @@ function resetBookingForm() {
    LIVE CALCULATIONS
 ══════════════════════════════════════ */
 function calcTotalPax() {
-  const pax   = parseInt(document.getElementById('bkPax').value) || 0;
-  const extra = parseInt(document.getElementById('bkExtraPax').value) || 0;
-  document.getElementById('bkTotalPax').textContent = (pax + extra) || '—';
+  const v = (parseInt(getVal('bkPax'))||0) + (parseInt(getVal('bkExtraPax'))||0);
+  document.getElementById('bkTotalPax').textContent = v || '—';
 }
 
 function calcBalance() {
-  const total = parseFloat(document.getElementById('bkTotal').value) || 0;
-  const dp    = parseFloat(document.getElementById('bkDownpayment').value) || 0;
+  const total = parseFloat(getVal('bkTotal')) || 0;
+  const dp    = parseFloat(getVal('bkDownpayment')) || 0;
   const el    = document.getElementById('bkBalance');
   if (!total && !dp) { el.textContent = '—'; el.className = 'bk-auto bk-balance'; return; }
   const bal = total - dp;
-  el.textContent = `₱ ${bal.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+  el.textContent = `₱ ${bal.toLocaleString('en-PH',{minimumFractionDigits:2})}`;
   el.className   = 'bk-auto bk-balance ' + (bal < 0 ? 'negative' : bal === 0 ? 'zero' : 'positive');
 }
 
 function calcCheckout() {
   if (!_tourType) return;
-  const checkinVal   = document.getElementById('bkCheckinTime').value;
+  const ci           = getVal('bkCheckinTime');
   const isNextDay    = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  const durationMins = _tourType === 'Over-Night' ? 21 * 60 : 10 * 60;
+  const durationMins = _tourType === 'Over-Night' ? 21*60 : 10*60;
   const nd           = nextDay(_bkYear, _bkMonth, _bkDay);
 
   document.getElementById('bkCheckoutDisplay').textContent =
     isNextDay ? nd.label : formatDateLabel(_bkYear, _bkMonth, _bkDay);
 
-  if (checkinVal) {
-    const coHHMM = addMinutesToTime(checkinVal, durationMins);
-    document.getElementById('bkCheckoutTime').textContent = to12hr(coHHMM);
+  if (ci) {
+    const co = addMinutesToTime(ci, durationMins);
+    document.getElementById('bkCheckoutTime').textContent = to12hr(co);
     document.getElementById('bkDuration').textContent =
-      `${durationMins / 60} hrs (${to12hr(checkinVal)} → ${to12hr(coHHMM)})`;
+      `${durationMins/60} hrs (${to12hr(ci)} → ${to12hr(co)})`;
   } else {
     document.getElementById('bkCheckoutTime').textContent =
-      _tourType === 'Over-Night' ? '(+21 hrs from check-in time)' : '(+10 hrs from check-in time)';
+      `(+${durationMins/60} hrs from check-in time)`;
     document.getElementById('bkDuration').textContent =
-      _tourType === 'Over-Night' ? '21 hrs (overnight)' : '10 hrs';
+      `${durationMins/60} hrs`;
   }
 }
 
@@ -274,46 +241,30 @@ function setupTourButtons() {
 ══════════════════════════════════════ */
 function validate() {
   let ok = true;
-  function setErr(fieldId, errId, msg) {
+  function err(fieldId, errId, msg) {
     const el = document.getElementById(fieldId);
     const er = document.getElementById(errId);
-    if (msg) { er.textContent = msg; if (el) el.classList.add('bk-error'); ok = false; }
-    else      { er.textContent = '';  if (el) el.classList.remove('bk-error'); }
+    if (msg) { if(er) er.textContent = msg; if(el) el.classList.add('bk-error'); ok = false; }
+    else      { if(er) er.textContent = '';  if(el) el.classList.remove('bk-error'); }
   }
-  setErr('bkGuestName',   'errGuestName',
-    !document.getElementById('bkGuestName').value.trim() ? 'Guest name is required.' : '');
-  const email = document.getElementById('bkGuestEmail').value.trim();
-  setErr('bkGuestEmail',  'errGuestEmail',
-    !email ? 'Email is required.' :
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Enter a valid email.' : '');
-  setErr('bkGuestPhone',  'errGuestPhone',
-    !document.getElementById('bkGuestPhone').value.trim() ? 'Phone number is required.' : '');
-  const pax = document.getElementById('bkPax').value.trim();
-  setErr('bkPax',         'errPax',
-    !pax || parseInt(pax) < 1 ? 'Pax must be at least 1.' : '');
-  setErr('bkPaymentDate', 'errPaymentDate',
-    !document.getElementById('bkPaymentDate').value.trim() ? 'Date of payment is required.' : '');
-  const total = document.getElementById('bkTotal').value.trim();
-  setErr('bkTotal',       'errTotal',
-    !total || parseFloat(total) <= 0 ? 'Total amount is required.' : '');
-  setErr('bkDownpayment', 'errDownpayment',
-    document.getElementById('bkDownpayment').value.trim() === '' ? 'Downpayment is required.' : '');
-  setErr('bkCheckinTime', 'errCheckinTime',
-    !document.getElementById('bkCheckinTime').value.trim() ? 'Check-in time is required.' : '');
-  if (!_tourType) {
-    document.getElementById('errTourType').textContent = 'Please select a tour type.';
-    ok = false;
-  } else {
-    document.getElementById('errTourType').textContent = '';
-  }
+  err('bkGuestName',  'errGuestName',  !getVal('bkGuestName').trim()  ? 'Required.' : '');
+  const email = getVal('bkGuestEmail').trim();
+  err('bkGuestEmail', 'errGuestEmail',
+    !email ? 'Required.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Invalid email.' : '');
+  err('bkGuestPhone', 'errGuestPhone', !getVal('bkGuestPhone').trim() ? 'Required.' : '');
+  err('bkPax',        'errPax',        parseInt(getVal('bkPax')) < 1  ? 'Min 1.' : '');
+  err('bkPaymentDate','errPaymentDate',!getVal('bkPaymentDate')       ? 'Required.' : '');
+  err('bkTotal',      'errTotal',      parseFloat(getVal('bkTotal')) <= 0 ? 'Required.' : '');
+  err('bkDownpayment','errDownpayment',getVal('bkDownpayment') === ''  ? 'Required.' : '');
+  err('bkCheckinTime','errCheckinTime',!getVal('bkCheckinTime')        ? 'Required.' : '');
+  const te = document.getElementById('errTourType');
+  if (!_tourType) { if(te) te.textContent = 'Select tour type.'; ok = false; }
+  else            { if(te) te.textContent = ''; }
   return ok;
 }
 
 /* ══════════════════════════════════════
    SAVE BOOKING
-   1. Compile full JSON
-   2. Push to Supabase (raw_json column + flat cols)
-   3. Save to localStorage as backup
 ══════════════════════════════════════ */
 async function saveBooking() {
   if (!validate()) return;
@@ -322,87 +273,82 @@ async function saveBooking() {
   btn.disabled  = true;
   btn.innerHTML = '<span>Saving…</span>';
 
+  // ── 1. Read form values ──────────────────────────
+  const pax         = parseInt(getVal('bkPax'))         || 0;
+  const extraPax    = parseInt(getVal('bkExtraPax'))     || 0;
+  const pets        = parseInt(getVal('bkPets'))         || 0;
+  const total       = parseFloat(getVal('bkTotal'))      || 0;
+  const downpayment = parseFloat(getVal('bkDownpayment'))|| 0;
+  const ciTime      = getVal('bkCheckinTime');
+  const isNextDay   = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
+  const durationMins= _tourType === 'Over-Night' ? 21*60 : 10*60;
+  const coTime      = addMinutesToTime(ciTime, durationMins);
+
+  // ── 2. Compile JSON ──────────────────────────────
+  const bookingJSON = compileBookingJSON(
+    pax, extraPax, pets, total, downpayment,
+    ciTime, coTime, isNextDay, durationMins
+  );
+
+  // ── 3. Build flat DB row ─────────────────────────
+  const dbRow = {
+    date_key:            bookingJSON.dateKey,
+    guest_name:          bookingJSON.guest.name,
+    guest_email:         bookingJSON.guest.email,
+    guest_phone:         bookingJSON.guest.phone,
+    pax:                 bookingJSON.guest.pax,
+    extra_pax:           bookingJSON.guest.extraPax,
+    total_pax:           bookingJSON.guest.totalPax,
+    pets:                bookingJSON.guest.pets,
+    payment_date:        bookingJSON.payment.date,
+    payment_mode:        bookingJSON.payment.mode,
+    total:               bookingJSON.payment.total,
+    downpayment:         bookingJSON.payment.downpayment,
+    balance:             bookingJSON.payment.balance,
+    checkin_date:        bookingJSON.booking.checkinDate,
+    checkout_date:       bookingJSON.booking.checkoutDate,
+    checkin_date_label:  bookingJSON.booking.checkinDateLabel,
+    checkout_date_label: bookingJSON.booking.checkoutDateLabel,
+    tour_type:           bookingJSON.booking.tourType,
+    checkin_time:        bookingJSON.booking.checkinTime,
+    checkout_time:       bookingJSON.booking.checkoutTime,
+    raw_json:            bookingJSON,
+  };
+
+  // ── 4. Try Supabase ──────────────────────────────
+  let sbId    = null;
+  let sbSaved = false;
+
   try {
-    const pax         = parseInt(document.getElementById('bkPax').value) || 0;
-    const extraPax    = parseInt(document.getElementById('bkExtraPax').value) || 0;
-    const pets        = parseInt(document.getElementById('bkPets').value) || 0;
-    const total       = parseFloat(document.getElementById('bkTotal').value) || 0;
-    const downpayment = parseFloat(document.getElementById('bkDownpayment').value) || 0;
-    const ciTime      = document.getElementById('bkCheckinTime').value;
-    const isNextDay   = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-    const durationMins = _tourType === 'Over-Night' ? 21 * 60 : 10 * 60;
-    const coTime      = addMinutesToTime(ciTime, durationMins);
-
-    // ── Step 1: Compile structured JSON ──
-    const bookingJSON = compileBookingJSON({
-      pax, extraPax, pets, total, downpayment,
-      ciTime, coTime, isNextDay, durationMins,
-    });
-
-    // ── Step 2: Flat DB row for Supabase columns ──
-    const dbRow = {
-      date_key:            bookingJSON.dateKey,
-      guest_name:          bookingJSON.guest.name,
-      guest_email:         bookingJSON.guest.email,
-      guest_phone:         bookingJSON.guest.phone,
-      pax:                 bookingJSON.guest.pax,
-      extra_pax:           bookingJSON.guest.extraPax,
-      total_pax:           bookingJSON.guest.totalPax,
-      pets:                bookingJSON.guest.pets,
-      payment_date:        bookingJSON.payment.date,
-      payment_mode:        bookingJSON.payment.mode,
-      total:               bookingJSON.payment.total,
-      downpayment:         bookingJSON.payment.downpayment,
-      balance:             bookingJSON.payment.balance,
-      checkin_date:        bookingJSON.booking.checkinDate,
-      checkout_date:       bookingJSON.booking.checkoutDate,
-      checkin_date_label:  bookingJSON.booking.checkinDateLabel,
-      checkout_date_label: bookingJSON.booking.checkoutDateLabel,
-      tour_type:           bookingJSON.booking.tourType,
-      checkin_time:        bookingJSON.booking.checkinTime,
-      checkout_time:       bookingJSON.booking.checkoutTime,
-      raw_json:            bookingJSON,   // ← full JSON blob
-    };
-
-    // ── Step 3: Send to Supabase (never throw — fallback to local) ──
-    let sbId   = null;
-    let sbSaved = false;
-    try {
-      console.log('📤 Sending to Supabase...', dbRow);
-      const result = await SB.insert(dbRow);
-      console.log('📥 Supabase response:', result);
-      sbId    = result[0]?.id ?? null;
-      sbSaved = true;
-      console.log('☁️ Saved to Supabase, id:', sbId);
-    } catch(e) {
-      console.error('❌ Supabase insert error:', e.message);
-      // Do NOT re-throw — fall through to localStorage save
-    }
-
-    // ── Step 4: Always save to localStorage ──
-    const localEntry = { ...bookingJSON, sbId };
-    if (!Bookings[_bkKey]) Bookings[_bkKey] = [];
-    Bookings[_bkKey].push(localEntry);
-    saveBookingsLocal(Bookings);
-
-    closeBookingForm();
-
-    if (sbSaved) {
-      showToast(`✅ Saved: ${bookingJSON.guest.name} ☁️`);
-      await refreshFromSupabase();
-    } else {
-      showToast(`💾 Saved locally: ${bookingJSON.guest.name} (Supabase unreachable)`);
-      refreshMonth(_bkMonth);
-      applyBookingIndicators();
-    }
-
-  } catch(err) {
-    console.error('Save error:', err);
-    showToast('❌ Save failed. Check console.');
-  } finally {
-    btn.disabled  = false;
-    btn.innerHTML = '<span>Confirm Booking</span><span class="bk-btn-arrow">→</span>';
+    console.log('📤 Inserting to Supabase:', dbRow);
+    const result = await SB.insert(dbRow);
+    console.log('📥 Supabase response:', result);
+    sbId    = result?.[0]?.id ?? null;
+    sbSaved = true;
+  } catch (sbErr) {
+    console.error('❌ Supabase error:', sbErr.message);
   }
+
+  // ── 5. Always save locally ───────────────────────
+  const entry = { ...bookingJSON, sbId };
+  if (!Bookings[_bkKey]) Bookings[_bkKey] = [];
+  Bookings[_bkKey].push(entry);
+  saveBookingsLocal(Bookings);
+
+  // ── 6. Close & notify ───────────────────────────
+  closeBookingForm();
+
+  if (sbSaved) {
+    showToast(`✅ Saved: ${bookingJSON.guest.name} ☁️`);
+    await refreshFromSupabase();
+  } else {
+    showToast(`💾 Saved locally: ${bookingJSON.guest.name} — check Supabase setup`);
+    refreshMonth(_bkMonth);
+    applyBookingIndicators();
+  }
+
+  btn.disabled  = false;
+  btn.innerHTML = '<span>Confirm Booking</span><span class="bk-btn-arrow">→</span>';
 }
 
 /* ══════════════════════════════════════
@@ -412,14 +358,14 @@ function openBookingList(key, day, month, year, color) {
   const list = Bookings[key] || [];
   document.getElementById('bkListTitle').textContent = `${MONTH_NAMES[month]} ${day}, ${year}`;
 
-  const body  = document.getElementById('bkListBody');
+  const body = document.getElementById('bkListBody');
   body.innerHTML = '';
   const inner = document.createElement('div');
   inner.className = 'bk-list-body-inner';
 
-  if (list.length === 0) {
+  if (!list.length) {
     const empty = document.createElement('div');
-    empty.className   = 'bk-list-empty';
+    empty.className = 'bk-list-empty';
     empty.textContent = 'No bookings yet for this date.';
     inner.appendChild(empty);
   } else {
@@ -446,13 +392,12 @@ function closeBookingList() {
 }
 
 function buildSummaryCard(b, key, idx, color, onDelete) {
-  const card = document.createElement('div');
+  const card  = document.createElement('div');
   card.className = 'bk-summary-card';
 
-  // Resolve both old flat shape and new nested JSON shape
-  const guestName   = b.guest?.name       || b.guestName       || '—';
-  const guestEmail  = b.guest?.email      || b.guestEmail      || '—';
-  const guestPhone  = b.guest?.phone      || b.guestPhone      || '—';
+  const name        = b.guest?.name       || b.guestName       || '—';
+  const email       = b.guest?.email      || b.guestEmail      || '—';
+  const phone       = b.guest?.phone      || b.guestPhone      || '—';
   const totalPax    = b.guest?.totalPax   || b.totalPax        || '—';
   const pets        = b.guest?.pets       ?? b.pets            ?? 0;
   const total       = b.payment?.total    ?? b.total           ?? 0;
@@ -460,57 +405,48 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
   const tourType    = b.booking?.tourType || b.tourType        || '—';
   const ciTime      = b.booking?.checkinTime  || b.checkinTime  || '';
   const coTime      = b.booking?.checkoutTime || b.checkoutTime || '';
-  const coDateLabel = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
+  const coLabel     = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
   const sbId        = b.sbId || null;
 
   const hdr = document.createElement('div');
   hdr.className = 'bk-summary-card-header';
+
   const nameEl = document.createElement('div');
-  nameEl.className   = 'bk-summary-name';
-  nameEl.textContent = guestName;
-  const badgeEl = document.createElement('span');
-  badgeEl.className        = 'bk-summary-badge';
-  badgeEl.textContent      = tourType;
-  badgeEl.style.background = color.accent;
-  hdr.appendChild(nameEl);
-  hdr.appendChild(badgeEl);
+  nameEl.className = 'bk-summary-name'; nameEl.textContent = name;
+
+  const badge = document.createElement('span');
+  badge.className = 'bk-summary-badge'; badge.textContent = tourType;
+  badge.style.background = color.accent;
+
+  hdr.append(nameEl, badge);
 
   const rows = [
-    [`📧 ${guestEmail}`, `📞 ${guestPhone}`],
+    [`📧 ${email}`, `📞 ${phone}`],
     [`👥 ${totalPax} Pax`, pets ? `🐾 ${pets} Pets` : null, `💳 ₱${Number(total).toLocaleString()}`],
-    [`🕐 ${to12hr(ciTime)} → ${to12hr(coTime)}`, `📅 Out: ${coDateLabel}`],
-    [`💰 Balance: ₱${Number(balance).toLocaleString('en-PH', { minimumFractionDigits:2 })}`],
-    sbId ? [`🔗 DB ID: ${sbId}`] : null,
+    [`🕐 ${to12hr(ciTime)} → ${to12hr(coTime)}`, `📅 Out: ${coLabel}`],
+    [`💰 Balance: ₱${Number(balance).toLocaleString('en-PH',{minimumFractionDigits:2})}`],
+    sbId ? [`🔗 ID: ${sbId}`] : null,
   ];
 
-  rows.filter(Boolean).forEach(rowItems => {
+  rows.filter(Boolean).forEach(items => {
     const row = document.createElement('div');
     row.className = 'bk-summary-row';
-    rowItems.filter(Boolean).forEach(text => {
-      const item = document.createElement('div');
-      item.className = 'bk-summary-item'; item.textContent = text;
-      row.appendChild(item);
+    items.filter(Boolean).forEach(text => {
+      const el = document.createElement('div');
+      el.className = 'bk-summary-item'; el.textContent = text;
+      row.appendChild(el);
     });
     card.appendChild(row);
   });
 
   const del = document.createElement('button');
-  del.className   = 'bk-summary-del';
-  del.textContent = '×';
-  del.title       = 'Delete booking';
+  del.className = 'bk-summary-del'; del.textContent = '×'; del.title = 'Delete';
   del.addEventListener('click', async () => {
-    if (!confirm(`Delete booking for ${guestName}?`)) return;
+    if (!confirm(`Delete booking for ${name}?`)) return;
     if (sbId) {
-      try {
-        await SB.deleteById(sbId);
-        console.log('🗑 Deleted from Supabase:', sbId);
-      } catch(e) {
-        console.error('⚠️ Supabase delete failed:', e.message);
-      }
-    } else {
-      console.warn('No sbId found — row may not exist in Supabase.');
+      try { await SB.deleteById(sbId); }
+      catch(e) { console.error('Delete error:', e.message); }
     }
-    // Re-fetch from Supabase after delete
     showToast('🗑 Booking deleted.');
     await refreshFromSupabase();
     onDelete();
@@ -525,35 +461,27 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
    CALENDAR INTEGRATION
 ══════════════════════════════════════ */
 function openModal(key, day, month, year, color) {
-  const existing = Bookings[key] || [];
-  if (existing.length > 0) {
-    openBookingList(key, day, month, year, color);
-  } else {
-    openBookingForm(key, day, month, year, color);
-  }
+  (Bookings[key]?.length > 0)
+    ? openBookingList(key, day, month, year, color)
+    : openBookingForm(key, day, month, year, color);
 }
 
 function applyBookingIndicators() {
-  const grid = document.getElementById('yearGrid');
-  if (!grid) return;
-  grid.querySelectorAll('.day-cell:not(.other-month)').forEach(cell => {
+  document.querySelectorAll('#yearGrid .day-cell:not(.other-month)').forEach(cell => {
     const numEl = cell.querySelector('.day-num');
     if (!numEl) return;
     const card = cell.closest('.month-card');
     if (!card) return;
-    const monthNameEl = card.querySelector('.month-name');
-    if (!monthNameEl) return;
-    const month = MONTH_NAMES.indexOf(monthNameEl.textContent);
-    const day   = parseInt(numEl.textContent);
-    const key   = toKey(AppState.year, month, day);
-    if (Bookings[key] && Bookings[key].length > 0) {
-      cell.classList.add('has-booking');
-    }
+    const mEl  = card.querySelector('.month-name');
+    if (!mEl) return;
+    const month = MONTH_NAMES.indexOf(mEl.textContent);
+    const key   = toKey(AppState.year, month, parseInt(numEl.textContent));
+    cell.classList.toggle('has-booking', !!(Bookings[key]?.length > 0));
   });
 }
 
 /* ══════════════════════════════════════
-   SETUP LISTENERS
+   LISTENERS
 ══════════════════════════════════════ */
 function setupBookingListeners() {
   document.getElementById('bookingClose').addEventListener('click', closeBookingForm);
