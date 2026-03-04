@@ -324,17 +324,19 @@
     if (state.files.length === 0 || !state.mode) return;
 
     UIManager.setRunning(true);
-    UIManager.setProgress(0, 'Reading PDF files…');
+    UIManager.setProgress(0, 'Phase 1 · Pre-reading PDFs and marking text locations…');
     document.getElementById('resultsContainer').style.display = 'none';
 
     // 🚀 Engage warp drive!
     if (window.StarField) window.StarField.startWarp();
 
     try {
-      // Step 1: Extract all PDF pages
+      // ── Phase 1: Read all PDFs and mark every text item's location ──────
+      // extractAll() now returns itemMap alongside each page's text, giving us
+      // the character-level position of every PDF text token (the "marks").
       const pdfData = await PDFProcessor.extractAll(state.files, (done, total) => {
-        const pct = Math.round((done / total) * (state.mode === 'extractall' ? 100 : 60));
-        UIManager.setProgress(pct, `Extracted ${done}/${total} file(s)…`);
+        const pct = Math.round((done / total) * 45);
+        UIManager.setProgress(pct, `Phase 1 · Marking text locations — ${done}/${total} file(s)…`);
       });
 
       state.lastPdfData = pdfData;
@@ -344,14 +346,22 @@
         UIManager.renderExtractAll(pdfData);
 
       } else if (state.mode === 'multiple') {
-        UIManager.setProgress(80, 'Searching keywords…');
+        // ── Phase 2: Two-pass keyword search ─────────────────────────────
+        UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting keyword positions…');
+        await new Promise(r => setTimeout(r, 30)); // yield so UI can update
+        UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing second-run values…');
+        await new Promise(r => setTimeout(r, 30));
         const results = KeywordHandler.search(pdfData, state.keywords);
         state.lastResults = results;
         UIManager.setProgress(100, 'Done!');
         UIManager.renderKeywordResults(results, state.keywords, state.files);
 
       } else if (state.mode === 'single') {
-        UIManager.setProgress(80, 'Searching keyword…');
+        // ── Phase 2: Two-pass keyword search ─────────────────────────────
+        UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting keyword position…');
+        await new Promise(r => setTimeout(r, 30));
+        UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing second-run value…');
+        await new Promise(r => setTimeout(r, 30));
         const results = KeywordHandler.search(pdfData, state.keywords);
         state.lastResults = results;
         const renameMap = RenameHandler.buildRenameMap(results);

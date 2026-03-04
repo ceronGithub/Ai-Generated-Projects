@@ -1,37 +1,7 @@
-(Done)update the result toolbar : if user choose multiple keywords display button "Download in excel format" only. 
-If user choose single keyword, display button "Rename PDF".
-
-(Done)update results-list : Show only 3 result-item. enable y-scrollable inside the results-container.
-
-(Done) Add new feature : User can individually remove existing record result (with animation like pop.). Add Clear all (delete all existing record result.). 
-
-(Done)Update result-item > result-meta feature : If user Choose single keyword. follow format Page: Icon PDFfilename.fileextension | Icon PDF-viewer | result remove-btn.
-
-(Done)Update result-item > result-keyword feature : If user Choose single keyword. follow format Page: keyword | Icon PDFfilename.fileextension to new file which is capturetext.pdf.
-
-(Done)Update If user Choose single keyword : Remove rename preview section. 
-
-(Done)Add new feature on file-list : show only 5 uploaded pdf then add y-scrollable.
-
-(Done)Add new features. If user choose extract all and click the download. the excel format should be each card is new row line in excel file.
-
-(Done, Search the Keyword exactly according to PDF file.)update keyword search logic. see the uploaded pdf. if i search the follow : Invoice #:, Created:, From:, To:, Description, Hours, Total, Signature.
-The expected captured text or expected output should be : INV-2026-042, Feb 25..., 742 Evergreen..., Evergreen marketing..., Brand Identity..., 20, capture both 1,500 and 1,800 but each is new result-item, jordan...
-
-(Done)Each keyword or data is in one result-item. Exaple. one result-card Invoice Number details..., another result-card Customer name.
-
-(Done)update logic if user choose multiple keyword : Each searched Keyword is new result-item.
-
-(Done)add new feature : below browse file button add a note "max upload is 2k pdf files.". check uploading logic and make sure it can accept or upload 2k pdf files.
-
-
-(Done)update results-list : Show only 3 result-item. enable y-scrollable inside the results-container.if User choose single keyword : click "Rename PDF" btn, compresed all renamed pdf in one folder, Named "PDF-Extractor-Rename-PDF-Result", and organized it from A to Z.
-(Done)add new feature : prompt or show a message how many remaining pdf files are ongoing to rename, if possible include how long can the user have to wait. So User will know. 	
-
 Add new Feature show user the directory of all export files Help modal.
 
-(Done)Change mode : If user click change mode. step-keywords and step-results go back to pristine state or reset all. or first state when user are first time choosing on extraction mode.
-
+add new feature : When system detected in table format.
+read the table starting from top of the table - bottom of the table 2x. Then from Left side - Right side 2x. if table is complex. re-create the table in structed table but dont show it to user. then start gathering data from top - bottom, and from left - right, read per row, then column.
 
 (ONGOING)update keyword search logic. see the uploaded 1st pdf. if i search the follow : Invoice #:, Created:, From:, To:, Description, Hours, Total, Signature.
 The expected captured text or expected output should be : INV-2026-042, Feb 25..., 742 Evergreen..., Evergreen marketing..., Brand Identity..., 20, capture both 1,500 and 1,800 but each is new result-item, jordan...

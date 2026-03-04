@@ -438,8 +438,136 @@ const KeywordHandler = (() => {
   }
 
   // ─── MAIN SEARCH ────────────────────────────────────────────────────────────
+  //
+  // Two-pass extraction engine:
+  //
+  //  PASS 1 — Scout pass (top → bottom through every file/page/keyword):
+  //    Run every keyword regex over every page exactly as before.
+  //    Instead of immediately emitting results, record the match positions
+  //    (regex m.index) into a per-page-per-keyword Set called run1Positions.
+  //    Also store the extracted values in run1Results so that pages where only
+  //    one occurrence exists can fall back to the scout results.
+  //
+  //  PASS 2 — Capture pass (top → bottom again, same order):
+  //    Re-run every keyword regex over every page.
+  //    For each regex match: if its m.index is already in run1Positions for
+  //    that (filename, page, keyword) → this is the FIRST occurrence (already
+  //    seen in the scout pass) → SKIP it and continue.
+  //    The first match that is NOT in run1Positions is the SECOND occurrence
+  //    → CAPTURE its value as the result.
+  //
+  //  Fallback rule:
+  //    If the capture pass finds no results for a given (filename, page, keyword)
+  //    (i.e. the keyword appears only once on that page) → emit the scout-pass
+  //    results instead so no data is lost.
+  //
+  //  Special keywords (Date, Time, Zone) bypass the two-pass logic because they
+  //  use whole-page scans rather than regex-match-position-based extraction.
+  //  They are handled identically in both passes; the capture pass result is
+  //  used (same as before, since they deduplicate internally).
 
   function search(pdfData, keywords) {
+
+    // ── PASS 1: Scout — record every first-occurrence match position ─────────
+
+    // run1Results:  Map<key, Array<resultObject>>
+    //   key = `${filename}|||${page}|||${keyword}`
+    // run1Positions: Map<key, Set<number>>
+    //   Set of regex m.index values found in the scout pass per keyword/page
+    const run1Results   = new Map();
+    const run1Positions = new Map();
+
+    for (const { file, pages } of pdfData) {
+      const filename = file.name;
+
+      for (const { page, text } of pages) {
+        const stopPositions = findAllStopPositions(text, keywords);
+
+        for (const keyword of keywords) {
+          const mapKey  = `${filename}|||${page}|||${keyword}`;
+          const found   = [];
+          const seen    = new Set();
+          const posSet  = new Set();
+          const regex   = buildKeywordRegex(keyword);
+          const type    = classifyKeyword(keyword);
+          const kwNorm  = normalizeKw(keyword).toLowerCase();
+
+          // Special whole-page keywords — run once, store results & skip 2nd pass
+          if (isDateKw(kwNorm)) {
+            const dates = extractAllDates(text);
+            const r1 = [];
+            for (const val of dates) {
+              const key = val.toLowerCase().replace(/[\s,$]/g, '').slice(0, 60);
+              if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [val], closestContext: val }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1])); // sentinel: whole-page scan, no regex positions
+            continue;
+          }
+
+          if (isTimeKw(kwNorm)) {
+            const times = extractAllTimes(text);
+            const r1 = [];
+            for (const t of times) {
+              const tk = t.toLowerCase().replace(/[\s]/g, '');
+              if (!seen.has(tk)) { seen.add(tk); r1.push({ page, filename, keyword, contexts: [t], closestContext: t }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          if (isZoneKw(kwNorm)) {
+            const zones = extractAllZones(text);
+            const r1 = [];
+            for (const z of zones) {
+              const key = z.toLowerCase();
+              if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [z], closestContext: z }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          // Normal regex-based keywords — scout pass
+          let m;
+          while ((m = regex.exec(text)) !== null) {
+            posSet.add(m.index);           // mark this position as seen in run 1
+            const matchEnd = m.index + m[0].length;
+            let values = [];
+
+            if (type === 'bare') {
+              const tableVals = extractTableColumnValues(text, matchEnd, keyword, keywords, stopPositions);
+              if (tableVals.length > 0) {
+                values = tableVals;
+              } else {
+                const dv = extractValueAt(text, matchEnd, stopPositions);
+                if (dv) {
+                  const isNum = isMonetaryKw(kwNorm) || isIntegerKw(kwNorm);
+                  if (isNum) { if (/^[\$\d]|^Php/i.test(dv)) values = [dv]; }
+                  else { if (dv.length < 100 || /^[\$\d]/.test(dv)) values = [dv]; }
+                }
+              }
+            } else {
+              const dv = extractValueAt(text, matchEnd, stopPositions);
+              if (dv) values = [dv];
+            }
+
+            for (const value of values) {
+              const key = value.toLowerCase().replace(/[\s,$]/g, '').slice(0, 60);
+              if (!seen.has(key)) { seen.add(key); found.push(value); }
+            }
+            if (m[0].length === 0) regex.lastIndex++;
+          }
+
+          run1Positions.set(mapKey, posSet);
+          run1Results.set(mapKey, found.map(ctx => ({ page, filename, keyword, contexts: [ctx], closestContext: ctx })));
+        }
+      }
+    }
+
+    // ── PASS 2: Capture — skip 1st-occurrence matches, keep 2nd occurrences ─
+
     const results = [];
 
     for (const { file, pages } of pdfData) {
@@ -449,109 +577,66 @@ const KeywordHandler = (() => {
         const stopPositions = findAllStopPositions(text, keywords);
 
         for (const keyword of keywords) {
-          const found  = [];
-          const seen   = new Set();
-          const regex  = buildKeywordRegex(keyword);
-          const type   = classifyKeyword(keyword);
-          const kwNorm = normalizeKw(keyword).toLowerCase();
+          const mapKey   = `${filename}|||${page}|||${keyword}`;
+          const r1pos    = run1Positions.get(mapKey) ?? new Set();
+          const r1res    = run1Results.get(mapKey)   ?? [];
 
-          // ── Special handling: DATE keyword ─────────────────────────────
-          // Scans the ENTIRE page text for all date-only values (d/m/yyyy).
-          // Outputs the date portion ONLY — no time component attached.
-          // e.g. "3/2/2026" from "Printed Date : 3/2/2026 11:24:05AM"
-          //      "02/01/2026" from table row "02/01/2026 16:41:37 ..."
-          if (isDateKw(kwNorm)) {
-            const dates = extractAllDates(text);
-            for (const val of dates) {
-              const key = val.toLowerCase().replace(/[\s,$]/g, '').slice(0, 60);
-              if (!seen.has(key)) { seen.add(key); found.push(val); }
-            }
-            for (const ctx of found) {
-              results.push({ page, filename, keyword, contexts: [ctx], closestContext: ctx });
-            }
-            continue; // next keyword
+          // Whole-page special keywords: emit run-1 results directly
+          if (r1pos.has(-1)) {
+            for (const r of r1res) results.push(r);
+            continue;
           }
 
-          // ── Special handling: TIME keyword ─────────────────────────────
-          // Matches ONLY values with exactly 2 colons: H:MM:SS or HH:MM:SS[AM/PM].
-          // e.g. "16:41:37", "11:24:05AM" — never captures dates (slashes only).
-          if (isTimeKw(kwNorm)) {
-            const times = extractAllTimes(text);
-            for (const t of times) {
-              const tk = t.toLowerCase().replace(/[\s]/g, '');
-              if (!seen.has(tk)) {
-                seen.add(tk);
-                results.push({ page, filename, keyword, contexts: [t], closestContext: t });
-              }
-            }
-            continue; // next keyword
-          }
+          const found2  = [];
+          const seen2   = new Set();
+          const regex2  = buildKeywordRegex(keyword);
+          const type    = classifyKeyword(keyword);
+          const kwNorm  = normalizeKw(keyword).toLowerCase();
 
-          // ── Special handling: ZONE keyword ─────────────────────────────
-          // In this PDF the column headers are stored in reverse order in the
-          // raw text stream, so a normal label-search on "Zone" would land on
-          // the wrong column (TransNo values). Instead we extract zone codes
-          // (NAIAX, SKYWAY, SLEX, TPLEX, SIDC, MMSS3, MCX) that appear
-          // directly before "Total" at the end of each transaction row.
-          if (isZoneKw(kwNorm)) {
-            const zones = extractAllZones(text);
-            for (const z of zones) {
-              const key = z.toLowerCase();
-              if (!seen.has(key)) { seen.add(key); found.push(z); }
-            }
-            for (const ctx of found) {
-              results.push({ page, filename, keyword, contexts: [ctx], closestContext: ctx });
-            }
-            continue; // next keyword
-          }
-
-          // ── Normal keyword extraction ───────────────────────────────────
           let m;
-          while ((m = regex.exec(text)) !== null) {
+          while ((m = regex2.exec(text)) !== null) {
+            if (r1pos.has(m.index)) {
+              // This position was the first occurrence (scout pass hit) → skip
+              if (m[0].length === 0) regex2.lastIndex++;
+              continue;
+            }
+
+            // New position → second (or later) occurrence → capture it
             const matchEnd = m.index + m[0].length;
             let values = [];
 
             if (type === 'bare') {
-              const tableVals = extractTableColumnValues(
-                text, matchEnd, keyword, keywords, stopPositions
-              );
+              const tableVals = extractTableColumnValues(text, matchEnd, keyword, keywords, stopPositions);
               if (tableVals.length > 0) {
                 values = tableVals;
               } else {
                 const dv = extractValueAt(text, matchEnd, stopPositions);
                 if (dv) {
                   const isNum = isMonetaryKw(kwNorm) || isIntegerKw(kwNorm);
-                  if (isNum) {
-                    // Numeric bare keywords only accept numeric/currency fallbacks
-                    if (/^[\$\d]|^Php/i.test(dv)) values = [dv];
-                  } else {
-                    if (dv.length < 100 || /^[\$\d]/.test(dv)) values = [dv];
-                  }
+                  if (isNum) { if (/^[\$\d]|^Php/i.test(dv)) values = [dv]; }
+                  else { if (dv.length < 100 || /^[\$\d]/.test(dv)) values = [dv]; }
                 }
               }
             } else {
-              // colon / spaced — direct extraction
               const dv = extractValueAt(text, matchEnd, stopPositions);
               if (dv) values = [dv];
             }
 
             for (const value of values) {
               const key = value.toLowerCase().replace(/[\s,$]/g, '').slice(0, 60);
-              if (!seen.has(key)) { seen.add(key); found.push(value); }
+              if (!seen2.has(key)) { seen2.add(key); found2.push(value); }
             }
-
-            if (m[0].length === 0) regex.lastIndex++;
+            if (m[0].length === 0) regex2.lastIndex++;
           }
 
-          // Each distinct value → its own result card
-          for (const ctx of found) {
-            results.push({
-              page,
-              filename,
-              keyword,
-              contexts:       [ctx],
-              closestContext: ctx,
-            });
+          if (found2.length > 0) {
+            // Use 2nd-pass results
+            for (const ctx of found2) {
+              results.push({ page, filename, keyword, contexts: [ctx], closestContext: ctx });
+            }
+          } else {
+            // No 2nd occurrence → fall back to scout-pass results
+            for (const r of r1res) results.push(r);
           }
         }
       }
@@ -559,6 +644,7 @@ const KeywordHandler = (() => {
 
     return results;
   }
+  
 
   // ─── HIGHLIGHT ──────────────────────────────────────────────────────────────
 
