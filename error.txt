@@ -1,12 +1,16 @@
-error encouter : save failed, check console. but when i check the console. no error has been dected.
+(Done) fix feature : connect supabase to this project.
+(Done) fix feature : add follow and add all updates. but still not working... error encounter "save failed. check the console".
+(Done)error encouter : save failed, check console. but when i check the console. no error has been dected.
 
-add new feature : web app responsiveness.
+(ongoing)add new feature : web app responsiveness.
 
-fix feature : background animate is not smooth. 
+(Done)fix feature : background animate is not smooth. 
 
-add new feature : add effects animate on each month-card.
+add new feature : each month card have different animate background.
 
-add new feature : always check if supabase connection is strong. if not then the whole web app cannot be use. Display on Web app, ongoing-maintenance.
+add new feature : always check if supabase connection is strong. if not then the whole web app cannot be use. Display on Web app, ongoing-maintenance. 
+
+(ongoing)update feature : And Hide the class "db-status-label"
 
 add new feature : on class "bk-summary-card". Give user options : Edit or View.
 If user choose Edit re-open the new booking section with previous data.
