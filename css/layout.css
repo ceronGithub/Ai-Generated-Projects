@@ -95,3 +95,28 @@
 @media (max-width: 600px) {
   .year-grid { grid-template-columns: 1fr; padding: 18px 16px 50px; gap: 18px; }
 }
+
+/* ── Supabase DB status indicator ── */
+.db-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-mid);
+  box-shadow: var(--shadow-card);
+  white-space: nowrap;
+}
+.db-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+.db-dot.online  { background: #3cb771; box-shadow: 0 0 0 3px rgba(60,183,113,0.20); }
+.db-dot.offline { background: #e0b000; box-shadow: 0 0 0 3px rgba(224,176,0,0.20); }

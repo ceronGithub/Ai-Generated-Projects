@@ -12,7 +12,6 @@ function renderTodayBadge() {
 const _origRefreshMonth = refreshMonth;
 function refreshMonth(month) {
   _origRefreshMonth(month);
-  // Re-apply booking dot indicator to the rebuilt card
   const grid = document.getElementById('yearGrid');
   if (!grid) return;
   const card = grid.querySelectorAll('.month-card')[month];
@@ -28,12 +27,15 @@ function refreshMonth(month) {
   });
 }
 
-function init() {
+async function init() {
   renderTodayBadge();
-  renderAllMonths();          // calendar.js — builds all 12 month cards
-  applyBookingIndicators();   // booking.js  — marks cells with saved bookings
-  setupModalListeners();      // modal.js    — legacy modal wiring (safe no-ops)
-  setupBookingListeners();    // booking.js  — booking form events
+  renderAllMonths();
+  setupModalListeners();
+  setupBookingListeners();
+
+  // Load bookings from Supabase into cache, then refresh indicators
+  await initSupabase();
+  applyBookingIndicators();
 }
 
 document.addEventListener('DOMContentLoaded', init);
