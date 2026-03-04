@@ -32,6 +32,7 @@ async function init() {
   renderAllMonths();
   setupModalListeners();
   setupBookingListeners();
+  setupAnalyticsListeners();
 
   // Load bookings from Firebase into cache, then refresh indicators
   await initFirebase();

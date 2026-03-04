@@ -669,6 +669,17 @@ function buildMonthCard(year, month) {
   }
 
   card.appendChild(dayGrid);
+
+  // Analytics button
+  const anBtn = document.createElement('button');
+  anBtn.className = 'an-card-btn';
+  anBtn.innerHTML = '📊 Analytics';
+  anBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    openMonthAnalytics(month);
+  });
+  card.appendChild(anBtn);
+
   return card;
 }
 

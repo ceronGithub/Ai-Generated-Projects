@@ -1,21 +1,21 @@
 /* ════════════════════════════════════════════════════════════════
    responsive.css — Victoria's Haven · Full Breakpoint System
    ────────────────────────────────────────────────────────────────
-   TIER          NAME               WIDTH
-   ──────────────────────────────────────────────────────────────
-   xxs    XX-Small Phone        ≤ 320px
-   xs     X-Small Phone         321px – 480px
-   sm     Small Phone           481px – 600px
-   md     Medium Tablet         601px – 768px
-   lg     Big Laptop            769px – 1280px
-   xl     Super-Big Screen      1281px+
-   ──────────────────────────────────────────────────────────────
-   Strategy: desktop-first (max-width) overrides,
-   min-width for super-big enhancements.
+   GRID RULE (takes priority over all):
+     ≥ 1000px  →  2 cards per row   repeat(2, 1fr)
+     ≤  999px  →  1 card per row    1fr
+
+   TIER OVERVIEW:
+     xl   ≥ 1281px   Super-Big Screen
+     lg   769–1280px Big Laptop
+     md   601–768px  Medium Tablet
+     sm   481–600px  Small Phone
+     xs   321–480px  X-Small Phone
+     xxs  ≤ 320px    XX-Small Phone
 ════════════════════════════════════════════════════════════════ */
 
 /* ════════════════════════════════════════════
-   BASE — global touch & box model
+   BASE — touch & box model
 ════════════════════════════════════════════ */
 *, *::before, *::after {
   -webkit-tap-highlight-color: transparent;
@@ -23,27 +23,35 @@
 }
 
 /* ════════════════════════════════════════════
+   GRID RULE — 2 cols ≥ 1000px
+════════════════════════════════════════════ */
+@media (min-width: 1000px) {
+  .year-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ════════════════════════════════════════════
+   GRID RULE — 1 col ≤ 999px
+════════════════════════════════════════════ */
+@media (max-width: 999px) {
+  .year-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ════════════════════════════════════════════
    SUPER-BIG SCREEN  ≥ 1281px
-   4-col calendar grid, wider layout, larger type
 ════════════════════════════════════════════ */
 @media (min-width: 1281px) {
-
-  /* Header */
   .site-header        { padding: 22px 72px; }
   .header-year        { font-size: 52px; }
   .header-label       { font-size: 14px; letter-spacing: 3px; }
   .header-today-badge { font-size: 14px; padding: 10px 28px; }
   .db-status          { font-size: 13px; padding: 9px 20px; }
 
-  /* 2-column calendar */
-  .year-grid {
-    grid-template-columns: repeat(2, 1fr);
-    max-width: 1800px;
-    padding: 64px 72px 110px;
-    gap: 36px;
-  }
+  .year-grid          { max-width: 1800px; padding: 64px 72px 110px; gap: 36px; }
 
-  /* Month cards */
   .month-header       { padding: 30px 28px 22px; }
   .month-name         { font-size: 32px; }
   .month-year-tag     { font-size: 12px; padding: 5px 12px; }
@@ -55,12 +63,10 @@
   .day-cell.today .day-num { width: 32px; height: 32px; }
   .event-dot          { width: 6px; height: 6px; }
 
-  /* Modals */
   .bk-modal           { width: 780px; }
   .bk-list-modal      { width: 600px; }
   .bk-modal-header    { padding: 28px 32px 22px; }
   .bk-header-date     { font-size: 28px; }
-  .bk-body            { padding: 28px 32px; gap: 32px; }
   .bk-footer          { padding: 22px 32px; }
   .bk-input           { font-size: 14px; padding: 12px 15px; }
   .bk-label           { font-size: 12px; }
@@ -72,19 +78,13 @@
 
 /* ════════════════════════════════════════════
    BIG LAPTOP  769px – 1280px
-   3-col grid, comfortable spacing
 ════════════════════════════════════════════ */
 @media (max-width: 1280px) {
-
   .site-header        { padding: 16px 40px; }
   .header-year        { font-size: 42px; }
   .header-inner       { gap: 14px; }
 
-  .year-grid {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 44px 40px 80px;
-    gap: 28px;
-  }
+  .year-grid          { padding: 44px 40px 80px; gap: 28px; }
 
   .month-header       { padding: 24px 22px 18px; }
   .month-name         { font-size: 26px; }
@@ -98,10 +98,8 @@
 
 /* ════════════════════════════════════════════
    MEDIUM TABLET  601px – 768px
-   2-col grid, bottom-sheet modals
 ════════════════════════════════════════════ */
 @media (max-width: 768px) {
-
   /* Header */
   .site-header        { padding: 12px 20px; }
   .header-inner       { gap: 10px; flex-wrap: wrap; }
@@ -110,28 +108,10 @@
   .header-today-badge { font-size: 11px; padding: 7px 14px; }
   .db-status          { font-size: 11px; padding: 6px 12px; }
 
-  /* Calendar — 2 cards per row at ≥ 1000px, 1 card below 1000px */
-  .year-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto;
-    padding: 24px 20px 60px;
-    gap: 20px;
-  }
-
-/* ── 1000px boundary — explicit rules ── */
-@media (min-width: 1000px) {
-  .year-grid {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto;
-  }
-}
-
-@media (max-width: 999px) {
-  .year-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-  }
-}
+  /* Calendar */
+  .year-grid          { padding: 24px 20px 60px; gap: 20px; }
+  .month-card:hover   { transform: none; }
+  .month-header       { padding: 18px 16px 14px; }
   .month-name         { font-size: 22px; }
   .weekday-row        { padding: 0 10px 6px; }
   .weekday-row span   { font-size: 9px; letter-spacing: 1px; }
@@ -170,7 +150,15 @@
   .bk-list-body-inner { padding: 12px 16px; }
   .bk-list-footer     { padding: 12px 16px 20px; }
 
-  /* Scrollbars — hide on touch */
+  /* Analytics modal */
+  .an-overlay         { padding: 0; align-items: flex-end; }
+  .an-modal           { max-width: 100%; border-radius: 24px 24px 0 0; max-height: 92vh; }
+  .an-modal-header    { padding: 18px 20px 14px; }
+  .an-title           { font-size: 18px; }
+  .an-body            { padding: 16px 18px 22px; gap: 16px; }
+  .an-stat-row        { grid-template-columns: repeat(2, 1fr); }
+
+  /* Scrollbars — hide */
   .bk-body::-webkit-scrollbar,
   .bk-list-body::-webkit-scrollbar { display: none; }
   .bk-body,
@@ -179,10 +167,8 @@
 
 /* ════════════════════════════════════════════
    SMALL PHONE  481px – 600px
-   Still 2-col grid, single-col form
 ════════════════════════════════════════════ */
 @media (max-width: 600px) {
-
   /* Header */
   .site-header        { padding: 10px 14px; }
   .header-year        { font-size: 26px; }
@@ -191,13 +177,9 @@
   .db-status          { padding: 5px 10px; }
   .db-status .db-status-label { display: none; }
 
-  /* Calendar — 1 card per row */
-  .year-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    padding: 14px 10px 48px;
-    gap: 10px;
-  }
+  /* Calendar */
+  .year-grid          { padding: 14px 10px 48px; gap: 10px; }
+  .month-header       { padding: 14px 12px 10px; }
   .month-name         { font-size: 18px; }
   .month-year-tag     { font-size: 9px; padding: 3px 7px; }
   .weekday-row        { padding: 0 8px 4px; }
@@ -207,7 +189,7 @@
   .day-num            { font-size: 10px; width: 22px; height: 22px; }
   .event-dot          { width: 3px; height: 3px; }
 
-  /* Booking form — single col */
+  /* Booking form */
   .bk-overlay         { padding: 0; }
   .bk-modal           { border-radius: 20px 20px 0 0; max-height: 95vh; }
   .bk-grid-2          { grid-template-columns: 1fr; gap: 12px; }
@@ -228,7 +210,7 @@
   .bk-event-badge     { font-size: 10px; padding: 4px 10px 4px 8px; }
   .bk-tour-hint       { font-size: 10px; padding: 7px 10px; }
 
-  /* Drag handle on bottom sheet */
+  /* Drag handle */
   .bk-modal::before {
     content: '';
     display: block;
@@ -264,22 +246,16 @@
 
 /* ════════════════════════════════════════════
    X-SMALL PHONE  321px – 480px
-   1-col grid, stacked footer buttons
 ════════════════════════════════════════════ */
 @media (max-width: 480px) {
-
   /* Header */
   .site-header        { padding: 9px 12px; }
   .header-year        { font-size: 22px; }
   .header-inner       { gap: 6px; }
   .header-today-badge { font-size: 9px; padding: 5px 10px; }
 
-  /* Calendar — 1 col */
-  .year-grid {
-    grid-template-columns: 1fr;
-    padding: 12px 10px 40px;
-    gap: 12px;
-  }
+  /* Calendar */
+  .year-grid          { padding: 12px 10px 40px; gap: 12px; }
   .month-header       { padding: 16px 14px 12px; }
   .month-name         { font-size: 24px; }
   .month-year-tag     { font-size: 10px; padding: 4px 10px; }
@@ -316,20 +292,30 @@
   .bk-card-btn        { font-size: 11px; padding: 8px 6px; min-height: 38px; }
   .bk-list-footer .bk-btn-save { width: 100%; justify-content: center; }
 
+  /* Analytics */
+  .an-modal-header    { padding: 14px 16px 12px; }
+  .an-title           { font-size: 16px; }
+  .an-body            { padding: 12px 14px 18px; gap: 12px; }
+  .an-stat-row        { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .an-stat-card       { padding: 10px 10px 8px; }
+  .an-stat-value      { font-size: 13px; }
+  .an-section         { padding: 12px 14px 14px; }
+  .an-chart-wrap      { height: 100px; }
+  .an-chart-wrap--tall { height: 120px; }
+  .an-tour-row        { flex-direction: column; gap: 12px; }
+  .an-donut-wrap      { width: 90px; height: 90px; align-self: center; }
+
   /* Toast */
   .bk-toast           { font-size: 11px; padding: 9px 14px; }
 }
 
 /* ════════════════════════════════════════════
    XX-SMALL PHONE  ≤ 320px
-   Ultra-compact — hide non-essential UI
 ════════════════════════════════════════════ */
 @media (max-width: 320px) {
-
   /* Header */
   .site-header        { padding: 8px 10px; }
   .header-year        { font-size: 20px; letter-spacing: -0.5px; }
-  .header-label       { display: none; }
   .header-today-badge { display: none; }
   .db-status          { padding: 4px 8px; font-size: 10px; }
   .db-status .db-status-label { display: none; }
@@ -358,8 +344,6 @@
   .bk-section-title   { font-size: 10px; letter-spacing: 1px; }
   .bk-label           { font-size: 9px; }
   .bk-input           { font-size: 13px; padding: 9px 10px; min-height: 42px; }
-  .bk-input-icon      { padding-left: 28px; }
-  .bk-icon            { font-size: 12px; left: 9px; }
   .bk-auto            { font-size: 12px; padding: 8px 10px; min-height: 42px; }
   .bk-tour-btn        { font-size: 11px; padding: 9px 10px; min-height: 42px; }
   .bk-err             { font-size: 10px; }
@@ -380,7 +364,6 @@
   .bk-card-actions    { gap: 4px; }
   .bk-card-btn        { font-size: 10px; padding: 7px 5px; min-height: 36px; }
   .bk-list-footer     { padding: 8px 12px 14px; }
-  .bk-list-footer .bk-btn-save { font-size: 12px; padding: 10px 14px; }
   .bk-slot-notice     { font-size: 10px; padding: 8px 10px; }
 
   /* Toast */
@@ -389,6 +372,9 @@
     font-size: 10px; padding: 8px 12px;
     border-radius: 30px;
   }
+
+  /* Analytics */
+  .an-stat-row        { grid-template-columns: 1fr; }
 }
 
 /* ════════════════════════════════════════════
