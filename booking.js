@@ -206,6 +206,10 @@ Victoria's Haven
     form.style.display    = 'none';
     compose.style.display = '';
     window.scrollTo(0, 0);
+    // Open preview automatically
+    setTimeout(() => {
+      if (typeof window.refreshEmailPreview === 'function') window.refreshEmailPreview();
+    }, 100);
   });
 
   // ── Back button ──

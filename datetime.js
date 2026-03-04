@@ -1,7 +1,6 @@
-/* datetime.js — Date, Day, Event detection */
+/* datetime.js — Date, Day, Event detection + Live Clock */
 (function () {
 
-  // Philippine public holidays (month is 0-indexed)
   const HOLIDAYS = [
     { month: 0,  day: 1,  name: "New Year's Day" },
     { month: 1,  day: 25, name: "People Power Day" },
@@ -16,31 +15,24 @@
     { month: 11, day: 30, name: "Rizal Day" },
   ];
 
-  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-  function pad(n) { return String(n).padStart(2, '0'); }
 
   function getHoliday(date) {
     return HOLIDAYS.find(h => h.month === date.getMonth() && h.day === date.getDate()) || null;
   }
 
-  function updateDisplay() {
-    const now  = new Date();
-    const dow  = now.getDay();
+  function updateDate() {
+    const now     = new Date();
+    const dow     = now.getDay();
     const holiday = getHoliday(now);
 
-    // Date
-    const dateStr = `${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
-    document.getElementById('dateDisplay').textContent = dateStr;
-
-    // Day
+    document.getElementById('dateDisplay').textContent =
+      `${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
     document.getElementById('dayDisplay').textContent = DAYS[dow];
 
-    // Event
     const iconEl  = document.getElementById('eventIcon');
     const labelEl = document.getElementById('eventLabel');
-
     if (holiday) {
       iconEl.textContent  = '🎉';
       labelEl.textContent = holiday.name;
@@ -56,17 +48,30 @@
     }
   }
 
-  updateDisplay();
-
-  // Refresh at midnight
-  function scheduleNextMidnight() {
-    const now = new Date();
-    const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
-    setTimeout(() => {
-      updateDisplay();
-      scheduleNextMidnight();
-    }, msUntilMidnight);
+  // ── Live clock (12-hr format) ──
+  function updateClock() {
+    const now    = new Date();
+    let   h      = now.getHours();
+    const m      = String(now.getMinutes()).padStart(2, '0');
+    const s      = String(now.getSeconds()).padStart(2, '0');
+    const period = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    const el = document.getElementById('timeDisplay');
+    if (el) el.textContent = `${h}:${m}:${s} ${period}`;
   }
 
+  updateDate();
+  updateClock();
+
+  // Refresh date at midnight
+  function scheduleNextMidnight() {
+    const now = new Date();
+    const ms  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
+    setTimeout(() => { updateDate(); scheduleNextMidnight(); }, ms);
+  }
   scheduleNextMidnight();
+
+  // Tick clock every second
+  setInterval(updateClock, 1000);
+
 })();

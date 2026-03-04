@@ -24,7 +24,7 @@
     <!-- ASIDE LEFT -->
     <aside class="sidebar" id="sidebar">
 
-      <div class="sidebar-logo">MX</div>
+      <div class="sidebar-logo">HV-Mai</div>
 
       <!-- Sidebar Header: Date / Day / Event -->
       <div class="sidebar-header">
@@ -35,6 +35,10 @@
         <div class="info-row">
           <span class="info-icon">◷</span>
           <span id="dayDisplay" class="info-text"></span>
+        </div>
+        <div class="info-row">
+          <span class="info-icon">🕐</span>
+          <span id="timeDisplay" class="info-text"></span>
         </div>
         <div class="info-row event-row">
           <span id="eventIcon" class="event-icon"></span>
@@ -236,6 +240,21 @@
             </div>
           </div>
 
+          <!-- ══ EMAIL PREVIEW ══ -->
+          <div class="preview-card" id="emailPreview">
+            <div class="preview-header">
+              <span class="preview-label">📧 Email Preview</span>
+              <button class="preview-toggle" id="btnTogglePreview">Show Preview ▾</button>
+            </div>
+            <div class="preview-body" id="previewBody" style="display:none;">
+              <div class="preview-frame" id="previewFrame">
+                <p style="color:var(--muted);font-size:12px;text-align:center;padding:20px;">
+                  Fill in booking details and compose a message to see preview.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div class="compose-actions">
             <button class="btn-ghost" id="btnDiscard">Discard</button>
             <button class="btn-send" id="btnSend">
@@ -310,6 +329,7 @@
 
   <script src="matrix.js"></script>
   <script src="booking.js"></script>
+  <script src="preview.js"></script>
   <script src="datetime.js"></script>
   <script src="nav.js"></script>
   <script src="attachments.js"></script>
