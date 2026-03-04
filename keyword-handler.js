@@ -198,6 +198,21 @@ const KeywordHandler = (() => {
   //   "quezon ave. cor. bir road" → "Quezon Ave. Cor. Bir Road"
   //   "88.39"                     → "88.39"            (no alpha → untouched)
 
+  // ── toTitleCase ─────────────────────────────────────────────────────────────
+  // Rules applied to every extracted PDF value:
+  //   • Words containing digits → preserved as-is (codes, IDs, dates, times)
+  //   • Words where ALL letters are uppercase → preserved as-is (acronyms, proper nouns)
+  //   • All other words → Title Case (first letter up, rest lower)
+  //   • After every '.'  → next alpha letter is capitalised
+  //
+  // Examples:
+  //   "national grid corporation"   → "National Grid Corporation"
+  //   "NATIONAL GRID CORPORATION"   → "National Grid Corporation"
+  //   "SMC TPLEX Corporation"       → "Smc Tplex Corporation"  [mixed → title]
+  //   "TPLEX000045430892"           → "TPLEX000045430892"       [has digit → unchanged]
+  //   "INV-2026-042"                → "INV-2026-042"            [has digit → unchanged]
+  //   "QUEZON AVE. COR. BIR ROAD"  → "Quezon Ave. Cor. Bir Road"
+  //   "88.39"                       → "88.39"                   [no alpha → unchanged]
   function toTitleCase(val) {
     if (!val) return val;
 
@@ -205,25 +220,25 @@ const KeywordHandler = (() => {
     const titled = val.split(' ').map(word => {
       if (!word) return word;
 
-      // Find the index of the first alphabetic character
-      let firstAlpha = -1;
-      for (let i = 0; i < word.length; i++) {
-        if (/[a-zA-Z]/.test(word[i])) { firstAlpha = i; break; }
-      }
-      if (firstAlpha === -1) return word; // no letters (pure number/symbol) → unchanged
-
-      // If the word contains any digit, it is a code / ID / number token
-      // (e.g. "INV-2026-042", "TPLEX000045430892", "11/F", "01/07/2026", "14:42:17")
-      // → preserve exactly as-is
+      // Words with digits → codes / IDs / numbers → preserve exactly
       if (/\d/.test(word)) return word;
 
-      // Pure-text word → lowercase all, then uppercase the first alpha character
+      // Find all alpha characters in this word
+      const letters = word.replace(/[^a-zA-Z]/g, '');
+      if (!letters) return word; // pure symbol/number → unchanged
+
+      // ALL-CAPS word (e.g. "OF", "THE", "COR", "AVE", "PHILIPPIN") →
+      // apply title case: first alpha upper, rest lower
+      // ALL-CAPS rule only preserves when user types in keyword field,
+      // not for PDF-extracted values which should always be normalised.
       const lower = word.toLowerCase();
+      // Find index of first alpha char to handle leading symbols (e.g. "#WORD")
+      let firstAlpha = 0;
+      while (firstAlpha < lower.length && !/[a-zA-Z]/.test(lower[firstAlpha])) firstAlpha++;
       return lower.slice(0, firstAlpha) + lower[firstAlpha].toUpperCase() + lower.slice(firstAlpha + 1);
     }).join(' ');
 
     // Step 2: capitalise first alpha character after each '.'
-    // Handles "Ave. cor." → "Ave. Cor." even when the next word wasn't space-separated
     return titled.replace(/\.([^a-zA-Z]*)([a-zA-Z])/g, (_, gap, letter) => {
       return '.' + gap + letter.toUpperCase();
     });

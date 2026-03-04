@@ -226,9 +226,46 @@
 
   // ===== KEYWORDS =====
 
+  // ── Smart keyword capitalisation ────────────────────────────────────────
+  // Rules:
+  //   • If ALL letter characters are UPPERCASE → keep unchanged (user typed caps deliberately)
+  //   • Everything else (all-lower OR mixed case) → apply Title Case word-by-word
+  //   • Apostrophes/smart-quotes are stripped (PDF labels never contain them)
+  //   • Non-letter characters (colons, spaces, numbers) are ignored for case detection
+  function smartCapKeyword(raw) {
+    // Strip apostrophes/smart-quotes first
+    const clean = raw.replace(/[‘’‛'']/g, '');
+    const letters = clean.replace(/[^a-zA-Z]/g, '');
+    if (!letters) return clean; // no letters → return as-is
+
+    // All letters uppercase → user deliberately typed ALL CAPS, keep unchanged
+    if (letters === letters.toUpperCase() && letters !== letters.toLowerCase()) {
+      return clean;
+    }
+
+    // All-lower OR mixed case → apply Title Case word by word
+    return clean.split(' ').map(word => {
+      if (!word) return word;
+      let result = '';
+      let foundFirst = false;
+      for (const ch of word) {
+        if (/[a-zA-Z]/.test(ch) && !foundFirst) {
+          result += ch.toUpperCase();
+          foundFirst = true;
+        } else if (/[a-zA-Z]/.test(ch)) {
+          result += ch.toLowerCase();
+        } else {
+          result += ch;
+        }
+      }
+      return result;
+    }).join(' ');
+  }
+
   function addKeyword() {
-    const val = keywordInput.value.trim();
-    if (!val) return;
+    const raw = keywordInput.value.trim();
+    if (!raw) return;
+    const val = smartCapKeyword(raw);  // apply smart capitalisation on Enter
 
     if (state.mode === 'single') {
       // Only one keyword allowed
