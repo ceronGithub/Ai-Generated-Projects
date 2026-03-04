@@ -558,17 +558,30 @@ function buildMonthCard(year, month) {
   header.style.background = `linear-gradient(135deg, ${color.tint}cc 0%, rgba(255,255,255,0.82) 100%)`;
   header.style.borderBottom = `2px solid ${color.light}`;
 
+  // Month name
   const nameEl = document.createElement('div');
   nameEl.className = 'month-name';
   nameEl.textContent = MONTH_NAMES[month];
   nameEl.style.color = color.accent;
 
+  // Analytics icon button — center
+  const anBtn = document.createElement('button');
+  anBtn.className = 'an-card-btn';
+  anBtn.title = 'Analytics';
+  anBtn.innerHTML = '📊';
+  anBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    openMonthAnalytics(month);
+  });
+
+  // Year tag
   const tagEl = document.createElement('div');
   tagEl.className = 'month-year-tag';
   tagEl.textContent = year;
   tagEl.style.color = color.accent;
 
   header.appendChild(nameEl);
+  header.appendChild(anBtn);
   header.appendChild(tagEl);
   card.appendChild(header);
 
@@ -669,16 +682,6 @@ function buildMonthCard(year, month) {
   }
 
   card.appendChild(dayGrid);
-
-  // Analytics button
-  const anBtn = document.createElement('button');
-  anBtn.className = 'an-card-btn';
-  anBtn.innerHTML = '📊 Analytics';
-  anBtn.addEventListener('click', e => {
-    e.stopPropagation();
-    openMonthAnalytics(month);
-  });
-  card.appendChild(anBtn);
 
   return card;
 }

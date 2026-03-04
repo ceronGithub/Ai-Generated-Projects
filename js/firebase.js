@@ -193,5 +193,11 @@ async function initFirebase() {
 async function refreshFromFirebase() {
   await initFirebase();
   renderAllMonths();
+  // Force all cards visible immediately — no animation restart
+  document.querySelectorAll('.month-card').forEach(card => {
+    card.style.opacity   = '1';
+    card.style.animation = 'none';
+    card.style.transform = 'translateY(0) scale(1)';
+  });
   applyBookingIndicators();
 }

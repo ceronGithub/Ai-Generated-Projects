@@ -16,6 +16,9 @@ function refreshMonth(month) {
   if (!grid) return;
   const card = grid.querySelectorAll('.month-card')[month];
   if (!card) return;
+  // Always ensure card is visible after rebuild
+  card.style.opacity  = '1';
+  card.style.transform = 'translateY(0) scale(1)';
   card.querySelectorAll('.day-cell:not(.other-month)').forEach(cell => {
     const numEl = cell.querySelector('.day-num');
     if (!numEl) return;
@@ -34,8 +37,13 @@ async function init() {
   setupBookingListeners();
   setupAnalyticsListeners();
 
-  // Load bookings from Firebase into cache, then refresh indicators
+  // Load bookings from Firebase, then force cards visible + refresh indicators
   await initFirebase();
+  document.querySelectorAll('.month-card').forEach(card => {
+    card.style.opacity   = '1';
+    card.style.animation = 'none';
+    card.style.transform = 'translateY(0) scale(1)';
+  });
   applyBookingIndicators();
 }
 

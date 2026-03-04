@@ -34,12 +34,14 @@
   transform: translateY(-5px);
 }
 
-/* ── Month header banner — larger ── */
+/* ── Month header banner ── */
 .month-header {
-  padding: 26px 24px 20px;
+  padding: 20px 24px 16px;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .month-name {
