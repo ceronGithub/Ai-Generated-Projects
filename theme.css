@@ -1,0 +1,60 @@
+/* theme.css — design tokens */
+:root {
+  --bg:           #0d0d0f;
+  --bg-raised:    #131316;
+  --bg-card:      #18181c;
+  --bg-hover:     #1f1f26;
+  --border:       #2a2a35;
+  --border-light: #333342;
+
+  --accent:       #e8c97a;
+  --accent-dim:   #b89a45;
+  --accent-glow:  rgba(232, 201, 122, 0.12);
+
+  --text-primary:   #f0ede6;
+  --text-secondary: #8a8799;
+  --text-muted:     #4e4d5e;
+
+  --today-bg:     #e8c97a;
+  --today-text:   #0d0d0f;
+  --event-dot:    #e8c97a;
+  --weekend-text: #6b6a7e;
+
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-mono:    'DM Mono', 'Courier New', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-modal: 0 20px 60px rgba(0,0,0,0.7);
+
+  --sidebar-w: 240px;
+  --transition: 0.2s ease;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--today-text);
+}
+
+/* Grain texture overlay */
+.grain-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px;
+}

@@ -1,0 +1,27 @@
+/* reset.css — baseline normalization */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+ul { list-style: none; }
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font: inherit;
+}
+
+input {
+  border: none;
+  outline: none;
+  font: inherit;
+  background: none;
+}

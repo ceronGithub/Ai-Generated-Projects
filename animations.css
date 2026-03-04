@@ -1,0 +1,80 @@
+/* animations.css — keyframes and entrance effects */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulseAccent {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 201, 122, 0); }
+  50%       { box-shadow: 0 0 0 4px rgba(232, 201, 122, 0.15); }
+}
+
+/* Grid entrance: each cell staggers in */
+.calendar-grid .day-cell {
+  animation: fadeSlideUp 0.3s ease both;
+}
+
+.calendar-grid .day-cell:nth-child(7n+1)  { animation-delay: 0.00s; }
+.calendar-grid .day-cell:nth-child(7n+2)  { animation-delay: 0.03s; }
+.calendar-grid .day-cell:nth-child(7n+3)  { animation-delay: 0.06s; }
+.calendar-grid .day-cell:nth-child(7n+4)  { animation-delay: 0.09s; }
+.calendar-grid .day-cell:nth-child(7n+5)  { animation-delay: 0.12s; }
+.calendar-grid .day-cell:nth-child(7n+6)  { animation-delay: 0.15s; }
+.calendar-grid .day-cell:nth-child(7n+7)  { animation-delay: 0.18s; }
+
+/* Today cell pulses softly */
+.day-cell.today {
+  animation: fadeSlideUp 0.3s ease both, pulseAccent 3s ease-in-out 0.5s infinite;
+}
+
+/* Month title transition */
+.cal-month-title {
+  animation: fadeIn 0.25s ease;
+}
+
+/* Sidebar month items */
+.month-nav li {
+  animation: fadeSlideUp 0.4s ease both;
+}
+
+.month-nav li:nth-child(1)  { animation-delay: 0.05s; }
+.month-nav li:nth-child(2)  { animation-delay: 0.08s; }
+.month-nav li:nth-child(3)  { animation-delay: 0.11s; }
+.month-nav li:nth-child(4)  { animation-delay: 0.14s; }
+.month-nav li:nth-child(5)  { animation-delay: 0.17s; }
+.month-nav li:nth-child(6)  { animation-delay: 0.20s; }
+.month-nav li:nth-child(7)  { animation-delay: 0.23s; }
+.month-nav li:nth-child(8)  { animation-delay: 0.26s; }
+.month-nav li:nth-child(9)  { animation-delay: 0.29s; }
+.month-nav li:nth-child(10) { animation-delay: 0.32s; }
+.month-nav li:nth-child(11) { animation-delay: 0.35s; }
+.month-nav li:nth-child(12) { animation-delay: 0.38s; }
+
+/* Upcoming items */
+.upcoming-item {
+  animation: fadeSlideUp 0.35s ease both;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 4px;
+}

@@ -1,0 +1,248 @@
+/* layout.css — structural layout */
+body {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--bg-raised);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0;
+  overflow-y: auto;
+}
+
+.sidebar-top {
+  padding: 0 24px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.logo-year {
+  font-family: var(--font-display);
+  font-size: 42px;
+  line-height: 1;
+  color: var(--accent);
+  letter-spacing: -1px;
+}
+
+.logo-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.mini-today {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.mini-day-name {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.mini-day-num {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.mini-month {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ── Sidebar nav ── */
+.nav-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--text-muted);
+  padding: 0 24px;
+  margin-bottom: 8px;
+}
+
+.month-nav {
+  margin-bottom: 28px;
+}
+
+.month-nav ul {
+  display: flex;
+  flex-direction: column;
+}
+
+.month-nav li {
+  padding: 7px 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+  border-left: 2px solid transparent;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.month-nav li:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.month-nav li.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+/* ── Upcoming events sidebar list ── */
+.sidebar-events {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-events ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 16px;
+}
+
+.upcoming-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  transition: border-color var(--transition);
+}
+
+.upcoming-item:hover {
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.upcoming-item .up-date {
+  color: var(--accent);
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+/* ── Main area ── */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 32px 36px 20px;
+}
+
+/* ── Calendar header ── */
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.cal-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.cal-month-title {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--text-primary);
+  letter-spacing: -1px;
+}
+
+.cal-year-tag {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+.cal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-nav {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.btn-nav:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.btn-today {
+  padding: 7px 18px;
+  background: var(--accent);
+  color: var(--today-text);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: opacity var(--transition);
+}
+
+.btn-today:hover { opacity: 0.85; }
+
+/* ── Weekday labels ── */
+.weekday-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+
+.weekday-row span {
+  text-align: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
