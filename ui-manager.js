@@ -485,6 +485,100 @@ const UIManager = (() => {
   // RESULTS — MULTIPLE KEYWORDS
   // =============================================
 
+  // =============================================
+  // EXCEL LAYOUT PICKER MODAL
+  // =============================================
+  //
+  // Shows a small modal asking the user which Excel layout to use:
+  //   A) Rows    — Page | Filename | Keyword | Captured Text  (one row per hit)
+  //   B) Columns — Filename | Page | [KW1] | [KW2] …         (one column per keyword)
+  //
+  // Calls onChoose('rows') or onChoose('columns') when the user picks.
+  // The modal self-destructs after a choice or on backdrop click.
+
+  function showExcelLayoutPicker(onChoose) {
+    // ── Build overlay ────────────────────────────────────────────────────
+    const overlay = document.createElement('div');
+    overlay.className = 'elp-overlay';
+
+    overlay.innerHTML = `
+      <div class="elp-backdrop"></div>
+      <div class="elp-panel" role="dialog" aria-modal="true" aria-label="Choose Excel layout">
+        <div class="elp-header">
+          <span class="elp-title">⬇ Excel Layout</span>
+          <button class="elp-close" title="Cancel">✕</button>
+        </div>
+        <p class="elp-subtitle">How should the data be arranged in the spreadsheet?</p>
+
+        <div class="elp-options">
+
+          <!-- Layout A: Rows -->
+          <button class="elp-option" data-layout="rows">
+            <div class="elp-option-label">
+              <span class="elp-option-icon">☰</span>
+              <span class="elp-option-name">Rows</span>
+              <span class="elp-option-badge">default</span>
+            </div>
+            <p class="elp-option-desc">One row per result — best for reviewing individual hits.</p>
+            <div class="elp-preview elp-preview--rows">
+              <div class="elp-th-row">
+                <span>Page</span><span>Filename</span><span>Keyword</span><span>Captured Text</span>
+              </div>
+              <div class="elp-td-row"><span>Page 1</span><span>file.pdf</span><span>TIN :</span><span>006-887-378-00000</span></div>
+              <div class="elp-td-row"><span>Page 1</span><span>file.pdf</span><span>TIN :</span><span>006-977-514-000</span></div>
+              <div class="elp-td-row"><span>Page 1</span><span>file.pdf</span><span>Date :</span><span>01/07/2026</span></div>
+            </div>
+          </button>
+
+          <!-- Layout B: Columns -->
+          <button class="elp-option" data-layout="columns">
+            <div class="elp-option-label">
+              <span class="elp-option-icon">⊞</span>
+              <span class="elp-option-name">Columns</span>
+            </div>
+            <p class="elp-option-desc">One column per keyword — best for comparing fields across many PDFs.</p>
+            <div class="elp-preview elp-preview--cols">
+              <div class="elp-th-row">
+                <span>Filename</span><span>Page</span><span>TIN :</span><span>Date :</span>
+              </div>
+              <div class="elp-td-row"><span>file.pdf</span><span>Page 1</span><span>006-887…</span><span></span></div>
+              <div class="elp-td-row"><span>file.pdf</span><span>Page 1</span><span>006-977…</span><span></span></div>
+              <div class="elp-td-row elp-td-row--faded"><span>file.pdf</span><span>Page 1</span><span></span><span>01/07/2026</span></div>
+            </div>
+          </button>
+
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // ── Animate in ───────────────────────────────────────────────────────
+    requestAnimationFrame(() => overlay.classList.add('elp-open'));
+
+    // ── Close helper ─────────────────────────────────────────────────────
+    function closeModal() {
+      overlay.classList.add('elp-closing');
+      overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+      setTimeout(() => overlay.remove(), 400); // safety net
+    }
+
+    // ── Option click ─────────────────────────────────────────────────────
+    overlay.querySelectorAll('.elp-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        overlay.querySelectorAll('.elp-option').forEach(b => b.classList.remove('elp-option--selected'));
+        btn.classList.add('elp-option--selected');
+        const layout = btn.dataset.layout;
+        closeModal();
+        onChoose(layout);
+      });
+    });
+
+    // ── Close button & backdrop ──────────────────────────────────────────
+    overlay.querySelector('.elp-close').addEventListener('click', closeModal);
+    overlay.querySelector('.elp-backdrop').addEventListener('click', closeModal);
+  }
+
   function renderKeywordResults(results, keywords) {
     const container = document.getElementById('resultsContainer');
     const list = document.getElementById('resultsList');
@@ -507,7 +601,10 @@ const UIManager = (() => {
     excelBtn.className = 'btn-excel';
     excelBtn.textContent = '⬇ Download in Excel Format';
     excelBtn.addEventListener('click', () => {
-      ExcelExporter.exportKeywordResults(results, 'Multiple-Keyword-Results.xlsx');
+      // Ask the user which layout they want before downloading
+      showExcelLayoutPicker(layout => {
+        ExcelExporter.exportKeywordResults(results, 'Multiple-Keyword-Results.xlsx', layout);
+      });
     });
 
     actionsRow.appendChild(excelBtn);
@@ -518,10 +615,6 @@ const UIManager = (() => {
     let total = 0;
     for (const r of results) total += r.contexts.length;
     actions.appendChild(makeCountBadge(total, 'result'));
-
-    excelBtn.addEventListener('click', () => {
-      ExcelExporter.exportKeywordResults(results, 'Multiple-Keyword-Results.xlsx');
-    });
 
     // Result cards — group by keyword+filename+page so multi-value keywords
     // get a single picker card instead of multiple plain cards.
@@ -685,6 +778,7 @@ const UIManager = (() => {
     setModeButtonsVisible,
     setKeywordSectionMode,
     renderKeywordChips,
+    showExcelLayoutPicker,
     activateStep,
     setProgress,
     hideProgress,

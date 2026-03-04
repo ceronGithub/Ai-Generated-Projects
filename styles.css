@@ -1802,3 +1802,213 @@ mark {
   font-family: var(--font-mono);
   letter-spacing: 0.06em;
 }
+/* ============================================================
+   EXCEL LAYOUT PICKER MODAL  (elp-*)
+   ============================================================ */
+
+.elp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.elp-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 4, 9, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+
+.elp-overlay.elp-open .elp-backdrop { opacity: 1; }
+.elp-overlay.elp-closing .elp-backdrop { opacity: 0; }
+
+/* Panel */
+.elp-panel {
+  position: relative;
+  z-index: 1;
+  background: rgba(8, 14, 32, 0.97);
+  border: 1px solid rgba(0,229,255,0.18);
+  border-radius: 16px;
+  width: min(92vw, 640px);
+  padding: 1.6rem 1.8rem 1.8rem;
+  box-shadow:
+    0 0 0 1px rgba(0,229,255,0.06),
+    0 0 60px rgba(0,229,255,0.08),
+    0 40px 100px rgba(0,0,0,0.8);
+  opacity: 0;
+  transform: translateY(24px) scale(0.97);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+
+.elp-overlay.elp-open .elp-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.elp-overlay.elp-closing .elp-panel {
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Header */
+.elp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.elp-title {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--cyan);
+  letter-spacing: 0.06em;
+}
+
+.elp-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.elp-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+
+.elp-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin: 0 0 1.1rem;
+}
+
+/* Option cards side-by-side */
+.elp-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .elp-options { grid-template-columns: 1fr; }
+}
+
+.elp-option {
+  background: rgba(0,229,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1rem 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+}
+
+.elp-option:hover {
+  border-color: var(--cyan);
+  background: rgba(0,229,255,0.07);
+  box-shadow: 0 0 18px rgba(0,229,255,0.1);
+}
+
+.elp-option--selected {
+  border-color: var(--violet);
+  background: rgba(155,93,229,0.1);
+  box-shadow: 0 0 18px rgba(155,93,229,0.15);
+}
+
+.elp-option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+}
+
+.elp-option-icon {
+  font-size: 1rem;
+  color: var(--cyan);
+}
+
+.elp-option-name {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.elp-option-badge {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--gold);
+  background: rgba(255,201,77,0.1);
+  border: 1px solid rgba(255,201,77,0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+  letter-spacing: 0.05em;
+}
+
+.elp-option-desc {
+  font-size: 0.67rem;
+  color: var(--text-dim);
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+/* Mini spreadsheet preview */
+.elp-preview {
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.57rem;
+}
+
+.elp-th-row,
+.elp-td-row {
+  display: grid;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.elp-preview--rows .elp-th-row,
+.elp-preview--rows .elp-td-row {
+  grid-template-columns: 0.6fr 1.1fr 0.8fr 1.5fr;
+}
+
+.elp-preview--cols .elp-th-row,
+.elp-preview--cols .elp-td-row {
+  grid-template-columns: 1.2fr 0.6fr 1fr 1fr;
+}
+
+.elp-th-row span {
+  padding: 0.28rem 0.4rem;
+  color: var(--cyan);
+  background: rgba(0,229,255,0.06);
+  border-right: 1px solid rgba(255,255,255,0.05);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.elp-td-row span {
+  padding: 0.26rem 0.4rem;
+  color: var(--text-dim);
+  border-right: 1px solid rgba(255,255,255,0.04);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.elp-td-row--faded span { opacity: 0.45; }
+
+.elp-th-row span:last-child,
+.elp-td-row span:last-child { border-right: none; }
+
+.elp-td-row:last-child { border-bottom: none; }
