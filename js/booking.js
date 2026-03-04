@@ -74,6 +74,34 @@ function showToast(msg, duration = 2800) {
   setTimeout(() => toast.classList.remove('show'), duration);
 }
 
+
+/* ══════════════════════════════════════
+   DATE EVENT INFO
+   Returns { type, icon, label } for any date.
+   type: "holiday" | "weekend" | "weekday"
+══════════════════════════════════════ */
+function getDateEventInfo(year, month, day) {
+  const key = toKey(year, month, day);
+  const dow = new Date(year, month, day).getDay(); // 0=Sun 6=Sat
+
+  // Check holidays from AppState.events (loaded from data.js DEFAULT_EVENTS + user events)
+  const events = AppState.events[key] || [];
+  if (events.length > 0) {
+    // Strip emoji from first event name for cleaner label
+    const rawLabel = events[0];
+    return { type: 'holiday', icon: '🎉', label: rawLabel };
+  }
+
+  // Weekend check
+  if (dow === 0 || dow === 6) {
+    const dayName = dow === 0 ? 'Sunday' : 'Saturday';
+    return { type: 'weekend', icon: '🌅', label: `Weekend — ${dayName}` };
+  }
+
+  // Weekday
+  return { type: 'weekday', icon: '📅', label: `Weekday — ${DAY_NAMES[dow]}` };
+}
+
 /* ══════════════════════════════════════
    OPEN BOOKING FORM
 ══════════════════════════════════════ */
@@ -89,6 +117,15 @@ function openBookingForm(key, day, month, year, color) {
   document.getElementById('bkColorPill').style.background =
     `linear-gradient(180deg, ${color.accent}, ${color.light})`;
   document.getElementById('bkHeaderDate').textContent = formatDateLabel(year, month, day);
+
+  // Set event badge (Holiday / Weekend / Weekday)
+  const evInfo  = getDateEventInfo(year, month, day);
+  const badge   = document.getElementById('bkEventBadge');
+  const iconEl  = document.getElementById('bkEventIcon');
+  const labelEl = document.getElementById('bkEventLabel');
+  iconEl.textContent  = evInfo.icon;
+  labelEl.textContent = evInfo.label;
+  badge.className = 'bk-event-badge is-' + evInfo.type;
 
   // Reset form
   resetBookingForm();
