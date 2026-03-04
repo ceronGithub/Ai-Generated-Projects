@@ -392,7 +392,19 @@ const TableEngine = (() => {
         if (!val || !val.trim()) return;
         const tok = cols[ci].name + ' : ' + val.trim();
         const key = tok.toLowerCase().replace(/\s+/g, '');
-        if (!seen.has(key)) { seen.add(key); tokens.push(tok); }
+        if (!seen.has(key)) {
+          seen.add(key);
+          tokens.push(tok);
+          // TransNo. column: also emit "Ref No. : <value>" and "IER No. : <value>"
+          // so that keyword searches for "Ref No. :" and "IER No. :" still resolve
+          // after TableEngine renames the column to "TransNo."
+          if (/^TransNo/i.test(cols[ci].name)) {
+            const aliasRef = 'Ref No. : ' + val.trim();
+            const aliasIER = 'IER No. : ' + val.trim();
+            tokens.push(aliasRef);
+            tokens.push(aliasIER);
+          }
+        }
       }
 
       // Pass A — top->bottom 1st (row r, left to right)

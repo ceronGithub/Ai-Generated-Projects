@@ -3536,3 +3536,237 @@ mark {
     padding: 12px 16px;
   }
 }
+
+/* =============================================
+   TABLE MODE — Transaction Cards
+   ============================================= */
+
+/* ── Summary stats card ── */
+.tm-summary-card {
+  background: linear-gradient(135deg, rgba(0,229,255,0.07) 0%, rgba(159,111,255,0.07) 100%);
+  border: 1px solid rgba(0,229,255,0.18);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.tm-summary-grid {
+  display: flex;
+  gap: 1.8rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.tm-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.tm-stat-val {
+  font-family: var(--font-head);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.tm-stat-lbl {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-mid);
+}
+
+.tm-stat--fee .tm-stat-val {
+  color: var(--green);
+}
+
+/* ── Individual transaction card ── */
+.tm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem 1.1rem 1rem;
+}
+
+/* Header row: tag · plate · ref · datetime */
+.tm-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.7rem;
+  align-items: center;
+  margin-top: 0.1rem;
+}
+
+.tm-tag-chip,
+.tm-plate-chip,
+.tm-ref-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.18em 0.6em;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tm-tag-chip {
+  background: rgba(0,229,255,0.1);
+  border: 1px solid rgba(0,229,255,0.25);
+  color: var(--cyan);
+}
+
+.tm-plate-chip {
+  background: rgba(159,111,255,0.1);
+  border: 1px solid rgba(159,111,255,0.25);
+  color: var(--violet);
+}
+
+.tm-ref-chip {
+  background: rgba(255,201,77,0.08);
+  border: 1px solid rgba(255,201,77,0.2);
+  color: var(--gold);
+}
+
+.tm-datetime {
+  font-size: 0.76rem;
+  font-family: var(--font-mono);
+  color: var(--text-mid);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* Fields grid */
+.tm-fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 0.9rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.tm-field {
+  display: contents; /* participates in parent grid */
+}
+
+.tm-field-lbl {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-mid);
+  padding-top: 0.1em;
+  white-space: nowrap;
+  align-self: start;
+}
+
+.tm-field-val {
+  font-size: 0.82rem;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+/* Zone badge */
+.tm-zone-badge {
+  display: inline-block;
+  padding: 0.1em 0.55em;
+  border-radius: 4px;
+  background: rgba(0,229,255,0.1);
+  border: 1px solid rgba(0,229,255,0.2);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* E-SI value */
+.tm-esi-val {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-mid);
+}
+
+/* Location value */
+.tm-loc-val {
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+/* Multi-value badge (for interop transactions) */
+.tm-badge-multi {
+  display: inline-block;
+  padding: 0.08em 0.45em;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Empty placeholder */
+.tm-empty {
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+/* Toll fee row — spans full width, fee aligned right */
+.tm-field--fee {
+  display: flex !important; /* override display:contents */
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.5rem;
+  margin-top: 0.2rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.tm-field--fee .tm-field-lbl {
+  font-size: 0.75rem;
+  color: var(--text-mid);
+}
+
+.tm-fee-val {
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.03em;
+}
+
+/* ── Table Mode button variant ── */
+.mode-btn--table {
+  border-color: rgba(255, 201, 77, 0.25) !important;
+}
+.mode-btn--table:hover,
+.mode-btn--table.selected {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 18px rgba(255,201,77,0.25) !important;
+}
+.mode-btn--table .mode-icon {
+  filter: drop-shadow(0 0 6px rgba(255,201,77,0.5));
+}
+
+/* Responsive: stack summary stats on small screens */
+@media (max-width: 540px) {
+  .tm-summary-grid {
+    gap: 1rem;
+  }
+  .tm-stat-val {
+    font-size: 1.1rem;
+  }
+  .tm-header-row {
+    gap: 0.3rem;
+  }
+  .tm-datetime {
+    margin-left: 0;
+    width: 100%;
+  }
+  .tm-fields {
+    grid-template-columns: 70px 1fr;
+    gap: 0.25rem 0.6rem;
+  }
+}

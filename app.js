@@ -7,17 +7,18 @@
   // ===== STATE =====
   const state = {
     files: [],            // File objects
-    mode: null,           // 'multiple' | 'single' | 'extractall'
+    mode: null,           // 'multiple' | 'single' | 'extractall' | 'tablemode'
     keywords: [],         // string[]
-    lastResults: null,    // last search results
+    lastResults: null,    // last keyword search results
     lastPdfData: null,    // last extraction data
+    lastTableRows: null,  // last table-mode parsed rows
   };
 
   // ===== DOM REFS =====
-  const dropZone     = document.getElementById('dropZone');
-  const fileInput    = document.getElementById('fileInput');
-  const deleteAllBtn = document.getElementById('deleteAllBtn');
-  const modeBtns     = document.querySelectorAll('.mode-btn');
+  const dropZone      = document.getElementById('dropZone');
+  const fileInput     = document.getElementById('fileInput');
+  const deleteAllBtn  = document.getElementById('deleteAllBtn');
+  const modeBtns      = document.querySelectorAll('.mode-btn');
   const changeModeBtn = document.getElementById('changeModeBtn');
   const keywordInput  = document.getElementById('keywordInput');
   const addKeywordBtn = document.getElementById('addKeywordBtn');
@@ -83,25 +84,13 @@
     }
   }
 
-  /**
-   * Show a temporary feedback message on the upload note element.
-   * type: 'ok' | 'warn' | 'error'
-   */
   function showUploadNote(msg, type) {
     const el = document.getElementById('uploadNote');
     if (!el) return;
-
-    const colors = {
-      ok:    'var(--green)',
-      warn:  'var(--gold)',
-      error: 'var(--danger)'
-    };
-
+    const colors = { ok: 'var(--green)', warn: 'var(--gold)', error: 'var(--danger)' };
     el.textContent = msg;
     el.style.color = colors[type] || colors.ok;
     el.style.opacity = '1';
-
-    // Reset back to default note after 4 seconds
     clearTimeout(el._noteTimer);
     el._noteTimer = setTimeout(() => {
       el.textContent = '⚠ Max upload is 2,000 PDF files per batch.';
@@ -131,31 +120,30 @@
   });
 
   changeModeBtn.addEventListener('click', () => {
-    // ── Reset state immediately ───────────────────
-    state.mode = null;
-    state.keywords = [];
-    state.lastResults = null;
-    state.lastPdfData = null;
+    // ── Reset state immediately ──────────────────────────
+    state.mode         = null;
+    state.keywords     = [];
+    state.lastResults  = null;
+    state.lastPdfData  = null;
+    state.lastTableRows = null;
 
-    // ── Animate keyword chips wiping out ──────────
+    // ── Animate keyword chips wiping out ─────────────────
     const chips = document.querySelectorAll('.keyword-chip');
     chips.forEach((chip, i) => {
       chip.style.animationDelay = `${i * 35}ms`;
       chip.classList.add('chip-wiping');
     });
 
-    // ── Animate results folding away (if visible) ─
+    // ── Animate results folding away (if visible) ────────
     const resultsContainer = document.getElementById('resultsContainer');
     if (resultsContainer.style.display !== 'none') {
       resultsContainer.classList.add('results-folding');
     }
 
-    // ── Step-results: fold away then settle ───────
+    // ── Step-results: fold away then settle ──────────────
     stepResults.classList.add('step-folding');
     stepResults.addEventListener('animationend', () => {
       stepResults.classList.remove('step-folding');
-
-      // Hard reset results
       resultsContainer.classList.remove('results-folding');
       resultsContainer.style.display = 'none';
       document.getElementById('resultsList').innerHTML = '';
@@ -164,19 +152,16 @@
       UIManager.setRunEnabled(false);
       stepResults.classList.add('disabled-card', 'step-settling');
       stepResults.classList.remove('active');
-
       stepResults.addEventListener('animationend', () => {
         stepResults.classList.remove('step-settling');
       }, { once: true });
     }, { once: true });
 
-    // ── Step-keywords: fold away with slight delay then settle ──
+    // ── Step-keywords: fold with slight delay then settle ─
     setTimeout(() => {
       stepKeywords.classList.add('step-folding');
       stepKeywords.addEventListener('animationend', () => {
         stepKeywords.classList.remove('step-folding');
-
-        // Hard reset keywords
         keywordInput.value = '';
         document.getElementById('keywordChips').innerHTML = '';
         document.getElementById('keywordHint').textContent = '';
@@ -184,40 +169,36 @@
         keywordInput.placeholder = 'Type a keyword and press Enter…';
         stepKeywords.classList.add('disabled-card', 'step-settling');
         stepKeywords.classList.remove('active');
-
         stepKeywords.addEventListener('animationend', () => {
           stepKeywords.classList.remove('step-settling');
         }, { once: true });
       }, { once: true });
-    }, 80); // 80ms stagger — results folds first, then keywords
+    }, 80);
 
-    // ── Show mode buttons after animations complete ──
+    // ── Restore mode buttons after animations ────────────
     setTimeout(() => {
       UIManager.setModeButtonsVisible(true);
       document.getElementById('modeDisplay').style.display = 'none';
       document.querySelector('.mode-buttons').style.display = 'grid';
-    }, 420); // after both fold animations finish
+    }, 420);
   });
 
   function selectMode(mode) {
-    state.mode = mode;
+    state.mode     = mode;
     state.keywords = [];
     UIManager.setModeSelected(mode);
     UIManager.setModeButtonsVisible(false);
 
-    // Show mode display
     document.getElementById('modeDisplay').style.display = 'flex';
     document.querySelector('.mode-buttons').style.display = 'none';
     UIManager.setModeSelected(mode);
 
-    // Activate keyword & results steps
     UIManager.activateStep('step-keywords');
     UIManager.activateStep('step-results');
 
     UIManager.setKeywordSectionMode(mode);
     UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, mode);
 
-    // Hide previous results
     document.getElementById('resultsContainer').style.display = 'none';
     UIManager.hideProgress();
 
@@ -226,37 +207,18 @@
 
   // ===== KEYWORDS =====
 
-  // ── Smart keyword capitalisation ────────────────────────────────────────
-  // Rules:
-  //   • If ALL letter characters are UPPERCASE → keep unchanged (user typed caps deliberately)
-  //   • Everything else (all-lower OR mixed case) → apply Title Case word-by-word
-  //   • Apostrophes/smart-quotes are stripped (PDF labels never contain them)
-  //   • Non-letter characters (colons, spaces, numbers) are ignored for case detection
   function smartCapKeyword(raw) {
-    // Strip apostrophes/smart-quotes first
-    const clean = raw.replace(/[‘’‛'']/g, '');
+    const clean = raw.replace(/[''‛'']/g, '');
     const letters = clean.replace(/[^a-zA-Z]/g, '');
-    if (!letters) return clean; // no letters → return as-is
-
-    // All letters uppercase → user deliberately typed ALL CAPS, keep unchanged
-    if (letters === letters.toUpperCase() && letters !== letters.toLowerCase()) {
-      return clean;
-    }
-
-    // All-lower OR mixed case → apply Title Case word by word
+    if (!letters) return clean;
+    if (letters === letters.toUpperCase() && letters !== letters.toLowerCase()) return clean;
     return clean.split(' ').map(word => {
       if (!word) return word;
-      let result = '';
-      let foundFirst = false;
+      let result = '', foundFirst = false;
       for (const ch of word) {
-        if (/[a-zA-Z]/.test(ch) && !foundFirst) {
-          result += ch.toUpperCase();
-          foundFirst = true;
-        } else if (/[a-zA-Z]/.test(ch)) {
-          result += ch.toLowerCase();
-        } else {
-          result += ch;
-        }
+        if (/[a-zA-Z]/.test(ch) && !foundFirst) { result += ch.toUpperCase(); foundFirst = true; }
+        else if (/[a-zA-Z]/.test(ch)) result += ch.toLowerCase();
+        else result += ch;
       }
       return result;
     }).join(' ');
@@ -265,17 +227,12 @@
   function addKeyword() {
     const raw = keywordInput.value.trim();
     if (!raw) return;
-    const val = smartCapKeyword(raw);  // apply smart capitalisation on Enter
-
+    const val = smartCapKeyword(raw);
     if (state.mode === 'single') {
-      // Only one keyword allowed
       state.keywords = [val];
     } else {
-      if (!state.keywords.includes(val)) {
-        state.keywords.push(val);
-      }
+      if (!state.keywords.includes(val)) state.keywords.push(val);
     }
-
     keywordInput.value = '';
     UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, state.mode);
     updateRunBtn();
@@ -298,18 +255,14 @@
   }
 
   addKeywordBtn.addEventListener('click', addKeyword);
-  keywordInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') addKeyword();
-  });
+  keywordInput.addEventListener('keydown', e => { if (e.key === 'Enter') addKeyword(); });
 
   // ===== RUN BUTTON STATE =====
 
   function updateRunBtn() {
-    if (!state.mode || state.files.length === 0) {
-      UIManager.setRunEnabled(false);
-      return;
-    }
-    if (state.mode === 'extractall') {
+    if (!state.mode || state.files.length === 0) { UIManager.setRunEnabled(false); return; }
+    // These modes need no keywords — enable Run immediately once files are loaded
+    if (state.mode === 'extractall' || state.mode === 'tablemode') {
       UIManager.setRunEnabled(true);
       return;
     }
@@ -331,9 +284,7 @@
     if (window.StarField) window.StarField.startWarp();
 
     try {
-      // ── Phase 1: Read all PDFs and mark every text item's location ──────
-      // extractAll() now returns itemMap alongside each page's text, giving us
-      // the character-level position of every PDF text token (the "marks").
+      // ── Phase 1: Read all PDFs ──────────────────────────────────────────
       const pdfData = await PDFProcessor.extractAll(state.files, (done, total) => {
         const pct = Math.round((done / total) * 45);
         UIManager.setProgress(pct, `Phase 1 · Marking text locations — ${done}/${total} file(s)…`);
@@ -345,10 +296,18 @@
         UIManager.setProgress(100, 'Done!');
         UIManager.renderExtractAll(pdfData);
 
+      } else if (state.mode === 'tablemode') {
+        // ── Table Mode: parse structured transaction rows ─────────────
+        UIManager.setProgress(55, 'Phase 2 · Parsing transaction table rows…');
+        await new Promise(r => setTimeout(r, 30)); // yield so UI paints
+        const tableRows = TableParser.parse(pdfData);
+        state.lastTableRows = tableRows;
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderTableResults(tableRows, state.files);
+
       } else if (state.mode === 'multiple') {
-        // ── Phase 2: Two-pass keyword search ─────────────────────────────
         UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting keyword positions…');
-        await new Promise(r => setTimeout(r, 30)); // yield so UI can update
+        await new Promise(r => setTimeout(r, 30));
         UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing second-run values…');
         await new Promise(r => setTimeout(r, 30));
         const results = KeywordHandler.search(pdfData, state.keywords);
@@ -357,7 +316,6 @@
         UIManager.renderKeywordResults(results, state.keywords, state.files);
 
       } else if (state.mode === 'single') {
-        // ── Phase 2: Two-pass keyword search ─────────────────────────────
         UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting keyword position…');
         await new Promise(r => setTimeout(r, 30));
         UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing second-run value…');
@@ -376,9 +334,9 @@
 
     } catch (err) {
       console.error(err);
-      const list = document.getElementById('resultsList');
       document.getElementById('resultsContainer').style.display = 'block';
-      list.innerHTML = `<div class="no-results" style="color:var(--danger);">Error: ${err.message}</div>`;
+      document.getElementById('resultsList').innerHTML =
+        `<div class="no-results" style="color:var(--danger);">Error: ${err.message}</div>`;
     } finally {
       // 🛑 Drop out of warp
       if (window.StarField) window.StarField.stopWarp();

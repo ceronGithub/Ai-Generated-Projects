@@ -121,5 +121,128 @@ const ExcelExporter = (() => {
     XLSX.writeFile(wb, filename);
   }
 
-  return { exportKeywordResults, exportExtractAll };
+  // ─── exportTableRows — Layout A: Rows ────────────────────────────────────
+  // One row per transaction leg. Best for reviewing individual trips.
+  // Header: Filename | Page | Tag Number | Plate | Ref Type | Ref No. |
+  //         Date | Time | E-SI No(s). | Zone(s) | Entry | Exit | Toll Fee
+  function exportTableRowsLayout(rows, filename) {
+    const header = [
+      'Filename', 'Page', 'Tag Number', 'Plate Number',
+      'Ref Type', 'Ref No.',
+      'Date', 'Time', 'E-SI No(s).', 'Zone(s)',
+      'Entry', 'Exit', 'Toll Fee'
+    ];
+
+    const data = [header, ...rows.map(r => [
+      r.filename,
+      `Page ${r.page}`,
+      r.tagNumber,
+      r.plateNumber,
+      r.refType,
+      r.refNo,
+      r.date,
+      r.time,
+      r.esiNos,
+      r.zones,
+      r.entries,
+      r.exits,
+      r.tollFee,
+    ])];
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 35 }, // Filename
+      { wch: 8  }, // Page
+      { wch: 14 }, // Tag Number
+      { wch: 12 }, // Plate
+      { wch: 10 }, // Ref Type
+      { wch: 14 }, // Ref No.
+      { wch: 12 }, // Date
+      { wch: 10 }, // Time
+      { wch: 26 }, // E-SI
+      { wch: 14 }, // Zone
+      { wch: 30 }, // Entry
+      { wch: 30 }, // Exit
+      { wch: 12 }, // Toll Fee
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+    XLSX.writeFile(wb, filename);
+  }
+
+  // ─── exportTableRows — Layout B: Columns (grouped by Tag) ────────────────
+  // One column group per unique Tag Number. Best for comparing vehicles.
+  // Header: Tag Number | Plate | Ref Type | Ref No. | Date | Time |
+  //         E-SI No(s). | Zone(s) | Entry | Exit | Toll Fee | Filename | Page
+  function exportTableColumnsLayout(rows, filename) {
+    const header = [
+      'Tag Number', 'Plate Number', 'Ref Type', 'Ref No.',
+      'Date', 'Time', 'E-SI No(s).', 'Zone(s)',
+      'Entry', 'Exit', 'Toll Fee',
+      'Filename', 'Page'
+    ];
+
+    // Sort by tag number then date/time for a cleaner grouped view
+    const sorted = [...rows].sort((a, b) => {
+      const tagCmp = (a.tagNumber || '').localeCompare(b.tagNumber || '');
+      if (tagCmp !== 0) return tagCmp;
+      const dateCmp = (a.date || '').localeCompare(b.date || '');
+      if (dateCmp !== 0) return dateCmp;
+      return (a.time || '').localeCompare(b.time || '');
+    });
+
+    const data = [header, ...sorted.map(r => [
+      r.tagNumber,
+      r.plateNumber,
+      r.refType,
+      r.refNo,
+      r.date,
+      r.time,
+      r.esiNos,
+      r.zones,
+      r.entries,
+      r.exits,
+      r.tollFee,
+      r.filename,
+      `Page ${r.page}`,
+    ])];
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 14 }, // Tag Number
+      { wch: 12 }, // Plate
+      { wch: 10 }, // Ref Type
+      { wch: 14 }, // Ref No.
+      { wch: 12 }, // Date
+      { wch: 10 }, // Time
+      { wch: 26 }, // E-SI
+      { wch: 14 }, // Zone
+      { wch: 30 }, // Entry
+      { wch: 30 }, // Exit
+      { wch: 12 }, // Toll Fee
+      { wch: 35 }, // Filename
+      { wch: 8  }, // Page
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions by Tag');
+    XLSX.writeFile(wb, filename);
+  }
+
+  /**
+   * Export TableParser rows to Excel.
+   * @param {Array<TransactionRow>} rows  - from TableParser.parse()
+   * @param {string} filename
+   * @param {'rows'|'columns'} layout
+   */
+  function exportTableRows(rows, filename = 'transaction_history.xlsx', layout = 'rows') {
+    if (layout === 'columns') {
+      exportTableColumnsLayout(rows, filename);
+    } else {
+      exportTableRowsLayout(rows, filename);
+    }
+  }
+
+  return { exportKeywordResults, exportExtractAll, exportTableRows };
 })();

@@ -103,7 +103,84 @@ const KeywordHandler = (() => {
     return /\bzone\b/.test(kwNorm);
   }
 
-  // ── DATE-ONLY REGEX ──────────────────────────────────────────────────────
+  /**
+   * Is this a Ref No. keyword?
+   * e.g. "Ref No.:", "Ref No. :"
+   */
+  function isRefNoKw(kwNorm) {
+    return /\bref\s*no\b/i.test(kwNorm);
+  }
+
+  /**
+   * Is this an IER No. keyword?
+   * e.g. "IER No.:", "IER No. :"
+   */
+  function isIerNoKw(kwNorm) {
+    return /\bier\s*no\b/i.test(kwNorm);
+  }
+
+  /**
+   * Is this an E-SI No. keyword?
+   * e.g. "E-SI No.:", "E-SI No. :"
+   */
+  function isEsiNoKw(kwNorm) {
+    return /\be-si\s*no\b/i.test(kwNorm);
+  }
+
+  // ── REF NO REGEX ─────────────────────────────────────────────────────────
+  // Matches "Ref No. : <digits>" in the enriched table text.
+  // TableEngine emits "Ref No. : 2531638662" as an alias alongside "TransNo."
+  const REF_NO_RE  = /Ref\s+No\.\s*:\s*(\d+)/gi;
+  const IER_NO_RE  = /IER\s+No\.\s*:\s*(\d+)/gi;
+  const ESI_NO_RE  = /E-SI\s+No\.\s*:\s*([A-Z0-9]+)/gi;
+
+  /**
+   * Scan page text for all Ref No. values.
+   * Returns string[] deduplicated.
+   */
+  function extractAllRefNos(text) {
+    const seen = new Set();
+    const vals = [];
+    REF_NO_RE.lastIndex = 0;
+    let m;
+    while ((m = REF_NO_RE.exec(text)) !== null) {
+      const v = m[1].trim();
+      if (!seen.has(v)) { seen.add(v); vals.push(v); }
+    }
+    return vals;
+  }
+
+  /**
+   * Scan page text for all IER No. values.
+   */
+  function extractAllIerNos(text) {
+    const seen = new Set();
+    const vals = [];
+    IER_NO_RE.lastIndex = 0;
+    let m;
+    while ((m = IER_NO_RE.exec(text)) !== null) {
+      const v = m[1].trim();
+      if (!seen.has(v)) { seen.add(v); vals.push(v); }
+    }
+    return vals;
+  }
+
+  /**
+   * Scan page text for all E-SI No. values.
+   */
+  function extractAllEsiNos(text) {
+    const seen = new Set();
+    const vals = [];
+    ESI_NO_RE.lastIndex = 0;
+    let m;
+    while ((m = ESI_NO_RE.exec(text)) !== null) {
+      const v = m[1].trim();
+      if (!seen.has(v)) { seen.add(v); vals.push(v); }
+    }
+    return vals;
+  }
+
+
   // Matches d/m/yyyy or dd/mm/yyyy — date part ONLY, no time component.
   // No leading-digit guard — table rows jam RefNo directly against the date.
   const DATE_ONLY_RE = /(\d{1,2}\/\d{1,2}\/\d{4})/g;
@@ -166,6 +243,51 @@ const KeywordHandler = (() => {
       if (!seen.has(val)) { seen.add(val); zones.push(val); }
     }
     return zones;
+  }
+
+  /**
+   * Is this an Entry column keyword?
+   * e.g. "Entry", "Entry :"
+   */
+  function isEntryKw(kwNorm) {
+    return /^\s*entry\s*$/.test(kwNorm);
+  }
+
+  /**
+   * Is this an Exit column keyword?
+   * e.g. "Exit", "Exit :"
+   */
+  function isExitKw(kwNorm) {
+    return /^\s*exit\s*$/.test(kwNorm);
+  }
+
+  // ── PIPE-COLUMN EXTRACTORS ────────────────────────────────────────────────
+  // TableEngine emits enriched text as pipe-delimited tokens:
+  //   "ColName : value | ColName : value | ..."
+  // These helpers extract all unique values for a given column name.
+
+  /**
+   * Extract all unique values for a named column from pipe-delimited enriched text.
+   * Handles multi-word values (e.g. "NAIAX TRAMO SBE", "TERMINAL 2").
+   * @param {string} text       - enriched page text
+   * @param {string} colLabel   - column name to search (e.g. "Entry", "Exit", "Zone")
+   * @returns {string[]}        - deduplicated array of raw values (NOT title-cased)
+   */
+  function extractPipeColumnValues(text, colLabel) {
+    const escaped = colLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Match "ColLabel : <value>" where value runs up to next " | " or end-of-string
+    const re = new RegExp(escaped + '\\s*:\\s*([^|]+?)(?=\\s*\\|\\s*[A-Za-z]|$)', 'gi');
+    const seen = new Set();
+    const vals = [];
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const v = m[1].trim();
+      if (v && !seen.has(v.toLowerCase())) {
+        seen.add(v.toLowerCase());
+        vals.push(v);
+      }
+    }
+    return vals;
   }
 
   /**
@@ -309,17 +431,23 @@ const KeywordHandler = (() => {
     const titled = val.split(' ').map(word => {
       if (!word) return word;
 
-      // Words with digits → codes / IDs / numbers → preserve exactly
+      // Words with digits → codes / IDs / numbers / E-SI codes → preserve exactly
       if (/\d/.test(word)) return word;
 
       // Find all alpha characters in this word
       const letters = word.replace(/[^a-zA-Z]/g, '');
       if (!letters) return word; // pure symbol/number → unchanged
 
-      // ALL-CAPS word (e.g. "OF", "THE", "COR", "AVE", "PHILIPPIN") →
-      // apply title case: first alpha upper, rest lower
-      // ALL-CAPS rule only preserves when user types in keyword field,
-      // not for PDF-extracted values which should always be normalised.
+      // ALL-CAPS words (e.g. "NAIAX", "TERMINAL", "TRAMO", "SBE", "SKYWAY",
+      // "ALABANG", "MAKATI", "ENTERTAINMENT", "COASTAL", "SLEX", "TPLEX") →
+      // PRESERVE as-is. These are proper nouns, toll zone codes, and place names
+      // that must not be lowercased.
+      // Only lowercase if the word is already mixed-case (first letter upper,
+      // remaining letters contain lowercase), which indicates a normal word.
+      const allLettersUpperCase = letters === letters.toUpperCase();
+      if (allLettersUpperCase) return word; // preserve ALL-CAPS words exactly
+
+      // Mixed-case or lowercase word → apply title case
       const lower = word.toLowerCase();
       // Find index of first alpha char to handle leading symbols (e.g. "#WORD")
       let firstAlpha = 0;
@@ -518,11 +646,71 @@ const KeywordHandler = (() => {
           }
 
           if (isZoneKw(kwNorm)) {
-            const zones = extractAllZones(text);
+            // Zone: use pipe-column extractor from enriched TableEngine text
+            // (also falls back to old ZONE_CODES_RE scan for backward compatibility)
+            let vals = extractPipeColumnValues(text, 'Zone');
+            if (vals.length === 0) vals = extractAllZones(text);
             const r1 = [];
-            for (const z of zones) {
+            for (const z of vals) {
               const key = z.toLowerCase();
               if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [z], closestContext: z }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          if (isEntryKw(kwNorm)) {
+            const vals = extractPipeColumnValues(text, 'Entry');
+            const r1 = [];
+            for (const v of vals) {
+              const key = v.toLowerCase();
+              if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          if (isExitKw(kwNorm)) {
+            const vals = extractPipeColumnValues(text, 'Exit');
+            const r1 = [];
+            for (const v of vals) {
+              const key = v.toLowerCase();
+              if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          if (isRefNoKw(kwNorm)) {
+            const vals = extractAllRefNos(text);
+            const r1 = [];
+            for (const v of vals) {
+              if (!seen.has(v)) { seen.add(v); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          if (isIerNoKw(kwNorm)) {
+            const vals = extractAllIerNos(text);
+            const r1 = [];
+            for (const v of vals) {
+              if (!seen.has(v)) { seen.add(v); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          if (isEsiNoKw(kwNorm)) {
+            const vals = extractAllEsiNos(text);
+            const r1 = [];
+            for (const v of vals) {
+              if (!seen.has(v)) { seen.add(v); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
             }
             run1Results.set(mapKey, r1);
             run1Positions.set(mapKey, new Set([-1]));
@@ -644,7 +832,6 @@ const KeywordHandler = (() => {
 
     return results;
   }
-  
 
   // ─── HIGHLIGHT ──────────────────────────────────────────────────────────────
 

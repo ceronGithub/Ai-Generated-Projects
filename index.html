@@ -82,7 +82,7 @@
           <p class="drop-sub">or click to browse your system</p>
           <label class="btn btn-outline" for="fileInput">Browse Files</label>
           <input type="file" id="fileInput" accept=".pdf" multiple hidden />
-          <p class="drop-upload-note">
+          <p class="drop-upload-note" id="uploadNote">
             ⚠ Max upload is 2,000 PDF files per batch.
           </p>
         </div>
@@ -123,6 +123,19 @@
             <span class="mode-icon">📋</span>
             <span class="mode-name">Extract All</span>
             <span class="mode-desc">Dump all text from every uploaded PDF</span>
+          </button>
+          <!-- ── NEW: Table Mode ── -->
+          <button
+            class="mode-btn mode-btn--table"
+            id="modeTable"
+            data-mode="tablemode"
+          >
+            <span class="mode-icon">🗂️</span>
+            <span class="mode-name">Table Mode</span>
+            <span class="mode-desc"
+              >Extract full transaction rows — Tag, Zone, Entry, Exit, Toll
+              Fee</span
+            >
           </button>
         </div>
 
@@ -202,7 +215,6 @@
     >
       <div class="hlp-backdrop" id="helpBackdrop"></div>
       <div class="hlp-panel">
-        <!-- Header -->
         <div class="hlp-header">
           <div class="hlp-title-row">
             <span class="hlp-icon">✦</span>
@@ -212,8 +224,6 @@
             ✕
           </button>
         </div>
-
-        <!-- Tab Nav -->
         <div class="hlp-tabs" role="tablist">
           <button
             class="hlp-tab hlp-tab--active"
@@ -226,316 +236,55 @@
           <button class="hlp-tab" data-tab="keywords" role="tab">
             Keywords
           </button>
-          <button class="hlp-tab" data-tab="export" role="tab">Export</button>
-          <button class="hlp-tab" data-tab="tips" role="tab">
-            Tips &amp; Tricks
-          </button>
+          <button class="hlp-tab" data-tab="tips" role="tab">Tips</button>
         </div>
-
-        <!-- Tab Content -->
         <div class="hlp-body">
-          <!-- ── OVERVIEW ── -->
           <div class="hlp-pane hlp-pane--active" data-pane="overview">
-            <div class="hlp-intro">
-              <p>
-                PDFExtract lets you search for specific keywords inside one or
-                many PDF files and pull out the exact values next to those
-                keywords — no manual reading required.
-              </p>
-            </div>
-            <div class="hlp-steps">
-              <div class="hlp-step">
-                <div class="hlp-step-num">01</div>
-                <div class="hlp-step-body">
-                  <h3>Upload PDFs</h3>
-                  <p>
-                    Drag and drop your PDF files into the upload zone, or click
-                    <em>Browse Files</em>. You can upload multiple files at
-                    once.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-step">
-                <div class="hlp-step-num">02</div>
-                <div class="hlp-step-body">
-                  <h3>Choose a Mode</h3>
-                  <p>
-                    Select <em>Multiple Keywords</em>, <em>Single Keyword</em>,
-                    or <em>Extract All</em> depending on what you need. See the
-                    <strong>Modes</strong> tab for details.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-step">
-                <div class="hlp-step-num">03</div>
-                <div class="hlp-step-body">
-                  <h3>Enter Keywords</h3>
-                  <p>
-                    Type the label that appears in your PDF (e.g.
-                    <code>Account Name</code>, <code>Date</code>,
-                    <code>Total</code>). See the <strong>Keywords</strong> tab
-                    for special keywords.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-step">
-                <div class="hlp-step-num">04</div>
-                <div class="hlp-step-body">
-                  <h3>Run &amp; Review</h3>
-                  <p>
-                    Click <em>Run Extraction</em>. Results appear as cards
-                    below. Click the <em>View</em> button on any card to jump
-                    directly to that page in the PDF.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-step">
-                <div class="hlp-step-num">05</div>
-                <div class="hlp-step-body">
-                  <h3>Export to Excel</h3>
-                  <p>
-                    Click <em>Export Excel</em> to download all results in a
-                    spreadsheet. Choose rows or columns layout before exporting.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <h3>Welcome to PDFExtract</h3>
+            <p>
+              Upload PDF files, choose an extraction mode, and run. All
+              processing happens locally in your browser — no files are ever
+              uploaded to a server.
+            </p>
           </div>
-
-          <!-- ── MODES ── -->
           <div class="hlp-pane" data-pane="modes">
-            <div class="hlp-mode-grid">
-              <div class="hlp-mode-card hlp-mode-card--cyan">
-                <div class="hlp-mode-icon">⬡⬡</div>
-                <h3>Multiple Keywords</h3>
-                <p>
-                  Search for several keywords at once across all uploaded PDFs.
-                  Each keyword produces its own result card. Best for structured
-                  documents like invoices or reports where you need many fields
-                  at once.
-                </p>
-                <div class="hlp-tag">Most common</div>
-              </div>
-              <div class="hlp-mode-card hlp-mode-card--violet">
-                <div class="hlp-mode-icon">⬡</div>
-                <h3>Single Keyword</h3>
-                <p>
-                  Focus on one keyword across all PDFs. Results are shown
-                  grouped per file. Use this when you need to find every
-                  occurrence of one specific field across many documents.
-                </p>
-                <div class="hlp-tag">Bulk scanning</div>
-              </div>
-              <div class="hlp-mode-card hlp-mode-card--gold">
-                <div class="hlp-mode-icon">⊞</div>
-                <h3>Extract All</h3>
-                <p>
-                  Automatically detects and extracts all label–value pairs from
-                  every page of every PDF — no keyword input needed. Ideal for
-                  exploring an unfamiliar document or doing a full data dump.
-                </p>
-                <div class="hlp-tag">Auto-detect</div>
-              </div>
-            </div>
+            <h3>Extraction Modes</h3>
+            <p>
+              <strong>Multiple Keywords</strong> — search several keywords
+              across all files at once.
+            </p>
+            <p>
+              <strong>Single Keyword</strong> — search one keyword and
+              optionally rename the PDFs by the captured value.
+            </p>
+            <p>
+              <strong>Extract All</strong> — dump all detected label:value
+              fields from every page.
+            </p>
+            <p>
+              <strong>Table Mode</strong> — extract structured transaction rows
+              from SMC Skyway Transaction History Reports. Captures Tag Number,
+              Plate, Ref No., Date, Time, E-SI No., Zone, Entry, Exit and Toll
+              Fee as individual cards.
+            </p>
           </div>
-
-          <!-- ── KEYWORDS ── -->
           <div class="hlp-pane" data-pane="keywords">
-            <p class="hlp-pane-intro">
-              Keywords match the labels printed in your PDF. You can type them
-              with or without a colon. A few keywords have special smart
-              behaviour:
+            <h3>Keyword Formats</h3>
+            <p>
+              Keywords can include a trailing colon (<code>TIN:</code>), a
+              spaced colon (<code>Date :</code>), or be bare
+              (<code>Total</code>). The engine auto-detects the format.
             </p>
-            <div class="hlp-kw-table">
-              <div class="hlp-kw-row hlp-kw-row--header">
-                <span>Keyword</span>
-                <span>What it extracts</span>
-                <span>Example output</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>Date</code>
-                <span
-                  >Every date value on the page (date part only, no time)</span
-                >
-                <span class="hlp-ex">02/01/2026</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>Time</code>
-                <span>Every time value with exactly two colons (HH:MM:SS)</span>
-                <span class="hlp-ex">16:41:37</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>Zone</code>
-                <span>Highway / zone codes from transaction rows</span>
-                <span class="hlp-ex">NAIAX · SKYWAY</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>Account Name</code>
-                <span>Text value after the "Account Name" label</span>
-                <span class="hlp-ex">National Grid Corp.</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>Total</code>
-                <span>Numeric/currency value after "Total"</span>
-                <span class="hlp-ex">Php 78,979.20</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>TIN</code>
-                <span>Tax ID number after "TIN"</span>
-                <span class="hlp-ex">006-977-514-000</span>
-              </div>
-            </div>
-            <div class="hlp-note">
-              <span class="hlp-note-icon">💡</span>
-              <p>
-                You can enter keywords in any case — <code>date</code>,
-                <code>Date</code>, and <code>DATE</code> all work the same way.
-              </p>
-            </div>
-            <div class="hlp-note">
-              <span class="hlp-note-icon">💡</span>
-              <p>
-                If a keyword has multiple values on the same page, a
-                <em>picker card</em> appears so you can choose which value to
-                keep before exporting.
-              </p>
-            </div>
           </div>
-
-          <!-- ── EXPORT ── -->
-          <div class="hlp-pane" data-pane="export">
-            <p class="hlp-pane-intro">
-              After running an extraction, click <em>Export Excel</em> to
-              download your results as an <code>.xlsx</code> file.
-            </p>
-            <div class="hlp-export-grid">
-              <div class="hlp-export-card">
-                <h3>📋 Rows Layout</h3>
-                <p>
-                  Each PDF file becomes its own row. Keywords are columns. Best
-                  for comparing many files side-by-side (e.g. batch of
-                  invoices).
-                </p>
-                <div class="hlp-layout-preview hlp-layout-preview--rows">
-                  <div class="hlp-lp-head">
-                    <span>File</span><span>Date</span><span>Total</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>invoice1.pdf</span><span>02/01</span
-                    ><span>45.00</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>invoice2.pdf</span><span>02/03</span
-                    ><span>99.00</span>
-                  </div>
-                </div>
-              </div>
-              <div class="hlp-export-card">
-                <h3>📊 Columns Layout</h3>
-                <p>
-                  Each keyword becomes its own column block. Results stack
-                  vertically per keyword. Best for single-document deep
-                  extraction.
-                </p>
-                <div class="hlp-layout-preview hlp-layout-preview--cols">
-                  <div class="hlp-lp-head">
-                    <span>Keyword</span><span>Value</span><span>Page</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>Date</span><span>02/01</span><span>1</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>Total</span><span>45.00</span><span>1</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="hlp-note">
-              <span class="hlp-note-icon">⚠️</span>
-              <p>
-                You can rename PDF files before exporting — click the pencil
-                icon next to any filename in the results to set a custom display
-                name in the Excel output.
-              </p>
-            </div>
-          </div>
-
-          <!-- ── TIPS ── -->
           <div class="hlp-pane" data-pane="tips">
-            <div class="hlp-tips-list">
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">🔍</span>
-                <div>
-                  <h3>View PDF pages inline</h3>
-                  <p>
-                    Every result card has a <em>View</em> button. Click it to
-                    open the PDF at the exact page where the value was found —
-                    no need to leave the app.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">🗑️</span>
-                <div>
-                  <h3>Remove individual results</h3>
-                  <p>
-                    Don't need a particular result card? Click the <em>✕</em> on
-                    any card to remove it before exporting. Only the remaining
-                    cards go into the Excel file.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">✏️</span>
-                <div>
-                  <h3>Edit extracted values inline</h3>
-                  <p>
-                    Click directly on an extracted value in a result card to
-                    edit it before exporting. Useful for correcting OCR
-                    artefacts or reformatting data.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">📅</span>
-                <div>
-                  <h3>Date vs Time keywords</h3>
-                  <p>
-                    Use <code>Date</code> to get only the calendar date (e.g.
-                    <em>02/01/2026</em>) and <code>Time</code> to get only the
-                    clock value (e.g. <em>16:41:37</em>). They are independent
-                    and can both be added to the same extraction.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">📁</span>
-                <div>
-                  <h3>Batch multiple PDFs</h3>
-                  <p>
-                    Upload many PDF files at once and run a single extraction.
-                    Every file is processed in one pass and all results are
-                    combined in the Excel export, labelled by filename.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">↺</span>
-                <div>
-                  <h3>Change mode mid-session</h3>
-                  <p>
-                    Click <em>↺ Change Mode</em> at any time to switch between
-                    Multiple Keywords, Single Keyword, and Extract All without
-                    re-uploading your files.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <h3>Tips</h3>
+            <p>
+              Drag and drop up to 2,000 PDFs at once. Use Table Mode for SMC
+              Skyway toll transaction reports to get perfectly structured
+              results without typing any keywords.
+            </p>
           </div>
         </div>
-        <!-- /Tab Content -->
-
-        <!-- Footer -->
         <div class="hlp-footer">
           <span class="hlp-footer-hint">Press <kbd>Esc</kbd> to close</span>
           <button class="btn btn-accent hlp-done-btn" id="helpDone">
@@ -543,7 +292,6 @@
           </button>
         </div>
       </div>
-      <!-- /Panel -->
     </div>
     <!-- ============ /HELP MODAL ============ -->
 
@@ -556,12 +304,8 @@
       aria-modal="true"
       aria-label="PDF Viewer"
     >
-      <!-- Click-outside backdrop -->
       <div id="pdfViewerBackdrop" class="pvm-backdrop"></div>
-
-      <!-- Modal panel -->
       <div class="pvm-panel">
-        <!-- Header bar -->
         <div class="pvm-header">
           <div class="pvm-header-left">
             <span class="pvm-logo-dot"></span>
@@ -578,30 +322,19 @@
             </svg>
           </button>
         </div>
-
-        <!-- Canvas area (scrollable) -->
         <div class="pvm-canvas-wrap" id="pdfViewerCanvasWrap">
-          <!-- Loading spinner -->
           <div class="pvm-loader" id="pdfViewerLoader">
             <div class="pvm-spinner"></div>
             <span>Rendering…</span>
           </div>
-
-          <!-- PDF Canvas -->
           <canvas id="pdfViewerCanvas" class="pvm-canvas"></canvas>
         </div>
-
-        <!-- Footer bar: filename + controls -->
         <div class="pvm-footer">
-          <!-- Filename (centered) -->
           <div class="pvm-filename-row">
             <span class="pvm-file-icon">📄</span>
             <span class="pvm-filename" id="pdfViewerFilename">file.pdf</span>
           </div>
-
-          <!-- Controls row -->
           <div class="pvm-controls">
-            <!-- Page navigation -->
             <div class="pvm-control-group pvm-nav">
               <button
                 class="pvm-btn pvm-btn--nav"
@@ -648,11 +381,7 @@
                 </svg>
               </button>
             </div>
-
-            <!-- Divider -->
             <div class="pvm-divider"></div>
-
-            <!-- Zoom controls -->
             <div class="pvm-control-group pvm-zoom">
               <button
                 class="pvm-btn pvm-btn--zoom"
@@ -706,9 +435,6 @@
               </button>
             </div>
           </div>
-          <!-- /Controls -->
-
-          <!-- Keyboard hint -->
           <div class="pvm-hints">
             <span>← → navigate</span>
             <span class="pvm-dot">·</span>
@@ -717,15 +443,14 @@
             <span>Esc close</span>
           </div>
         </div>
-        <!-- /Footer -->
       </div>
-      <!-- /Panel -->
     </div>
     <!-- ============ /PDF VIEWER MODAL ============ -->
 
     <!-- JS modules (order matters) -->
     <script src="pdf-processor.js"></script>
     <script src="keyword-handler.js"></script>
+    <script src="table-parser.js"></script>
     <script src="excel-exporter.js"></script>
     <script src="rename-handler.js"></script>
     <script src="ui-manager.js"></script>
