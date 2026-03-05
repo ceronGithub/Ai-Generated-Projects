@@ -507,6 +507,59 @@
   box-shadow: 0 0 0 2px #fff;
 }
 
+/* ── Time-slot availability indicators ── */
+/* Yellow = morning slot taken (8AM–11AM): Day Tour / Overnight only remain */
+.day-cell.slot-morning-taken {
+  background: linear-gradient(135deg, #fffbe6 60%, #fff3c4) !important;
+  border: 1.5px solid #f0c040 !important;
+}
+.day-cell.slot-morning-taken .day-num {
+  background: #f0c040 !important;
+  color: #5a4000 !important;
+}
+/* Red = afternoon/evening slot taken (11:30AM+): Night Tour / Overnight only, no new booking */
+.day-cell.slot-full {
+  background: linear-gradient(135deg, #fff0f0 60%, #ffd6d6) !important;
+  border: 1.5px solid #ff8080 !important;
+  cursor: default !important;
+}
+.day-cell.slot-full .day-num {
+  background: #e04060 !important;
+  color: #fff !important;
+}
+.day-cell.slot-full:hover {
+  background: linear-gradient(135deg, #fff0f0 60%, #ffd6d6) !important;
+}
+
+/* Tour type availability badge inside form */
+.bk-tour-unavailable {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  text-decoration: line-through;
+}
+.bk-time-slot-banner {
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.bk-time-slot-banner.morning {
+  background: #fffbe6;
+  border: 1.5px solid #f0c040;
+  color: #7a5c00;
+}
+.bk-time-slot-banner.afternoon {
+  background: #fff0f0;
+  border: 1.5px solid #ff8080;
+  color: #a01030;
+}
+
 /* ══════════════════════════
    EVENT BADGE in modal header
 ══════════════════════════ */

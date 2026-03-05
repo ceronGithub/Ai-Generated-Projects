@@ -66,6 +66,148 @@ function showToast(msg, duration = 3000) {
   setTimeout(() => t.classList.remove('show'), duration);
 }
 
+/* ══════════════════════════════════════
+   TIME-SLOT RULES
+   Returns info about what's available for a given check-in time.
+
+   Rules:
+   • 08:00 – 11:00  → "morning"  slot
+     - Day Tour and Over-Night only available
+     - Night Tour still available (can add later)
+     - Cell: yellow
+   • 11:30 – 13:59  → "afternoon" slot
+     - Night Tour and Over-Night only
+     - Checkout same day
+     - Cell: red, no Add New button
+   • 14:00+          → "evening" slot
+     - Night Tour and Over-Night only
+     - Night Tour → checkout NEXT day
+     - Over-Night → checkout NEXT day
+     - Cell: red, no Add New button
+══════════════════════════════════════ */
+function getTimeSlot(hhmm) {
+  // Returns null if no time given, or an object describing the slot
+  if (!hhmm) return null;
+  const [h, m] = hhmm.split(':').map(Number);
+  const mins = h * 60 + m;
+
+  if (mins >= 8*60 && mins <= 11*60) {
+    return {
+      slot:       'morning',
+      available:  ['Day Tour', 'Night Tour', 'Over-Night'],   // all still ok, Day Tour preferred
+      restricted: [],
+      cellClass:  'slot-morning-taken',
+      canAdd:     true,
+      checkoutNextDay: { 'Night Tour': true, 'Over-Night': true },
+      banner: '🌤 Morning slot (8AM–11AM): Day Tour, Night Tour & Over-Night available.',
+    };
+  }
+  if (mins >= 11*60+30 && mins <= 13*60+59) {
+    return {
+      slot:       'afternoon',
+      available:  ['Night Tour', 'Over-Night'],
+      restricted: ['Day Tour'],
+      cellClass:  'slot-full',
+      canAdd:     false,
+      checkoutNextDay: { 'Night Tour': false, 'Over-Night': true },
+      banner: '🌆 Afternoon slot (11:30AM–2PM): Night Tour & Over-Night only. Check-out same day for Night Tour.',
+    };
+  }
+  if (mins >= 14*60) {
+    return {
+      slot:       'evening',
+      available:  ['Night Tour', 'Over-Night'],
+      restricted: ['Day Tour'],
+      cellClass:  'slot-full',
+      canAdd:     false,
+      checkoutNextDay: { 'Night Tour': true, 'Over-Night': true },
+      banner: '🌙 Evening slot (2PM+): Night Tour & Over-Night only. Both check out next day.',
+    };
+  }
+  // Between 11:00 and 11:30 — treat as morning transition
+  return {
+    slot:       'morning',
+    available:  ['Day Tour', 'Night Tour', 'Over-Night'],
+    restricted: [],
+    cellClass:  'slot-morning-taken',
+    canAdd:     true,
+    checkoutNextDay: { 'Night Tour': true, 'Over-Night': true },
+    banner: '🌤 Morning slot: Day Tour, Night Tour & Over-Night available.',
+  };
+}
+
+/* Apply time-slot rules to the form UI */
+function applyTimeSlotToForm(hhmm) {
+  const slot = getTimeSlot(hhmm);
+
+  // Remove existing banner
+  const existingBanner = document.getElementById('bkTimeSlotBanner');
+  if (existingBanner) existingBanner.remove();
+
+  // Reset all tour buttons
+  document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+    btn.classList.remove('bk-tour-unavailable');
+    btn.disabled = false;
+  });
+
+  if (!slot) return;
+
+  // Show banner above tour buttons
+  const tourSection = document.querySelector('.bk-tour-options');
+  if (tourSection) {
+    const banner = document.createElement('div');
+    banner.id        = 'bkTimeSlotBanner';
+    banner.className = 'bk-time-slot-banner ' + (slot.slot === 'morning' ? 'morning' : 'afternoon');
+    banner.innerHTML = '<span style="font-size:16px;flex-shrink:0;">' + (slot.slot === 'morning' ? '🌤' : slot.slot === 'afternoon' ? '🌆' : '🌙') + '</span>' +
+      '<span>' + slot.banner + '</span>';
+    tourSection.parentNode.insertBefore(banner, tourSection);
+  }
+
+  // Disable unavailable tour buttons
+  document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+    const type = btn.dataset.type;
+    if (slot.restricted.includes(type)) {
+      btn.classList.add('bk-tour-unavailable');
+      btn.disabled = true;
+      // If this was selected, deselect it
+      if (_tourType === type) {
+        btn.classList.remove('selected');
+        _tourType = null;
+        document.getElementById('bkCheckoutDisplay').textContent = '—';
+        document.getElementById('bkCheckoutTime').textContent    = '—';
+        document.getElementById('bkDuration').textContent        = '—';
+      }
+    }
+  });
+}
+
+/* Apply time-slot CSS class to a specific day cell */
+function applyTimeSlotsToCell(key, cellEl) {
+  cellEl.classList.remove('slot-morning-taken', 'slot-full');
+  const list = Bookings[key] || [];
+  if (!list.length) return;
+
+  // Find the "latest" slot among all bookings on this day
+  let hasEvening   = false;
+  let hasAfternoon = false;
+  let hasMorning   = false;
+
+  list.forEach(b => {
+    const ci   = (b.booking && b.booking.checkinTime) || b.checkinTime || '';
+    const slot = getTimeSlot(ci);
+    if (!slot) return;
+    if (slot.slot === 'evening')   hasEvening   = true;
+    if (slot.slot === 'afternoon') hasAfternoon = true;
+    if (slot.slot === 'morning')   hasMorning   = true;
+  });
+
+  if (hasEvening || hasAfternoon) {
+    cellEl.classList.add('slot-full');
+  } else if (hasMorning) {
+    cellEl.classList.add('slot-morning-taken');
+  }
+}
+
 function getVal(id) {
   const el = document.getElementById(id);
   return el ? el.value : '';
@@ -187,6 +329,13 @@ function resetBookingForm() {
   document.getElementById('bkAdditionalWrap').style.display  = 'none';
   document.getElementById('bkFinalTotalWrap').style.display  = 'none';
   _tourType = null;
+  // Clear time-slot banner and reset tour buttons
+  const existingBanner = document.getElementById('bkTimeSlotBanner');
+  if (existingBanner) existingBanner.remove();
+  document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+    btn.classList.remove('bk-tour-unavailable');
+    btn.disabled = false;
+  });
 }
 
 /* ══════════════════════════════════════
@@ -240,9 +389,21 @@ function calcBalance() {
 
 function calcCheckout() {
   if (!_tourType) return;
-  const ci           = getVal('bkCheckinTime');
-  const isNextDay    = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  const durationMins = _tourType === 'Over-Night' ? 21*60 : 10*60;
+  const ci   = getVal('bkCheckinTime');
+  const slot = getTimeSlot(ci);
+
+  // Determine if checkout is next day based on slot rules
+  let isNextDay;
+  if (slot && slot.checkoutNextDay && _tourType in slot.checkoutNextDay) {
+    isNextDay = slot.checkoutNextDay[_tourType];
+  } else {
+    // Default: Night Tour and Over-Night → next day
+    isNextDay = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
+  }
+
+  const durationMins = _tourType === 'Over-Night' ? 21*60
+                     : _tourType === 'Half Day'   ?  5*60
+                     :                              10*60;
   const nd           = nextDay(_bkYear, _bkMonth, _bkDay);
 
   document.getElementById('bkCheckoutDisplay').textContent =
@@ -298,8 +459,20 @@ function validate() {
   err('bkDownpayment','errDownpayment',getVal('bkDownpayment') === ''  ? 'Required.' : '');
   err('bkCheckinTime','errCheckinTime',!getVal('bkCheckinTime')        ? 'Required.' : '');
   const te = document.getElementById('errTourType');
-  if (!_tourType) { if(te) te.textContent = 'Select tour type.'; ok = false; }
-  else            { if(te) te.textContent = ''; }
+  if (!_tourType) {
+    if(te) te.textContent = 'Select tour type.';
+    ok = false;
+  } else {
+    // Check if chosen tour type is allowed for the entered check-in time
+    const ciVal  = getVal('bkCheckinTime');
+    const slot   = getTimeSlot(ciVal);
+    if (slot && slot.restricted.includes(_tourType)) {
+      if(te) te.textContent = _tourType + ' is not available for this check-in time. Choose: ' + slot.available.join(' or ') + '.';
+      ok = false;
+    } else {
+      if(te) te.textContent = '';
+    }
+  }
   return ok;
 }
 
@@ -325,8 +498,14 @@ async function saveBooking() {
   const total        = baseTotal + headCharge + petCharge;
   const downpayment  = parseFloat(getVal('bkDownpayment')) || 0;
   const ciTime      = getVal('bkCheckinTime');
-  const isNextDay   = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  const durationMins= _tourType === 'Over-Night' ? 21*60 : 10*60;
+  const ciSlot      = getTimeSlot(ciTime);
+  let isNextDay;
+  if (ciSlot && ciSlot.checkoutNextDay && _tourType in ciSlot.checkoutNextDay) {
+    isNextDay = ciSlot.checkoutNextDay[_tourType];
+  } else {
+    isNextDay = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
+  }
+  const durationMins= _tourType === 'Over-Night' ? 21*60 : _tourType === 'Half Day' ? 5*60 : 10*60;
   const coTime      = addMinutesToTime(ciTime, durationMins);
 
   // ── 2. Compile JSON ──────────────────────────────
@@ -362,6 +541,9 @@ async function saveBooking() {
     console.log('📥 Firebase key:', fbKey);
   } catch (fbErr) {
     console.error('❌ Firebase error:', fbErr.message);
+    if (fbErr.isPermission) {
+      showToast('⚠️ Firebase rules may be expired — check ⚙️ Rules tab', 5000);
+    }
   }
 
   // ── 5. Always save locally ───────────────────────
@@ -413,12 +595,39 @@ function openBookingList(key, day, month, year, color) {
   }
 
   body.appendChild(inner);
-  document.getElementById('bkListAddNew').onclick = () => {
+  const addNewBtn = document.getElementById('bkListAddNew');
+  addNewBtn.onclick = () => {
     closeBookingList();
     openBookingForm(key, day, month, year, color);
   };
-  document.getElementById('bkListAddNew').style.background =
-    `linear-gradient(135deg, ${color.accent}, ${color.light})`;
+  addNewBtn.style.background = `linear-gradient(135deg, ${color.accent}, ${color.light})`;
+
+  // Hide Add New if the slot is full (afternoon/evening booking already exists)
+  const slotClass = (() => {
+    const bookingsOnDay = Bookings[key] || [];
+    for (const b of bookingsOnDay) {
+      const ci   = (b.booking && b.booking.checkinTime) || b.checkinTime || '';
+      const slot = getTimeSlot(ci);
+      if (slot && !slot.canAdd) return 'full';
+    }
+    return 'open';
+  })();
+  addNewBtn.style.display = slotClass === 'full' ? 'none' : '';
+  // Show info if full
+  let slotNote = document.getElementById('bkListSlotNote');
+  if (!slotNote) {
+    slotNote = document.createElement('div');
+    slotNote.id = 'bkListSlotNote';
+    slotNote.style.cssText = 'font-size:11px;font-weight:700;color:#a01030;background:#fff0f0;border:1.5px solid #ff8080;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;display:none;';
+    addNewBtn.parentNode.appendChild(slotNote);
+  }
+  if (slotClass === 'full') {
+    slotNote.style.display = '';
+    slotNote.textContent = '🔴 This date is fully booked — afternoon/evening slot taken.';
+  } else {
+    slotNote.style.display = 'none';
+  }
+
   document.getElementById('bkListOverlay').classList.add('open');
 }
 
@@ -674,7 +883,10 @@ function applyBookingIndicators() {
     if (!mEl) return;
     const month = MONTH_NAMES.indexOf(mEl.textContent);
     const key   = toKey(AppState.year, month, parseInt(numEl.textContent));
-    cell.classList.toggle('has-booking', !!(Bookings[key]?.length > 0));
+    const hasBk = !!(Bookings[key]?.length > 0);
+    cell.classList.toggle('has-booking', hasBk);
+    // Apply time-slot color class based on existing bookings
+    applyTimeSlotsToCell(key, cell);
   });
 }
 
@@ -702,6 +914,9 @@ function setupBookingListeners() {
   document.getElementById('bkRatePerPet').addEventListener('input', calcBalance);
   document.getElementById('bkTotal').addEventListener('input', calcBalance);
   document.getElementById('bkDownpayment').addEventListener('input', calcBalance);
-  document.getElementById('bkCheckinTime').addEventListener('change', calcCheckout);
+  document.getElementById('bkCheckinTime').addEventListener('change', () => {
+    calcCheckout();
+    applyTimeSlotToForm(document.getElementById('bkCheckinTime').value);
+  });
   setupTourButtons();
 }
