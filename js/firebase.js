@@ -1,25 +1,35 @@
-// firebase.js — Firebase Realtime Database integration
+// firebase.js — Firebase Realtime Database connection logic
+// ⛔ DO NOT EDIT for configuration — edit js/firebase-config.js instead.
 // Uses REST API (no SDK needed, works from file://)
 
-// ─────────────────────────────────────────────────
-//  🔴 PASTE YOUR FIREBASE CONFIG VALUES HERE
-// ─────────────────────────────────────────────────
-const FB_DATABASE_URL_DEFAULT = 'https://victoriashaven-93136-default-rtdb.asia-southeast1.firebasedatabase.app';
-// Allow runtime override from localStorage (set by config modal)
-// Use hardcoded default. localStorage override only applies if user saved a different URL via the modal.
+// ─────────────────────────────────────────────────────────────
+//  Configuration is loaded from firebase-config.js (loaded first in index.html)
+//  FIREBASE_CONFIG.databaseURL  — your Realtime DB URL
+//  FIREBASE_CONFIG.bookingsPath — root node (default: /bookings)
+// ─────────────────────────────────────────────────────────────
+
+// Pull URL from config file, then allow localStorage override (set by config modal)
+const FB_DATABASE_URL_DEFAULT = (
+  (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.databaseURL)
+    ? FIREBASE_CONFIG.databaseURL
+    : ''
+).replace(/\/+$/, '');
+
 let FB_DATABASE_URL = (() => {
   const saved = localStorage.getItem('fb_database_url');
-  // Only use saved URL if it's different from default AND not the old project
-  if (saved && !saved.includes('victorias-haven-book-record') && saved !== FB_DATABASE_URL_DEFAULT) return saved;
-  // Clear stale saved URL so default takes over
+  // Only use saved URL if it was explicitly set by the user via the modal
+  if (saved && saved !== FB_DATABASE_URL_DEFAULT) return saved.replace(/\/+$/, '');
+  // Otherwise use config file value (clear any stale saved URL)
   localStorage.removeItem('fb_database_url');
   return FB_DATABASE_URL_DEFAULT;
 })();
-// ^ e.g. 'https://my-calendar-app-default-rtdb.firebaseio.com'
-// Get this from: Firebase Console → Project Settings → General → Your apps → databaseURL
-// ─────────────────────────────────────────────────
 
-const FB_PATH = '/bookings';   // root node in Realtime DB
+// Bookings path from config (default: /bookings)
+const FB_PATH = (
+  (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.bookingsPath)
+    ? FIREBASE_CONFIG.bookingsPath
+    : '/bookings'
+);
 
 /* ─────────────────────────────────────────
    FB — raw fetch() REST operations
@@ -37,7 +47,12 @@ const FB = {
       body:    JSON.stringify(data),
     });
     const json = await res.json();
-    if (!res.ok || json.error) throw new Error(json.error || 'Insert failed ' + res.status);
+    if (!res.ok || json.error) {
+      const err = new Error(json.error || 'Insert failed ' + res.status);
+      err.status = res.status;
+      err.isPermission = (res.status === 401 || res.status === 403);
+      throw err;
+    }
     return json.name; // Firebase returns { name: "-auto_key" }
   },
 
@@ -46,8 +61,14 @@ const FB = {
       method: 'GET',
     });
     const json = await res.json();
-    if (!res.ok || json?.error) throw new Error(json?.error || 'FetchAll failed ' + res.status);
-    if (!json) return []; // null = empty db
+    if (!res.ok) {
+      // Tag error type so caller can handle differently
+      const err = new Error(json?.error || 'FetchAll failed ' + res.status);
+      err.status = res.status;
+      err.isPermission = (res.status === 401 || res.status === 403);
+      throw err;
+    }
+    if (!json) return []; // null = empty db (rules OK, just no data)
     // Convert Firebase object { key: {...}, key: {...} } → flat array
     return Object.entries(json).map(([fbKey, val]) => ({ ...val, fbKey }));
   },
@@ -214,11 +235,44 @@ async function initFirebase() {
 
   } catch (e) {
     setDbStatus('offline');
-    console.error('❌ Firebase error:', e.message);
-    scheduleRetry();
-    // Auto-open config modal on first failure so user can fix it
-    if (_retryCount <= 1) {
-      setTimeout(() => openDbConfigModal(), 1200);
+    console.error('❌ Firebase error:', e.message, 'status:', e.status, 'perm:', e.isPermission);
+
+    if (e.isPermission) {
+      // 401/403 = rules expired or blocked
+      // _retryCount hasn't been incremented yet for this attempt — use it as the attempt counter
+      const attempt = _retryCount + 1; // what attempt number this is (1-based)
+
+      // Update status pill with helpful message
+      const lbl = document.getElementById('dbStatusLabel');
+      if (lbl) {
+        var retryMsg = attempt < 3
+          ? 'Rules blocked (attempt ' + attempt + '/3) &nbsp;'
+          : 'Rules expired — ';
+        lbl.innerHTML = retryMsg +
+          '<button onclick="manualRetry()" style="font:700 10px/1 inherit;background:#e0b000;color:#fff;border:none;border-radius:20px;padding:2px 8px;cursor:pointer;margin-right:3px;">RETRY</button>' +
+          '<button onclick="openDbConfigModal();setTimeout(function(){switchDbTab(\'rules\');},250)" style="font:700 10px/1 inherit;background:#e04060;color:#fff;border:none;border-radius:20px;padding:2px 8px;cursor:pointer;">FIX RULES</button>';
+      }
+
+      if (attempt <= 3) {
+        // Retry up to 3 times automatically — rules may just be propagating
+        console.warn('🔄 Permission error — retry attempt ' + attempt + '/3');
+        scheduleRetry(); // this increments _retryCount
+      } else {
+        // 3 retries exhausted — open config modal on Rules tab automatically
+        console.warn('⚠️ Rules still blocked after 3 retries — opening Fix Rules modal');
+        setTimeout(function() {
+          openDbConfigModal();
+          setTimeout(function() { switchDbTab('rules'); }, 300);
+        }, 800);
+      }
+
+    } else {
+      // Network / URL error
+      scheduleRetry();
+      // Open config modal only on very first failure
+      if (_retryCount <= 1) {
+        setTimeout(function() { openDbConfigModal(); }, 1400);
+      }
     }
   }
 }
@@ -516,9 +570,9 @@ function clearSavedUrl() {
   const input  = document.getElementById('dbUrlInput');
   const el     = document.getElementById('currentUrlDisplay');
   const status = document.getElementById('dbUrlStatus');
-  if (input)  input.value = FB_DATABASE_URL_DEFAULT;
+  if (input)  input.value    = FB_DATABASE_URL_DEFAULT;
   if (el)     el.textContent = FB_DATABASE_URL_DEFAULT;
-  if (status) status.innerHTML = '<span style="color:#3cb771;">✅ Cleared — using default URL.</span>';
+  if (status) status.innerHTML = '<span style="color:#3cb771;">✅ Cleared — using URL from firebase-config.js.</span>';
   setTimeout(() => { if (status) status.innerHTML = ''; }, 3000);
 }
 

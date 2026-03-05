@@ -32,12 +32,16 @@ add new feature : 1 time auto save and connect on firebase database.
 (Done)add new feature : Give user option of 3days and 2nights. 3days from the selected date. (Check-out-time: 21+21hours+check-in-time).
 
 
-add new feature : When user put check-in-date is Feb 2, 2026 (Overnight), Put red tag on the date. And put a yellow tag on the next day.
+(ongoing)add new feature : When user put check-in-date is Feb 2, 2026 (Overnight), Put red tag on the date. And put a yellow tag on the next day.
+
+add new feature : if previous date is marked as book, check the check-out. 
+sample : Check-in-date : feb 2, 2026 - feb 3, 2026. Check-out-time of feb 2, 2026 is 3PM. so 3PM onwards Overnight and Night tour is available. 
+User cannot checkin earlier than 3PM on Feb 3, 2026.
 
 add new feature : If user put check-in-date is Feb 2, 2026 (3Days and 2Nights), Put red tag on the selected date and next day (Feb 3, 2026). 
-And put a yellow tag on the third day (Feb 4, 2026). Summary card From Feb 2 - 4, 2026 are all the same.
+And put a yellow tag on the third day (Feb 4, 2026). Summary card From Feb 2 - 3, 2026 are all the same.
 
-add new feature : seperate the bookingJS to firebase ConnectionJS. To avoid any changes from firebase connection.
+(Done)add new feature : Kindly create a new JS for firebase db connection. To avoid any changes from firebase connection.
 
 
 tutorial : https://www.youtube.com/watch?v=i_ud_9imKjg
