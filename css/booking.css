@@ -574,3 +574,155 @@
   border-width: 2px;
   letter-spacing: -0.3px;
 }
+
+/* ══════════════════════════════════════
+   SUMMARY CARD ACTION BUTTONS
+══════════════════════════════════════ */
+.bk-summary-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1.5px solid #f0eeff;
+}
+
+.bk-action-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  letter-spacing: 0.2px;
+}
+
+.bk-action-view {
+  background: #f0faff;
+  color: #29b5e8;
+  border: 1.5px solid #b0e4f8;
+}
+.bk-action-view:hover {
+  background: #29b5e8;
+  color: #fff;
+  border-color: #29b5e8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(41,181,232,0.25);
+}
+
+.bk-action-edit {
+  background: #f3f0ff;
+  color: #7c6af4;
+  border: 1.5px solid #d0caff;
+}
+.bk-action-edit:hover {
+  background: #7c6af4;
+  color: #fff;
+  border-color: #7c6af4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124,106,244,0.25);
+}
+
+.bk-action-delete {
+  background: #fff0f3;
+  color: #e04060;
+  border: 1.5px solid #ffd6df;
+}
+.bk-action-delete:hover {
+  background: #e04060;
+  color: #fff;
+  border-color: #e04060;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224,64,96,0.25);
+}
+
+.bk-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ══════════════════════════════════════
+   VIEW MODAL — read-only detail grid
+══════════════════════════════════════ */
+.bk-view-body {
+  gap: 20px;
+}
+
+.bk-view-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+}
+
+.bk-view-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bk-view-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9996b0;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.bk-view-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+@media (max-width: 600px) {
+  .bk-summary-actions { flex-wrap: wrap; }
+  .bk-action-btn { flex: 1 1 calc(50% - 4px); font-size: 11px; padding: 7px 8px; }
+  .bk-view-grid { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════
+   PESO SIGN — properly aligned
+══════════════════════════════════════ */
+.bk-peso-wrap {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid rgba(0,0,0,0.10);
+  border-radius: 10px;
+  background: #fafafa;
+  overflow: hidden;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.bk-peso-wrap:focus-within {
+  border-color: #7c6af4;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(124,106,244,0.12);
+}
+.bk-peso-sign {
+  padding: 0 10px 0 13px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #7c6af4;
+  user-select: none;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.bk-peso-input {
+  flex: 1;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 10px 13px 10px 0 !important;
+  outline: none;
+}
+.bk-peso-input:focus {
+  border: none !important;
+  box-shadow: none !important;
+}
