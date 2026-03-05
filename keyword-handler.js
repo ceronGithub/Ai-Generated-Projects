@@ -244,6 +244,7 @@ const KeywordHandler = (() => {
     const stopM  = stopRe.exec(s);
     let value    = stopM ? s.slice(0, stopM.index) : s.slice(0, 30);
     value        = value.replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim();
+    value        = cleanValue(value);
     return value.length > 0 ? value : null;
   }
 
@@ -557,6 +558,38 @@ const KeywordHandler = (() => {
     return value;
   }
 
+  // ─── SPECIAL CHARACTER CLEANER ──────────────────────────────────────────────
+  //
+  // Removes label-syntax characters that bleed into extracted values.
+  //
+  // Applies to BOTH leading AND trailing edges of every captured value.
+  //
+  // Leading chars stripped:
+  //   : ; # - – — | / \ * • · (spaces)
+  //   e.g.  '#: INV-2026-042' → 'INV-2026-042'
+  //         ': some value'    → 'some value'
+  //         '– em dash'       → 'em dash'
+  //
+  // Trailing chars stripped:
+  //   : ; # - – — | / \ * • · , (spaces)
+  //   e.g.  'INV-2026-042:'   → 'INV-2026-042'
+  //         'CORPORATION,'    → 'CORPORATION'
+  //
+  // Safe for internal chars:
+  //   '006-977-514-000'  → unchanged  (hyphens only stripped at edges)
+  //   '$1,500.00'        → unchanged  ($ not in strip list; comma is internal)
+  //   'Php 105.00'       → unchanged
+  //   'Feb 25, 2026'     → unchanged  (comma is mid-value)
+
+  function cleanValue(value) {
+    if (!value) return value;
+    // Strip leading label-syntax chars
+    value = value.replace(/^[\s:;#\-–—|/\\*•·]+/, '');
+    // Strip trailing label-syntax chars
+    value = value.replace(/[\s:;#\-–—|/\\*•·,]+$/, '');
+    return value.trim();
+  }
+
   // ─── TITLE CASE FORMATTER ───────────────────────────────────────────────────
   //
   // Ensures every word's first letter is uppercase and every letter immediately
@@ -660,6 +693,7 @@ const KeywordHandler = (() => {
     value = value.replace(/^[\s:–—\-]+/, '').replace(/\s+/g, ' ').trim();
     value = value.replace(/[\s:–—\-,]+$/, '').trim();
     value = trimTrailingNoise(value);
+    value = cleanValue(value);
     value = toTitleCase(value);
     return value.length > 0 ? value : null;
   }
@@ -745,6 +779,7 @@ const KeywordHandler = (() => {
     let value = segment.replace(/^[\s:–—\-]+/, '').trim().replace(/\s+/g, ' ');
     value = value.replace(/(\s+(?:\$?[\d,]+(?:\.\d+)?|\d+)){1,5}\s*$/, '').trim();
     value = value.replace(/[\s:–—\-,]+$/, '').trim();
+    value = cleanValue(value);
     return value.length > 0 ? [toTitleCase(value)] : [];
   }
 
