@@ -155,7 +155,10 @@ async function manualRetry() {
   if (_retryTimer) { clearTimeout(_retryTimer); _retryTimer = null; }
   _retryCount = 0;
   await initFirebase();
-  if (_dbOnline) applyBookingIndicators();
+  if (_dbOnline) {
+    applyBookingIndicators();
+    await flushSyncQueue();
+  }
 }
 
 /* ─────────────────────────────────────────

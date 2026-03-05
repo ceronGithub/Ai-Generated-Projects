@@ -32,7 +32,7 @@ add new feature : 1 time auto save and connect on firebase database.
 (Done)add new feature : Give user option of 3days and 2nights. 3days from the selected date. (Check-out-time: 21+21hours+check-in-time).
 
 
-(ongoing)add new feature : When user put check-in-date is Feb 2, 2026 (Overnight), Put red tag on the date. And put a yellow tag on the next day.
+(Done)add new feature : When user put check-in-date is Feb 2, 2026 (Overnight), Put red tag on the date. And put a yellow tag on the next day.
 
 add new feature : if previous date is marked as book, check the check-out. 
 sample : Check-in-date : feb 2, 2026 - feb 3, 2026. Check-out-time of feb 2, 2026 is 3PM. so 3PM onwards Overnight and Night tour is available. 

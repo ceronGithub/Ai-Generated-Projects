@@ -372,6 +372,9 @@ function openBookingForm(key, day, month, year, color) {
   document.getElementById('bkBtnSave').style.background =
     `linear-gradient(135deg, ${color.accent}, ${color.light})`;
 
+  // Restore any saved draft for this date
+  checkAndRestoreDraft(key);
+
   document.getElementById('bookingOverlay').classList.add('open');
 }
 
@@ -498,6 +501,7 @@ function setupTourButtons() {
       _tourType = btn.dataset.type;
       document.getElementById('errTourType').textContent = '';
       calcCheckout();
+      scheduleDraftSave();
     });
   });
 }
@@ -618,6 +622,9 @@ async function saveBooking() {
     Bookings[savedKey].push(entry);
     saveBookingsLocal(Bookings);
 
+    // Clear the draft for this date — booking is now confirmed
+    clearDraft(savedKey);
+
     closeBookingForm();
 
     if (fbSaved) {
@@ -626,7 +633,9 @@ async function saveBooking() {
         : `✅ Saved: ${bookingJSON.guest.name} ☁️`);
       try { await refreshFromFirebase(); } catch(e) { console.warn('Refresh error:', e.message); }
     } else {
-      showToast(`💾 Saved locally: ${bookingJSON.guest.name} (Firebase offline)`);
+      // Firebase offline — enqueue for later auto-sync
+      if (!editFbKey) enqueueSync(bookingJSON);
+      showToast(`💾 Saved locally: ${bookingJSON.guest.name} — will sync when online`, 4000);
       try { refreshMonth(savedMonth); } catch(e) {}
       applyBookingIndicators();
     }
@@ -960,16 +969,225 @@ function setupBookingListeners() {
     if (e.key === 'Escape') { closeBookingForm(); closeBookingList(); closeViewModal(); }
   });
   document.getElementById('bkBtnSave').addEventListener('click', saveBooking);
-  document.getElementById('bkPax').addEventListener('input',         () => { calcTotalPax(); calcBalance(); });
-  document.getElementById('bkExtraPax').addEventListener('input',    () => { calcTotalPax(); calcBalance(); });
-  document.getElementById('bkRatePerHead').addEventListener('input', calcBalance);
-  document.getElementById('bkPets').addEventListener('input',         calcBalance);
-  document.getElementById('bkRatePerPet').addEventListener('input',   calcBalance);
-  document.getElementById('bkTotal').addEventListener('input',        calcBalance);
-  document.getElementById('bkDownpayment').addEventListener('input',  calcBalance);
+  document.getElementById('bkPax').addEventListener('input',         () => { calcTotalPax(); calcBalance(); scheduleDraftSave(); });
+  document.getElementById('bkExtraPax').addEventListener('input',    () => { calcTotalPax(); calcBalance(); scheduleDraftSave(); });
+  document.getElementById('bkRatePerHead').addEventListener('input', () => { calcBalance(); scheduleDraftSave(); });
+  document.getElementById('bkPets').addEventListener('input',         () => { calcBalance(); scheduleDraftSave(); });
+  document.getElementById('bkRatePerPet').addEventListener('input',   () => { calcBalance(); scheduleDraftSave(); });
+  document.getElementById('bkTotal').addEventListener('input',        () => { calcBalance(); scheduleDraftSave(); });
+  document.getElementById('bkDownpayment').addEventListener('input',  () => { calcBalance(); scheduleDraftSave(); });
   document.getElementById('bkCheckinTime').addEventListener('change', () => {
     calcCheckout();
     applyTimeSlotToForm(document.getElementById('bkCheckinTime').value);
+    scheduleDraftSave();
+  });
+  // Draft save on text fields
+  ['bkGuestName','bkGuestEmail','bkGuestPhone'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', scheduleDraftSave);
   });
   setupTourButtons();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AUTO-SAVE DRAFT SYSTEM
+   ──────────────────────────────────────────────────────────────
+   • Every field change debounce-saves a draft to localStorage
+   • Draft key: 'bk_draft_<YYYY-MM-DD>'
+   • On openBookingForm → restore draft if present (show notice)
+   • On Confirm Booking → clear draft for that date
+   • On Cancel / close → draft kept (so user doesn't lose work)
+   • Sync queue: if Firebase offline at save time, booking is
+     queued in localStorage 'bk_sync_queue' and auto-uploaded
+     the next time Firebase comes online
+══════════════════════════════════════════════════════════════ */
+
+const DRAFT_PREFIX = 'bk_draft_';
+const SYNC_QUEUE_KEY = 'bk_sync_queue';
+
+let _draftTimer = null;
+
+/* ── Collect all current form values into an object ── */
+function collectDraft() {
+  return {
+    savedAt:     new Date().toISOString(),
+    dateKey:     _bkKey,
+    tourType:    _tourType,
+    guestName:   getVal('bkGuestName'),
+    guestEmail:  getVal('bkGuestEmail'),
+    guestPhone:  getVal('bkGuestPhone'),
+    pax:         getVal('bkPax'),
+    extraPax:    getVal('bkExtraPax'),
+    ratePerHead: getVal('bkRatePerHead'),
+    pets:        getVal('bkPets'),
+    ratePerPet:  getVal('bkRatePerPet'),
+    total:       getVal('bkTotal'),
+    downpayment: getVal('bkDownpayment'),
+    paymentDate: getVal('bkPaymentDate'),
+    checkinTime: getVal('bkCheckinTime'),
+  };
+}
+
+/* ── Save draft to localStorage (debounced 600ms) ── */
+function scheduleDraftSave() {
+  if (_draftTimer) clearTimeout(_draftTimer);
+  _draftTimer = setTimeout(() => {
+    if (!_bkKey) return;
+    try {
+      const draft = collectDraft();
+      // Only save if at least one meaningful field is filled
+      const hasMeaningful = draft.guestName || draft.guestPhone || draft.total || draft.checkinTime;
+      if (!hasMeaningful) return;
+      localStorage.setItem(DRAFT_PREFIX + _bkKey, JSON.stringify(draft));
+      showDraftIndicator('saving');
+      setTimeout(() => showDraftIndicator('saved'), 400);
+    } catch(e) { console.warn('Draft save error:', e); }
+  }, 600);
+}
+
+/* ── Restore draft fields into form ── */
+function restoreDraft(draft) {
+  const fill = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  fill('bkGuestName',   draft.guestName);
+  fill('bkGuestEmail',  draft.guestEmail);
+  fill('bkGuestPhone',  draft.guestPhone);
+  fill('bkPax',         draft.pax);
+  fill('bkExtraPax',    draft.extraPax);
+  fill('bkRatePerHead', draft.ratePerHead);
+  fill('bkPets',        draft.pets);
+  fill('bkRatePerPet',  draft.ratePerPet);
+  fill('bkTotal',       draft.total);
+  fill('bkDownpayment', draft.downpayment);
+  fill('bkPaymentDate', draft.paymentDate);
+  fill('bkCheckinTime', draft.checkinTime);
+
+  if (draft.tourType) {
+    document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.type === draft.tourType);
+    });
+    _tourType = draft.tourType;
+  }
+
+  calcTotalPax();
+  calcBalance();
+  if (_tourType && draft.checkinTime) {
+    calcCheckout();
+    applyTimeSlotToForm(draft.checkinTime);
+  }
+}
+
+/* ── Clear draft for current date ── */
+function clearDraft(key) {
+  try { localStorage.removeItem(DRAFT_PREFIX + (key || _bkKey)); } catch(e) {}
+  hideDraftIndicator();
+}
+
+/* ── Draft status indicator in form header ── */
+function showDraftIndicator(state) {
+  let el = document.getElementById('bkDraftIndicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'bkDraftIndicator';
+    el.style.cssText =
+      'font-size:10px;font-weight:700;letter-spacing:0.4px;padding:3px 10px;' +
+      'border-radius:20px;transition:all 0.3s ease;white-space:nowrap;';
+    const header = document.getElementById('bkHeaderDate');
+    if (header) header.parentNode.insertBefore(el, header.nextSibling);
+  }
+  if (state === 'saving') {
+    el.textContent = '💾 Saving draft…';
+    el.style.background = '#f0eeff'; el.style.color = '#7c6af4';
+    el.style.opacity = '1';
+  } else if (state === 'saved') {
+    el.textContent = '✅ Draft saved';
+    el.style.background = '#f0fff4'; el.style.color = '#2a9a5a';
+    el.style.opacity = '1';
+    setTimeout(() => { if (el) el.style.opacity = '0.4'; }, 2000);
+  } else if (state === 'restored') {
+    el.textContent = '📋 Draft restored — you can continue editing';
+    el.style.background = '#fff8e0'; el.style.color = '#9a7800';
+    el.style.opacity = '1';
+  }
+}
+
+function hideDraftIndicator() {
+  const el = document.getElementById('bkDraftIndicator');
+  if (el) el.remove();
+}
+
+/* ── Check for draft on date open ── */
+function checkAndRestoreDraft(key) {
+  try {
+    const raw = localStorage.getItem(DRAFT_PREFIX + key);
+    if (!raw) return false;
+    const draft = JSON.parse(raw);
+    if (!draft || !draft.savedAt) return false;
+    restoreDraft(draft);
+    showDraftIndicator('restored');
+    return true;
+  } catch(e) { return false; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FIREBASE SYNC QUEUE
+   When Firebase is offline at save time, the booking JSON is
+   pushed onto a queue. Next time initFirebase() succeeds, the
+   queue is flushed automatically.
+══════════════════════════════════════════════════════════════ */
+
+function enqueueSync(bookingJSON) {
+  try {
+    const queue = getSyncQueue();
+    queue.push({ bookingJSON, queuedAt: new Date().toISOString() });
+    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
+    console.log('📬 Queued for Firebase sync. Queue length:', queue.length);
+  } catch(e) { console.warn('Sync queue error:', e); }
+}
+
+function getSyncQueue() {
+  try {
+    const raw = localStorage.getItem(SYNC_QUEUE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function clearSyncQueue() {
+  localStorage.removeItem(SYNC_QUEUE_KEY);
+}
+
+async function flushSyncQueue() {
+  const queue = getSyncQueue();
+  if (!queue.length) return;
+
+  console.log('🔄 Flushing sync queue —', queue.length, 'item(s)…');
+  const failed = [];
+
+  for (const item of queue) {
+    try {
+      const fbKey = await FB.insert(item.bookingJSON);
+      // Update local Bookings with the new fbKey
+      const key = item.bookingJSON.dateKey;
+      if (Bookings[key]) {
+        const local = Bookings[key].find(b => b.id === item.bookingJSON.id);
+        if (local) local.fbKey = fbKey;
+      }
+      console.log('☁️ Synced queued booking:', item.bookingJSON.guest?.name, '→', fbKey);
+    } catch(e) {
+      console.warn('❌ Sync failed for queued item:', e.message);
+      failed.push(item);
+    }
+  }
+
+  if (failed.length) {
+    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(failed));
+    console.warn('⚠️', failed.length, 'item(s) remain in queue after flush.');
+  } else {
+    clearSyncQueue();
+    saveBookingsLocal(Bookings);
+    console.log('✅ Sync queue fully flushed.');
+  }
+
+  const queueCount = failed.length;
+  if (queueCount === 0) {
+    showToast('☁️ All offline bookings synced to Firebase!', 4000);
+  }
 }

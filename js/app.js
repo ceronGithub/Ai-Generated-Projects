@@ -16,9 +16,6 @@ function refreshMonth(month) {
   if (!grid) return;
   const card = grid.querySelectorAll('.month-card')[month];
   if (!card) return;
-  // Always ensure card is visible after rebuild
-  card.style.opacity  = '1';
-  card.style.transform = 'translateY(0) scale(1)';
   card.querySelectorAll('.day-cell:not(.other-month)').forEach(cell => {
     const numEl = cell.querySelector('.day-num');
     if (!numEl) return;
@@ -30,21 +27,21 @@ function refreshMonth(month) {
   });
 }
 
-async function init() {
+function init() {
+  // Step 1 — render calendar instantly, never await anything
   renderTodayBadge();
   renderAllMonths();
   setupModalListeners();
   setupBookingListeners();
-  setupAnalyticsListeners();
 
-  // Load bookings from Firebase, then force cards visible + refresh indicators
-  await initFirebase();
-  document.querySelectorAll('.month-card').forEach(card => {
-    card.style.opacity   = '1';
-    card.style.animation = 'none';
-    card.style.transform = 'translateY(0) scale(1)';
+  // Step 2 — connect Firebase in background, never blocks UI
+  initFirebase().then(async () => {
+    applyBookingIndicators();
+    // Auto-sync any bookings that were saved while offline
+    await flushSyncQueue();
+  }).catch(e => {
+    console.warn('Firebase background init failed:', e.message);
   });
-  applyBookingIndicators();
 }
 
 document.addEventListener('DOMContentLoaded', init);
