@@ -597,6 +597,8 @@ function copyCurrentRules() {
     btn.innerHTML = '✅ Copied!';
     btn.style.background = '#3cb771'; btn.style.color = '#fff';
     btn.style.borderColor = '#3cb771';
+    try { localStorage.setItem('fb_rules_backup', text); } catch(e) {}
+    if (typeof refreshNewsTicker === 'function') refreshNewsTicker();
     setTimeout(() => {
       btn.innerHTML = orig;
       btn.style.background = '#f0eeff'; btn.style.color = '#7c6af4';

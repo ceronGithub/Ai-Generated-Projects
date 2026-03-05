@@ -169,6 +169,56 @@
   <input type="file" id="importFileInput" accept=".json" style="display:none"
     onchange="if(this.files[0]) handleImportFile(this.files[0]); this.value='';">
 
+  <!-- ══════════════════════════════════════════
+       NEWS TICKER — rules expiry warning
+       Shown 1 day before Firebase rules expire
+  ══════════════════════════════════════════ -->
+  <!-- ══ NEWS TICKER — always visible, live rules countdown ══ -->
+  <div id="newsTicker" style="
+    position:relative;z-index:90;width:100%;overflow:hidden;
+    background:linear-gradient(90deg,#3cb771,#5ad98a,#3cb771,#1a9a52,#3cb771);
+    background-size:300% 100%;
+    animation:tickerBg 6s linear infinite;
+    border-bottom:2px solid rgba(255,255,255,0.20);
+    box-shadow:0 3px 14px rgba(0,0,0,0.14);">
+
+    <!-- Left label -->
+    <div id="newsLabel" style="
+      position:absolute;left:0;top:0;bottom:0;z-index:2;
+      display:flex;align-items:center;
+      background:rgba(0,0,0,0.20);
+      padding:0 18px;
+      font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;
+      color:#fff;letter-spacing:1.2px;text-transform:uppercase;
+      white-space:nowrap;border-right:1.5px solid rgba(255,255,255,0.22);">
+      ✅ FIREBASE
+    </div>
+
+    <!-- Scrolling track — padding-left pushes text off-screen right -->
+    <div id="newsTrack" style="
+      display:flex;align-items:center;
+      height:38px;padding-left:calc(100% + 120px);
+      white-space:nowrap;will-change:transform;">
+      <span id="newsText" style="
+        font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;
+        color:#fff;letter-spacing:0.4px;
+        text-shadow:0 1px 4px rgba(0,0,0,0.22);
+        padding-right:80px;">
+        Loading Firebase status…
+      </span>
+    </div>
+
+    <!-- Dismiss (snooze 1 hr) -->
+    <button onclick="dismissNewsTicker()" title="Snooze 1 hour" style="
+      position:absolute;right:0;top:0;bottom:0;z-index:2;
+      background:rgba(0,0,0,0.16);border:none;
+      border-left:1.5px solid rgba(255,255,255,0.20);
+      padding:0 15px;cursor:pointer;color:#fff;font-size:17px;
+      transition:background 0.15s;"
+      onmouseover="this.style.background='rgba(0,0,0,0.30)'"
+      onmouseout="this.style.background='rgba(0,0,0,0.16)'">×</button>
+  </div>
+
   <main class="year-grid" id="yearGrid"></main>
 
   <!-- ══════════════════════════════
@@ -488,6 +538,7 @@
   <script src="js/booking.js"></script>
   <script src="js/analysis.js"></script>
   <script src="js/background.js"></script>
+  <script src="js/news.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
