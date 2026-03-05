@@ -102,7 +102,10 @@
 
     // ── Closing ──
     const closingHtml = closing
-      ? `<p style="font-size:14px;white-space:pre-wrap;margin:16px 0 0;">${escHtml(closing)}</p>`
+      ? `<p style="font-size:14px;white-space:pre-wrap;margin:16px 0 0;">${
+          escHtml(closing)
+            .replace(/(We kindly request an acknowledgment of this transaction\.)/g, '<strong>$1</strong>')
+        }</p>`
       : '';
 
     // ── Full preview HTML ──

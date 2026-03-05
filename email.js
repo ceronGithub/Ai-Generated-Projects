@@ -139,8 +139,13 @@
 </table>` : '';
 
     // ── Step 3b: Closing text (set by booking.js) ──
-    const closingText = (window._emailClosing || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br/>');
-    const closingSection = closingText ? `<br/><p style="font-family:Arial,sans-serif;font-size:14px;color:#1a1a1a;line-height:1.9;margin:16px 0 0;">${closingText}</p>` : '';
+    // Parse closing: make "We kindly request..." bold, preserve newlines as <br/>
+    const rawClosing = (window._emailClosing || '');
+    const closingHtml = rawClosing
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/(We kindly request an acknowledgment of this transaction\.)/g, '<strong>$1</strong>')
+      .replace(/\n/g,'<br/>');
+    const closingSection = closingHtml ? `<p style="font-family:Arial,sans-serif;font-size:14px;color:#1a1a1a;line-height:1.9;margin:16px 0 0;">${closingHtml}</p>` : '';
 
     // ── Step 4: Full HTML body ──
     const bd = window._bookingDetails || {};
@@ -148,7 +153,7 @@
     // Build bold booking details block (all bold, each on new line)
     const boldDetails = bd.guestName ? `
 <table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
-  <tr><td style="padding:0 0 6px;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>Booking Details:</strong></td></tr>
+  <tr><td style="padding:0 0 6px;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>IMPORTANT:</strong></td></tr>
   <tr><td style="padding:0 0 4px;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>Your Check-in time is ${bd.checkinStr} and Check-out is ${bd.checkoutStr}.</strong></td></tr>
   <tr><td style="padding:0 0 4px;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>Date of booking: ${bd.dateBooking}</strong></td></tr>
   <tr><td style="padding:0 0 0;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>Upon check-in, please provide one valid ID and settle the balance.</strong></td></tr>

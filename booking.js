@@ -159,21 +159,23 @@
     const dateBooking = formatDateRange(start, end, selectedTour);
 
     // ── Build the email body message ──
+    // Use only the first word of the guest name for the greeting
+    const guestFirstName = guestName.split(' ')[0];
+
     // Store booking details for email.js to use in HTML bold formatting
     window._bookingDetails = {
-      guestName, checkinStr, checkoutStr, dateBooking,
+      guestName, guestFirstName, checkinStr, checkoutStr, dateBooking,
       down, balance, datePay, mop: selectedMop, refNum
     };
 
     const message =
-`Good day ${guestName},
+`Good day ${guestFirstName},
 
 This is to formally confirm that we have successfully processed your downpayment for your reservation at Victoria's Haven Resort.
 
 BOOKING_DETAILS_PLACEHOLDER
 
 Please see the details below for your reference:
-
 
 Reservation Name: ${guestName}
 Down payment Amount: ${down}
@@ -183,7 +185,11 @@ Mode of Payment: ${selectedMop}
 Reference Number: ${refNum}`;
 
     const closing =
-`We kindly request an acknowledgment of this transaction.
+`
+
+
+
+We kindly request an acknowledgment of this transaction.
 
 
 Thank you very much and we officially welcome you to Victoria's Haven Private Resort!
