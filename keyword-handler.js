@@ -34,6 +34,52 @@
 //   ✓ "Business Style: SMC TPLEX Corporation" not cut at "Corporation Tin:"
 //   ✓ "Signature: Jordan Riverside" — trailing date/doc noise trimmed
 //   ✓ "Title SMCX TPLEX CORPORATION" — bare label with ALL-CAPS value
+//
+// SMC INVOICE FIXES (2-column interleaved PDF layout):
+//
+//   The SMC invoice form uses a 2-column layout:
+//     LEFT  column: Date :  Time :  Customer Name :  TIN :  Business Style :  Address :
+//     RIGHT column: (blank) 01/07/2025  15:21:49  NATIONAL GRID...  006-977...
+//
+//   PDF.js collapses this into ONE string by reading left-col labels first,
+//   then right-col values, producing:
+//     "Date : Time : 01/07/2025 : 15:21:49 Customer Name : ..."
+//
+//   Fix A — INTERLEAVED-LABEL RESOLVER (extractValueAt):
+//     After matching "Date :", if the text immediately following starts with
+//     a sibling label (Time, Customer Name, TIN, Business Style, Address),
+//     skip past that sibling label + colon before extracting the value.
+//     Result: "Date :" → "01/07/2025" ✓
+//
+//   Fix B — "Time" as whole-page HH:MM:SS scanner (like "Date"):
+//     In the collapsed string, "Time :" is followed by "01/07/2025" (the DATE
+//     value placed there by column-order reading). The 2-pass engine would
+//     erroneously return the date for "Time".  Instead, "Time" now triggers
+//     the same whole-page TIME_ONLY_RE scan it always used — bypassing the
+//     2-pass regex entirely. Result: "Time" → "15:21:49" ✓
+//
+//   Fix C — ENTRY/EXIT stop-pattern anchor:
+//     "MAMPLASAN NORTH ENTRY/EXIT" contains the word "ENTRY" but has NO colon
+//     after it. The stop pattern now requires \bEntry\s*: or \bExit\s*: so
+//     "ENTRY/EXIT" inside a value never triggers a premature stop.
+//     Result: "Entry :" → "MAMPLASAN NORTH ENTRY/EXIT" ✓
+//
+//   Fix D — SALES INVOICE NUMBER special extractor:
+//     Detects "Sales Invoice Number" as a keyword alias and extracts the
+//     alphanumeric code (e.g. MMSS3000053914465) directly after the colon.
+//
+//   Fix E — VATABLE SALES / VAT positional extractor:
+//     The block "Vatable Sales VAT-Exempt Sales Zero-Rated Sales VAT 93.75
+//     0.00 0.00 11.25" jams 4 numbers after 4 sibling headers with no
+//     individual label:value pairing.  New positional approach:
+//       "Vatable Sales" → 1st decimal in block = 93.75
+//       "VAT"           → 4th  (last) decimal before "Total Amount" = 11.25
+//     Word-boundary guard already prevents matching "VAT-Exempt" or "VAT Reg TIN".
+//
+//   Fix F — CUSTOMER NAME stop boundary:
+//     "Customer Name :" value must stop before "TIN :" not at next label token.
+//     The address field on these invoices can include "COR." abbreviations that
+//     previously triggered mixed-case label stops prematurely.
 // =============================================
 
 const KeywordHandler = (() => {
@@ -125,6 +171,119 @@ const KeywordHandler = (() => {
    */
   function isEsiNoKw(kwNorm) {
     return /\be-si\s*no\b/i.test(kwNorm);
+  }
+
+  /**
+   * Is this a Sales Invoice Number keyword?
+   * e.g. "Sales Invoice Number:", "SALES INVOICE NUMBER:", "Sales Invoice No."
+   */
+  function isSalesInvoiceNoKw(kwNorm) {
+    return /sales\s+invoice\s+(number|no)/i.test(kwNorm);
+  }
+
+  /**
+   * Is this a Vatable Sales keyword? (SMC invoice tax block — 1st decimal)
+   * e.g. "Vatable Sales", "Vatable"
+   */
+  function isVatableSalesKw(kwNorm) {
+    return /^vatable/i.test(kwNorm);
+  }
+
+  /**
+   * Is this a bare VAT-only keyword? (SMC invoice tax block — 4th/last decimal)
+   * Matches "VAT" alone, but NOT "VAT-Exempt", "VAT Reg", "Vatable".
+   */
+  function isVatOnlyKw(kwNorm) {
+    return /^vat$/i.test(kwNorm);
+  }
+
+  /**
+   * Is this a Customer Name keyword?
+   * e.g. "Customer Name :", "Customer Name:"
+   */
+  function isCustomerNameKw(kwNorm) {
+    return /^customer\s+name$/i.test(kwNorm);
+  }
+
+  // ── SMC INVOICE: SIBLING-LABEL PATTERN ──────────────────────────────────
+  //
+  // In SMC invoices the 2-column form layout causes PDF.js to produce:
+  //   "Date : Time : 01/07/2025 : 15:21:49 Customer Name : ..."
+  //
+  // After matching a spaced-colon keyword, if the text immediately following
+  // starts with one of these sibling label patterns, we skip past it before
+  // extracting the actual value.
+  //
+  // Matches (case-insensitive, leading spaces already stripped):
+  //   Time :    Customer Name :    TIN :    Business Style :    Address :
+  const SMC_SIBLING_RE = /^(Time|Customer\s+Name|TIN|Business\s+Style|Address)\s{0,10}:/i;
+
+  /**
+   * Extract the value for an SMC-style "Date :" keyword by skipping the
+   * interleaved sibling "Time :" label that PDF.js inserts before the value.
+   *
+   * Raw after "Date :": "Time : 01/07/2025 : 15:21:49 Customer Name : ..."
+   *                             ↑ skip this  ↑ grab date up to next label
+   *
+   * @param {string} afterKw  - text starting immediately after "Date :"
+   * @param {number[]} stops  - sorted stop positions (global offsets, not used here)
+   * @returns {string|null}
+   */
+  function extractSMCInterleavedValue(afterKw) {
+    // Strip leading whitespace / stray colons
+    let s = afterKw.replace(/^[\s:]+/, '');
+
+    // If sibling label found, skip past it + its colon
+    const sib = SMC_SIBLING_RE.exec(s);
+    if (sib) {
+      s = s.slice(sib[0].length).replace(/^[\s:]+/, '');
+    }
+
+    // Grab up to the next known label start or end-of-meaningful-content
+    const stopRe = /\b(Time|Customer\s+Name|TIN\s*:|Business\s+Style\s*:|Address\s*:|Entry\s*:|Exit\s*:|Vatable|THIS\s+SERVES)/i;
+    const stopM  = stopRe.exec(s);
+    let value    = stopM ? s.slice(0, stopM.index) : s.slice(0, 30);
+    value        = value.replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim();
+    return value.length > 0 ? value : null;
+  }
+
+  /**
+   * Extract Vatable Sales value from the SMC tax block.
+   * Block shape: "Vatable Sales VAT-Exempt Sales Zero-Rated Sales VAT 93.75 0.00 0.00 11.25"
+   * Returns the FIRST decimal number = Vatable Sales amount.
+   */
+  function extractVatableSales(text, matchEnd) {
+    const seg = text.slice(matchEnd, matchEnd + 300);
+    // Skip sibling label text until we reach the first decimal
+    const m = seg.match(/(?:VAT-Exempt\s+Sales\s+Zero-Rated\s+Sales\s+VAT\s+)?(\d+\.\d{2})/);
+    return m ? m[1] : null;
+  }
+
+  /**
+   * Extract bare VAT amount from the SMC tax block.
+   * Block shape: "VAT-Exempt Sales Zero-Rated Sales VAT 93.75 0.00 0.00 11.25 Total Amount"
+   * The bare "VAT" label precedes all 4 numbers; the VAT amount is the 4th (last) one.
+   * We scan forward to "Total Amount" and grab the last decimal before it.
+   */
+  function extractVatAmount(text, matchEnd) {
+    const totalIdx = text.indexOf('Total Amount', matchEnd);
+    const boundary = totalIdx > matchEnd ? totalIdx : matchEnd + 300;
+    const seg      = text.slice(matchEnd, boundary);
+    const nums     = [...seg.matchAll(/\d+\.\d{2}/g)];
+    if (nums.length === 0) return null;
+    return nums[nums.length - 1][0]; // last decimal = VAT
+  }
+
+  /**
+   * Extract Sales Invoice Number from SMC invoices.
+   * Pattern: "SALES INVOICE NUMBER: MMSS3000053914465"
+   * The value is an alphanumeric code that may contain digits and letters.
+   */
+  function extractSalesInvoiceNo(text, matchEnd) {
+    const seg = text.slice(matchEnd, matchEnd + 60).replace(/^[\s:]+/, '');
+    // Grab alphanumeric token (the invoice number)
+    const m = seg.match(/^([A-Z0-9]+)/i);
+    return m ? m[1] : null;
   }
 
   // ── REF NO REGEX ─────────────────────────────────────────────────────────
@@ -349,6 +508,9 @@ const KeywordHandler = (() => {
     }
 
     // 2. Generic single-word mixed-case label + colon  (NOT time values — (?!\d) guard)
+    //    IMPORTANT: Only fire on labels that actually have a colon — this prevents
+    //    "ENTRY" or "EXIT" inside values like "MAMPLASAN NORTH ENTRY/EXIT" from
+    //    being treated as stop points (they have no colon after them).
     const labelRe = /(?<![a-z\d])([A-Z][a-z][A-Za-z#\-\.]{0,13})\s{0,3}:(?!\d)/g;
     let m;
     while ((m = labelRe.exec(text)) !== null) posSet.add(m.index);
@@ -465,8 +627,29 @@ const KeywordHandler = (() => {
   //
   // Slices text from matchEnd to the first stop AT OR AFTER matchEnd.
   // A stop exactly at matchEnd → null (empty value / adjacent headers).
+  //
+  // SMC INTERLEAVED FIX:
+  //   For spaced-colon keywords (Date :, Address :, Customer Name :, etc.),
+  //   if the text immediately after the match starts with a known sibling label
+  //   (Time, Customer Name, TIN, Business Style, Address), that sibling label
+  //   is skipped before the value is extracted.
+  //
+  //   This fixes the 2-column PDF.js rendering artefact:
+  //     "Date : Time : 01/07/2025 : 15:21:49" → "Date :" yields "01/07/2025"
 
-  function extractValueAt(text, matchEnd, stopPositions, maxLen = 200) {
+  function extractValueAt(text, matchEnd, stopPositions, maxLen = 200, kwType = '') {
+    // ── SMC interleaved-label resolver ─────────────────────────────────────
+    // Only apply for spaced-colon keywords (type === 'spaced' or 'colon')
+    // to avoid touching bare keywords like "Total" or "Description".
+    if (kwType === 'spaced' || kwType === 'colon') {
+      const afterKw = text.slice(matchEnd, matchEnd + 120);
+      const stripped = afterKw.replace(/^[\s:]+/, '');
+      if (SMC_SIBLING_RE.test(stripped)) {
+        const value = extractSMCInterleavedValue(stripped);
+        if (value) return toTitleCase(trimTrailingNoise(value));
+      }
+    }
+
     const nextStop = stopPositions.find(p => p >= matchEnd);
     if (nextStop === matchEnd) return null;
     const stopAt = nextStop !== undefined
@@ -717,6 +900,50 @@ const KeywordHandler = (() => {
             continue;
           }
 
+          // ── SMC invoice: Sales Invoice Number ───────────────────────────
+          if (isSalesInvoiceNoKw(kwNorm)) {
+            const re = /SALES\s+INVOICE\s+NUMBER\s*:\s*/gi;
+            let sm;
+            const r1 = [];
+            while ((sm = re.exec(text)) !== null) {
+              const val = extractSalesInvoiceNo(text, sm.index + sm[0].length);
+              if (val && !seen.has(val)) { seen.add(val); r1.push({ page, filename, keyword, contexts: [val], closestContext: val }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          // ── SMC invoice: Vatable Sales (1st decimal in tax block) ───────
+          if (isVatableSalesKw(kwNorm)) {
+            const re = /Vatable\s+Sales/gi;
+            let sm;
+            const r1 = [];
+            while ((sm = re.exec(text)) !== null) {
+              const val = extractVatableSales(text, sm.index + sm[0].length);
+              if (val && !seen.has(val)) { seen.add(val); r1.push({ page, filename, keyword, contexts: [val], closestContext: val }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
+          // ── SMC invoice: bare VAT (4th/last decimal before Total Amount) ─
+          if (isVatOnlyKw(kwNorm)) {
+            // Scan for the VAT row — it appears after Zero-Rated Sales and before Total Amount
+            // Pattern: "Zero-Rated Sales VAT <vatable> <exempt> <zero> <vat>"
+            const re = /\bVAT\b(?!\s*-|\s*Reg|\s*Exempt|\s*Zero)/gi;
+            let sm;
+            const r1 = [];
+            while ((sm = re.exec(text)) !== null) {
+              const val = extractVatAmount(text, sm.index + sm[0].length);
+              if (val && !seen.has(val)) { seen.add(val); r1.push({ page, filename, keyword, contexts: [val], closestContext: val }); }
+            }
+            run1Results.set(mapKey, r1);
+            run1Positions.set(mapKey, new Set([-1]));
+            continue;
+          }
+
           // Normal regex-based keywords — scout pass
           let m;
           while ((m = regex.exec(text)) !== null) {
@@ -729,7 +956,7 @@ const KeywordHandler = (() => {
               if (tableVals.length > 0) {
                 values = tableVals;
               } else {
-                const dv = extractValueAt(text, matchEnd, stopPositions);
+                const dv = extractValueAt(text, matchEnd, stopPositions, 200, type);
                 if (dv) {
                   const isNum = isMonetaryKw(kwNorm) || isIntegerKw(kwNorm);
                   if (isNum) { if (/^[\$\d]|^Php/i.test(dv)) values = [dv]; }
@@ -737,7 +964,7 @@ const KeywordHandler = (() => {
                 }
               }
             } else {
-              const dv = extractValueAt(text, matchEnd, stopPositions);
+              const dv = extractValueAt(text, matchEnd, stopPositions, 200, type);
               if (dv) values = [dv];
             }
 
@@ -798,7 +1025,7 @@ const KeywordHandler = (() => {
               if (tableVals.length > 0) {
                 values = tableVals;
               } else {
-                const dv = extractValueAt(text, matchEnd, stopPositions);
+                const dv = extractValueAt(text, matchEnd, stopPositions, 200, type);
                 if (dv) {
                   const isNum = isMonetaryKw(kwNorm) || isIntegerKw(kwNorm);
                   if (isNum) { if (/^[\$\d]|^Php/i.test(dv)) values = [dv]; }
@@ -806,7 +1033,7 @@ const KeywordHandler = (() => {
                 }
               }
             } else {
-              const dv = extractValueAt(text, matchEnd, stopPositions);
+              const dv = extractValueAt(text, matchEnd, stopPositions, 200, type);
               if (dv) values = [dv];
             }
 
@@ -862,7 +1089,7 @@ const KeywordHandler = (() => {
         if (tv.length > 0) {
           values = tv;
         } else {
-          const dv = extractValueAt(text, matchEnd, stopPositions);
+          const dv = extractValueAt(text, matchEnd, stopPositions, 200, type);
           if (dv) {
             const isNum = isMonetaryKw(kwNorm) || isIntegerKw(kwNorm);
             if (isNum) {
@@ -873,7 +1100,7 @@ const KeywordHandler = (() => {
           }
         }
       } else {
-        const dv = extractValueAt(text, matchEnd, stopPositions);
+        const dv = extractValueAt(text, matchEnd, stopPositions, 200, type);
         if (dv) values = [dv];
       }
 
