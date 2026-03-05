@@ -820,22 +820,94 @@ async function saveBooking() {
    started on a previous date and is still
    occupying the currently-viewed date.
 ══════════════════════════════════════ */
-function buildStayoverCard(b, checkinKey, color) {
+function buildStayoverCard(b, checkinKey, color, viewingKey) {
   const card = document.createElement('div');
-  card.className = 'bk-summary-card bk-stayover-card';
 
   const name     = b.guest?.name       || b.guestName  || '—';
+  const email    = b.guest?.email      || b.guestEmail || '';
+  const phone    = b.guest?.phone      || b.guestPhone || '';
   const totalPax = b.guest?.totalPax   || b.totalPax   || '—';
   const pets     = b.guest?.pets       ?? b.pets       ?? 0;
   const total    = b.payment?.total    ?? b.total      ?? 0;
   const balance  = b.payment?.balance  ?? b.balance    ?? 0;
+  const dp       = b.payment?.downpayment ?? b.downpayment ?? 0;
   const tourType = b.booking?.tourType || b.tourType   || '—';
   const ciLabel  = b.booking?.checkinDateLabel  || checkinKey || '—';
   const coLabel  = b.booking?.checkoutDateLabel || '—';
+  const coDate   = b.booking?.checkoutDate || b.checkoutDate || '';
   const ciTime   = b.booking?.checkinTime  || b.checkinTime  || '';
   const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
+  const durationHrs = b.booking?.durationHrs ?? '—';
 
-  // Header
+  // ── Compute which day of the stay we are viewing ──
+  const is3D2N    = tourType === '3D2N';
+  const isOvernight = tourType === 'Over-Night';
+  let stayDay = 1; // default (shouldn't display day 1 here — that's the checkin date)
+  if (viewingKey) {
+    const [cy, cm, cd] = checkinKey.split('-').map(Number);
+    const [vy, vm, vd] = viewingKey.split('-').map(Number);
+    const checkinMs  = new Date(cy, cm - 1, cd).getTime();
+    const viewingMs  = new Date(vy, vm - 1, vd).getTime();
+    stayDay = Math.round((viewingMs - checkinMs) / 86400000) + 1;
+  }
+
+  // Total days in stay
+  const totalDays = is3D2N ? 3 : isOvernight ? 2 : 2;
+  const isCheckoutDay = viewingKey && viewingKey === coDate;
+
+  // ── Colour theme based on day ──
+  // Day 1 (checkin) = red (never shown as stayover card, but just in case)
+  // Day 2 of 3D2N   = red  (still fully occupied)
+  // Last day         = yellow (checkout day)
+  const isRedDay = !isCheckoutDay && stayDay < totalDays;
+  const accentColor  = isRedDay ? '#e04060' : '#e0b800';
+  const accentBg     = isRedDay
+    ? 'linear-gradient(135deg,#fff0f2,#ffd6df)'
+    : 'linear-gradient(135deg,#fffbe0,#fff3b0)';
+  const badgeBg      = isRedDay ? '#e04060' : '#e0b800';
+  const borderColor  = isRedDay ? '#ff8080' : '#e0b800';
+  const dayIcon      = is3D2N ? '🏕' : '🌙';
+  const dayLabel     = isCheckoutDay
+    ? `${dayIcon} Day ${stayDay} of ${totalDays} — Checkout Day`
+    : `${dayIcon} Day ${stayDay} of ${totalDays} — Staying Over`;
+
+  card.className = 'bk-summary-card bk-stayover-card';
+  card.style.cssText =
+    `border-left:4px solid ${borderColor}!important;` +
+    `background:${accentBg}!important;`;
+
+  // ── Day-of-stay progress bar ──
+  const progress = document.createElement('div');
+  progress.className = 'bk-stayover-progress';
+  progress.innerHTML = Array.from({ length: totalDays }, (_, i) => {
+    const dayNum  = i + 1;
+    const isDone  = dayNum < stayDay;
+    const isCurr  = dayNum === stayDay;
+    const isLast  = dayNum === totalDays;
+    const dotColor = isDone  ? '#bbb'
+                   : isCurr && !isLast ? '#e04060'
+                   : isCurr && isLast  ? '#e0b800'
+                   : '#ddd';
+    return `<span class="bk-stayover-dot" style="background:${dotColor};` +
+           `${isCurr ? 'transform:scale(1.4);box-shadow:0 0 0 3px '+dotColor+'44;' : ''}` +
+           `" title="Day ${dayNum}${isLast?' (checkout)':''}"></span>` +
+           (i < totalDays - 1 ? `<span class="bk-stayover-dot-line"></span>` : '');
+  }).join('');
+
+  // ── Day label strip ──
+  const dayStrip = document.createElement('div');
+  dayStrip.className = 'bk-stayover-day-label';
+  dayStrip.style.cssText =
+    `color:${accentColor};background:${accentBg};` +
+    `border-bottom:1px solid ${borderColor}44;`;
+  dayStrip.innerHTML =
+    `<span>${dayLabel}</span>` +
+    `<span style="font-size:10px;opacity:0.7;font-weight:600;">${ciLabel} → ${coLabel}</span>`;
+
+  card.appendChild(progress);
+  card.appendChild(dayStrip);
+
+  // ── Header ──
   const hdr = document.createElement('div');
   hdr.className = 'bk-summary-card-header';
   const nameEl = document.createElement('div');
@@ -843,20 +915,21 @@ function buildStayoverCard(b, checkinKey, color) {
   const badge = document.createElement('span');
   badge.className = 'bk-summary-badge bk-stayover-badge';
   badge.textContent = tourType;
-  badge.style.background = '#ff9800';
+  badge.style.background = badgeBg;
   hdr.append(nameEl, badge);
   card.appendChild(hdr);
 
-  // Info rows
+  // ── Info rows ──
   const rows = [
-    [`📅 In: ${ciLabel}`, `📅 Out: ${coLabel}`],
-    [`🕐 ${to12hr(ciTime)} → ${to12hr(coTime)}`],
+    email || phone ? [`📧 ${email || '—'}`, `📞 ${phone || '—'}`] : null,
     [`👥 ${totalPax} Pax${pets ? `  🐾 ${pets} Pets` : ''}`,
      `💳 ₱${Number(total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`],
-    [`💰 Balance: ₱${Number(balance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`],
+    [`🕐 ${to12hr(ciTime)} → ${to12hr(coTime)}  (${durationHrs} hrs)`],
+    [`💰 DP: ₱${Number(dp).toLocaleString('en-PH',{minimumFractionDigits:2})}`,
+     `💰 Balance: ₱${Number(balance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`],
   ];
 
-  rows.forEach(items => {
+  rows.filter(Boolean).forEach(items => {
     const row = document.createElement('div');
     row.className = 'bk-summary-row';
     items.filter(Boolean).forEach(text => {
@@ -867,7 +940,7 @@ function buildStayoverCard(b, checkinKey, color) {
     card.appendChild(row);
   });
 
-  // Actions — View only (this booking belongs to another date)
+  // ── Actions ──
   const actions = document.createElement('div');
   actions.className = 'bk-summary-actions';
 
@@ -879,11 +952,10 @@ function buildStayoverCard(b, checkinKey, color) {
 
   const originBtn = document.createElement('button');
   originBtn.className = 'bk-action-btn';
-  originBtn.style.cssText = 'background:#fff4e0;color:#9a5a00;border:1.5px solid #ffcc80;';
+  originBtn.style.cssText = `background:#fff4e0;color:#9a5a00;border:1.5px solid #ffcc80;`;
   originBtn.textContent = `📅 See ${ciLabel}`;
   originBtn.addEventListener('click', () => {
     closeBookingList();
-    // Navigate to the original checkin date's booking list
     const parts = checkinKey.split('-');
     const y = parseInt(parts[0]), m = parseInt(parts[1]) - 1, d = parseInt(parts[2]);
     openBookingList(checkinKey, d, m, y, color);
@@ -910,13 +982,20 @@ function openBookingList(key, day, month, year, color) {
   if (stayoverEntries.length > 0) {
     const stayoverHeader = document.createElement('div');
     stayoverHeader.className = 'bk-stayover-section-header';
+    // Pick the right icon/label based on tour type of first stayover entry
+    const firstTour = (stayoverEntries[0]?.booking?.booking?.tourType) ||
+                      (stayoverEntries[0]?.booking?.tourType) || '';
+    const sIcon  = firstTour === '3D2N' ? '🏕' : '🌙';
+    const sLabel = firstTour === '3D2N'
+      ? 'Staying Over — 3 Days 2 Nights (checked in earlier)'
+      : 'Staying Over — checked in on a previous date';
     stayoverHeader.innerHTML =
-      `<span class="bk-stayover-section-icon">🌙</span>` +
-      `<span>Staying Over — checked in on a previous date</span>`;
+      `<span class="bk-stayover-section-icon">${sIcon}</span>` +
+      `<span>${sLabel}</span>`;
     inner.appendChild(stayoverHeader);
 
     stayoverEntries.forEach(({ booking: b, checkinKey }) => {
-      inner.appendChild(buildStayoverCard(b, checkinKey, color));
+      inner.appendChild(buildStayoverCard(b, checkinKey, color, key));
     });
 
     if (list.length > 0) {
@@ -947,7 +1026,15 @@ function openBookingList(key, day, month, year, color) {
   addNewBtn.onclick = () => { closeBookingList(); openBookingForm(key, day, month, year, color); };
   addNewBtn.style.background = `linear-gradient(135deg, ${color.accent}, ${color.light})`;
 
-  const slotFull = (Bookings[key] || []).some(b => {
+  // ── Block new bookings when a multi-night stay is still mid-stay (not yet checkout day) ──
+  // e.g. 3D2N: Feb2→Feb4. On Feb3, checkoutDate='2026-02-04' > key='2026-02-03' → fully blocked.
+  // On Feb4 (checkout day), checkoutDate === key → allowed (after checkout time).
+  const midStayBlock = stayoverEntries.some(({ booking: b }) => {
+    const coDate = (b.booking && b.booking.checkoutDate) || b.checkoutDate || '';
+    return coDate > key; // still mid-stay — not yet checkout day
+  });
+
+  const slotFull = midStayBlock || (Bookings[key] || []).some(b => {
     const ci   = (b.booking && b.booking.checkinTime) || b.checkinTime || '';
     const slot = getTimeSlot(ci);
     return slot && !slot.canAdd;
@@ -959,12 +1046,36 @@ function openBookingList(key, day, month, year, color) {
     slotNote = document.createElement('div');
     slotNote.id = 'bkListSlotNote';
     slotNote.style.cssText =
-      'font-size:11px;font-weight:700;color:#a01030;background:#fff0f0;' +
-      'border:1.5px solid #ff8080;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;';
+      'font-size:11px;font-weight:700;color:#7a3800;background:#fff4e0;' +
+      'border:1.5px solid #ff9800;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;';
     addNewBtn.parentNode.appendChild(slotNote);
   }
   slotNote.style.display = slotFull ? '' : 'none';
-  if (slotFull) slotNote.textContent = '🔴 Afternoon/evening slot booked — no new bookings for this date.';
+  if (midStayBlock) {
+    // Figure out tour type for message
+    const midEntry   = stayoverEntries.find(({ booking: b }) => {
+      const coDate = (b.booking && b.booking.checkoutDate) || b.checkoutDate || '';
+      return coDate > key;
+    });
+    const midTour    = midEntry
+      ? ((midEntry.booking.booking && midEntry.booking.booking.tourType) || midEntry.booking.tourType || 'multi-night')
+      : 'multi-night';
+    const coDateLbl  = midEntry
+      ? ((midEntry.booking.booking && midEntry.booking.booking.checkoutDateLabel) || midEntry.booking.checkoutDateLabel || '')
+      : '';
+    slotNote.style.cssText =
+      'font-size:11px;font-weight:700;color:#7a3800;background:#fff4e0;' +
+      'border:1.5px solid #ff9800;border-radius:8px;padding:10px 14px;margin-top:8px;text-align:center;';
+    slotNote.innerHTML =
+      `🏕 <b>${midTour}</b> guests are still checked in.` +
+      (coDateLbl ? ` Checkout: <b>${coDateLbl}</b>.` : '') +
+      ` No new bookings allowed on this date.`;
+  } else if (slotFull) {
+    slotNote.style.cssText =
+      'font-size:11px;font-weight:700;color:#a01030;background:#fff0f0;' +
+      'border:1.5px solid #ff8080;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;';
+    slotNote.textContent = '🔴 Afternoon/evening slot booked — no new bookings for this date.';
+  }
 
   document.getElementById('bkListOverlay').classList.add('open');
 }

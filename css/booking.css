@@ -986,3 +986,43 @@
   background: #ff9800 !important;
   color: #fff !important;
 }
+
+/* ══════════════════════════════════════
+   STAYOVER CARD — DAY PROGRESS & LABEL
+══════════════════════════════════════ */
+
+/* Progress dots strip */
+.bk-stayover-progress {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 8px 14px 6px;
+}
+.bk-stayover-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.bk-stayover-dot-line {
+  flex: 1;
+  height: 2px;
+  background: #e0e0ee;
+  min-width: 20px;
+  max-width: 40px;
+}
+
+/* Day label strip (below progress, above header) */
+.bk-stayover-day-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 14px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  gap: 6px;
+}
