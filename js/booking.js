@@ -16,17 +16,16 @@ function saveBookingsLocal(data) {
   catch(e) { console.warn('localStorage error:', e); }
 }
 
-// In-memory cache  { 'YYYY-MM-DD': [ bookingObj, ... ] }
 const Bookings = loadBookingsLocal();
 
 /* ══════════════════════════════════════
    FORM STATE
 ══════════════════════════════════════ */
-let _bkKey    = null;
-let _bkDay    = null;
-let _bkMonth  = null;
-let _bkYear   = null;
-let _bkColor  = null;
+let _bkKey   = null;
+let _bkDay   = null;
+let _bkMonth = null;
+let _bkYear  = null;
+let _bkColor = null;
 let _tourType = null;
 
 /* ══════════════════════════════════════
@@ -54,6 +53,15 @@ function nextDay(year, month, day) {
   };
 }
 
+/* Return a date N days forward from current booking date */
+function addDays(n) {
+  const d = new Date(_bkYear, _bkMonth, _bkDay + n);
+  return {
+    key:   toKey(d.getFullYear(), d.getMonth(), d.getDate()),
+    label: `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`,
+  };
+}
+
 function formatDateLabel(year, month, day) {
   return `${MONTH_NAMES[month]} ${day}, ${year} (${DAY_NAMES[new Date(year,month,day).getDay()]})`;
 }
@@ -66,85 +74,86 @@ function showToast(msg, duration = 3000) {
   setTimeout(() => t.classList.remove('show'), duration);
 }
 
+function getVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.value : '';
+}
+
+/* ══════════════════════════════════════
+   TOUR TYPE CONFIG
+   mins        — total duration in minutes
+   daysOffset  — how many calendar days ahead
+                 checkout falls (0=same, 1=next, 2=+2)
+══════════════════════════════════════ */
+function getTourConfig(tourType) {
+  switch (tourType) {
+    case 'Day Tour':   return { mins: 10 * 60, daysOffset: 0 };
+    case 'Night Tour': return { mins: 10 * 60, daysOffset: 1 };
+    case 'Over-Night': return { mins: 21 * 60, daysOffset: 1 };
+    case '3D2N':       return { mins: 42 * 60, daysOffset: 2 }; // 21+21 hrs, checkout day 3
+    case 'Half Day':   return { mins:  5 * 60, daysOffset: 0 };
+    default:           return { mins: 10 * 60, daysOffset: 0 };
+  }
+}
+
 /* ══════════════════════════════════════
    TIME-SLOT RULES
-   Returns info about what's available for a given check-in time.
-
-   Rules:
-   • 08:00 – 11:00  → "morning"  slot
-     - Day Tour and Over-Night only available
-     - Night Tour still available (can add later)
-     - Cell: yellow
-   • 11:30 – 13:59  → "afternoon" slot
-     - Night Tour and Over-Night only
-     - Checkout same day
-     - Cell: red, no Add New button
-   • 14:00+          → "evening" slot
-     - Night Tour and Over-Night only
-     - Night Tour → checkout NEXT day
-     - Over-Night → checkout NEXT day
-     - Cell: red, no Add New button
+   8:00–11:00   → morning   → all types ok  → cell yellow
+   11:30–13:59  → afternoon → no Day Tour   → cell red
+   14:00+       → evening   → no Day Tour   → cell red
 ══════════════════════════════════════ */
 function getTimeSlot(hhmm) {
-  // Returns null if no time given, or an object describing the slot
   if (!hhmm) return null;
   const [h, m] = hhmm.split(':').map(Number);
   const mins = h * 60 + m;
 
-  if (mins >= 8*60 && mins <= 11*60) {
+  if (mins >= 8 * 60 && mins <= 11 * 60) {
     return {
       slot:       'morning',
-      available:  ['Day Tour', 'Night Tour', 'Over-Night'],   // all still ok, Day Tour preferred
+      available:  ['Day Tour', 'Night Tour', 'Over-Night', '3D2N'],
       restricted: [],
       cellClass:  'slot-morning-taken',
       canAdd:     true,
-      checkoutNextDay: { 'Night Tour': true, 'Over-Night': true },
-      banner: '🌤 Morning slot (8AM–11AM): Day Tour, Night Tour & Over-Night available.',
+      banner:     '🌤 Morning slot (8AM–11AM): All tour types available.',
     };
   }
-  if (mins >= 11*60+30 && mins <= 13*60+59) {
+  if (mins >= 11 * 60 + 30 && mins <= 13 * 60 + 59) {
     return {
       slot:       'afternoon',
-      available:  ['Night Tour', 'Over-Night'],
+      available:  ['Night Tour', 'Over-Night', '3D2N'],
       restricted: ['Day Tour'],
       cellClass:  'slot-full',
       canAdd:     false,
-      checkoutNextDay: { 'Night Tour': false, 'Over-Night': true },
-      banner: '🌆 Afternoon slot (11:30AM–2PM): Night Tour & Over-Night only. Check-out same day for Night Tour.',
+      banner:     '🌆 Afternoon slot (11:30AM–2PM): Night Tour, Over-Night & 3 Days 2 Nights only.',
     };
   }
-  if (mins >= 14*60) {
+  if (mins >= 14 * 60) {
     return {
       slot:       'evening',
-      available:  ['Night Tour', 'Over-Night'],
+      available:  ['Night Tour', 'Over-Night', '3D2N'],
       restricted: ['Day Tour'],
       cellClass:  'slot-full',
       canAdd:     false,
-      checkoutNextDay: { 'Night Tour': true, 'Over-Night': true },
-      banner: '🌙 Evening slot (2PM+): Night Tour & Over-Night only. Both check out next day.',
+      banner:     '🌙 Evening slot (2PM+): Night Tour, Over-Night & 3 Days 2 Nights only. All check out next day or later.',
     };
   }
-  // Between 11:00 and 11:30 — treat as morning transition
+  // 11:00–11:30 transition
   return {
     slot:       'morning',
-    available:  ['Day Tour', 'Night Tour', 'Over-Night'],
+    available:  ['Day Tour', 'Night Tour', 'Over-Night', '3D2N'],
     restricted: [],
     cellClass:  'slot-morning-taken',
     canAdd:     true,
-    checkoutNextDay: { 'Night Tour': true, 'Over-Night': true },
-    banner: '🌤 Morning slot: Day Tour, Night Tour & Over-Night available.',
+    banner:     '🌤 Morning slot: All tour types available.',
   };
 }
 
-/* Apply time-slot rules to the form UI */
 function applyTimeSlotToForm(hhmm) {
   const slot = getTimeSlot(hhmm);
 
-  // Remove existing banner
-  const existingBanner = document.getElementById('bkTimeSlotBanner');
-  if (existingBanner) existingBanner.remove();
+  const existing = document.getElementById('bkTimeSlotBanner');
+  if (existing) existing.remove();
 
-  // Reset all tour buttons
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     btn.classList.remove('bk-tour-unavailable');
     btn.disabled = false;
@@ -152,24 +161,21 @@ function applyTimeSlotToForm(hhmm) {
 
   if (!slot) return;
 
-  // Show banner above tour buttons
   const tourSection = document.querySelector('.bk-tour-options');
   if (tourSection) {
     const banner = document.createElement('div');
     banner.id        = 'bkTimeSlotBanner';
     banner.className = 'bk-time-slot-banner ' + (slot.slot === 'morning' ? 'morning' : 'afternoon');
-    banner.innerHTML = '<span style="font-size:16px;flex-shrink:0;">' + (slot.slot === 'morning' ? '🌤' : slot.slot === 'afternoon' ? '🌆' : '🌙') + '</span>' +
-      '<span>' + slot.banner + '</span>';
+    const icon = slot.slot === 'morning' ? '🌤' : slot.slot === 'afternoon' ? '🌆' : '🌙';
+    banner.innerHTML = `<span style="font-size:16px;flex-shrink:0;">${icon}</span><span>${slot.banner}</span>`;
     tourSection.parentNode.insertBefore(banner, tourSection);
   }
 
-  // Disable unavailable tour buttons
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     const type = btn.dataset.type;
     if (slot.restricted.includes(type)) {
       btn.classList.add('bk-tour-unavailable');
       btn.disabled = true;
-      // If this was selected, deselect it
       if (_tourType === type) {
         btn.classList.remove('selected');
         _tourType = null;
@@ -181,17 +187,12 @@ function applyTimeSlotToForm(hhmm) {
   });
 }
 
-/* Apply time-slot CSS class to a specific day cell */
 function applyTimeSlotsToCell(key, cellEl) {
   cellEl.classList.remove('slot-morning-taken', 'slot-full');
   const list = Bookings[key] || [];
   if (!list.length) return;
 
-  // Find the "latest" slot among all bookings on this day
-  let hasEvening   = false;
-  let hasAfternoon = false;
-  let hasMorning   = false;
-
+  let hasEvening = false, hasAfternoon = false, hasMorning = false;
   list.forEach(b => {
     const ci   = (b.booking && b.booking.checkinTime) || b.checkinTime || '';
     const slot = getTimeSlot(ci);
@@ -201,16 +202,8 @@ function applyTimeSlotsToCell(key, cellEl) {
     if (slot.slot === 'morning')   hasMorning   = true;
   });
 
-  if (hasEvening || hasAfternoon) {
-    cellEl.classList.add('slot-full');
-  } else if (hasMorning) {
-    cellEl.classList.add('slot-morning-taken');
-  }
-}
-
-function getVal(id) {
-  const el = document.getElementById(id);
-  return el ? el.value : '';
+  if (hasEvening || hasAfternoon) cellEl.classList.add('slot-full');
+  else if (hasMorning)            cellEl.classList.add('slot-morning-taken');
 }
 
 /* ══════════════════════════════════════
@@ -227,43 +220,50 @@ function getDateEventInfo(year, month, day) {
 
 /* ══════════════════════════════════════
    COMPILE BOOKING JSON
-   One structured object — also stored as
-   raw_json stored in Firebase for future queries.
 ══════════════════════════════════════ */
-function compileBookingJSON(pax, extraPax, pets, total, downpayment, ciTime, coTime, isNextDay, durationMins, ratePerHead, ratePerPet, baseTotal, headCharge, petCharge) {
-  ratePerHead = ratePerHead || 0; ratePerPet = ratePerPet || 0;
-  baseTotal   = baseTotal   || total; headCharge = headCharge || 0; petCharge = petCharge || 0;
-  const nd = nextDay(_bkYear, _bkMonth, _bkDay);
+function compileBookingJSON(pax, extraPax, pets, total, downpayment,
+    ciTime, coTime, checkoutOffset, durationMins,
+    ratePerHead, ratePerPet, baseTotal, headCharge, petCharge) {
+
+  ratePerHead = ratePerHead || 0;
+  ratePerPet  = ratePerPet  || 0;
+  baseTotal   = baseTotal   || total;
+  headCharge  = headCharge  || 0;
+  petCharge   = petCharge   || 0;
+
+  const coDate = addDays(checkoutOffset);
+
   return {
     id:        Date.now(),
     createdAt: new Date().toISOString(),
     dateKey:   _bkKey,
     guest: {
-      name:     getVal('bkGuestName').trim(),
-      email:    getVal('bkGuestEmail').trim(),
-      phone:    getVal('bkGuestPhone').trim(),
+      name:       getVal('bkGuestName').trim(),
+      email:      getVal('bkGuestEmail').trim(),
+      phone:      getVal('bkGuestPhone').trim(),
       pax, extraPax, totalPax: pax + extraPax, pets,
       ratePerHead, ratePerPet,
     },
     payment: {
-      date:        getVal('bkPaymentDate'),
-      mode:        'BDO Bank Transfer',
+      date:              getVal('bkPaymentDate'),
+      mode:              'BDO Bank Transfer',
       baseTotal, headCharge, petCharge,
       additionalCharges: headCharge + petCharge,
       total, downpayment,
-      balance:     total - downpayment,
+      balance:           total - downpayment,
     },
     booking: {
       tourType:           _tourType,
       checkinDate:        _bkKey,
       checkinDateLabel:   formatDateLabel(_bkYear, _bkMonth, _bkDay),
-      checkoutDate:       isNextDay ? nd.key   : _bkKey,
-      checkoutDateLabel:  isNextDay ? nd.label : formatDateLabel(_bkYear, _bkMonth, _bkDay),
+      checkoutDate:       coDate.key,
+      checkoutDateLabel:  coDate.label,
       checkinTime:        ciTime,
       checkinTime12:      to12hr(ciTime),
       checkoutTime:       coTime,
       checkoutTime12:     to12hr(coTime),
       durationHrs:        durationMins / 60,
+      checkoutDaysOffset: checkoutOffset,
     },
     dayInfo: getDateEventInfo(_bkYear, _bkMonth, _bkDay),
   };
@@ -324,14 +324,14 @@ function resetBookingForm() {
   document.getElementById('bkTotalPax').textContent = '—';
   document.getElementById('bkBalance').textContent  = '—';
   document.getElementById('bkBalance').className    = 'bk-auto bk-balance';
-  document.getElementById('bkAdditional').textContent   = '—';
-  document.getElementById('bkFinalTotal').textContent   = '—';
-  document.getElementById('bkAdditionalWrap').style.display  = 'none';
-  document.getElementById('bkFinalTotalWrap').style.display  = 'none';
+  document.getElementById('bkAdditional').textContent  = '—';
+  document.getElementById('bkFinalTotal').textContent  = '—';
+  document.getElementById('bkAdditionalWrap').style.display = 'none';
+  document.getElementById('bkFinalTotalWrap').style.display = 'none';
   _tourType = null;
-  // Clear time-slot banner and reset tour buttons
-  const existingBanner = document.getElementById('bkTimeSlotBanner');
-  if (existingBanner) existingBanner.remove();
+
+  const banner = document.getElementById('bkTimeSlotBanner');
+  if (banner) banner.remove();
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     btn.classList.remove('bk-tour-unavailable');
     btn.disabled = false;
@@ -347,78 +347,74 @@ function calcTotalPax() {
 }
 
 function calcBalance() {
-  const baseTotal    = parseFloat(getVal('bkTotal'))        || 0;
-  const dp           = parseFloat(getVal('bkDownpayment'))  || 0;
-  const totalPax     = (parseInt(getVal('bkPax'))||0) + (parseInt(getVal('bkExtraPax'))||0);
-  const ratePerHead  = parseFloat(getVal('bkRatePerHead'))  || 0;
-  const totalPets    = parseInt(getVal('bkPets'))            || 0;
-  const ratePerPet   = parseFloat(getVal('bkRatePerPet'))   || 0;
+  const baseTotal   = parseFloat(getVal('bkTotal'))       || 0;
+  const dp          = parseFloat(getVal('bkDownpayment')) || 0;
+  const totalPax    = (parseInt(getVal('bkPax'))||0) + (parseInt(getVal('bkExtraPax'))||0);
+  const ratePerHead = parseFloat(getVal('bkRatePerHead')) || 0;
+  const totalPets   = parseInt(getVal('bkPets'))           || 0;
+  const ratePerPet  = parseFloat(getVal('bkRatePerPet'))  || 0;
 
-  // Calculate additional charges
-  const headCharge   = totalPax  > 0 && ratePerHead > 0 ? totalPax  * ratePerHead : 0;
-  const petCharge    = totalPets > 0 && ratePerPet  > 0 ? totalPets * ratePerPet  : 0;
-  const additional   = headCharge + petCharge;
-  const finalTotal   = baseTotal + additional;
+  const headCharge = totalPax  > 0 && ratePerHead > 0 ? totalPax  * ratePerHead : 0;
+  const petCharge  = totalPets > 0 && ratePerPet  > 0 ? totalPets * ratePerPet  : 0;
+  const additional = headCharge + petCharge;
+  const finalTotal = baseTotal + additional;
 
-  // Show / hide additional charges block
-  const addWrap  = document.getElementById('bkAdditionalWrap');
-  const ftWrap   = document.getElementById('bkFinalTotalWrap');
-  const addEl    = document.getElementById('bkAdditional');
-  const ftEl     = document.getElementById('bkFinalTotal');
+  const addWrap = document.getElementById('bkAdditionalWrap');
+  const ftWrap  = document.getElementById('bkFinalTotalWrap');
+  const addEl   = document.getElementById('bkAdditional');
+  const ftEl    = document.getElementById('bkFinalTotal');
 
   if (additional > 0) {
     addWrap.style.display = '';
     ftWrap.style.display  = '';
-    let breakdown = [];
-    if (headCharge > 0) breakdown.push(`${totalPax} pax × ₱${ratePerHead.toLocaleString('en-PH')} = ₱${headCharge.toLocaleString('en-PH',{minimumFractionDigits:2})}`);
-    if (petCharge  > 0) breakdown.push(`${totalPets} pet${totalPets>1?'s':''} × ₱${ratePerPet.toLocaleString('en-PH')} = ₱${petCharge.toLocaleString('en-PH',{minimumFractionDigits:2})}`);
-    addEl.textContent = '+ ₱' + additional.toLocaleString('en-PH',{minimumFractionDigits:2}) + '  (' + breakdown.join('  •  ') + ')';
-    ftEl.textContent  = '₱ ' + finalTotal.toLocaleString('en-PH',{minimumFractionDigits:2});
+    const parts = [];
+    if (headCharge > 0) parts.push(`${totalPax} pax × ₱${ratePerHead.toLocaleString('en-PH')} = ₱${headCharge.toLocaleString('en-PH',{minimumFractionDigits:2})}`);
+    if (petCharge  > 0) parts.push(`${totalPets} pet${totalPets>1?'s':''} × ₱${ratePerPet.toLocaleString('en-PH')} = ₱${petCharge.toLocaleString('en-PH',{minimumFractionDigits:2})}`);
+    addEl.textContent = `+ ₱${additional.toLocaleString('en-PH',{minimumFractionDigits:2})}  (${parts.join('  •  ')})`;
+    ftEl.textContent  = `₱ ${finalTotal.toLocaleString('en-PH',{minimumFractionDigits:2})}`;
   } else {
     addWrap.style.display = 'none';
     ftWrap.style.display  = 'none';
   }
 
-  // Balance uses finalTotal
-  const el  = document.getElementById('bkBalance');
+  const el = document.getElementById('bkBalance');
   if (!baseTotal && !dp) { el.textContent = '—'; el.className = 'bk-auto bk-balance'; return; }
   const bal = finalTotal - dp;
-  el.textContent = '₱ ' + bal.toLocaleString('en-PH',{minimumFractionDigits:2});
+  el.textContent = `₱ ${bal.toLocaleString('en-PH',{minimumFractionDigits:2})}`;
   el.className   = 'bk-auto bk-balance ' + (bal < 0 ? 'negative' : bal === 0 ? 'zero' : 'positive');
 }
 
 function calcCheckout() {
   if (!_tourType) return;
+
   const ci   = getVal('bkCheckinTime');
   const slot = getTimeSlot(ci);
+  const cfg  = getTourConfig(_tourType);
 
-  // Determine if checkout is next day based on slot rules
-  let isNextDay;
-  if (slot && slot.checkoutNextDay && _tourType in slot.checkoutNextDay) {
-    isNextDay = slot.checkoutNextDay[_tourType];
-  } else {
-    // Default: Night Tour and Over-Night → next day
-    isNextDay = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
+  // Night Tour: afternoon slot → same day checkout, evening → next day
+  let daysOffset = cfg.daysOffset;
+  if (_tourType === 'Night Tour' && slot) {
+    daysOffset = slot.slot === 'afternoon' ? 0 : 1;
   }
 
-  const durationMins = _tourType === 'Over-Night' ? 21*60
-                     : _tourType === 'Half Day'   ?  5*60
-                     :                              10*60;
-  const nd           = nextDay(_bkYear, _bkMonth, _bkDay);
+  const durationMins = cfg.mins;
+  const coDate = addDays(daysOffset);
 
   document.getElementById('bkCheckoutDisplay').textContent =
-    isNextDay ? nd.label : formatDateLabel(_bkYear, _bkMonth, _bkDay);
+    daysOffset === 0
+      ? formatDateLabel(_bkYear, _bkMonth, _bkDay)
+      : coDate.label;
 
   if (ci) {
     const co = addMinutesToTime(ci, durationMins);
     document.getElementById('bkCheckoutTime').textContent = to12hr(co);
     document.getElementById('bkDuration').textContent =
-      `${durationMins/60} hrs (${to12hr(ci)} → ${to12hr(co)})`;
+      `${durationMins/60} hrs (${to12hr(ci)} → ${to12hr(co)})` +
+      (daysOffset > 0 ? ` +${daysOffset} day${daysOffset > 1 ? 's' : ''}` : '');
   } else {
-    document.getElementById('bkCheckoutTime').textContent =
-      `(+${durationMins/60} hrs from check-in time)`;
+    document.getElementById('bkCheckoutTime').textContent = `(+${durationMins/60} hrs from check-in)`;
     document.getElementById('bkDuration').textContent =
-      `${durationMins/60} hrs`;
+      `${durationMins/60} hrs` + (daysOffset > 0 ? ` +${daysOffset} day${daysOffset > 1 ? 's' : ''}` : '');
   }
 }
 
@@ -451,26 +447,27 @@ function validate() {
   err('bkGuestName',  'errGuestName',  !getVal('bkGuestName').trim()  ? 'Required.' : '');
   const email = getVal('bkGuestEmail').trim();
   err('bkGuestEmail', 'errGuestEmail',
-    !email ? 'Required.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Invalid email.' : '');
+    email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Invalid email format.' : '');
   err('bkGuestPhone', 'errGuestPhone', !getVal('bkGuestPhone').trim() ? 'Required.' : '');
   err('bkPax',        'errPax',        parseInt(getVal('bkPax')) < 1  ? 'Min 1.' : '');
   err('bkPaymentDate','errPaymentDate',!getVal('bkPaymentDate')       ? 'Required.' : '');
   err('bkTotal',      'errTotal',      parseFloat(getVal('bkTotal')) <= 0 ? 'Required.' : '');
   err('bkDownpayment','errDownpayment',getVal('bkDownpayment') === ''  ? 'Required.' : '');
   err('bkCheckinTime','errCheckinTime',!getVal('bkCheckinTime')        ? 'Required.' : '');
+
   const te = document.getElementById('errTourType');
   if (!_tourType) {
-    if(te) te.textContent = 'Select tour type.';
+    if (te) te.textContent = 'Select tour type.';
     ok = false;
   } else {
-    // Check if chosen tour type is allowed for the entered check-in time
-    const ciVal  = getVal('bkCheckinTime');
-    const slot   = getTimeSlot(ciVal);
+    const ciVal = getVal('bkCheckinTime');
+    const slot  = getTimeSlot(ciVal);
     if (slot && slot.restricted.includes(_tourType)) {
-      if(te) te.textContent = _tourType + ' is not available for this check-in time. Choose: ' + slot.available.join(' or ') + '.';
+      if (te) te.textContent =
+        `${_tourType} is not available for this check-in time. Choose: ${slot.available.join(', ')}.`;
       ok = false;
     } else {
-      if(te) te.textContent = '';
+      if (te) te.textContent = '';
     }
   }
   return ok;
@@ -486,86 +483,93 @@ async function saveBooking() {
   btn.disabled  = true;
   btn.innerHTML = '<span>Saving…</span>';
 
-  // ── 1. Read form values ──────────────────────────
-  const pax          = parseInt(getVal('bkPax'))          || 0;
-  const extraPax     = parseInt(getVal('bkExtraPax'))      || 0;
-  const ratePerHead  = parseFloat(getVal('bkRatePerHead')) || 0;
-  const pets         = parseInt(getVal('bkPets'))          || 0;
-  const ratePerPet   = parseFloat(getVal('bkRatePerPet'))  || 0;
-  const baseTotal    = parseFloat(getVal('bkTotal'))       || 0;
-  const headCharge   = (pax + extraPax) > 0 && ratePerHead > 0 ? (pax + extraPax) * ratePerHead : 0;
-  const petCharge    = pets > 0 && ratePerPet > 0 ? pets * ratePerPet : 0;
-  const total        = baseTotal + headCharge + petCharge;
-  const downpayment  = parseFloat(getVal('bkDownpayment')) || 0;
-  const ciTime      = getVal('bkCheckinTime');
-  const ciSlot      = getTimeSlot(ciTime);
-  let isNextDay;
-  if (ciSlot && ciSlot.checkoutNextDay && _tourType in ciSlot.checkoutNextDay) {
-    isNextDay = ciSlot.checkoutNextDay[_tourType];
-  } else {
-    isNextDay = (_tourType === 'Night Tour' || _tourType === 'Over-Night');
-  }
-  const durationMins= _tourType === 'Over-Night' ? 21*60 : _tourType === 'Half Day' ? 5*60 : 10*60;
-  const coTime      = addMinutesToTime(ciTime, durationMins);
-
-  // ── 2. Compile JSON ──────────────────────────────
-  const bookingJSON = compileBookingJSON(
-    pax, extraPax, pets, total, downpayment,
-    ciTime, coTime, isNextDay, durationMins,
-    ratePerHead, ratePerPet, baseTotal, headCharge, petCharge
-  );
-
-  // ── 3. Check if this is an EDIT (delete old first) ──
-  const saveBtn    = document.getElementById('bkBtnSave');
-  const editFbKey  = saveBtn._editFbKey  || null;
-  const editKey    = saveBtn._editKey    || null;
-  // Clear edit markers
-  saveBtn._editFbKey = null; saveBtn._editLocalIdx = null; saveBtn._editKey = null;
-
-  if (editFbKey) {
-    try { await FB.deleteByKey(editFbKey); } catch(e) { console.warn('Edit-delete:', e.message); }
-  }
-  if (editKey && Bookings[editKey]) {
-    Bookings[editKey] = Bookings[editKey].filter(bk => bk.fbKey !== editFbKey);
-    if (!Bookings[editKey].length) delete Bookings[editKey];
-  }
-
-  // ── 4. Save to Firebase ─────────────────────────
-  let fbKey   = null;
-  let fbSaved = false;
+  // Snapshot state now — btn.disabled=true means _bkKey etc. can't change mid-save
+  const savedKey   = _bkKey;
+  const savedMonth = _bkMonth;
+  const savedYear  = _bkYear;
+  const savedDay   = _bkDay;
+  const savedTour  = _tourType;
 
   try {
-    console.log('📤 Inserting to Firebase:', bookingJSON);
-    fbKey   = await FB.insert(bookingJSON);
-    fbSaved = true;
-    console.log('📥 Firebase key:', fbKey);
-  } catch (fbErr) {
-    console.error('❌ Firebase error:', fbErr.message);
-    if (fbErr.isPermission) {
-      showToast('⚠️ Firebase rules may be expired — check ⚙️ Rules tab', 5000);
+    const pax         = parseInt(getVal('bkPax'))          || 0;
+    const extraPax    = parseInt(getVal('bkExtraPax'))      || 0;
+    const ratePerHead = parseFloat(getVal('bkRatePerHead')) || 0;
+    const pets        = parseInt(getVal('bkPets'))          || 0;
+    const ratePerPet  = parseFloat(getVal('bkRatePerPet'))  || 0;
+    const baseTotal   = parseFloat(getVal('bkTotal'))       || 0;
+    const headCharge  = (pax + extraPax) > 0 && ratePerHead > 0 ? (pax + extraPax) * ratePerHead : 0;
+    const petCharge   = pets > 0 && ratePerPet > 0 ? pets * ratePerPet : 0;
+    const total       = baseTotal + headCharge + petCharge;
+    const downpayment = parseFloat(getVal('bkDownpayment')) || 0;
+    const ciTime      = getVal('bkCheckinTime');
+
+    const ciSlot   = getTimeSlot(ciTime);
+    const cfg      = getTourConfig(savedTour);
+    let daysOffset = cfg.daysOffset;
+    // Night Tour: afternoon slot → same-day checkout; morning/evening → next day
+    if (savedTour === 'Night Tour' && ciSlot) {
+      daysOffset = ciSlot.slot === 'afternoon' ? 0 : 1;
     }
+
+    const durationMins = cfg.mins;
+    const coTime       = addMinutesToTime(ciTime, durationMins);
+
+    const bookingJSON = compileBookingJSON(
+      pax, extraPax, pets, total, downpayment,
+      ciTime, coTime, daysOffset, durationMins,
+      ratePerHead, ratePerPet, baseTotal, headCharge, petCharge
+    );
+
+    // Handle EDIT — read and clear edit markers before any await
+    const editFbKey = btn._editFbKey || null;
+    const editKey   = btn._editKey   || null;
+    btn._editFbKey = null; btn._editLocalIdx = null; btn._editKey = null;
+
+    if (editFbKey) {
+      try { await FB.deleteByKey(editFbKey); } catch(e) { console.warn('Edit-delete:', e.message); }
+    }
+    if (editKey && Bookings[editKey]) {
+      Bookings[editKey] = Bookings[editKey].filter(bk => bk.fbKey !== editFbKey);
+      if (!Bookings[editKey].length) delete Bookings[editKey];
+    }
+
+    // Save to Firebase (non-fatal — always falls back to local)
+    let fbKey = null, fbSaved = false;
+    try {
+      fbKey   = await FB.insert(bookingJSON);
+      fbSaved = true;
+    } catch (fbErr) {
+      console.error('❌ Firebase error:', fbErr.message);
+      if (fbErr.isPermission) showToast('⚠️ Firebase rules may be expired — check ⚙️ Rules tab', 5000);
+    }
+
+    // Always save locally
+    const entry = { ...bookingJSON, fbKey };
+    if (!Bookings[savedKey]) Bookings[savedKey] = [];
+    Bookings[savedKey].push(entry);
+    saveBookingsLocal(Bookings);
+
+    closeBookingForm();
+
+    if (fbSaved) {
+      showToast(editFbKey
+        ? `✏️ Updated: ${bookingJSON.guest.name} ☁️`
+        : `✅ Saved: ${bookingJSON.guest.name} ☁️`);
+      try { await refreshFromFirebase(); } catch(e) { console.warn('Refresh error:', e.message); }
+    } else {
+      showToast(`💾 Saved locally: ${bookingJSON.guest.name} (Firebase offline)`);
+      try { refreshMonth(savedMonth); } catch(e) {}
+      applyBookingIndicators();
+    }
+
+  } catch (unexpectedErr) {
+    // Catch any unexpected sync/async error so the button always gets re-enabled
+    console.error('❌ saveBooking unexpected error:', unexpectedErr);
+    showToast('❌ Save failed: ' + unexpectedErr.message, 5000);
+  } finally {
+    btn.disabled  = false;
+    btn.innerHTML = '<span>Confirm Booking</span><span class="bk-btn-arrow">→</span>';
   }
-
-  // ── 5. Always save locally ───────────────────────
-  const entry = { ...bookingJSON, fbKey };
-  if (!Bookings[_bkKey]) Bookings[_bkKey] = [];
-  Bookings[_bkKey].push(entry);
-  saveBookingsLocal(Bookings);
-
-  // ── 6. Close & notify ───────────────────────────
-  closeBookingForm();
-
-  if (fbSaved) {
-    showToast(editFbKey ? `✏️ Updated: ${bookingJSON.guest.name} ☁️` : `✅ Saved: ${bookingJSON.guest.name} ☁️`);
-    await refreshFromFirebase();
-  } else {
-    showToast(`💾 Saved locally: ${bookingJSON.guest.name} (Firebase offline)`);
-    refreshMonth(_bkMonth);
-    applyBookingIndicators();
-  }
-
-  btn.disabled  = false;
-  btn.innerHTML = '<span>Confirm Booking</span><span class="bk-btn-arrow">→</span>';
 }
 
 /* ══════════════════════════════════════
@@ -582,8 +586,7 @@ function openBookingList(key, day, month, year, color) {
 
   if (!list.length) {
     const empty = document.createElement('div');
-    empty.className = 'bk-list-empty';
-    empty.textContent = 'No bookings yet for this date.';
+    empty.className = 'bk-list-empty'; empty.textContent = 'No bookings yet for this date.';
     inner.appendChild(empty);
   } else {
     list.forEach((b, idx) => {
@@ -595,38 +598,29 @@ function openBookingList(key, day, month, year, color) {
   }
 
   body.appendChild(inner);
+
   const addNewBtn = document.getElementById('bkListAddNew');
-  addNewBtn.onclick = () => {
-    closeBookingList();
-    openBookingForm(key, day, month, year, color);
-  };
+  addNewBtn.onclick = () => { closeBookingList(); openBookingForm(key, day, month, year, color); };
   addNewBtn.style.background = `linear-gradient(135deg, ${color.accent}, ${color.light})`;
 
-  // Hide Add New if the slot is full (afternoon/evening booking already exists)
-  const slotClass = (() => {
-    const bookingsOnDay = Bookings[key] || [];
-    for (const b of bookingsOnDay) {
-      const ci   = (b.booking && b.booking.checkinTime) || b.checkinTime || '';
-      const slot = getTimeSlot(ci);
-      if (slot && !slot.canAdd) return 'full';
-    }
-    return 'open';
-  })();
-  addNewBtn.style.display = slotClass === 'full' ? 'none' : '';
-  // Show info if full
+  const slotFull = (Bookings[key] || []).some(b => {
+    const ci   = (b.booking && b.booking.checkinTime) || b.checkinTime || '';
+    const slot = getTimeSlot(ci);
+    return slot && !slot.canAdd;
+  });
+  addNewBtn.style.display = slotFull ? 'none' : '';
+
   let slotNote = document.getElementById('bkListSlotNote');
   if (!slotNote) {
     slotNote = document.createElement('div');
     slotNote.id = 'bkListSlotNote';
-    slotNote.style.cssText = 'font-size:11px;font-weight:700;color:#a01030;background:#fff0f0;border:1.5px solid #ff8080;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;display:none;';
+    slotNote.style.cssText =
+      'font-size:11px;font-weight:700;color:#a01030;background:#fff0f0;' +
+      'border:1.5px solid #ff8080;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;';
     addNewBtn.parentNode.appendChild(slotNote);
   }
-  if (slotClass === 'full') {
-    slotNote.style.display = '';
-    slotNote.textContent = '🔴 This date is fully booked — afternoon/evening slot taken.';
-  } else {
-    slotNote.style.display = 'none';
-  }
+  slotNote.style.display = slotFull ? '' : 'none';
+  if (slotFull) slotNote.textContent = '🔴 Afternoon/evening slot booked — no new bookings for this date.';
 
   document.getElementById('bkListOverlay').classList.add('open');
 }
@@ -636,43 +630,37 @@ function closeBookingList() {
 }
 
 function buildSummaryCard(b, key, idx, color, onDelete) {
-  const card  = document.createElement('div');
+  const card = document.createElement('div');
   card.className = 'bk-summary-card';
 
-  const name        = b.guest?.name       || b.guestName       || '—';
-  const email       = b.guest?.email      || b.guestEmail      || '—';
-  const phone       = b.guest?.phone      || b.guestPhone      || '—';
-  const totalPax    = b.guest?.totalPax   || b.totalPax        || '—';
-  const pets        = b.guest?.pets       ?? b.pets            ?? 0;
-  const total       = b.payment?.total    ?? b.total           ?? 0;
-  const balance     = b.payment?.balance  ?? b.balance         ?? 0;
-  const tourType    = b.booking?.tourType || b.tourType        || '—';
-  const ciTime      = b.booking?.checkinTime  || b.checkinTime  || '';
-  const coTime      = b.booking?.checkoutTime || b.checkoutTime || '';
-  const coLabel     = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
-  const fbKey       = b.fbKey || null;
+  const name     = b.guest?.name       || b.guestName       || '—';
+  const email    = b.guest?.email      || b.guestEmail      || '—';
+  const phone    = b.guest?.phone      || b.guestPhone      || '—';
+  const totalPax = b.guest?.totalPax   || b.totalPax        || '—';
+  const pets     = b.guest?.pets       ?? b.pets            ?? 0;
+  const total    = b.payment?.total    ?? b.total           ?? 0;
+  const balance  = b.payment?.balance  ?? b.balance         ?? 0;
+  const tourType = b.booking?.tourType || b.tourType        || '—';
+  const ciTime   = b.booking?.checkinTime  || b.checkinTime  || '';
+  const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
+  const coLabel  = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
+  const fbKey    = b.fbKey || null;
 
-  // ── Header: name + tour badge ──
   const hdr = document.createElement('div');
   hdr.className = 'bk-summary-card-header';
-
   const nameEl = document.createElement('div');
   nameEl.className = 'bk-summary-name'; nameEl.textContent = name;
-
   const badge = document.createElement('span');
   badge.className = 'bk-summary-badge'; badge.textContent = tourType;
   badge.style.background = color.accent;
-
   hdr.append(nameEl, badge);
-  card.appendChild(hdr);
 
-  // ── Info rows ──
   const rows = [
     [`📧 ${email}`, `📞 ${phone}`],
-    [`👥 ${totalPax} Pax`, pets ? `🐾 ${pets} Pets` : null, `💳 ₱${Number(total).toLocaleString()}`],
+    [`👥 ${totalPax} Pax`, pets ? `🐾 ${pets} Pets` : null, `💳 ₱${Number(total).toLocaleString('en-PH',{minimumFractionDigits:2})}`],
     [`🕐 ${to12hr(ciTime)} → ${to12hr(coTime)}`, `📅 Out: ${coLabel}`],
     [`💰 Balance: ₱${Number(balance).toLocaleString('en-PH',{minimumFractionDigits:2})}`],
-    fbKey ? [`🔗 ID: ${fbKey}`] : null,
+    fbKey ? [`🔗 FB: ${fbKey}`] : null,
   ];
 
   rows.filter(Boolean).forEach(items => {
@@ -686,182 +674,150 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
     card.appendChild(row);
   });
 
-  // ── Action buttons: View | Edit | Delete ──
   const actions = document.createElement('div');
   actions.className = 'bk-summary-actions';
 
-  // VIEW button
   const viewBtn = document.createElement('button');
-  viewBtn.className = 'bk-action-btn bk-action-view';
-  viewBtn.innerHTML = '👁 View';
+  viewBtn.className = 'bk-action-btn bk-action-view'; viewBtn.textContent = '👁 View';
   viewBtn.addEventListener('click', () => openViewModal(b, color));
 
-  // EDIT button
   const editBtn = document.createElement('button');
-  editBtn.className = 'bk-action-btn bk-action-edit';
-  editBtn.innerHTML = '✏️ Edit';
-  editBtn.addEventListener('click', () => {
-    closeBookingList();
-    openEditForm(b, key, idx, color);
-  });
+  editBtn.className = 'bk-action-btn bk-action-edit'; editBtn.textContent = '✏️ Edit';
+  editBtn.addEventListener('click', () => { closeBookingList(); openEditForm(b, key, color); });
 
-  // DELETE button
   const delBtn = document.createElement('button');
-  delBtn.className = 'bk-action-btn bk-action-delete';
-  delBtn.innerHTML = '🗑 Delete';
+  delBtn.className = 'bk-action-btn bk-action-del'; delBtn.textContent = '🗑 Delete';
   delBtn.addEventListener('click', async () => {
     if (!confirm(`Delete booking for ${name}?`)) return;
-    delBtn.disabled = true;
-    delBtn.textContent = 'Deleting…';
     if (fbKey) {
       try { await FB.deleteByKey(fbKey); }
       catch(e) { console.error('Delete error:', e.message); }
     }
-    // Also remove from local cache
     if (Bookings[key]) {
-      Bookings[key] = Bookings[key].filter(bk => bk.fbKey !== fbKey && bk.id !== b.id);
+      Bookings[key] = Bookings[key].filter(bk => bk.fbKey !== fbKey);
       if (!Bookings[key].length) delete Bookings[key];
       saveBookingsLocal(Bookings);
     }
     showToast('🗑 Booking deleted.');
-    await refreshFromFirebase();
     onDelete();
+    applyBookingIndicators();
   });
 
   actions.append(viewBtn, editBtn, delBtn);
+  card.insertBefore(hdr, card.firstChild);
   card.appendChild(actions);
-
   return card;
 }
 
-/* ── VIEW MODAL (read-only detail) ── */
+/* ══════════════════════════════════════
+   VIEW MODAL
+══════════════════════════════════════ */
 function openViewModal(b, color) {
-  const existing = document.getElementById('bkViewOverlay');
-  if (existing) existing.remove();
+  const overlay = document.getElementById('bkViewOverlay');
+  if (!overlay) return;
 
-  const name      = b.guest?.name       || b.guestName       || '—';
-  const email     = b.guest?.email      || b.guestEmail      || '—';
-  const phone     = b.guest?.phone      || b.guestPhone      || '—';
-  const pax       = b.guest?.pax        || b.pax             || 0;
-  const extraPax  = b.guest?.extraPax   || b.extraPax        || 0;
-  const totalPax  = b.guest?.totalPax   || b.totalPax        || '—';
-  const pets      = b.guest?.pets       ?? b.pets            ?? 0;
-  const rph       = b.guest?.ratePerHead|| 0;
-  const rpp       = b.guest?.ratePerPet || 0;
-  const payDate   = b.payment?.date     || b.paymentDate     || '—';
-  const payMode   = b.payment?.mode     || b.paymentMode     || '—';
-  const baseTotal = b.payment?.baseTotal|| b.payment?.total  || b.total || 0;
-  const addCharge = b.payment?.additionalCharges || 0;
-  const total     = b.payment?.total    ?? b.total           ?? 0;
-  const dp        = b.payment?.downpayment ?? b.downpayment  ?? 0;
-  const balance   = b.payment?.balance  ?? b.balance         ?? 0;
-  const tourType  = b.booking?.tourType || b.tourType        || '—';
-  const ciLabel   = b.booking?.checkinDateLabel  || b.checkinDateLabel  || '—';
-  const coLabel   = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
-  const ciTime    = b.booking?.checkinTime12  || to12hr(b.booking?.checkinTime  || b.checkinTime  || '');
-  const coTime    = b.booking?.checkoutTime12 || to12hr(b.booking?.checkoutTime || b.checkoutTime || '');
-  const fbKey     = b.fbKey || '—';
+  const name    = b.guest?.name  || '—';
+  const email   = b.guest?.email || '—';
+  const phone   = b.guest?.phone || '—';
+  const pax     = b.guest?.totalPax   ?? '—';
+  const pets    = b.guest?.pets       ?? 0;
+  const rph     = b.guest?.ratePerHead ?? 0;
+  const rpp     = b.guest?.ratePerPet  ?? 0;
+  const baseT   = b.payment?.baseTotal ?? b.payment?.total ?? 0;
+  const headC   = b.payment?.headCharge ?? 0;
+  const petC    = b.payment?.petCharge  ?? 0;
+  const total   = b.payment?.total    ?? 0;
+  const dp      = b.payment?.downpayment ?? 0;
+  const balance = b.payment?.balance  ?? 0;
+  const tourType= b.booking?.tourType || '—';
+  const ciLabel = b.booking?.checkinDateLabel  || b.dateKey || '—';
+  const coLabel = b.booking?.checkoutDateLabel || '—';
+  const ciTime  = b.booking?.checkinTime12  || to12hr(b.booking?.checkinTime  || '');
+  const coTime  = b.booking?.checkoutTime12 || to12hr(b.booking?.checkoutTime || '');
+  const dur     = b.booking?.durationHrs ?? '—';
 
-  function row(label, value) {
-    return `<div class="bk-view-row"><span class="bk-view-label">${label}</span><span class="bk-view-val">${value}</span></div>`;
-  }
+  document.getElementById('bkViewTitle').textContent = name;
+  document.getElementById('bkViewColorPill').style.background =
+    `linear-gradient(180deg, ${color.accent}, ${color.light})`;
 
-  document.body.insertAdjacentHTML('beforeend', `
-  <div id="bkViewOverlay" class="bk-overlay open" style="z-index:3000;">
-    <div class="bk-modal" style="max-width:580px;">
-      <div class="bk-modal-header">
-        <div class="bk-header-left">
-          <div class="bk-color-pill" style="background:linear-gradient(180deg,${color.accent},${color.light})"></div>
-          <div>
-            <span class="bk-header-label">Booking Details</span>
-            <h2 class="bk-header-date">${name}</h2>
-          </div>
-        </div>
-        <div class="bk-header-right">
-          <span class="bk-summary-badge" style="background:${color.accent}">${tourType}</span>
-          <button class="bk-close" onclick="document.getElementById('bkViewOverlay').remove()">×</button>
+  document.getElementById('bkViewBody').innerHTML = `
+    <div class="bk-view-grid">
+      <div class="bk-view-section">
+        <p class="bk-view-section-title" style="color:${color.accent};">👤 Guest</p>
+        <div class="bk-view-row"><span>Name</span><span>${name}</span></div>
+        <div class="bk-view-row"><span>Email</span><span>${email}</span></div>
+        <div class="bk-view-row"><span>Phone</span><span>${phone}</span></div>
+        <div class="bk-view-row"><span>Pax</span><span>${pax}</span></div>
+        ${pets ? `<div class="bk-view-row"><span>Pets</span><span>${pets}</span></div>` : ''}
+        ${rph  ? `<div class="bk-view-row"><span>Rate/Head</span><span>₱${Number(rph).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>` : ''}
+        ${rpp  ? `<div class="bk-view-row"><span>Rate/Pet</span><span>₱${Number(rpp).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>` : ''}
+      </div>
+      <div class="bk-view-section">
+        <p class="bk-view-section-title" style="color:${color.accent};">📅 Booking</p>
+        <div class="bk-view-row"><span>Tour Type</span><span>${tourType}</span></div>
+        <div class="bk-view-row"><span>Check-in</span><span>${ciLabel}</span></div>
+        <div class="bk-view-row"><span>Check-in Time</span><span>${ciTime}</span></div>
+        <div class="bk-view-row"><span>Check-out</span><span>${coLabel}</span></div>
+        <div class="bk-view-row"><span>Check-out Time</span><span>${coTime}</span></div>
+        <div class="bk-view-row"><span>Duration</span><span>${dur} hrs</span></div>
+      </div>
+      <div class="bk-view-section bk-view-section-full">
+        <p class="bk-view-section-title" style="color:${color.accent};">💳 Payment</p>
+        <div class="bk-view-row"><span>Base Total</span><span>₱${Number(baseT).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+        ${headC ? `<div class="bk-view-row"><span>Head Charges</span><span>+ ₱${Number(headC).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>` : ''}
+        ${petC  ? `<div class="bk-view-row"><span>Pet Charges</span><span>+ ₱${Number(petC).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>` : ''}
+        <div class="bk-view-row bk-view-total"><span>Total</span><span>₱${Number(total).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+        <div class="bk-view-row"><span>Downpayment</span><span>₱${Number(dp).toLocaleString('en-PH',{minimumFractionDigits:2})}</span></div>
+        <div class="bk-view-row ${balance > 0 ? 'bk-view-balance-due' : 'bk-view-balance-ok'}">
+          <span>Balance</span><span>₱${Number(balance).toLocaleString('en-PH',{minimumFractionDigits:2})} ${balance === 0 ? '✅' : ''}</span>
         </div>
       </div>
-      <div class="bk-body bk-view-body">
-        <div class="bk-section">
-          <div class="bk-section-title" style="color:${color.accent};border-color:${color.light}">
-            <span class="bk-section-icon">👤</span> Guest Information
-          </div>
-          <div class="bk-view-grid">
-            ${row('Name', name)}${row('Email', email)}${row('Phone', phone)}
-            ${row('Pax', pax)}${row('Extra Pax', extraPax)}${row('Total Pax', totalPax)}
-            ${row('Pets', pets)}${rph ? row('Rate / Head', '₱' + Number(rph).toLocaleString('en-PH')) : ''}
-            ${rpp ? row('Rate / Pet', '₱' + Number(rpp).toLocaleString('en-PH')) : ''}
-          </div>
-        </div>
-        <div class="bk-section">
-          <div class="bk-section-title" style="color:${color.accent};border-color:${color.light}">
-            <span class="bk-section-icon">💳</span> Payment
-          </div>
-          <div class="bk-view-grid">
-            ${row('Date', payDate)}${row('Mode', payMode)}
-            ${row('Base Total', '₱' + Number(baseTotal).toLocaleString('en-PH', {minimumFractionDigits:2}))}
-            ${addCharge > 0 ? row('Additional', '₱' + Number(addCharge).toLocaleString('en-PH', {minimumFractionDigits:2})) : ''}
-            ${row('Total', '₱' + Number(total).toLocaleString('en-PH', {minimumFractionDigits:2}))}
-            ${row('Downpayment', '₱' + Number(dp).toLocaleString('en-PH', {minimumFractionDigits:2}))}
-            ${row('Balance', '₱' + Number(balance).toLocaleString('en-PH', {minimumFractionDigits:2}))}
-          </div>
-        </div>
-        <div class="bk-section">
-          <div class="bk-section-title" style="color:${color.accent};border-color:${color.light}">
-            <span class="bk-section-icon">🏡</span> Booking
-          </div>
-          <div class="bk-view-grid">
-            ${row('Tour Type', tourType)}
-            ${row('Check-in', ciLabel)}${row('Check-in Time', ciTime)}
-            ${row('Check-out', coLabel)}${row('Check-out Time', coTime)}
-            ${row('Firebase ID', '<code style="font-size:10px;color:#9996b0">' + fbKey + '</code>')}
-          </div>
-        </div>
-      </div>
-      <div class="bk-footer">
-        <button class="bk-btn-cancel" onclick="document.getElementById('bkViewOverlay').remove()">Close</button>
-      </div>
-    </div>
-  </div>`);
+    </div>`;
+
+  overlay.classList.add('open');
 }
 
-/* ── EDIT FORM (pre-fill booking form) ── */
-function openEditForm(b, key, idx, color) {
-  // Parse out date parts from key YYYY-MM-DD
-  const [year, month1, day] = key.split('-').map(Number);
-  openBookingForm(key, day, month1 - 1, year, color);
+function closeViewModal() {
+  const overlay = document.getElementById('bkViewOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
 
-  // Pre-fill after a tick so the form is rendered
-  setTimeout(() => {
-    const s = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-    s('bkGuestName',   b.guest?.name       || b.guestName   || '');
-    s('bkGuestEmail',  b.guest?.email      || b.guestEmail  || '');
-    s('bkGuestPhone',  b.guest?.phone      || b.guestPhone  || '');
-    s('bkPax',         b.guest?.pax        || b.pax         || '');
-    s('bkExtraPax',    b.guest?.extraPax   || b.extraPax    || '');
-    s('bkRatePerHead', b.guest?.ratePerHead|| 0);
-    s('bkPets',        b.guest?.pets       ?? b.pets        ?? '');
-    s('bkRatePerPet',  b.guest?.ratePerPet || 0);
-    s('bkPaymentDate', b.payment?.date     || b.paymentDate || '');
-    s('bkTotal',       b.payment?.baseTotal|| b.payment?.total || b.total || '');
-    s('bkDownpayment', b.payment?.downpayment ?? b.downpayment ?? '');
-    s('bkCheckinTime', b.booking?.checkinTime || b.checkinTime || '');
-    calcTotalPax(); calcBalance();
+/* ══════════════════════════════════════
+   EDIT FORM
+══════════════════════════════════════ */
+function openEditForm(b, key, color) {
+  const day   = parseInt((b.dateKey || key).split('-')[2]);
+  const month = parseInt((b.dateKey || key).split('-')[1]) - 1;
+  const year  = parseInt((b.dateKey || key).split('-')[0]);
+  openBookingForm(key, day, month, year, color);
 
-    // Select the tour type button
-    const tt = b.booking?.tourType || b.tourType || '';
-    document.querySelectorAll('.bk-tour-btn').forEach(btn => {
-      btn.classList.toggle('selected', btn.dataset.type === tt);
-    });
-    _tourType = tt;
-    calcCheckout();
+  const fill = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  fill('bkGuestName',   b.guest?.name);
+  fill('bkGuestEmail',  b.guest?.email);
+  fill('bkGuestPhone',  b.guest?.phone);
+  fill('bkPax',         b.guest?.pax);
+  fill('bkExtraPax',    b.guest?.extraPax || 0);
+  fill('bkRatePerHead', b.guest?.ratePerHead || '');
+  fill('bkPets',        b.guest?.pets || '');
+  fill('bkRatePerPet',  b.guest?.ratePerPet || '');
+  fill('bkTotal',       b.payment?.baseTotal ?? b.payment?.total);
+  fill('bkDownpayment', b.payment?.downpayment);
+  fill('bkPaymentDate', b.payment?.date);
+  fill('bkCheckinTime', b.booking?.checkinTime);
 
-    // Mark this as an edit (store original fbKey to delete on save)
-    document.getElementById('bkBtnSave')._editFbKey = b.fbKey || null;
-    document.getElementById('bkBtnSave')._editLocalIdx = idx;
-    document.getElementById('bkBtnSave')._editKey = key;
-  }, 50);
+  const tour = b.booking?.tourType || b.tourType || '';
+  document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.type === tour);
+  });
+  _tourType = tour;
+
+  calcTotalPax(); calcBalance(); calcCheckout();
+  applyTimeSlotToForm(b.booking?.checkinTime || '');
+
+  const saveBtn      = document.getElementById('bkBtnSave');
+  saveBtn._editFbKey = b.fbKey || null;
+  saveBtn._editKey   = key;
+  saveBtn.innerHTML  = '<span>Update Booking</span><span class="bk-btn-arrow">→</span>';
 }
 
 /* ══════════════════════════════════════
@@ -879,13 +835,11 @@ function applyBookingIndicators() {
     if (!numEl) return;
     const card = cell.closest('.month-card');
     if (!card) return;
-    const mEl  = card.querySelector('.month-name');
+    const mEl = card.querySelector('.month-name');
     if (!mEl) return;
     const month = MONTH_NAMES.indexOf(mEl.textContent);
     const key   = toKey(AppState.year, month, parseInt(numEl.textContent));
-    const hasBk = !!(Bookings[key]?.length > 0);
-    cell.classList.toggle('has-booking', hasBk);
-    // Apply time-slot color class based on existing bookings
+    cell.classList.toggle('has-booking', !!(Bookings[key]?.length > 0));
     applyTimeSlotsToCell(key, cell);
   });
 }
@@ -903,17 +857,22 @@ function setupBookingListeners() {
   document.getElementById('bkListOverlay').addEventListener('click', e => {
     if (e.target.id === 'bkListOverlay') closeBookingList();
   });
+  const vo = document.getElementById('bkViewOverlay');
+  if (vo) {
+    document.getElementById('bkViewClose')?.addEventListener('click', closeViewModal);
+    vo.addEventListener('click', e => { if (e.target.id === 'bkViewOverlay') closeViewModal(); });
+  }
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeBookingForm(); closeBookingList(); }
+    if (e.key === 'Escape') { closeBookingForm(); closeBookingList(); closeViewModal(); }
   });
   document.getElementById('bkBtnSave').addEventListener('click', saveBooking);
-  document.getElementById('bkPax').addEventListener('input', () => { calcTotalPax(); calcBalance(); });
-  document.getElementById('bkExtraPax').addEventListener('input', () => { calcTotalPax(); calcBalance(); });
+  document.getElementById('bkPax').addEventListener('input',         () => { calcTotalPax(); calcBalance(); });
+  document.getElementById('bkExtraPax').addEventListener('input',    () => { calcTotalPax(); calcBalance(); });
   document.getElementById('bkRatePerHead').addEventListener('input', calcBalance);
-  document.getElementById('bkPets').addEventListener('input', calcBalance);
-  document.getElementById('bkRatePerPet').addEventListener('input', calcBalance);
-  document.getElementById('bkTotal').addEventListener('input', calcBalance);
-  document.getElementById('bkDownpayment').addEventListener('input', calcBalance);
+  document.getElementById('bkPets').addEventListener('input',         calcBalance);
+  document.getElementById('bkRatePerPet').addEventListener('input',   calcBalance);
+  document.getElementById('bkTotal').addEventListener('input',        calcBalance);
+  document.getElementById('bkDownpayment').addEventListener('input',  calcBalance);
   document.getElementById('bkCheckinTime').addEventListener('change', () => {
     calcCheckout();
     applyTimeSlotToForm(document.getElementById('bkCheckinTime').value);
