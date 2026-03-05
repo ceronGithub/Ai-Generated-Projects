@@ -176,17 +176,33 @@
   /* ── Analytics modal — bottom sheet ── */
   .an-overlay         { padding: 0; align-items: flex-end; }
   .an-modal {
+    width: 100%;
     max-width: 100%;
     border-radius: 24px 24px 0 0;
     max-height: 92vh;
+    box-sizing: border-box;
   }
-  .an-modal-header    { padding: 18px 20px 14px; }
-  .an-title           { font-size: 18px; }
-  .an-body            { padding: 16px 18px 22px; gap: 16px; }
-  .an-stat-row        { grid-template-columns: repeat(2, 1fr); }
+  .an-modal-header    { padding: 16px 18px 12px; }
+  .an-title           { font-size: 17px; }
+  .an-subtitle        { font-size: 11px; }
+  .an-body            { padding: 14px 16px 22px; gap: 14px; }
+  /* 2-col stat grid on tablet */
+  .an-stat-row        { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .an-stat-card       { padding: 12px 12px 10px; }
+  .an-stat-value      { font-size: 14px; }
+  .an-stat-icon       { font-size: 17px; }
+  /* Section padding tighter */
+  .an-section         { padding: 14px 14px 16px; }
+  /* Chart heights */
   .an-chart-wrap      { height: 120px; }
   .an-chart-wrap--tall { height: 140px; }
+  /* Tour row stays horizontal */
   .an-tour-row        { flex-direction: row; }
+  /* Tab bar scrollable — hide scrollbar */
+  .ana-tab-bar::-webkit-scrollbar { display: none; }
+  /* Table — shrink columns */
+  .an-table-head,
+  .an-table-row       { grid-template-columns: 0.6fr 2fr 1.8fr 0.8fr 1.8fr; font-size: 11px; padding: 7px 10px; }
 
   /* ── Scrollbars — hide on touch ── */
   .bk-body::-webkit-scrollbar,
@@ -330,21 +346,51 @@
   .bk-list-footer .bk-btn-save { width: 100%; justify-content: center; }
 
   /* ── Analytics modal ── */
-  .an-modal-header    { padding: 14px 16px 12px; }
+  .an-overlay         { padding: 0; align-items: flex-end; }
+  .an-modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 94vh;
+    box-sizing: border-box;
+  }
+  .an-modal-header    { padding: 14px 14px 10px; }
   .an-title           { font-size: 16px; }
-  .an-subtitle        { font-size: 11px; }
-  .an-body            { padding: 12px 14px 18px; gap: 12px; }
-  .an-stat-row        { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .an-stat-card       { padding: 10px 10px 8px; }
+  .an-subtitle        { font-size: 10px; }
+  /* Body padding matches screen edge */
+  .an-body            { padding: 12px 12px 18px; gap: 10px; }
+  /* 1-col stat grid on small phones so cards never clip */
+  .an-stat-row        { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .an-stat-card       { padding: 10px 10px 8px; gap: 8px; }
+  .an-stat-icon       { font-size: 16px; }
   .an-stat-value      { font-size: 13px; }
-  .an-section         { padding: 12px 14px 14px; }
+  .an-stat-label      { font-size: 9px; }
+  .an-section         { padding: 10px 10px 12px; gap: 10px; }
+  .an-section-title   { font-size: 10px; }
   .an-chart-wrap      { height: 100px; }
   .an-chart-wrap--tall { height: 120px; }
-  .an-tour-row        { flex-direction: column; gap: 12px; }
+  /* Tour donut row stacks on small phones */
+  .an-tour-row        { flex-direction: column; gap: 10px; }
   .an-donut-wrap      { width: 90px; height: 90px; align-self: center; }
+  /* Table scrolls horizontally */
+  .an-table           { overflow-x: auto; }
   .an-table-head,
-  .an-table-row       { grid-template-columns: 0.6fr 2fr 1.8fr 0.7fr 1.8fr; font-size: 10px; padding: 6px 8px; }
+  .an-table-row       { grid-template-columns: 0.5fr 1.8fr 1.6fr 0.6fr 1.6fr; font-size: 10px; padding: 6px 8px; min-width: 340px; }
+  /* Hide scrollbar on tab bar */
+  .ana-tab-bar        { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ana-tab-bar::-webkit-scrollbar { display: none; }
   #btnYearAnalytics   { font-size: 11px; padding: 6px 12px; }
+
+  /* ── Month analysis modal ── */
+  #monthAnalysisOverlay { padding: 0; align-items: flex-end; }
+  #monthAnalysisModal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 94vh !important;
+    box-sizing: border-box;
+  }
+  #monthAnalysisBody  { padding: 0 14px 20px !important; }
 
   /* ── Toast ── */
   .bk-toast           { font-size: 11px; padding: 9px 14px; }
@@ -416,9 +462,13 @@
   .bk-view-total span:last-child { font-size: 13px; }
 
   /* ── Analytics modal ── */
-  .an-stat-row        { grid-template-columns: 1fr; }
+  .an-body            { padding: 10px 10px 16px; gap: 8px; }
+  .an-stat-row        { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .an-stat-card       { padding: 8px 8px 6px; gap: 6px; }
+  .an-stat-value      { font-size: 12px; }
+  .an-section         { padding: 8px 10px 10px; }
   .an-table-head,
-  .an-table-row       { grid-template-columns: 0.5fr 1.8fr 1.6fr 0.6fr 1.8fr; font-size: 9px; }
+  .an-table-row       { grid-template-columns: 0.5fr 1.8fr 1.6fr 0.6fr 1.6fr; font-size: 9px; min-width: 320px; }
 
   /* ── Toast ── */
   .bk-toast {
