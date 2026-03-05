@@ -344,7 +344,7 @@
       UIManager.setRunEnabled(false);
       return;
     }
-    if (state.mode === 'extractall') {
+    if (state.mode === 'extractall' || state.mode === 'tablemode') {
       UIManager.setRunEnabled(true);
       return;
     }
@@ -381,6 +381,13 @@
         // Enrich pdfData with smart document-type detection + structured parsing
         const enriched = window.ExtractAll ? ExtractAll.process(pdfData) : pdfData;
         UIManager.renderExtractAll(enriched);
+
+      } else if (state.mode === 'tablemode') {
+        UIManager.setProgress(70, 'Parsing transaction rows…');
+        await new Promise(r => setTimeout(r, 30));
+        const rows = TableParser.parse(pdfData);
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderTableResults(rows, state.files);
 
       } else if (state.mode === 'multiple') {
         // ── Phase 2: Two-pass keyword search ─────────────────────────────
