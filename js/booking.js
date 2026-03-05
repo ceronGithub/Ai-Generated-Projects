@@ -193,17 +193,86 @@ function applyTimeSlotsToCell(key, cellEl) {
   if (!list.length) return;
 
   let hasEvening = false, hasAfternoon = false, hasMorning = false;
+  let hasMultiNight = false;
+
   list.forEach(b => {
     const ci   = (b.booking && b.booking.checkinTime) || b.checkinTime || '';
+    const tour = (b.booking && b.booking.tourType)    || b.tourType    || '';
     const slot = getTimeSlot(ci);
-    if (!slot) return;
-    if (slot.slot === 'evening')   hasEvening   = true;
-    if (slot.slot === 'afternoon') hasAfternoon = true;
-    if (slot.slot === 'morning')   hasMorning   = true;
+    if (slot) {
+      if (slot.slot === 'evening')   hasEvening   = true;
+      if (slot.slot === 'afternoon') hasAfternoon = true;
+      if (slot.slot === 'morning')   hasMorning   = true;
+    }
+    // Over-Night and 3D2N always force checkin day to RED regardless of time
+    if (tour === 'Over-Night' || tour === '3D2N') hasMultiNight = true;
   });
 
-  if (hasEvening || hasAfternoon) cellEl.classList.add('slot-full');
-  else if (hasMorning)            cellEl.classList.add('slot-morning-taken');
+  if (hasEvening || hasAfternoon || hasMultiNight) cellEl.classList.add('slot-full');
+  else if (hasMorning)                             cellEl.classList.add('slot-morning-taken');
+}
+
+/*
+  Build a lookup map of stay-over days.
+
+  RULES:
+  Over-Night (offset=1):
+    checkin      → 🔴 red   (handled by applyTimeSlotsToCell)
+    day+1        → 🟡 yellow  { color:'yellow', tour:'overnight' }
+
+  3D2N (offset=2):
+    checkin      → 🔴 red   (handled by applyTimeSlotsToCell)
+    day+1        → 🔴 red    { color:'red',    tour:'3d2n' }
+    day+2        → 🟡 yellow  { color:'yellow', tour:'3d2n' }
+
+  Returns:  { 'YYYY-MM-DD': { color: 'red'|'yellow', tour: 'overnight'|'3d2n' } }
+  Priority: red > yellow if two bookings conflict on same day.
+*/
+function buildStayoverMap() {
+  const map = {};
+  const src = Bookings;
+
+  function setDay(key, color, tour) {
+    const existing = map[key];
+    // red always wins over yellow
+    if (!existing || (existing.color === 'yellow' && color === 'red')) {
+      map[key] = { color, tour };
+    }
+  }
+
+  Object.keys(src).forEach(checkinKey => {
+    const list = src[checkinKey] || [];
+    list.forEach(b => {
+      const tour   = (b.booking && b.booking.tourType) || b.tourType || '';
+      const offset = (b.booking && b.booking.checkoutDaysOffset != null)
+                      ? b.booking.checkoutDaysOffset
+                      : getTourConfig(tour).daysOffset;
+
+      // Only Over-Night and 3D2N get downstream tags
+      if (tour !== 'Over-Night' && tour !== '3D2N') return;
+      if (offset < 1) return;
+
+      const parts = checkinKey.split('-');
+      const cy = parseInt(parts[0]), cm = parseInt(parts[1]) - 1, cd = parseInt(parts[2]);
+
+      if (tour === 'Over-Night') {
+        // day+1 → yellow (checkout day)
+        const d1 = new Date(cy, cm, cd + 1);
+        setDay(toKey(d1.getFullYear(), d1.getMonth(), d1.getDate()), 'yellow', 'overnight');
+      }
+
+      if (tour === '3D2N') {
+        // day+1 → red (still occupied, day 2 of stay)
+        const d1 = new Date(cy, cm, cd + 1);
+        setDay(toKey(d1.getFullYear(), d1.getMonth(), d1.getDate()), 'red', '3d2n');
+        // day+2 → yellow (checkout day, day 3)
+        const d2 = new Date(cy, cm, cd + 2);
+        setDay(toKey(d2.getFullYear(), d2.getMonth(), d2.getDate()), 'yellow', '3d2n');
+      }
+    });
+  });
+
+  return map;
 }
 
 /* ══════════════════════════════════════
@@ -830,6 +899,9 @@ function openModal(key, day, month, year, color) {
 }
 
 function applyBookingIndicators() {
+  // Build stayover map once for all cells (Over-Night / 3D2N downstream days)
+  const stayoverMap = buildStayoverMap();
+
   document.querySelectorAll('#yearGrid .day-cell:not(.other-month)').forEach(cell => {
     const numEl = cell.querySelector('.day-num');
     if (!numEl) return;
@@ -839,8 +911,30 @@ function applyBookingIndicators() {
     if (!mEl) return;
     const month = MONTH_NAMES.indexOf(mEl.textContent);
     const key   = toKey(AppState.year, month, parseInt(numEl.textContent));
+
+    // 1. has-booking dot
     cell.classList.toggle('has-booking', !!(Bookings[key]?.length > 0));
+
+    // 2. Checkin day: red (slot-full) or yellow (slot-morning-taken)
     applyTimeSlotsToCell(key, cell);
+
+    // 3. Stay-over days from overnight/3D2N bookings
+    //    Only apply if cell isn't already a checkin-day (has its own booking)
+    cell.classList.remove('slot-stayover', 'slot-stayover-3d2n', 'slot-stayover-red');
+    if (!cell.classList.contains('slot-full') && !cell.classList.contains('slot-morning-taken')) {
+      const stay = stayoverMap[key];
+      if (stay) {
+        if (stay.color === 'red') {
+          // 3D2N day+1: red occupied day
+          cell.classList.add('slot-stayover-red');
+          if (stay.tour === '3d2n') cell.classList.add('slot-stayover-3d2n');
+        } else {
+          // yellow checkout day
+          cell.classList.add('slot-stayover');
+          if (stay.tour === '3d2n') cell.classList.add('slot-stayover-3d2n');
+        }
+      }
+    }
   });
 }
 

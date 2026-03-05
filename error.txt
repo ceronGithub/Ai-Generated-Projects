@@ -29,7 +29,15 @@ if User put check-in-time 2PM onwards Night Tour, Overnight are the only availab
 add new feature : 1 time auto save and connect on firebase database.
 (Done) add new feature : allow user to see the data analysis in each month, 12 month data analysis. with graps, icons, smooth animation.
 
-add new feature : Give user option of 3days and 2nights. 3days from the selected date. (Check-out-time: 21+21hours+check-in-time).
+(Done)add new feature : Give user option of 3days and 2nights. 3days from the selected date. (Check-out-time: 21+21hours+check-in-time).
+
+
+add new feature : When user put check-in-date is Feb 2, 2026 (Overnight), Put red tag on the date. And put a yellow tag on the next day.
+
+add new feature : If user put check-in-date is Feb 2, 2026 (3Days and 2Nights), Put red tag on the selected date and next day (Feb 3, 2026). 
+And put a yellow tag on the third day (Feb 4, 2026). Summary card From Feb 2 - 4, 2026 are all the same.
+
+add new feature : seperate the bookingJS to firebase ConnectionJS. To avoid any changes from firebase connection.
 
 
 tutorial : https://www.youtube.com/watch?v=i_ud_9imKjg
