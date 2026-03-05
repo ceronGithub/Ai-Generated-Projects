@@ -37,6 +37,8 @@ function init() {
   // Step 2 — connect Firebase in background, never blocks UI
   initFirebase().then(async () => {
     applyBookingIndicators();
+    // 💾 Sync localStorage backup with live Firebase data
+    syncBackupFromBookings();
     // Auto-sync any bookings that were saved while offline
     await flushSyncQueue();
   }).catch(e => {

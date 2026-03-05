@@ -40,6 +40,19 @@
         📊 Analysis
       </button>
       <div class="db-status is-connecting" id="dbStatus"><span class="db-dot connecting" id="dbStatusDot"></span><span class="db-status-label" id="dbStatusLabel">Connecting…</span><button onclick="openDbConfigModal()" title="Firebase Settings" style="width:22px;height:22px;border-radius:50%;background:#f0eeff;border:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;flex-shrink:0;transition:background 0.15s;" onmouseover="this.style.background='#d0caff'" onmouseout="this.style.background='#f0eeff'">⚙️</button></div>
+      <!-- Backup export button -->
+      <button onclick="exportBackup()" title="Download full db.json backup"
+        style="display:flex;align-items:center;gap:5px;background:#fff;border:1px solid rgba(0,0,0,0.08);
+               border-radius:50px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:12px;
+               font-weight:700;color:#555570;box-shadow:0 2px 8px rgba(0,0,0,0.06);
+               cursor:pointer;white-space:nowrap;transition:all 0.18s ease;"
+        onmouseover="this.style.background='#f0fff4';this.style.color='#3cb771';this.style.borderColor='#b8f0ce'"
+        onmouseout="this.style.background='#fff';this.style.color='#555570';this.style.borderColor='rgba(0,0,0,0.08)'">
+        💾 Backup
+      </button>
+      <!-- Hidden file input for restore -->
+      <input type="file" id="dbRestoreInput" accept=".json" style="display:none"
+        onchange="if(this.files[0]) restoreBackup(this.files[0]); this.value='';">
     </div>
   </header>
 
@@ -357,6 +370,7 @@
   <script src="js/modal.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/firebase.js"></script>
+  <script src="js/backup.js"></script>
   <script src="js/booking.js"></script>
   <script src="js/analysis.js"></script>
   <script src="js/background.js"></script>
