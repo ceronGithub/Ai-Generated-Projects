@@ -815,8 +815,87 @@ async function saveBooking() {
 }
 
 /* ══════════════════════════════════════
-   BOOKING LIST
+   STAYOVER CARD
+   Read-only summary for a booking that
+   started on a previous date and is still
+   occupying the currently-viewed date.
 ══════════════════════════════════════ */
+function buildStayoverCard(b, checkinKey, color) {
+  const card = document.createElement('div');
+  card.className = 'bk-summary-card bk-stayover-card';
+
+  const name     = b.guest?.name       || b.guestName  || '—';
+  const totalPax = b.guest?.totalPax   || b.totalPax   || '—';
+  const pets     = b.guest?.pets       ?? b.pets       ?? 0;
+  const total    = b.payment?.total    ?? b.total      ?? 0;
+  const balance  = b.payment?.balance  ?? b.balance    ?? 0;
+  const tourType = b.booking?.tourType || b.tourType   || '—';
+  const ciLabel  = b.booking?.checkinDateLabel  || checkinKey || '—';
+  const coLabel  = b.booking?.checkoutDateLabel || '—';
+  const ciTime   = b.booking?.checkinTime  || b.checkinTime  || '';
+  const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'bk-summary-card-header';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'bk-summary-name'; nameEl.textContent = name;
+  const badge = document.createElement('span');
+  badge.className = 'bk-summary-badge bk-stayover-badge';
+  badge.textContent = tourType;
+  badge.style.background = '#ff9800';
+  hdr.append(nameEl, badge);
+  card.appendChild(hdr);
+
+  // Info rows
+  const rows = [
+    [`📅 In: ${ciLabel}`, `📅 Out: ${coLabel}`],
+    [`🕐 ${to12hr(ciTime)} → ${to12hr(coTime)}`],
+    [`👥 ${totalPax} Pax${pets ? `  🐾 ${pets} Pets` : ''}`,
+     `💳 ₱${Number(total).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`],
+    [`💰 Balance: ₱${Number(balance).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`],
+  ];
+
+  rows.forEach(items => {
+    const row = document.createElement('div');
+    row.className = 'bk-summary-row';
+    items.filter(Boolean).forEach(text => {
+      const el = document.createElement('div');
+      el.className = 'bk-summary-item'; el.textContent = text;
+      row.appendChild(el);
+    });
+    card.appendChild(row);
+  });
+
+  // Actions — View only (this booking belongs to another date)
+  const actions = document.createElement('div');
+  actions.className = 'bk-summary-actions';
+
+  const viewBtn = document.createElement('button');
+  viewBtn.className = 'bk-action-btn bk-action-view';
+  viewBtn.textContent = '👁 View Full Details';
+  viewBtn.style.flex = '1';
+  viewBtn.addEventListener('click', () => openViewModal(b, color));
+
+  const originBtn = document.createElement('button');
+  originBtn.className = 'bk-action-btn';
+  originBtn.style.cssText = 'background:#fff4e0;color:#9a5a00;border:1.5px solid #ffcc80;';
+  originBtn.textContent = `📅 See ${ciLabel}`;
+  originBtn.addEventListener('click', () => {
+    closeBookingList();
+    // Navigate to the original checkin date's booking list
+    const parts = checkinKey.split('-');
+    const y = parseInt(parts[0]), m = parseInt(parts[1]) - 1, d = parseInt(parts[2]);
+    openBookingList(checkinKey, d, m, y, color);
+  });
+
+  actions.append(viewBtn, originBtn);
+  card.appendChild(actions);
+
+  return card;
+}
+
+
 function openBookingList(key, day, month, year, color) {
   const list = Bookings[key] || [];
   document.getElementById('bkListTitle').textContent = `${MONTH_NAMES[month]} ${day}, ${year}`;
@@ -826,7 +905,30 @@ function openBookingList(key, day, month, year, color) {
   const inner = document.createElement('div');
   inner.className = 'bk-list-body-inner';
 
-  if (!list.length) {
+  // ── Stayover section: bookings from previous dates still occupying this date ──
+  const stayoverEntries = getStayingOverBookings(key);
+  if (stayoverEntries.length > 0) {
+    const stayoverHeader = document.createElement('div');
+    stayoverHeader.className = 'bk-stayover-section-header';
+    stayoverHeader.innerHTML =
+      `<span class="bk-stayover-section-icon">🌙</span>` +
+      `<span>Staying Over — checked in on a previous date</span>`;
+    inner.appendChild(stayoverHeader);
+
+    stayoverEntries.forEach(({ booking: b, checkinKey }) => {
+      inner.appendChild(buildStayoverCard(b, checkinKey, color));
+    });
+
+    if (list.length > 0) {
+      const divider = document.createElement('div');
+      divider.className = 'bk-stayover-divider';
+      divider.innerHTML = `<span>New bookings for this date</span>`;
+      inner.appendChild(divider);
+    }
+  }
+
+  // ── Direct bookings for this date ──
+  if (!list.length && !stayoverEntries.length) {
     const empty = document.createElement('div');
     empty.className = 'bk-list-empty'; empty.textContent = 'No bookings yet for this date.';
     inner.appendChild(empty);
@@ -1065,10 +1167,37 @@ function openEditForm(b, key, color) {
 /* ══════════════════════════════════════
    CALENDAR INTEGRATION
 ══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   STAYOVER LOOKUP
+   Returns all bookings from other dates
+   that are still occupying 'dateKey'
+   (i.e. checkoutDate >= dateKey and
+         checkinDate  <  dateKey)
+══════════════════════════════════════ */
+function getStayingOverBookings(dateKey) {
+  const results = [];
+  Object.keys(Bookings).forEach(checkinKey => {
+    if (checkinKey >= dateKey) return; // only bookings that started BEFORE this date
+    (Bookings[checkinKey] || []).forEach(b => {
+      const coDate = (b.booking && b.booking.checkoutDate) || b.checkoutDate || '';
+      // Booking spans this date if checkoutDate >= dateKey (still here today or leaving today)
+      if (!coDate || coDate < dateKey) return;
+      results.push({ booking: b, checkinKey });
+    });
+  });
+  return results;
+}
+
 function openModal(key, day, month, year, color) {
-  (Bookings[key]?.length > 0)
-    ? openBookingList(key, day, month, year, color)
-    : openBookingForm(key, day, month, year, color);
+  const directBookings  = Bookings[key]?.length > 0;
+  const stayoverEntries = getStayingOverBookings(key);
+
+  // Open list if there are direct bookings OR stayover bookings from previous dates
+  if (directBookings || stayoverEntries.length > 0) {
+    openBookingList(key, day, month, year, color);
+  } else {
+    openBookingForm(key, day, month, year, color);
+  }
 }
 
 function applyBookingIndicators() {
