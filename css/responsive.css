@@ -699,3 +699,178 @@
   .bk-summary-name { font-size: 12px; }
 
 } /* end @media (max-width: 320px) */
+
+/* ════════════════════════════════════════════════════════
+   ANALYSIS MODAL — RESPONSIVE FIXES
+   Overrides hardcoded inline styles on the modal elements.
+   Must use !important to beat inline style specificity.
+════════════════════════════════════════════════════════ */
+
+/* ── Stat card grid: 3 col on desktop, 1 col on mobile ── */
+.ana-stat-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* ── Revenue 2-col grid ── */
+.ana-two-col {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── Tab bar: scrollable row, no wrap ── */
+.ana-tab-bar {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.ana-tab-bar::-webkit-scrollbar { display: none; }
+.ana-tab-bar button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ════════════
+   ≤ 600px
+════════════ */
+@media (max-width: 600px) {
+
+  /* Modal: full-width bottom sheet */
+  #analysisOverlay,
+  #monthAnalysisOverlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+  #analysisModal,
+  #monthAnalysisModal {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 22px 22px 0 0 !important;
+    max-height: 92vh !important;
+  }
+
+  /* Header padding */
+  #analysisModal > div:first-child {
+    padding: 16px 16px 0 !important;
+  }
+  #monthAnalysisModal > div:first-child {
+    padding: 16px 16px 0 !important;
+  }
+
+  /* Body padding */
+  #analysisBody,
+  #monthAnalysisBody {
+    padding: 14px 14px 20px !important;
+  }
+
+  /* Title size */
+  #analysisModal h2 {
+    font-size: 18px !important;
+  }
+
+  /* Stat grid: single column */
+  .ana-stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Revenue 2-col: single column */
+  .ana-two-col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tab buttons: smaller, still scrollable */
+  .ana-tab-bar button {
+    padding: 9px 14px !important;
+    font-size: 11px !important;
+  }
+
+  /* Stat card internal text */
+  #analysisBody [style*="font-size:18px"],
+  #monthAnalysisBody [style*="font-size:18px"] {
+    font-size: 15px !important;
+  }
+}
+
+/* ════════════
+   ≤ 480px
+════════════ */
+@media (max-width: 480px) {
+
+  #analysisModal,
+  #monthAnalysisModal {
+    border-radius: 18px 18px 0 0 !important;
+    max-height: 94vh !important;
+  }
+
+  /* Stat grid: 2 col fits better than 1 at 480 */
+  .ana-stat-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Tab buttons: tighter */
+  .ana-tab-bar button {
+    padding: 8px 12px !important;
+    font-size: 10px !important;
+  }
+
+  /* Analysis body content */
+  #analysisBody,
+  #monthAnalysisBody {
+    padding: 12px 12px 18px !important;
+  }
+}
+
+/* ════════════
+   ≤ 360px
+════════════ */
+@media (max-width: 360px) {
+
+  #analysisModal,
+  #monthAnalysisModal {
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 96vh !important;
+  }
+
+  /* Stat grid: back to 1-col — 360px too narrow for 2 */
+  .ana-stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ana-two-col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Tab buttons: very compact */
+  .ana-tab-bar button {
+    padding: 7px 10px !important;
+    font-size: 9px !important;
+  }
+
+  #analysisBody,
+  #monthAnalysisBody {
+    padding: 10px 10px 16px !important;
+  }
+
+  /* Analysis header */
+  #analysisModal > div:first-child,
+  #monthAnalysisModal > div:first-child {
+    padding: 12px 12px 0 !important;
+  }
+
+  #analysisModal h2,
+  #monthAnalysisModal h2 {
+    font-size: 16px !important;
+  }
+
+  /* Stat card padding (inline) */
+  #analysisBody div[style*="padding:16px 18px"],
+  #monthAnalysisBody div[style*="padding:16px 18px"] {
+    padding: 10px 12px !important;
+  }
+
+  /* Tour breakdown bar — smaller fixed width */
+  #analysisBody div[style*="width:80px"],
+  #monthAnalysisBody div[style*="width:80px"] {
+    width: 50px !important;
+  }
+}

@@ -265,7 +265,7 @@ function _yearTabOverview(d) {
         '</div>';
     });
 
-  return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">' +
+  return '<div style="display:grid;gap:12px;margin-bottom:20px;" class="ana-stat-grid">' +
       _statCard('📅','Total Bookings',''+d.total, d.totalPax+' pax &middot; '+d.totalPets+' pets','#1a1a2e') +
       _statCard('💳','Total Revenue',_peso(d.totalRevenue),_peso(d.totalCollected)+' collected ('+pct+'%)','#3cb771') +
       _statCard('💰','Outstanding',_peso(d.totalBalance),d.totalBalance>0?(100-pct)+'% unpaid':'All paid \u2705',d.totalBalance>0?'#e04060':'#3cb771') +
@@ -412,7 +412,7 @@ function _yearTabRevenue(d) {
       '<span style="font-size:13px;font-weight:800;color:#e04060;">'+_peso(g.balance)+'</span></div>';
   });
 
-  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">' +
+  return '<div style="display:grid;gap:12px;margin-bottom:16px;" class="ana-two-col">' +
     '<div style="background:#f0fff4;border:1.5px solid #b8f0ce;border-radius:14px;padding:16px 18px;">' +
       '<div style="font-size:10px;font-weight:700;color:#2a9a5a;letter-spacing:0.5px;margin-bottom:5px;">COLLECTED</div>' +
       '<div style="font-size:22px;font-weight:800;color:#2a9a5a;">'+_peso(d.totalCollected)+'</div>' +
@@ -536,7 +536,7 @@ function _buildMonthAnalysis(year, month, color) {
 
   // ── stat cards ──
   var stats =
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">' +
+    '<div style="display:grid;gap:10px;margin-bottom:16px;" class="ana-stat-grid">' +
       _statCard('📅','Bookings',''+d.totalCount, d.totalPax+' total pax', acc) +
       _statCard('💳','Revenue',_peso(d.totalRevenue),_peso(d.totalCollected)+' collected ('+pct+'%)',acc) +
       _statCard('💰','Outstanding',_peso(d.totalBalance),d.totalBalance>0?(100-pct)+'% unpaid':'All paid \u2705',d.totalBalance>0?'#e04060':acc) +
