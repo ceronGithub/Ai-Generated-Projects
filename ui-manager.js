@@ -141,6 +141,13 @@ const UIManager = (() => {
     el.classList.remove('disabled-card');
   }
 
+  function deactivateStep(stepId) {
+    const el = document.getElementById(stepId);
+    if (!el) return;
+    el.classList.remove('active');
+    el.classList.add('disabled-card');
+  }
+
   // ----- Progress -----
 
   function setProgress(value, label) {
@@ -209,9 +216,9 @@ const UIManager = (() => {
 
     const optionsHtml = values.map((v, i) => `
       <div class="pick-option-wrap" data-idx="${i}">
-        <button class="pick-option" data-idx="${i}" title="${escapeHtml(v)}">
+        <button class="pick-option" data-idx="${i}" title="${escapeHtml(stripSpecialChars(v))}">
           <span class="pick-dot"></span>
-          <span class="pick-label">${escapeHtml(v)}</span>
+          <span class="pick-label">${escapeHtml(stripSpecialChars(v))}</span>
         </button>
         <button class="pick-edit-btn" data-idx="${i}" title="Edit this value">
           <span class="pick-edit-icon">✎</span><span class="pick-edit-label">Edit</span>
@@ -418,8 +425,8 @@ const UIManager = (() => {
             </button>
             <button class="result-remove-btn" title="Remove this result">✕</button>
           </div>
-          <div class="result-keyword">${escapeHtml(label)}</div>
-          <div class="result-text">${escapeHtml(value)}</div>
+          <div class="result-keyword">${escapeHtml(stripSpecialChars(label))}</div>
+          <div class="result-text">${escapeHtml(stripSpecialChars(value))}</div>
         `;
         if (window.PDFViewer) {
           item.querySelector('.result-view-btn').addEventListener('click', () => window.PDFViewer.open(file, p.page));
@@ -556,11 +563,12 @@ const UIManager = (() => {
 
     for (const { page, filename, keyword, values } of grouped.values()) {
       if (values.length > 1) {
-        list.appendChild(makePickerResultItem(page, filename, keyword, values, files));
+        const cleanedValues = values.map(stripSpecialChars);
+        list.appendChild(makePickerResultItem(page, filename, keyword, cleanedValues, files));
       } else {
         const highlighted = keywords.reduce(
           (text, kw) => KeywordHandler.highlight(text, kw),
-          escapeHtml(values[0])
+          escapeHtml(stripSpecialChars(values[0]))
         );
         list.appendChild(makeResultItem(page, filename, keyword, highlighted, files));
       }
@@ -624,7 +632,7 @@ const UIManager = (() => {
 
     for (const r of results) {
       for (const ctx of r.contexts) {
-        const highlighted = KeywordHandler.highlight(escapeHtml(ctx), keyword);
+        const highlighted = KeywordHandler.highlight(escapeHtml(stripSpecialChars(ctx)), keyword);
         list.appendChild(makeSingleResultItem(r.page, r.filename, r.keyword, highlighted, files, renameMap));
       }
     }
@@ -1028,6 +1036,30 @@ const UIManager = (() => {
       .replace(/"/g, '&quot;');
   }
 
+  // ─── SPECIAL CHARACTER STRIPPER ──────────────────────────────────────────
+  // Removes label-syntax characters that bleed into extracted values before
+  // they are displayed in result cards or written to Excel.
+  //
+  // Strips from LEADING edge:  : ; # - – — | / \ * • · (spaces)
+  // Strips from TRAILING edge: same + ,
+  //
+  // Safe for internal chars — only edge characters are removed:
+  //   '006-977-514-000'          → unchanged  (hyphens are mid-value)
+  //   '$1,500.00'                → unchanged  ($ not in list; comma is internal)
+  //   'MAMPLASAN NORTH ENTRY/EXIT' → unchanged (slash is mid-value)
+  //   '#: INV-2026-042'          → 'INV-2026-042'
+  //   ': some value'             → 'some value'
+  //   'some value :'             → 'some value'
+  //   'CORPORATION,'             → 'CORPORATION'
+
+  function stripSpecialChars(str) {
+    if (!str) return str;
+    let s = String(str);
+    s = s.replace(/^[\s:;#\-–—|\/\\*•·]+/, '');   // strip leading
+    s = s.replace(/[\s:;#\-–—|\/\\*•·,]+$/, '');   // strip trailing
+    return s.trim();
+  }
+
   return {
     renderFileList,
     setModeSelected,
@@ -1036,6 +1068,7 @@ const UIManager = (() => {
     renderKeywordChips,
     showExcelLayoutPicker,
     activateStep,
+    deactivateStep,
     setProgress,
     hideProgress,
     setRunning,
