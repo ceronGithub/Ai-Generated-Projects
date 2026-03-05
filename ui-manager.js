@@ -666,16 +666,27 @@ const UIManager = (() => {
     actions.appendChild(makeCountBadge(totalPages, 'page'));
 
     dlBtn.addEventListener('click', () => {
-      ExcelExporter.exportExtractAll(pdfData, 'extract_all.xlsx');
+      // Use smart ExtractAll exporter when available, else legacy
+      if (window.ExtractAll && pdfData[0]?.docType) {
+        ExtractAll.exportExcel(pdfData);
+      } else {
+        ExcelExporter.exportExtractAll(pdfData, 'extract_all.xlsx');
+      }
     });
 
-    let totalFields = 0;
-    for (const { file, pages } of pdfData) {
-      const cards = makeExtractItem(file, pages);
-      cards.forEach(card => list.appendChild(card));
-      totalFields += cards.length;
+    // Use smart renderer when pdfData has been enriched by ExtractAll.process
+    if (window.ExtractAll && pdfData[0]?.docType) {
+      ExtractAll.render(pdfData, list);
+    } else {
+      // Legacy fallback: per-page field extraction via KeywordHandler
+      let totalFields = 0;
+      for (const { file, pages } of pdfData) {
+        const cards = makeExtractItem(file, pages);
+        cards.forEach(card => list.appendChild(card));
+        totalFields += cards.length;
+      }
+      actions.appendChild(makeCountBadge(totalFields, 'field'));
     }
-    actions.appendChild(makeCountBadge(totalFields, 'field'));
     capResultsHeight(list);
   }
 

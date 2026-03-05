@@ -378,7 +378,9 @@
 
       if (state.mode === 'extractall') {
         UIManager.setProgress(100, 'Done!');
-        UIManager.renderExtractAll(pdfData);
+        // Enrich pdfData with smart document-type detection + structured parsing
+        const enriched = window.ExtractAll ? ExtractAll.process(pdfData) : pdfData;
+        UIManager.renderExtractAll(enriched);
 
       } else if (state.mode === 'multiple') {
         // ── Phase 2: Two-pass keyword search ─────────────────────────────
