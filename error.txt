@@ -17,14 +17,17 @@ add new feature : always check if supabase connection is strong. if not then the
 If user choose Edit re-open the new booking section with previous data.
 If user choose view. only for viewing.
 
-add new feature : right side align to Extra pax, put How much per head: user input (optional).
+(done)add new feature : right side align to Extra pax, put How much per head: user input (optional).
 right side align to Total pets, put How much per pet: user Input(optional).
 below Total field display the additional. once user input the final total recalculate if (total + How much per pet + How much per head).
 
-add new feature : Always check Check-In-Time of user. 
+(testing)add new feature : Always check Check-In-Time of user. 
 If User Put check-in-Time in between 8AM and 11AM. Day Tour,  Overnight are the only available Mark the date as yellow can still accept Night-Tour, Overnight. 
 If User put check-in-time in between 11:30AM and 2PM of the current date. Night Tour, Overnight are the only available, Check-out-date will be on the same day, Mark the date as red and remove the new booking btn.
 if User put check-in-time 2PM onwards Night Tour, Overnight are the only available option, and user chooses Night-Tour Check-out-date will be on the Next day, and user chooses Over-night Check-out-date will be on the Next day, Mark the date as red and remove the new booking btn.
+
+add new feature : 1 time auto save and connect on firebase database.
+add new feature : allow user to see the data analysis in each month, 12 month data analysis. with graps, icons, smooth animation.
 
 add new feature : Give user option of 3days and 2nights. 3days from the selected date. (Check-out-time: 21+21hours+check-in-time).
 
