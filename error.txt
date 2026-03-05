@@ -26,7 +26,7 @@ If User Put check-in-Time in between 8AM and 11AM. Day Tour,  Overnight are the 
 If User put check-in-time in between 11:30AM and 2PM of the current date. Night Tour, Overnight are the only available, Check-out-date will be on the same day, Mark the date as red and remove the new booking btn.
 if User put check-in-time 2PM onwards Night Tour, Overnight are the only available option, and user chooses Night-Tour Check-out-date will be on the Next day, and user chooses Over-night Check-out-date will be on the Next day, Mark the date as red and remove the new booking btn.
 
-add new feature : 1 time auto save and connect on firebase database.
+(Done)add new feature : Auto Save and connect firebase. but allow user to edit details.
 (Done) add new feature : allow user to see the data analysis in each month, 12 month data analysis. with graps, icons, smooth animation.
 
 (Done)add new feature : Give user option of 3days and 2nights. 3days from the selected date. (Check-out-time: 21+21hours+check-in-time).
@@ -34,7 +34,9 @@ add new feature : 1 time auto save and connect on firebase database.
 
 (Done)add new feature : When user put check-in-date is Feb 2, 2026 (Overnight), Put red tag on the date. And put a yellow tag on the next day.
 
-add new feature : if previous date is marked as book, check the check-out. 
+add new feature : if previous date is marked as book, then on the next day the summary of both date are same. but the next day can create a new booking.
+
+(Done)add new feature : if previous date is marked as book, check the check-out. 
 sample : Check-in-date : feb 2, 2026 - feb 3, 2026. Check-out-time of feb 2, 2026 is 3PM. so 3PM onwards Overnight and Night tour is available. 
 User cannot checkin earlier than 3PM on Feb 3, 2026.
 

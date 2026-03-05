@@ -148,19 +148,167 @@ function getTimeSlot(hhmm) {
   };
 }
 
+/* ══════════════════════════════════════
+   CHECKOUT CONSTRAINT
+   Scans all existing bookings to find any
+   whose checkout date falls on the date
+   being opened. The LATEST checkout time
+   among those becomes the earliest allowed
+   check-in for new bookings on that date.
+
+   Example:
+     Feb 2 Overnight checkout → Feb 3 at 15:00
+     → Opening Feb 3 form: check-in must be ≥ 15:00
+       Only Night Tour / Over-Night / 3D2N available
+       (Day Tour ends same day, would conflict)
+══════════════════════════════════════ */
+
+/* Returns { time: 'HH:MM', time12: '3:00 PM', sources: [...names] } or null */
+function getCheckoutConstraintForDate(dateKey) {
+  let latestMins = -1;
+  let latestTime = '';
+  const sources  = [];
+
+  Object.keys(Bookings).forEach(checkinKey => {
+    (Bookings[checkinKey] || []).forEach(b => {
+      const coDate = (b.booking && b.booking.checkoutDate) || b.checkoutDate || '';
+      const coTime = (b.booking && b.booking.checkoutTime) || b.checkoutTime || '';
+      if (coDate !== dateKey || !coTime) return;
+
+      const [h, m] = coTime.split(':').map(Number);
+      const mins   = h * 60 + m;
+      if (mins > latestMins) {
+        latestMins = mins;
+        latestTime = coTime;
+      }
+      const guestName = (b.guest && b.guest.name) || b.guestName || 'Guest';
+      const tour      = (b.booking && b.booking.tourType) || b.tourType || '';
+      sources.push(`${guestName} (${tour} check-out)`);
+    });
+  });
+
+  if (latestMins < 0) return null;
+  return { time: latestTime, time12: to12hr(latestTime), mins: latestMins, sources };
+}
+
+/* ── State: constraint for currently open form ── */
+let _checkinConstraint = null;  // { time, time12, mins, sources } | null
+
+/* Apply constraint to the form: set min on time input, show banner,
+   block tours that cannot be used after the constraint time.        */
+function applyCheckoutConstraint(constraint) {
+  _checkinConstraint = constraint;
+
+  // Remove any existing constraint banner
+  const old = document.getElementById('bkConstraintBanner');
+  if (old) old.remove();
+
+  // Reset time input min
+  const timeInput = document.getElementById('bkCheckinTime');
+  if (timeInput) timeInput.min = constraint ? constraint.time : '';
+
+  if (!constraint) return;
+
+  // Build and inject the constraint banner above the check-in time field
+  const banner = document.createElement('div');
+  banner.id = 'bkConstraintBanner';
+  banner.style.cssText =
+    'background:linear-gradient(135deg,#fff3e0,#ffe8cc);' +
+    'border:1.5px solid #ff9800;border-radius:10px;' +
+    'padding:10px 14px;margin-bottom:10px;' +
+    'font-size:12px;font-weight:700;color:#7a3800;' +
+    'display:flex;gap:8px;align-items:flex-start;line-height:1.5;';
+
+  const sourceText = constraint.sources.slice(0, 2).join(', ') +
+    (constraint.sources.length > 2 ? ` +${constraint.sources.length - 2} more` : '');
+
+  banner.innerHTML =
+    `<span style="font-size:16px;flex-shrink:0;">🔔</span>` +
+    `<span>Previous booking checks out at <b>${constraint.time12}</b> on this date` +
+    ` <span style="font-size:10px;opacity:0.75;">(${sourceText})</span>.<br>` +
+    `Check-in must be <b>${constraint.time12} or later</b>. ` +
+    `Day Tour unavailable (guests still checking out).</span>`;
+
+  // Insert before the check-in time field
+  const ciField = document.getElementById('bkCheckinTime');
+  if (ciField && ciField.parentNode) {
+    ciField.parentNode.insertBefore(banner, ciField);
+  }
+
+  // Disable Day Tour — it's same-day, so it would overlap with checkout
+  document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+    if (btn.dataset.type === 'Day Tour') {
+      btn.classList.add('bk-tour-unavailable');
+      btn.disabled = true;
+      if (_tourType === 'Day Tour') {
+        btn.classList.remove('selected');
+        _tourType = null;
+        document.getElementById('bkCheckoutDisplay').textContent = '—';
+        document.getElementById('bkCheckoutTime').textContent    = '—';
+        document.getElementById('bkDuration').textContent        = '—';
+      }
+    }
+  });
+}
+
+/* Validate that entered check-in time respects constraint */
+function validateCheckinConstraint(hhmm) {
+  if (!_checkinConstraint || !hhmm) return null;
+  const [h, m]  = hhmm.split(':').map(Number);
+  const enteredMins = h * 60 + m;
+  if (enteredMins < _checkinConstraint.mins) {
+    return `Check-in must be ${_checkinConstraint.time12} or later (previous guest checkout time).`;
+  }
+  return null;
+}
+
 function applyTimeSlotToForm(hhmm) {
   const slot = getTimeSlot(hhmm);
 
+  // Remove existing time-slot banner (constraint banner stays)
   const existing = document.getElementById('bkTimeSlotBanner');
   if (existing) existing.remove();
 
+  // Re-enable all buttons, then re-apply both layers of restrictions
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     btn.classList.remove('bk-tour-unavailable');
     btn.disabled = false;
   });
 
+  // Layer 1: checkout constraint — always block Day Tour when constrained
+  if (_checkinConstraint) {
+    document.querySelectorAll('.bk-tour-btn').forEach(btn => {
+      if (btn.dataset.type === 'Day Tour' || btn.dataset.type === 'Half Day') {
+        btn.classList.add('bk-tour-unavailable');
+        btn.disabled = true;
+        if (_tourType === btn.dataset.type) {
+          btn.classList.remove('selected');
+          _tourType = null;
+          document.getElementById('bkCheckoutDisplay').textContent = '—';
+          document.getElementById('bkCheckoutTime').textContent    = '—';
+          document.getElementById('bkDuration').textContent        = '—';
+        }
+      }
+    });
+
+    // Show inline time error if entered time is too early
+    if (hhmm) {
+      const [h, m] = hhmm.split(':').map(Number);
+      const enteredMins = h * 60 + m;
+      const errEl = document.getElementById('errCheckinTime');
+      if (errEl) {
+        if (enteredMins < _checkinConstraint.mins) {
+          errEl.textContent = '⚠️ Must be ' + _checkinConstraint.time12 + ' or later — previous guest checks out then.';
+        } else if (errEl.textContent.includes('previous guest')) {
+          errEl.textContent = '';
+        }
+      }
+    }
+  }
+
   if (!slot) return;
 
+  // Layer 2: time-slot rules — additive on top of constraint restrictions
   const tourSection = document.querySelector('.bk-tour-options');
   if (tourSection) {
     const banner = document.createElement('div');
@@ -361,10 +509,14 @@ function openBookingForm(key, day, month, year, color) {
   document.getElementById('bkPaymentDate').value =
     `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`;
 
-  document.querySelectorAll('.bk-tour-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('bkCheckoutDisplay').textContent = '—';
   document.getElementById('bkCheckoutTime').textContent    = '—';
   document.getElementById('bkDuration').textContent        = '—';
+
+  // Check if a previous booking checks out on this date → constrain check-in time
+  // Must run AFTER resetBookingForm so constraint banners are injected fresh
+  const constraint = getCheckoutConstraintForDate(key);
+  applyCheckoutConstraint(constraint);
 
   document.querySelectorAll('.bk-section-title').forEach(el => {
     el.style.color = color.accent; el.style.borderColor = color.light;
@@ -401,9 +553,14 @@ function resetBookingForm() {
   document.getElementById('bkAdditionalWrap').style.display = 'none';
   document.getElementById('bkFinalTotalWrap').style.display = 'none';
   _tourType = null;
+  _checkinConstraint = null;
 
   const banner = document.getElementById('bkTimeSlotBanner');
   if (banner) banner.remove();
+  const constraintBanner = document.getElementById('bkConstraintBanner');
+  if (constraintBanner) constraintBanner.remove();
+  const timeInput = document.getElementById('bkCheckinTime');
+  if (timeInput) timeInput.min = '';
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     btn.classList.remove('bk-tour-unavailable');
     btn.disabled = false;
@@ -526,7 +683,14 @@ function validate() {
   err('bkPaymentDate','errPaymentDate',!getVal('bkPaymentDate')       ? 'Required.' : '');
   err('bkTotal',      'errTotal',      parseFloat(getVal('bkTotal')) <= 0 ? 'Required.' : '');
   err('bkDownpayment','errDownpayment',getVal('bkDownpayment') === ''  ? 'Required.' : '');
-  err('bkCheckinTime','errCheckinTime',!getVal('bkCheckinTime')        ? 'Required.' : '');
+  err('bkCheckinTime','errCheckinTime',!getVal('bkCheckinTime') ? 'Required.' : '');
+
+  // Checkout constraint — check-in must be after previous booking's checkout
+  const ciVal = getVal('bkCheckinTime');
+  const constraintErr = validateCheckinConstraint(ciVal);
+  if (constraintErr) {
+    err('bkCheckinTime', 'errCheckinTime', constraintErr);
+  }
 
   const te = document.getElementById('errTourType');
   if (!_tourType) {
@@ -911,6 +1075,28 @@ function applyBookingIndicators() {
   // Build stayover map once for all cells (Over-Night / 3D2N downstream days)
   const stayoverMap = buildStayoverMap();
 
+  // Build checkout-constraint map: dateKey → latest checkout time (HH:MM)
+  // These are days where a previous booking checks out — new bookings must start after that time
+  const checkoutConstraintMap = {};
+  Object.keys(Bookings).forEach(checkinKey => {
+    (Bookings[checkinKey] || []).forEach(b => {
+      const coDate = (b.booking && b.booking.checkoutDate) || b.checkoutDate || '';
+      const coTime = (b.booking && b.booking.checkoutTime) || b.checkoutTime || '';
+      if (!coDate || !coTime) return;
+      // Only mark if checkout date differs from checkin date (multi-day booking)
+      if (coDate === checkinKey) return;
+      if (!checkoutConstraintMap[coDate]) {
+        checkoutConstraintMap[coDate] = coTime;
+      } else {
+        // Keep the latest checkout time
+        const existing = checkoutConstraintMap[coDate];
+        const [eh, em] = existing.split(':').map(Number);
+        const [nh, nm] = coTime.split(':').map(Number);
+        if (nh * 60 + nm > eh * 60 + em) checkoutConstraintMap[coDate] = coTime;
+      }
+    });
+  });
+
   document.querySelectorAll('#yearGrid .day-cell:not(.other-month)').forEach(cell => {
     const numEl = cell.querySelector('.day-num');
     if (!numEl) return;
@@ -928,21 +1114,32 @@ function applyBookingIndicators() {
     applyTimeSlotsToCell(key, cell);
 
     // 3. Stay-over days from overnight/3D2N bookings
-    //    Only apply if cell isn't already a checkin-day (has its own booking)
     cell.classList.remove('slot-stayover', 'slot-stayover-3d2n', 'slot-stayover-red');
     if (!cell.classList.contains('slot-full') && !cell.classList.contains('slot-morning-taken')) {
       const stay = stayoverMap[key];
       if (stay) {
         if (stay.color === 'red') {
-          // 3D2N day+1: red occupied day
           cell.classList.add('slot-stayover-red');
           if (stay.tour === '3d2n') cell.classList.add('slot-stayover-3d2n');
         } else {
-          // yellow checkout day
           cell.classList.add('slot-stayover');
           if (stay.tour === '3d2n') cell.classList.add('slot-stayover-3d2n');
         }
       }
+    }
+
+    // 4. Checkout-constraint day: partial availability (previous guest still checking out)
+    //    Only apply if no stronger indicator already shown (slot-full, slot-stayover-red)
+    cell.classList.remove('slot-checkout-pending');
+    const constraintTime = checkoutConstraintMap[key];
+    if (constraintTime &&
+        !cell.classList.contains('slot-full') &&
+        !cell.classList.contains('slot-stayover-red') &&
+        !cell.classList.contains('slot-morning-taken')) {
+      cell.classList.add('slot-checkout-pending');
+      cell.dataset.checkoutTime = to12hr(constraintTime);
+    } else {
+      delete cell.dataset.checkoutTime;
     }
   });
 }
@@ -1073,6 +1270,8 @@ function restoreDraft(draft) {
     calcCheckout();
     applyTimeSlotToForm(draft.checkinTime);
   }
+  // Re-apply checkout constraint (draft restore may have set a time; re-validate it)
+  if (_checkinConstraint) applyCheckoutConstraint(_checkinConstraint);
 }
 
 /* ── Clear draft for current date ── */
