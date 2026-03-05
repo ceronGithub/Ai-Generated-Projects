@@ -3770,3 +3770,49 @@ mark {
     gap: 0.25rem 0.6rem;
   }
 }
+
+/* =============================================
+   HELP MODAL — Table Mode card + tab icons
+   ============================================= */
+
+/* ── Tab icons ── */
+.hlp-tab-icon {
+  font-size: 0.85em;
+  margin-right: 0.3em;
+  vertical-align: -0.05em;
+}
+
+/* ── Table Mode mode card (gold accent) ── */
+.hlp-mode-card--table {
+  border-color: rgba(255, 201, 77, 0.25);
+  background: linear-gradient(135deg, rgba(255,201,77,0.06) 0%, rgba(255,150,30,0.04) 100%);
+}
+
+.hlp-mode-card--table .hlp-mode-icon {
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(255,201,77,0.5);
+}
+
+.hlp-mode-card--table h3 {
+  color: var(--gold);
+}
+
+.hlp-mode-card--table .hlp-tag {
+  background: rgba(255,201,77,0.12);
+  border-color: rgba(255,201,77,0.3);
+  color: var(--gold);
+}
+
+/* Make the mode grid 2×2 to accommodate 4 cards */
+.hlp-mode-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+@media (max-width: 560px) {
+  .hlp-mode-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .hlp-tab-icon {
+    display: none;
+  }
+}
