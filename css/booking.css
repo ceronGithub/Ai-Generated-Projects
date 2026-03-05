@@ -1026,3 +1026,61 @@
   text-transform: uppercase;
   gap: 6px;
 }
+
+/* ══════════════════════════════════════
+   VIEW MODAL — sections, rows, totals
+══════════════════════════════════════ */
+.bk-view-section {
+  background: #fafafa;
+  border: 1px solid #f0eeff;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.bk-view-section-full {
+  grid-column: 1 / -1;
+}
+.bk-view-section-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+.bk-view-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0eeff;
+  gap: 8px;
+}
+.bk-view-row:last-child { border-bottom: none; }
+.bk-view-row span:first-child {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9996b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.bk-view-row span:last-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a1a2e;
+  text-align: right;
+}
+.bk-view-total span:last-child {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+.bk-view-balance-due span:last-child { color: #e04060; font-weight: 800; }
+.bk-view-balance-ok  span:last-child { color: #2a9a5a; font-weight: 800; }
+
+@media (max-width: 360px) {
+  .bk-view-section { padding: 10px 12px; border-radius: 10px; }
+  .bk-view-section-title { font-size: 9px; margin-bottom: 8px; }
+  .bk-view-row span:first-child { font-size: 9px; }
+  .bk-view-row span:last-child  { font-size: 11px; }
+  .bk-view-total span:last-child { font-size: 13px; }
+}
