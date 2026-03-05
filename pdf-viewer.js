@@ -28,11 +28,13 @@ const PDFViewer = (() => {
   const $ = id => document.getElementById(id);
 
   // ── Open modal with a File object ──────────
-  async function open(file) {
+  // @param {File}   file       - PDF File object
+  // @param {number} [startPage=1] - page to jump to after loading
+  async function open(file, startPage) {
     if (!file) { console.warn('[PDFViewer] open() called with no file'); return; }
 
     _fileName = file.name;
-    _pageNum  = 1;
+    _pageNum  = (startPage && startPage > 0) ? Math.floor(startPage) : 1;
     _scale    = 1.2;
 
     // Show modal immediately (skeleton state) — happens synchronously
@@ -43,6 +45,8 @@ const PDFViewer = (() => {
     try {
       const arrayBuffer = await file.arrayBuffer();
       _pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      // Clamp requested page to valid range
+      _pageNum = Math.max(1, Math.min(_pageNum, _pdfDoc.numPages));
       _updatePageInfo();
       await _renderPage(_pageNum);
     } catch (err) {

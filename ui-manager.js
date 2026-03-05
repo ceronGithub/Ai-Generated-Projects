@@ -196,7 +196,7 @@ const UIManager = (() => {
     `;
     item.querySelector('.result-view-btn').addEventListener('click', () => {
       const fileObj = _findFile(filename, files);
-      if (fileObj && window.PDFViewer) window.PDFViewer.open(fileObj);
+      if (fileObj && window.PDFViewer) window.PDFViewer.open(fileObj, page);
     });
     item.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(item));
     return item;
@@ -244,7 +244,7 @@ const UIManager = (() => {
 
     item.querySelector('.result-view-btn').addEventListener('click', () => {
       const fileObj = _findFile(filename, files);
-      if (fileObj && window.PDFViewer) window.PDFViewer.open(fileObj);
+      if (fileObj && window.PDFViewer) window.PDFViewer.open(fileObj, page);
     });
 
     function openInlineEditor(wrap) {
@@ -369,7 +369,7 @@ const UIManager = (() => {
     `;
     const viewBtn = item.querySelector('.result-view-btn');
     if (fileObj && window.PDFViewer) {
-      viewBtn.addEventListener('click', () => window.PDFViewer.open(fileObj));
+      viewBtn.addEventListener('click', () => window.PDFViewer.open(fileObj, page));
     } else {
       viewBtn.style.display = 'none';
     }
@@ -400,11 +400,8 @@ const UIManager = (() => {
           <div class="result-text">${escapeHtml(p.text) || '<em>(no text)</em>'}</div>
         `;
         if (window.PDFViewer) {
-          item.querySelector('.result-view-btn').addEventListener('click', () => window.PDFViewer.open(file));
+          item.querySelector('.result-view-btn').addEventListener('click', () => window.PDFViewer.open(file, p.page));
         }
-        item.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(item));
-        cards.push(item);
-        continue;
       }
       for (const { label, value } of fields) {
         const item = document.createElement('div');
@@ -425,7 +422,7 @@ const UIManager = (() => {
           <div class="result-text">${escapeHtml(value)}</div>
         `;
         if (window.PDFViewer) {
-          item.querySelector('.result-view-btn').addEventListener('click', () => window.PDFViewer.open(file));
+          item.querySelector('.result-view-btn').addEventListener('click', () => window.PDFViewer.open(file, p.page));
         }
         item.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(item));
         cards.push(item);
@@ -848,7 +845,7 @@ const UIManager = (() => {
     // Wire up View button
     card.querySelector('.result-view-btn').addEventListener('click', () => {
       const fileObj = _findFile(row.filename, files);
-      if (fileObj && window.PDFViewer) window.PDFViewer.open(fileObj);
+      if (fileObj && window.PDFViewer) window.PDFViewer.open(fileObj, row.page);
     });
 
     // Wire up Remove button
