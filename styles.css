@@ -220,6 +220,17 @@ body {
   filter: drop-shadow(0 0 14px var(--cyan));
   animation: iconPulse 3s ease-in-out infinite;
 }
+/* Official app icon — replaces the emoji when img is used */
+.logo-icon--img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 50%;
+  font-size: 0; /* hide alt text if image fails */
+  filter: drop-shadow(0 0 10px var(--cyan)) drop-shadow(0 0 22px var(--violet));
+  animation: iconPulse 3s ease-in-out infinite;
+  flex-shrink: 0;
+}
 .logo strong {
   color: var(--cyan);
   text-shadow: 0 0 20px rgba(0, 229, 255, 0.6);
