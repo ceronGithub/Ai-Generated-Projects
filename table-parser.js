@@ -273,6 +273,53 @@ const TableParser = (() => {
   }
 
   // ── Public API ─────────────────────────────────────────────────────────────
-  return { parse };
+  // ── Table detection ────────────────────────────────────────────────────────
+  /**
+   * Scans pdfData and returns true if any page looks like it contains
+   * a structured table (transaction history / grid of rows with repeated
+   * column-like patterns).
+   *
+   * Heuristics (ANY match = table detected):
+   *  1. TagNumber header line (SMC-style transaction report)
+   *  2. 5+ data lines matching the date/ESI/zone pattern on a single page
+   *  3. 4+ consecutive lines that each have 4+ tab/multi-space separated tokens
+   *     (generic table grid detection)
+   *
+   * @param {Array<{file, pages}>} pdfData
+   * @returns {boolean}
+   */
+  function detectTable(pdfData) {
+    const MULTI_SPACE = /\s{2,}/;           // 2+ spaces = column separator
+    const MIN_COLS    = 4;                  // min tokens per line to count as a grid row
+    const MIN_GRID    = 4;                  // min consecutive grid rows to flag a table
+
+    for (const { pages } of pdfData) {
+      for (const { text } of pages) {
+        const lines = splitIntoLines(text);
+
+        // Heuristic 1 — SMC TagNumber header
+        if (lines.some(l => RE_TAG.test(l))) return true;
+
+        // Heuristic 2 — 5+ data lines (date + ESI pattern)
+        const dataCount = lines.filter(l => RE_DATALINE.test(l)).length;
+        if (dataCount >= 5) return true;
+
+        // Heuristic 3 — 4+ consecutive multi-column lines (generic grid)
+        let streak = 0;
+        for (const line of lines) {
+          const cols = line.trim().split(MULTI_SPACE).filter(Boolean);
+          if (cols.length >= MIN_COLS) {
+            streak++;
+            if (streak >= MIN_GRID) return true;
+          } else {
+            streak = 0;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  return { parse, detectTable };
 
 })();

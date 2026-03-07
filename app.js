@@ -351,6 +351,28 @@
     UIManager.setRunEnabled(state.keywords.length > 0);
   }
 
+  // ===== TABLE-DETECTED MODAL =====
+
+  function showTableWarningModal() {
+    return new Promise(resolve => {
+      const overlay    = document.getElementById('tableWarnOverlay');
+      const btnOk      = document.getElementById('tableWarnOk');
+      const btnProceed = document.getElementById('tableWarnProceed');
+      overlay.style.display = 'flex';
+
+      function cleanup(result) {
+        btnOk.removeEventListener('click', onOk);
+        btnProceed.removeEventListener('click', onProceed);
+        overlay.style.display = 'none';
+        resolve(result);
+      }
+      const onOk      = () => cleanup('ok');
+      const onProceed = () => cleanup('proceed');
+      btnOk.addEventListener('click', onOk);
+      btnProceed.addEventListener('click', onProceed);
+    });
+  }
+
   // ===== RUN EXTRACTION =====
 
   runBtn.addEventListener('click', runExtraction);
@@ -389,28 +411,54 @@
         UIManager.setProgress(100, 'Done!');
         UIManager.renderTableResults(rows, state.files);
 
-      } else if (state.mode === 'multiple') {
-        // ── Phase 2: Two-pass keyword search ─────────────────────────────
-        UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting keyword positions…');
-        await new Promise(r => setTimeout(r, 30)); // yield so UI can update
-        UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing second-run values…');
-        await new Promise(r => setTimeout(r, 30));
-        const results = KeywordHandler.search(pdfData, state.keywords);
-        state.lastResults = results;
-        UIManager.setProgress(100, 'Done!');
-        UIManager.renderKeywordResults(results, state.keywords, state.files);
+      } else if (state.mode === 'multiple' || state.mode === 'single') {
 
-      } else if (state.mode === 'single') {
-        // ── Phase 2: Two-pass keyword search ─────────────────────────────
-        UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting keyword position…');
-        await new Promise(r => setTimeout(r, 30));
-        UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing second-run value…');
-        await new Promise(r => setTimeout(r, 30));
-        const results = KeywordHandler.search(pdfData, state.keywords);
-        state.lastResults = results;
-        const renameMap = RenameHandler.buildRenameMap(results);
-        UIManager.setProgress(100, 'Done!');
-        UIManager.renderSingleKeywordResults(results, state.keywords[0], state.files, renameMap);
+        // ── Table guard: detect before running keyword search ─────────────
+        const hasTable = TableParser.detectTable(pdfData);
+        if (hasTable) {
+          // Stop warp + progress immediately before showing modal
+          if (window.StarField) window.StarField.stopWarp();
+          UIManager.setRunning(false);
+          UIManager.hideProgress();
+
+          const choice = await showTableWarningModal();
+
+          if (choice === 'ok') {
+            // Reset back to mode selection cleanly
+            resetToEmpty();
+            return;
+          }
+          // choice === 'proceed': continue but skip table regions in search
+          // Re-engage warp for the search phase
+          if (window.StarField) window.StarField.startWarp();
+          UIManager.setRunning(true);
+        }
+
+        const skipTables = hasTable;
+
+        if (state.mode === 'multiple') {
+          // ── Phase 2: Two-pass keyword search ───────────────────────────
+          UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting keyword positions…');
+          await new Promise(r => setTimeout(r, 30)); // yield so UI can update
+          UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing second-run values…');
+          await new Promise(r => setTimeout(r, 30));
+          const results = KeywordHandler.search(pdfData, state.keywords, { skipTables });
+          state.lastResults = results;
+          UIManager.setProgress(100, 'Done!');
+          UIManager.renderKeywordResults(results, state.keywords, state.files);
+
+        } else {
+          // ── Phase 2: Two-pass keyword search (single) ──────────────────
+          UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting keyword position…');
+          await new Promise(r => setTimeout(r, 30));
+          UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing second-run value…');
+          await new Promise(r => setTimeout(r, 30));
+          const results = KeywordHandler.search(pdfData, state.keywords, { skipTables });
+          state.lastResults = results;
+          const renameMap = RenameHandler.buildRenameMap(results);
+          UIManager.setProgress(100, 'Done!');
+          UIManager.renderSingleKeywordResults(results, state.keywords[0], state.files, renameMap);
+        }
       }
 
       // Scroll to results

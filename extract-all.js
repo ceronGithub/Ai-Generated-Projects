@@ -79,13 +79,15 @@ window.ExtractAll = (() => {
   // ─── DOCUMENT TYPE DETECTION ─────────────────────────────────────────────────
 
   /**
-   * detectType(text) → 'transaction' | 'salesinvoice' | 'generic'
+   * detectType(text) → 'transaction' | 'salesinvoice' | 'table' | 'generic'
    *
    * Runs on the FULL concatenated text of all pages of a PDF.
    */
-  function detectType(fullText) {
+  function detectType(fullText, pdfDataEntry) {
     if (/TRANSACTION\s+HISTORY\s+REPORT/i.test(fullText)) return 'transaction';
     if (/SALES\s+INVOICE\s+NUMBER\s*:/i.test(fullText))    return 'salesinvoice';
+    // Use TableParser to detect generic tabular PDFs
+    if (window.TableParser && pdfDataEntry && TableParser.detectTable([pdfDataEntry])) return 'table';
     return 'generic';
   }
 
@@ -328,13 +330,16 @@ window.ExtractAll = (() => {
       // Build full text from all pages for type detection
       const fullText = pages.map(p => p.text).join('\n');
 
-      const docType = detectType(fullText);
+      const docType = detectType(fullText, entry);
       let structured = null;
 
       if (docType === 'transaction') {
         structured = parseTransactionHistory(fullText);
       } else if (docType === 'salesinvoice') {
         structured = parseSalesInvoice(fullText);
+      } else if (docType === 'table') {
+        // Use TableParser to extract structured rows from generic tabular PDFs
+        structured = window.TableParser ? TableParser.parse([entry]) : null;
       }
       // generic: structured stays null — handled per-page in render
 
@@ -553,6 +558,14 @@ window.ExtractAll = (() => {
         continue;
       }
 
+      // ── Generic table (detected via TableParser) ──────────────────────────
+      if (docType === 'table' && structured && structured.length > 0) {
+        for (const row of structured) {
+          listEl.appendChild(makeTransactionCard(row, row.page || 1, file));
+        }
+        continue;
+      }
+
       // ── Generic / Fallback (per page) ─────────────────────────────────────
       for (const p of pages) {
         const fields = parseGeneric(p.text);
@@ -617,6 +630,7 @@ window.ExtractAll = (() => {
     if (txRows.length) {
       const ws = XLSX.utils.json_to_sheet(txRows);
       ws['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(Object.keys(txRows[0]).length - 1)}1` };
+      highlightDuplicates(ws);
       XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
     }
 
@@ -643,6 +657,7 @@ window.ExtractAll = (() => {
     if (invRows.length) {
       const ws = XLSX.utils.json_to_sheet(invRows);
       ws['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(Object.keys(invRows[0]).length - 1)}1` };
+      highlightDuplicates(ws);
       XLSX.utils.book_append_sheet(wb, ws, 'Invoices');
     }
 
@@ -665,6 +680,7 @@ window.ExtractAll = (() => {
     if (genRows.length) {
       const ws = XLSX.utils.json_to_sheet(genRows);
       ws['!autofilter'] = { ref: 'A1:D1' };
+      highlightDuplicates(ws);
       XLSX.utils.book_append_sheet(wb, ws, 'Fields');
     }
 

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="media.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   </head>
   <body>
@@ -29,11 +29,7 @@
     <!-- ============ HEADER ============ -->
     <header class="site-header">
       <div class="logo">
-        <img
-          class="logo-icon logo-icon--img"
-          src="icon.png"
-          alt="PDF Extract icon"
-        />
+        <img class="logo-icon logo-icon--img" src="icon.png" alt="PDF Extract icon" />
         <span class="logo-text">PDF<strong>Extract</strong></span>
       </div>
       <p class="tagline">
@@ -115,17 +111,12 @@
           <button class="mode-btn" id="modeMultiple" data-mode="multiple">
             <span class="mode-icon">🔑</span>
             <span class="mode-name">Multiple Keywords</span>
-            <span class="mode-desc"
-              >Finds values next to specific labels — great for invoices &amp;
-              forms. Not suited for large tables or transaction rows.</span
-            >
+            <span class="mode-desc">Finds values next to specific labels — great for invoices &amp; forms. Not suited for large tables or transaction rows.</span>
           </button>
           <button class="mode-btn" id="modeSingle" data-mode="single">
             <span class="mode-icon">🔍</span>
             <span class="mode-name">Single Keyword</span>
-            <span class="mode-desc"
-              >Search one keyword &amp; rename files by result</span
-            >
+            <span class="mode-desc">Search one keyword &amp; rename files by result</span>
           </button>
           <button class="mode-btn" id="modeExtractAll" data-mode="extractall">
             <span class="mode-icon">📋</span>
@@ -133,18 +124,10 @@
             <span class="mode-desc">Dump all text from every uploaded PDF</span>
           </button>
           <!-- ── NEW: Table Mode ── -->
-          <button
-            class="mode-btn mode-btn--table"
-            id="modeTable"
-            data-mode="tablemode"
-          >
+          <button class="mode-btn mode-btn--table" id="modeTable" data-mode="tablemode">
             <span class="mode-icon">🗂️</span>
             <span class="mode-name">Table Mode</span>
-            <span class="mode-desc"
-              >Designed for large tables — parses every row automatically and
-              captures Tag, Zone, Entry, Exit &amp; Toll Fee without any
-              keywords.</span
-            >
+            <span class="mode-desc">Designed for large tables — parses every row automatically and captures Tag, Zone, Entry, Exit &amp; Toll Fee without any keywords.</span>
           </button>
         </div>
 
@@ -189,17 +172,9 @@
         <div class="progress-bar-wrap" id="progressWrap" style="display: none">
           <div class="progress-bar" id="progressBar"></div>
         </div>
-        <span
-          class="progress-label"
-          id="progressLabel"
-          style="display: none"
-        ></span>
+        <span class="progress-label" id="progressLabel" style="display: none"></span>
 
-        <div
-          class="results-container"
-          id="resultsContainer"
-          style="display: none"
-        >
+        <div class="results-container" id="resultsContainer" style="display: none">
           <div class="results-toolbar">
             <h3 class="results-title">⬡ Extraction Results</h3>
             <div class="results-actions" id="resultsActions"></div>
@@ -230,18 +205,12 @@
             <span class="hlp-icon">✦</span>
             <h2 class="hlp-title">How to Use <strong>PDFExtract</strong></h2>
           </div>
-          <button class="hlp-close-btn" id="helpClose" title="Close (Esc)">
-            ✕
-          </button>
+          <button class="hlp-close-btn" id="helpClose" title="Close (Esc)">✕</button>
         </div>
 
         <!-- Tab Nav -->
         <div class="hlp-tabs" role="tablist">
-          <button
-            class="hlp-tab hlp-tab--active"
-            data-tab="overview"
-            role="tab"
-          >
+          <button class="hlp-tab hlp-tab--active" data-tab="overview" role="tab">
             <span class="hlp-tab-icon">🏠</span> Overview
           </button>
           <button class="hlp-tab" data-tab="modes" role="tab">
@@ -260,6 +229,7 @@
 
         <!-- Tab Content -->
         <div class="hlp-body">
+
           <!-- ── OVERVIEW ── -->
           <div class="hlp-pane hlp-pane--active" data-pane="overview">
             <div class="hlp-intro">
@@ -276,8 +246,7 @@
                   <h3>📄 Upload PDFs</h3>
                   <p>
                     Drag and drop your PDF files into the upload zone, or click
-                    <em>Browse Files</em>. You can upload multiple files at
-                    once.
+                    <em>Browse Files</em>. You can upload multiple files at once.
                   </p>
                 </div>
               </div>
@@ -287,9 +256,8 @@
                   <h3>⚙️ Choose a Mode</h3>
                   <p>
                     Select <em>Multiple Keywords</em>, <em>Single Keyword</em>,
-                    <em>Extract All</em>, or <em>Table Mode</em> depending on
-                    what you need. See the <strong>Modes</strong> tab for
-                    details.
+                    <em>Extract All</em>, or <em>Table Mode</em> depending on what
+                    you need. See the <strong>Modes</strong> tab for details.
                   </p>
                 </div>
               </div>
@@ -301,8 +269,7 @@
                     Type the label that appears in your PDF (e.g.
                     <code>Account Name</code>, <code>Date</code>,
                     <code>Total</code>). See the <strong>Keywords</strong> tab
-                    for special keywords. Not needed for Extract All or Table
-                    Mode.
+                    for special keywords. Not needed for Extract All or Table Mode.
                   </p>
                 </div>
               </div>
@@ -333,17 +300,16 @@
           <!-- ── MODES ── -->
           <div class="hlp-pane" data-pane="modes">
             <div class="hlp-mode-grid">
+
               <div class="hlp-mode-card hlp-mode-card--cyan">
                 <div class="hlp-mode-icon">🔑</div>
                 <h3>Multiple Keywords</h3>
                 <p>
-                  Finds values next to specific labels — great for invoices
-                  &amp; forms where you need many fields at once. Each keyword
-                  produces its own result card per file.
-                  <strong
-                    >Not suited for large tables or transaction rows</strong
-                  >
-                  — use Table Mode instead when your data is structured in rows.
+                  Finds values next to specific labels — great for invoices &amp;
+                  forms where you need many fields at once. Each keyword produces
+                  its own result card per file. <strong>Not suited for large
+                  tables or transaction rows</strong> — use Table Mode instead
+                  when your data is structured in rows.
                 </p>
                 <div class="hlp-tag">Best for: invoices &amp; forms</div>
               </div>
@@ -357,9 +323,7 @@
                   this when you need to find every occurrence of one specific
                   field across many documents.
                 </p>
-                <div class="hlp-tag">
-                  Best for: bulk scanning &amp; renaming
-                </div>
+                <div class="hlp-tag">Best for: bulk scanning &amp; renaming</div>
               </div>
 
               <div class="hlp-mode-card hlp-mode-card--gold">
@@ -370,9 +334,7 @@
                   every page of every PDF — no keyword input needed. Ideal for
                   exploring an unfamiliar document or doing a full data dump.
                 </p>
-                <div class="hlp-tag">
-                  Best for: auto-detect &amp; exploration
-                </div>
+                <div class="hlp-tag">Best for: auto-detect &amp; exploration</div>
               </div>
 
               <div class="hlp-mode-card hlp-mode-card--table">
@@ -387,6 +349,7 @@
                 </p>
                 <div class="hlp-tag">Best for: large transaction tables</div>
               </div>
+
             </div>
           </div>
 
@@ -394,8 +357,7 @@
           <div class="hlp-pane" data-pane="keywords">
             <p class="hlp-pane-intro">
               Keywords match the labels printed in your PDF. You can type them
-              with or without a colon. A few keywords have special smart
-              behaviour:
+              with or without a colon. A few keywords have special smart behaviour:
             </p>
             <div class="hlp-kw-table">
               <div class="hlp-kw-row hlp-kw-row--header">
@@ -405,9 +367,7 @@
               </div>
               <div class="hlp-kw-row">
                 <code>📅 Date</code>
-                <span
-                  >Every date value on the page (date part only, no time)</span
-                >
+                <span>Every date value on the page (date part only, no time)</span>
                 <span class="hlp-ex">02/01/2026</span>
               </div>
               <div class="hlp-kw-row">
@@ -471,12 +431,10 @@
                     <span>File</span><span>Date</span><span>Total</span>
                   </div>
                   <div class="hlp-lp-row">
-                    <span>invoice1.pdf</span><span>02/01</span
-                    ><span>45.00</span>
+                    <span>invoice1.pdf</span><span>02/01</span><span>45.00</span>
                   </div>
                   <div class="hlp-lp-row">
-                    <span>invoice2.pdf</span><span>02/03</span
-                    ><span>99.00</span>
+                    <span>invoice2.pdf</span><span>02/03</span><span>99.00</span>
                   </div>
                 </div>
               </div>
@@ -540,9 +498,9 @@
                 <div>
                   <h3>Edit extracted values inline</h3>
                   <p>
-                    Click directly on an extracted value in a result card to
-                    edit it before exporting. Useful for correcting OCR
-                    artefacts or reformatting data.
+                    Click directly on an extracted value in a result card to edit
+                    it before exporting. Useful for correcting OCR artefacts or
+                    reformatting data.
                   </p>
                 </div>
               </div>
@@ -593,15 +551,14 @@
               </div>
             </div>
           </div>
+
         </div>
         <!-- /Tab Content -->
 
         <!-- Footer -->
         <div class="hlp-footer">
           <span class="hlp-footer-hint">Press <kbd>Esc</kbd> to close</span>
-          <button class="btn btn-accent hlp-done-btn" id="helpDone">
-            Got it ✦
-          </button>
+          <button class="btn btn-accent hlp-done-btn" id="helpDone">Got it ✦</button>
         </div>
       </div>
       <!-- /Panel -->
@@ -626,12 +583,7 @@
           </div>
           <button class="pvm-close-btn" id="pdfViewerClose" title="Close (Esc)">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M2 2L14 14M14 2L2 14"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
+              <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
         </div>
@@ -649,103 +601,38 @@
           </div>
           <div class="pvm-controls">
             <div class="pvm-control-group pvm-nav">
-              <button
-                class="pvm-btn pvm-btn--nav"
-                id="pdfViewerPrev"
-                title="Previous page (←)"
-                disabled
-              >
+              <button class="pvm-btn pvm-btn--nav" id="pdfViewerPrev" title="Previous page (←)" disabled>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path
-                    d="M9 2L4 7L9 12"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
+                  <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
               <div class="pvm-page-indicator">
-                <input
-                  type="number"
-                  id="pdfViewerPageInput"
-                  class="pvm-page-input"
-                  min="1"
-                  value="1"
-                  title="Jump to page"
-                />
+                <input type="number" id="pdfViewerPageInput" class="pvm-page-input" min="1" value="1" title="Jump to page"/>
                 <span class="pvm-page-sep">/</span>
                 <span class="pvm-page-total" id="pdfViewerTotalPages">1</span>
               </div>
-              <button
-                class="pvm-btn pvm-btn--nav"
-                id="pdfViewerNext"
-                title="Next page (→)"
-                disabled
-              >
+              <button class="pvm-btn pvm-btn--nav" id="pdfViewerNext" title="Next page (→)" disabled>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path
-                    d="M5 2L10 7L5 12"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
+                  <path d="M5 2L10 7L5 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
             </div>
             <div class="pvm-divider"></div>
             <div class="pvm-control-group pvm-zoom">
-              <button
-                class="pvm-btn pvm-btn--zoom"
-                id="pdfViewerZoomOut"
-                title="Zoom out (−)"
-              >
+              <button class="pvm-btn pvm-btn--zoom" id="pdfViewerZoomOut" title="Zoom out (−)">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle
-                    cx="6"
-                    cy="6"
-                    r="4.5"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                  />
-                  <path
-                    d="M3.5 6h5M10 10l2.5 2.5"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                  />
+                  <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M3.5 6h5M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                 </svg>
               </button>
               <span class="pvm-zoom-label" id="pdfViewerZoomLabel">120%</span>
-              <button
-                class="pvm-btn pvm-btn--zoom"
-                id="pdfViewerZoomIn"
-                title="Zoom in (+)"
-              >
+              <button class="pvm-btn pvm-btn--zoom" id="pdfViewerZoomIn" title="Zoom in (+)">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle
-                    cx="6"
-                    cy="6"
-                    r="4.5"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                  />
-                  <path
-                    d="M6 3.5v5M3.5 6h5M10 10l2.5 2.5"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                  />
+                  <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M6 3.5v5M3.5 6h5M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
                 </svg>
               </button>
-              <button
-                class="pvm-btn pvm-btn--reset"
-                id="pdfViewerZoomReset"
-                title="Reset zoom (Ctrl+0)"
-              >
-                Reset
-              </button>
+              <button class="pvm-btn pvm-btn--reset" id="pdfViewerZoomReset" title="Reset zoom (Ctrl+0)">Reset</button>
             </div>
           </div>
           <div class="pvm-hints">
@@ -773,5 +660,24 @@
     <script src="pdf-viewer.js"></script>
     <script src="app.js"></script>
     <script src="help.js"></script>
+
+    <!-- ── Table-detected modal ── -->
+    <div id="tableWarnOverlay" class="tw-overlay" style="display:none" aria-modal="true" role="alertdialog">
+      <div class="tw-modal">
+        <div class="tw-modal-glow"></div>
+        <!-- corner brackets via CSS -->
+        <div class="tw-icon">⚠</div>
+        <h2 class="tw-title">Table Detected</h2>
+        <p class="tw-body">
+          I'm sorry, I cannot deal with huge data in a table.<br>
+          Choose <strong>Table Mode</strong> for that option.<br><br>
+          However, I could still capture keywords <em>outside</em> the table.
+        </p>
+        <div class="tw-btn-row">
+          <button class="tw-btn tw-btn--ok"      id="tableWarnOk">OK</button>
+          <button class="tw-btn tw-btn--proceed" id="tableWarnProceed">Proceed</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

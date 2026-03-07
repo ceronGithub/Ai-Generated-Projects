@@ -583,10 +583,10 @@ const KeywordHandler = (() => {
 
   function cleanValue(value) {
     if (!value) return value;
-    // Strip leading label-syntax chars
-    value = value.replace(/^[\s:;#\-–—|/\\*•·]+/, '');
-    // Strip trailing label-syntax chars
-    value = value.replace(/[\s:;#\-–—|/\\*•·,]+$/, '');
+    // Strip leading label-syntax chars: spaces, colons, hashes, dashes, pipes, slashes, etc.
+    value = value.replace(/^[\s:;#\-–—|\/\\*•·]+/, '');
+    // Strip trailing label-syntax chars (also commas)
+    value = value.replace(/[\s:;#\-–—|\/\\*•·,]+$/, '');
     return value.trim();
   }
 
@@ -812,7 +812,49 @@ const KeywordHandler = (() => {
   //  They are handled identically in both passes; the capture pass result is
   //  used (same as before, since they deduplicate internally).
 
-  function search(pdfData, keywords) {
+  function search(pdfData, keywords, opts = {}) {
+    const skipTables = !!opts.skipTables;
+
+    // Helper: remove lines that look like table rows (2+ spaces = column separator,
+    // 4+ tokens per line, or matching the SMC tag/dataline patterns)
+    const TABLE_LINE_RE = /\t|\s{2,}/;
+    const MIN_TABLE_COLS = 4;
+    function stripTableRegions(text) {
+      if (!skipTables) return text;
+      const lines = text.split('\n');
+      const tableLines = new Set();
+
+      // Pass 1: mark any run of 3+ consecutive multi-column lines as table
+      let streakStart = -1;
+      for (let i = 0; i <= lines.length; i++) {
+        const isTableLine = i < lines.length &&
+          lines[i].trim().split(TABLE_LINE_RE).filter(Boolean).length >= MIN_TABLE_COLS;
+
+        if (isTableLine) {
+          if (streakStart === -1) streakStart = i;
+        } else {
+          if (streakStart !== -1) {
+            const streakLen = i - streakStart;
+            if (streakLen >= 3) {
+              for (let j = streakStart; j < i; j++) tableLines.add(j);
+            }
+            streakStart = -1;
+          }
+        }
+      }
+
+      // Pass 2: mark individual SMC-style table lines
+      for (let i = 0; i < lines.length; i++) {
+        const l = lines[i];
+        if (/TagNumber\s*:/i.test(l))                              tableLines.add(i);
+        if (/\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}:\d{2}/.test(l)) tableLines.add(i);
+        if (/Total\s*:\s*Php/i.test(l))                            tableLines.add(i);
+        if (/Ref\s+No\.\s*:/i.test(l))                             tableLines.add(i);
+        if (/IER\s+No\.\s*:/i.test(l))                             tableLines.add(i);
+      }
+
+      return lines.filter((_, i) => !tableLines.has(i)).join('\n');
+    }
 
     // ── PASS 1: Scout — record every first-occurrence match position ─────────
 
@@ -826,7 +868,8 @@ const KeywordHandler = (() => {
     for (const { file, pages } of pdfData) {
       const filename = file.name;
 
-      for (const { page, text } of pages) {
+      for (const { page, text: rawText } of pages) {
+        const text = stripTableRegions(rawText);
         const stopPositions = findAllStopPositions(text, keywords);
 
         for (const keyword of keywords) {
@@ -1023,7 +1066,8 @@ const KeywordHandler = (() => {
     for (const { file, pages } of pdfData) {
       const filename = file.name;
 
-      for (const { page, text } of pages) {
+      for (const { page, text: rawText } of pages) {
+        const text = stripTableRegions(rawText);
         const stopPositions = findAllStopPositions(text, keywords);
 
         for (const keyword of keywords) {
