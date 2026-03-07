@@ -23,6 +23,7 @@ const ExcelExporter = (() => {
     }
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws['!cols'] = [{ wch: 10 }, { wch: 35 }, { wch: 25 }, { wch: 80 }];
+    ws['!autofilter'] = { ref: 'A1:D1' };
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Results');
     XLSX.writeFile(wb, filename);
@@ -66,6 +67,7 @@ const ExcelExporter = (() => {
       { wch: 10 },  // Page
       ...kwOrder.map(() => ({ wch: 28 }))
     ];
+    ws['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(header.length - 1)}1` };
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Results');
     XLSX.writeFile(wb, filename);
@@ -115,6 +117,7 @@ const ExcelExporter = (() => {
       { wch: 22 },   // Label
       { wch: 100 },  // Extracted Text
     ];
+    ws['!autofilter'] = { ref: 'A1:D1' };
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'All Text');
@@ -165,6 +168,7 @@ const ExcelExporter = (() => {
       { wch: 30 }, // Exit
       { wch: 12 }, // Toll Fee
     ];
+    ws['!autofilter'] = { ref: 'A1:M1' };
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
@@ -224,6 +228,7 @@ const ExcelExporter = (() => {
       { wch: 35 }, // Filename
       { wch: 8  }, // Page
     ];
+    ws['!autofilter'] = { ref: 'A1:M1' };
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Transactions by Tag');

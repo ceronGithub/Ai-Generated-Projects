@@ -615,7 +615,9 @@ window.ExtractAll = (() => {
       });
     }
     if (txRows.length) {
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(txRows), 'Transactions');
+      const ws = XLSX.utils.json_to_sheet(txRows);
+      ws['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(Object.keys(txRows[0]).length - 1)}1` };
+      XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
     }
 
     // ── Sales Invoice sheet ──────────────────────────────────────────────────
@@ -639,7 +641,9 @@ window.ExtractAll = (() => {
       });
     }
     if (invRows.length) {
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(invRows), 'Invoices');
+      const ws = XLSX.utils.json_to_sheet(invRows);
+      ws['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(Object.keys(invRows[0]).length - 1)}1` };
+      XLSX.utils.book_append_sheet(wb, ws, 'Invoices');
     }
 
     // ── Generic fields sheet ─────────────────────────────────────────────────
@@ -659,7 +663,9 @@ window.ExtractAll = (() => {
       }
     }
     if (genRows.length) {
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(genRows), 'Fields');
+      const ws = XLSX.utils.json_to_sheet(genRows);
+      ws['!autofilter'] = { ref: 'A1:D1' };
+      XLSX.utils.book_append_sheet(wb, ws, 'Fields');
     }
 
     if (!wb.SheetNames.length) {
