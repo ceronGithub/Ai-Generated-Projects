@@ -389,7 +389,6 @@ function _yearTabGuests(d) {
 function _yearTabRevenue(d) {
   var pct       = d.totalRevenue > 0 ? Math.round(d.totalCollected / d.totalRevenue * 100) : 0;
 
-  /* ── top months ── */
   var topMonths = d.byMonth.filter(function(m) { return m.revenue > 0; })
     .sort(function(a, b) { return b.revenue - a.revenue; }).slice(0, 6);
 
@@ -409,7 +408,6 @@ function _yearTabRevenue(d) {
       '</div>';
   });
 
-  /* ── unpaid guests ── */
   var unpaid = d.guests.filter(function(g) { return g.balance > 0; });
   var unpaidRows = '';
   unpaid.forEach(function(g) {
@@ -423,7 +421,6 @@ function _yearTabRevenue(d) {
       '</div>';
   });
 
-  /* ── summary card ── */
   var summaryCard =
     '<div style="background:#fafafa;border:1.5px solid #f0eeff;border-radius:14px;padding:18px;margin-bottom:14px;">' +
       '<p style="font-size:12px;font-weight:800;color:#1a1a2e;margin:0 0 14px;">Revenue Summary</p>' +
@@ -444,7 +441,6 @@ function _yearTabRevenue(d) {
       '</div>' +
     '</div>';
 
-  /* ── top months section ── */
   var topSection =
     '<div style="background:#fafafa;border:1.5px solid #f0eeff;border-radius:14px;padding:18px;margin-bottom:14px;">' +
       '<p style="font-size:12px;font-weight:800;color:#1a1a2e;margin:0 0 2px;">Top Revenue Months</p>' +
@@ -452,7 +448,6 @@ function _yearTabRevenue(d) {
       (topRows || '<p style="color:#9996b0;font-size:12px;margin-top:8px;">No revenue yet.</p>') +
     '</div>';
 
-  /* ── outstanding section ── */
   var outstandingSection = unpaid.length
     ? '<div style="background:#fafafa;border:1.5px solid #ffd6df;border-radius:14px;padding:18px;">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
@@ -476,10 +471,26 @@ function _yearTabRevenue(d) {
 /* ═══════════════════════════════════════════════════════
    MONTH ANALYSIS MODAL
 ═══════════════════════════════════════════════════════ */
+var _maCurrentYear  = null;
+var _maCurrentMonth = null;
+var _maCurrentColor = null;
+
+function _triggerMonthPdfExport() {
+  if (typeof exportMonthAnalysisPDF === 'function' && _maCurrentYear !== null) {
+    exportMonthAnalysisPDF(_maCurrentYear, _maCurrentMonth, _maCurrentColor);
+  } else {
+    alert('PDF library not ready. Please try again.');
+  }
+}
+
 function openMonthAnalysis(year, month, color) {
   var ov = document.getElementById('monthAnalysisOverlay');
   var md = document.getElementById('monthAnalysisModal');
   if (!ov || !md) { alert('Month analysis modal not found.'); return; }
+
+  _maCurrentYear  = year;
+  _maCurrentMonth = month;
+  _maCurrentColor = color;
 
   var MN  = (typeof MONTH_NAMES !== 'undefined') ? MONTH_NAMES : [];
   var title = document.getElementById('maTitle');
