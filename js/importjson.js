@@ -66,6 +66,8 @@ function _resetImportState() {
   if (info) info.textContent = '';
   if (push) push.style.display = 'none';
   if (load) load.style.display = 'none';
+  const pushAll = document.getElementById('importPushAllBtn');
+  if (pushAll) pushAll.style.display = 'none';
 }
 
 /* ────────────────────────────────────────
@@ -253,6 +255,8 @@ function _renderImportPreview() {
   info.textContent = `${_importEntries.length} booking${_importEntries.length !== 1 ? 's' : ''} ready to import`;
   push.style.display = 'inline-flex';
   load.style.display = 'inline-flex';
+  const pushAllBtn = document.getElementById('importPushAllBtn');
+  if (pushAllBtn) pushAllBtn.style.display = 'inline-flex';
   _updateImportSelCount();
 }
 
@@ -484,6 +488,100 @@ function _showImportError(msg) {
     dz.onclick = () => document.getElementById('importFileInput').click();
     document.getElementById('importFileInput').click();
   };
+}
+
+/* ────────────────────────────────────────
+   PUSH ALL TO DATABASE (no selection needed)
+──────────────────────────────────────── */
+async function pushAllToDatabase() {
+  if (!_importEntries.length) {
+    showToast('⚠️ No bookings to push.', 3000);
+    return;
+  }
+
+  const btn = document.getElementById('importPushAllBtn');
+  const pushSelBtn = document.getElementById('importPushBtn');
+  const loadBtn = document.getElementById('importLoadAnother');
+  const cancelBtn = document.querySelector('#importFooter button[onclick="closeImportModal()"]');
+
+  // Disable all footer buttons during push
+  [btn, pushSelBtn, loadBtn, cancelBtn].forEach(b => { if (b) b.disabled = true; });
+  btn.innerHTML = '⏳ Pushing…';
+
+  let added = 0, skipped = 0, failed = 0;
+  const existingKeys = new Set(Object.values(Bookings).flat().map(b => b.fbKey));
+  const total = _importEntries.length;
+
+  for (let i = 0; i < total; i++) {
+    const entry = _importEntries[i];
+    if (!entry) continue;
+
+    // Update button progress
+    btn.innerHTML = `⏳ Pushing ${i + 1}/${total}…`;
+
+    // Skip duplicates by fbKey
+    if (entry.fbKey && existingKeys.has(entry.fbKey)) {
+      skipped++; continue;
+    }
+
+    const raw = entry._raw || {};
+    const bJSON = {
+      dateKey:   entry.dateKey || entry.checkinDate || '',
+      createdAt: entry.createdAt || new Date().toISOString(),
+      guest: raw.guest || {
+        name:     entry.guestName,
+        email:    entry.guestEmail,
+        phone:    entry.guestPhone,
+        pax:      entry.pax,
+        extraPax: entry.extraPax,
+        totalPax: entry.totalPax,
+        pets:     entry.pets,
+      },
+      payment: raw.payment || {
+        total:       entry.total,
+        downpayment: entry.downpayment,
+        balance:     entry.balance,
+        mode:        entry.paymentMode,
+        date:        entry.paymentDate,
+      },
+      booking: raw.booking || {
+        tourType:          entry.tourType,
+        checkinDate:       entry.checkinDate,
+        checkoutDate:      entry.checkoutDate,
+        checkinDateLabel:  entry.checkinDateLabel,
+        checkoutDateLabel: entry.checkoutDateLabel,
+        checkinTime:       entry.checkinTime,
+        checkoutTime:      entry.checkoutTime,
+      },
+      dayInfo: raw.dayInfo || {},
+    };
+
+    try {
+      const newKey = await FB.insert(bJSON);
+      backupOnInsert(newKey, bJSON);
+      added++;
+    } catch(err) {
+      console.error('Push All failed for entry', i, ':', err.message);
+      failed++;
+    }
+  }
+
+  // Refresh calendar
+  await refreshFromFirebase();
+  applyBookingIndicators();
+
+  // Re-enable buttons
+  [btn, pushSelBtn, loadBtn, cancelBtn].forEach(b => { if (b) b.disabled = false; });
+  btn.innerHTML = '🚀 Push All to Database';
+
+  const msg = [
+    added   ? `✅ ${added} imported`   : null,
+    skipped ? `⏭ ${skipped} skipped`  : null,
+    failed  ? `❌ ${failed} failed`    : null,
+  ].filter(Boolean).join(' · ');
+
+  showToast(msg || '✅ Done!', 5000);
+  closeImportModal();
 }
 
 /* ────────────────────────────────────────
