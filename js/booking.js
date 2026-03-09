@@ -1153,9 +1153,33 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
       if (!Bookings[key].length) delete Bookings[key];
       saveBookingsLocal(Bookings);
     }
+    // Immediately strip all tagging classes from this date's cell
+    document.querySelectorAll('#yearGrid .day-cell:not(.other-month)').forEach(cell => {
+      const numEl = cell.querySelector('.day-num');
+      if (!numEl) return;
+      const card = cell.closest('.month-card');
+      if (!card) return;
+      const mEl = card.querySelector('.month-name');
+      if (!mEl) return;
+      const month = MONTH_NAMES.indexOf(mEl.textContent);
+      const cellKey = toKey(AppState.year, month, parseInt(numEl.textContent));
+      if (cellKey === key) {
+        cell.classList.remove(
+          'has-booking',
+          'slot-full',
+          'slot-morning-taken',
+          'slot-stayover',
+          'slot-stayover-3d2n',
+          'slot-stayover-red',
+          'slot-checkout-pending'
+        );
+        delete cell.dataset.checkoutTime;
+      }
+    });
     showToast('🗑 Booking deleted.');
     onDelete();
     applyBookingIndicators();
+    location.reload();
   });
 
   actions.append(viewBtn, editBtn, delBtn);
