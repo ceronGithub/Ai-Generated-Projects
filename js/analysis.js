@@ -268,7 +268,6 @@ function _yearTabOverview(d) {
   return '<div style="display:grid;gap:12px;margin-bottom:20px;" class="ana-stat-grid">' +
       _statCard('📅','Total Bookings',''+d.total, d.totalPax+' pax &middot; '+d.totalPets+' pets','#1a1a2e') +
       _statCard('💳','Total Revenue',_peso(d.totalRevenue),_peso(d.totalCollected)+' collected ('+pct+'%)','#3cb771') +
-      _statCard('💰','Outstanding',_peso(d.totalBalance),d.totalBalance>0?(100-pct)+'% unpaid':'All paid \u2705',d.totalBalance>0?'#e04060':'#3cb771') +
     '</div>' +
     '<div style="background:#fafafa;border:1.5px solid #f0eeff;border-radius:14px;padding:18px;">' +
       '<p style="font-size:12px;font-weight:800;color:#1a1a2e;margin:0 0 14px;">Tour Type Breakdown</p>' +
@@ -539,7 +538,6 @@ function _buildMonthAnalysis(year, month, color) {
     '<div style="display:grid;gap:10px;margin-bottom:16px;" class="ana-stat-grid">' +
       _statCard('📅','Bookings',''+d.totalCount, d.totalPax+' total pax', acc) +
       _statCard('💳','Revenue',_peso(d.totalRevenue),_peso(d.totalCollected)+' collected ('+pct+'%)',acc) +
-      _statCard('💰','Outstanding',_peso(d.totalBalance),d.totalBalance>0?(100-pct)+'% unpaid':'All paid \u2705',d.totalBalance>0?'#e04060':acc) +
     '</div>';
 
   // ── bookings-per-day bar chart ──
