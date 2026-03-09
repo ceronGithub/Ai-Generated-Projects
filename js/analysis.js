@@ -242,7 +242,7 @@ function _renderAnalysisTab(tab) {
 /* ── year: overview tab ── */
 function _yearTabOverview(d) {
   var pct = d.totalRevenue > 0 ? Math.round(d.totalCollected / d.totalRevenue * 100) : 0;
-  var TOUR_COL = { 'Day Tour':'#ff8c42','Night Tour':'#7c6af4','Over-Night':'#29b5e8','Half Day':'#3cb771' };
+  var TOUR_COL = { 'Day Tour':'#ff8c42','Night Tour':'#7c6af4','Over-Night':'#29b5e8','Half Day':'#3cb771','Overnight Tour':'#ff9900','Over Night':'#ff9900' };
 
   var tourRows = '';
   Object.keys(d.byTour).sort(function(a,b){return d.byTour[b].count-d.byTour[a].count;})
@@ -265,7 +265,7 @@ function _yearTabOverview(d) {
         '</div>';
     });
 
-  return '<div style="display:grid;gap:12px;margin-bottom:20px;" class="ana-stat-grid">' +
+  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">' +
       _statCard('📅','Total Bookings',''+d.total, d.totalPax+' pax &middot; '+d.totalPets+' pets','#1a1a2e') +
       _statCard('💳','Total Revenue',_peso(d.totalRevenue),_peso(d.totalCollected)+' collected ('+pct+'%)','#3cb771') +
     '</div>' +
@@ -387,55 +387,90 @@ function _yearTabGuests(d) {
 
 /* ── year: revenue tab ── */
 function _yearTabRevenue(d) {
-  var pct = d.totalRevenue > 0 ? Math.round(d.totalCollected/d.totalRevenue*100) : 0;
-  var unpaidPct = 100 - pct;
-  var MC = (typeof MONTH_COLORS !== 'undefined') ? MONTH_COLORS : Array(12).fill({accent:'#7c6af4'});
+  var pct       = d.totalRevenue > 0 ? Math.round(d.totalCollected / d.totalRevenue * 100) : 0;
 
-  var topMonths = d.byMonth.filter(function(m){return m.revenue>0;})
-    .sort(function(a,b){return b.revenue-a.revenue;}).slice(0,6);
+  /* ── top months ── */
+  var topMonths = d.byMonth.filter(function(m) { return m.revenue > 0; })
+    .sort(function(a, b) { return b.revenue - a.revenue; }).slice(0, 6);
+
   var topRows = '';
-  topMonths.forEach(function(m,i){
-    topRows += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f5f5f8;">' +
-      '<span style="font-size:12px;font-weight:700;color:#1a1a2e;">'+m.month+'</span>' +
-      '<div style="display:flex;align-items:center;gap:14px;">' +
-        '<span style="font-size:11px;color:#9996b0;">'+m.count+' booking'+(m.count!==1?'s':'')+'</span>' +
-        '<span style="font-size:13px;font-weight:800;color:#3cb771;">'+_peso(m.revenue)+'</span>' +
-      '</div></div>';
+  topMonths.forEach(function(m) {
+    var barPct = topMonths[0].revenue > 0 ? Math.round(m.revenue / topMonths[0].revenue * 100) : 0;
+    topRows +=
+      '<div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #f5f5f8;">' +
+        '<span style="font-size:12px;font-weight:700;color:#1a1a2e;width:80px;flex-shrink:0;">'+m.month+'</span>' +
+        '<div style="flex:1;height:6px;background:#f0eeff;border-radius:99px;overflow:hidden;">' +
+          '<div style="height:100%;width:'+barPct+'%;background:#3cb771;border-radius:99px;"></div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;min-width:110px;">' +
+          '<span style="font-size:13px;font-weight:800;color:#3cb771;">'+_peso(m.revenue)+'</span>' +
+          '<span style="font-size:10px;color:#9996b0;">'+m.count+' booking'+(m.count!==1?'s':'')+'</span>' +
+        '</div>' +
+      '</div>';
   });
 
-  var unpaid = d.guests.filter(function(g){return g.balance>0;});
+  /* ── unpaid guests ── */
+  var unpaid = d.guests.filter(function(g) { return g.balance > 0; });
   var unpaidRows = '';
-  unpaid.forEach(function(g){
-    unpaidRows += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f5f5f8;">' +
-      '<div><div style="font-size:12px;font-weight:700;color:#1a1a2e;">'+g.name+'</div><div style="font-size:11px;color:#9996b0;">'+g.date+' &middot; '+g.tourType+'</div></div>' +
-      '<span style="font-size:13px;font-weight:800;color:#e04060;">'+_peso(g.balance)+'</span></div>';
+  unpaid.forEach(function(g) {
+    unpaidRows +=
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f5f5f8;">' +
+        '<div style="min-width:0;flex:1;">' +
+          '<div style="font-size:12px;font-weight:700;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+g.name+'</div>' +
+          '<div style="font-size:11px;color:#9996b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+g.date+' &middot; '+g.tourType+'</div>' +
+        '</div>' +
+        '<span style="font-size:13px;font-weight:800;color:#e04060;flex-shrink:0;">'+_peso(g.balance)+'</span>' +
+      '</div>';
   });
 
-  return '<div style="display:grid;gap:12px;margin-bottom:16px;" class="ana-two-col">' +
-    '<div style="background:#f0fff4;border:1.5px solid #b8f0ce;border-radius:14px;padding:16px 18px;">' +
-      '<div style="font-size:10px;font-weight:700;color:#2a9a5a;letter-spacing:0.5px;margin-bottom:5px;">COLLECTED</div>' +
-      '<div style="font-size:22px;font-weight:800;color:#2a9a5a;">'+_peso(d.totalCollected)+'</div>' +
-      '<div style="margin-top:8px;height:7px;background:#b8f0ce;border-radius:99px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:#3cb771;border-radius:99px;"></div></div>' +
-      '<div style="font-size:11px;color:#2a9a5a;margin-top:4px;">'+pct+'% of total</div>' +
-    '</div>' +
-    '<div style="background:#fff0f3;border:1.5px solid #ffd6df;border-radius:14px;padding:16px 18px;">' +
-      '<div style="font-size:10px;font-weight:700;color:#e04060;letter-spacing:0.5px;margin-bottom:5px;">OUTSTANDING</div>' +
-      '<div style="font-size:22px;font-weight:800;color:#e04060;">'+_peso(d.totalBalance)+'</div>' +
-      '<div style="margin-top:8px;height:7px;background:#ffd6df;border-radius:99px;overflow:hidden;"><div style="height:100%;width:'+unpaidPct+'%;background:#e04060;border-radius:99px;"></div></div>' +
-      '<div style="font-size:11px;color:#e04060;margin-top:4px;">'+unpaid.length+' guest'+(unpaid.length!==1?'s':'')+' with balance</div>' +
-    '</div>' +
-  '</div>' +
-  '<div style="background:#fafafa;border:1.5px solid #f0eeff;border-radius:14px;padding:18px;margin-bottom:14px;">' +
-    '<p style="font-size:12px;font-weight:800;color:#1a1a2e;margin:0 0 4px;">Top Revenue Months</p>' +
-    (topRows||'<p style="color:#9996b0;font-size:12px;margin-top:8px;">No revenue yet.</p>') +
-  '</div>' +
-  (unpaid.length
+  /* ── summary card ── */
+  var summaryCard =
+    '<div style="background:#fafafa;border:1.5px solid #f0eeff;border-radius:14px;padding:18px;margin-bottom:14px;">' +
+      '<p style="font-size:12px;font-weight:800;color:#1a1a2e;margin:0 0 14px;">Revenue Summary</p>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+        '<div style="background:#fff;border:1.5px solid #e8e8f0;border-radius:12px;padding:14px 16px;">' +
+          '<div style="font-size:10px;font-weight:700;color:#9996b0;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:5px;">TOTAL REVENUE</div>' +
+          '<div style="font-size:20px;font-weight:800;color:#1a1a2e;letter-spacing:-0.5px;">'+_peso(d.totalRevenue)+'</div>' +
+          '<div style="font-size:11px;color:#9996b0;margin-top:3px;">'+d.total+' booking'+(d.total!==1?'s':'')+'</div>' +
+        '</div>' +
+        '<div style="background:#f0fff4;border:1.5px solid #b8f0ce;border-radius:12px;padding:14px 16px;">' +
+          '<div style="font-size:10px;font-weight:700;color:#2a9a5a;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:5px;">COLLECTED</div>' +
+          '<div style="font-size:20px;font-weight:800;color:#2a9a5a;letter-spacing:-0.5px;">'+_peso(d.totalCollected)+'</div>' +
+          '<div style="margin-top:8px;height:6px;background:#b8f0ce;border-radius:99px;overflow:hidden;">' +
+            '<div style="height:100%;width:'+pct+'%;background:#3cb771;border-radius:99px;"></div>' +
+          '</div>' +
+          '<div style="font-size:11px;color:#2a9a5a;margin-top:4px;">'+pct+'% of total</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  /* ── top months section ── */
+  var topSection =
+    '<div style="background:#fafafa;border:1.5px solid #f0eeff;border-radius:14px;padding:18px;margin-bottom:14px;">' +
+      '<p style="font-size:12px;font-weight:800;color:#1a1a2e;margin:0 0 2px;">Top Revenue Months</p>' +
+      '<p style="font-size:11px;color:#9996b0;margin:0 0 10px;">Sorted highest to lowest</p>' +
+      (topRows || '<p style="color:#9996b0;font-size:12px;margin-top:8px;">No revenue yet.</p>') +
+    '</div>';
+
+  /* ── outstanding section ── */
+  var outstandingSection = unpaid.length
     ? '<div style="background:#fafafa;border:1.5px solid #ffd6df;border-radius:14px;padding:18px;">' +
-        '<p style="font-size:12px;font-weight:800;color:#e04060;margin:0 0 4px;">\u26a0\ufe0f Outstanding ('+unpaid.length+')</p>' +
-        unpaidRows + '</div>'
-    : '<div style="background:#f0fff4;border:1.5px solid #b8f0ce;border-radius:14px;padding:16px;text-align:center;">' +
-        '<p style="font-size:13px;font-weight:700;color:#2a9a5a;margin:0;">\u2705 All guests fully paid!</p></div>'
-  );
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+          '<p style="font-size:12px;font-weight:800;color:#e04060;margin:0;">\u26a0\ufe0f Outstanding Balance</p>' +
+          '<span style="font-size:11px;font-weight:700;background:#ffe0e6;color:#e04060;padding:3px 10px;border-radius:20px;">'+unpaid.length+' guest'+(unpaid.length!==1?'s':'')+' unpaid</span>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fff0f3;border-radius:10px;margin-bottom:10px;">' +
+          '<span style="font-size:11px;font-weight:700;color:#e04060;">Total Outstanding</span>' +
+          '<span style="font-size:16px;font-weight:800;color:#e04060;">'+_peso(d.totalBalance)+'</span>' +
+        '</div>' +
+        unpaidRows +
+      '</div>'
+    : '<div style="background:#f0fff4;border:1.5px solid #b8f0ce;border-radius:14px;padding:20px;text-align:center;">' +
+        '<div style="font-size:28px;margin-bottom:6px;">\u2705</div>' +
+        '<p style="font-size:13px;font-weight:700;color:#2a9a5a;margin:0;">All guests fully paid!</p>' +
+      '</div>';
+
+  return summaryCard + topSection + outstandingSection;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -535,7 +570,7 @@ function _buildMonthAnalysis(year, month, color) {
 
   // ── stat cards ──
   var stats =
-    '<div style="display:grid;gap:10px;margin-bottom:16px;" class="ana-stat-grid">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' +
       _statCard('📅','Bookings',''+d.totalCount, d.totalPax+' total pax', acc) +
       _statCard('💳','Revenue',_peso(d.totalRevenue),_peso(d.totalCollected)+' collected ('+pct+'%)',acc) +
     '</div>';
