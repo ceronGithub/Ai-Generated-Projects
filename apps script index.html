@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MailVault — Gmail Exporter</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --night:#06040f;--deep:#0d0a1e;--card:#13102a;--card2:#1a163a;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);
+  --text:#f0eeff;--muted:rgba(240,238,255,.55);--faint:rgba(240,238,255,.28);
+  --em:#00e5a0;--em2:#00b87c;--vi:#a78bfa;--vi2:#7c3aed;
+  --ro:#fb7185;--am:#fbbf24;--bl:#60a5fa;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--night);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+.bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.3;animation:drift 22s ease-in-out infinite}
+.orb1{width:640px;height:640px;background:radial-gradient(circle,#7c3aed,transparent 70%);top:-220px;left:-180px}
+.orb2{width:520px;height:520px;background:radial-gradient(circle,#00e5a0,transparent 70%);top:35%;right:-220px;animation-delay:-8s}
+.orb3{width:420px;height:420px;background:radial-gradient(circle,#fb7185,transparent 70%);bottom:-120px;left:25%;animation-delay:-15s}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(28px,-36px) scale(1.04)}66%{transform:translate(-18px,28px) scale(.96)}}
+
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 28px 100px}
+
+/* HERO */
+.hero{padding:80px 0 54px;text-align:center}
+.hero-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--em);background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.28);
+  padding:6px 18px;border-radius:99px;margin-bottom:28px;animation:fdDown .6s ease both;
+}
+.hero-pill::before{content:'';width:6px;height:6px;background:var(--em);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+.hero h1{
+  font-family:'Playfair Display',serif;font-size:clamp(2.8rem,8vw,6.2rem);
+  font-weight:900;line-height:.93;letter-spacing:-.03em;margin-bottom:20px;
+  animation:fdDown .7s .1s ease both;
+}
+.grd{background:linear-gradient(135deg,var(--em) 0%,var(--vi) 55%,var(--ro) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1.02rem;color:var(--muted);max-width:460px;margin:0 auto 34px;line-height:1.7;animation:fdDown .7s .2s ease both}
+.user-badge{
+  display:inline-flex;align-items:center;gap:9px;
+  background:rgba(255,255,255,.05);border:1px solid var(--border2);backdrop-filter:blur(14px);
+  padding:9px 20px;border-radius:99px;
+  font-family:'DM Mono',monospace;font-size:.73rem;color:var(--em);
+  animation:fdDown .7s .3s ease both;
+}
+.live-dot{width:7px;height:7px;background:var(--em);border-radius:50%;box-shadow:0 0 8px var(--em);animation:pulse 2s infinite;flex-shrink:0}
+#userPill{display:none}
+
+/* GLASS CARDS */
+.glass{
+  background:rgba(19,16,42,.72);border:1px solid var(--border);border-radius:20px;
+  backdrop-filter:blur(22px);padding:32px;margin-bottom:20px;
+  position:relative;overflow:hidden;
+  transition:border-color .3s,transform .2s,box-shadow .3s;
+  animation:fdUp .6s ease both;
+}
+.glass::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,transparent 55%);pointer-events:none;border-radius:inherit}
+.glass:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 20px 56px rgba(0,0,0,.4)}
+.glass:nth-child(1){animation-delay:.08s}.glass:nth-child(2){animation-delay:.16s}.glass:nth-child(3){animation-delay:.24s}
+.stripe{position:absolute;top:0;left:0;right:0;height:2px;border-radius:20px 20px 0 0}
+.s-em{background:linear-gradient(90deg,var(--em),var(--vi))}.s-vi{background:linear-gradient(90deg,var(--vi),var(--bl))}.s-ro{background:linear-gradient(90deg,var(--ro),var(--am))}
+
+.chead{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.chip{font-family:'DM Mono',monospace;font-size:.59rem;letter-spacing:.14em;text-transform:uppercase;padding:4px 10px;border-radius:6px;font-weight:500;flex-shrink:0}
+.c-em{background:rgba(0,229,160,.14);color:var(--em);border:1px solid rgba(0,229,160,.28)}
+.c-vi{background:rgba(167,139,250,.14);color:var(--vi);border:1px solid rgba(167,139,250,.28)}
+.c-ro{background:rgba(251,113,133,.14);color:var(--ro);border:1px solid rgba(251,113,133,.28)}
+.ctitle{font-family:'Playfair Display',serif;font-size:1.22rem;font-weight:700}
+
+/* FORM */
+.field{margin-bottom:20px}.field:last-child{margin-bottom:0}
+.flbl{font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:7px;display:block}
+.date-row{display:grid;grid-template-columns:1fr 22px 1fr;align-items:end;gap:10px}
+.darrow{text-align:center;color:var(--faint);font-size:1.1rem;padding-bottom:13px}
+input[type=date],input[type=text],input[type=email],textarea{
+  width:100%;padding:12px 15px;
+  background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:10px;
+  font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);
+  outline:none;transition:border-color .2s,box-shadow .2s,background .2s;-webkit-appearance:none;color-scheme:dark;
+}
+input:focus,textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px rgba(0,229,160,.14);background:rgba(0,229,160,.04)}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+.hint{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint);margin-top:7px;line-height:1.5}
+
+/* BUTTONS */
+.brow{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.84rem;border:none;border-radius:10px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .2s}
+.btn:hover::after{background:rgba(255,255,255,.07)}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
+.btn-em{background:linear-gradient(135deg,var(--em2),var(--em));color:#06040f;font-weight:700;box-shadow:0 4px 22px rgba(0,229,160,.3)}
+.btn-em:hover{box-shadow:0 6px 30px rgba(0,229,160,.5);transform:translateY(-1px)}
+.btn-vi{background:linear-gradient(135deg,var(--vi2),var(--vi));color:#fff;box-shadow:0 4px 18px rgba(124,58,237,.3)}
+.btn-vi:hover{box-shadow:0 6px 26px rgba(124,58,237,.5);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border2)}
+.btn-ghost:hover{background:rgba(255,255,255,.1);color:var(--text)}
+.btn-ro{background:linear-gradient(135deg,#e11d48,var(--ro));color:#fff;box-shadow:0 4px 18px rgba(251,113,133,.3)}
+.btn-ro:hover{box-shadow:0 6px 26px rgba(251,113,133,.5);transform:translateY(-1px)}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:rot .6s linear infinite;flex-shrink:0}
+.spin-dk{border:2px solid rgba(0,0,0,.15);border-top-color:rgba(0,0,0,.8)}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* STATUS */
+.status{display:none;padding:13px 17px;border-radius:10px;font-size:.85rem;line-height:1.6;margin-top:18px;align-items:flex-start;gap:10px}
+.status.show{display:flex}
+.status.info{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.28);color:var(--bl)}
+.status.success{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.22);color:var(--em)}
+.status.error{background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.28);color:var(--ro)}
+.status.warning{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.28);color:var(--am)}
+.sico{flex-shrink:0}
+.prog-wrap{display:none;margin-top:18px}.prog-wrap.show{display:block}
+.prog-top{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint);margin-bottom:7px}
+.prog-track{height:3px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--em2),var(--em));border-radius:99px;transition:width .35s ease;width:0%}
+
+/* EXPORT CARDS */
+.exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+.ec{border:1px solid var(--border2);border-radius:14px;padding:20px 14px;cursor:pointer;transition:all .2s;text-align:center;background:rgba(255,255,255,.03);position:relative;overflow:hidden}
+.ec::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;pointer-events:none}
+.ec.sel::before{opacity:1}
+.ec-csv::before{background:radial-gradient(circle at 50% 0%,rgba(0,229,160,.13),transparent 65%)}
+.ec-pdf::before{background:radial-gradient(circle at 50% 0%,rgba(251,113,133,.13),transparent 65%)}
+.ec-txt::before{background:radial-gradient(circle at 50% 0%,rgba(167,139,250,.13),transparent 65%)}
+.ec:hover{transform:translateY(-2px)}
+.ec.sel{border-color:var(--em);box-shadow:0 0 22px rgba(0,229,160,.14)}
+.ec.s-pdf{border-color:var(--ro)!important;box-shadow:0 0 22px rgba(251,113,133,.14)!important}
+.ec.s-txt{border-color:var(--vi)!important;box-shadow:0 0 22px rgba(167,139,250,.14)!important}
+.ec .ck{position:absolute;top:9px;right:9px;width:17px;height:17px;background:var(--em);border-radius:50%;color:#06040f;font-size:.58rem;display:none;align-items:center;justify-content:center;font-weight:800}
+.ec.sel .ck{display:flex}
+.eico{font-size:1.75rem;margin-bottom:7px;display:block}
+.ename{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.76rem;color:var(--text);margin-bottom:3px}
+.edesc{font-size:.67rem;color:var(--faint);line-height:1.4}
+
+/* EMAIL TABLE */
+.es-wrap{display:none;margin-top:0}.es-wrap.show{display:block}
+.tbhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.tblbl{display:flex;flex-direction:column;gap:2px}
+.eyebrow{font-family:'DM Mono',monospace;font-size:.59rem;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+.tbtitle{font-family:'Playfair Display',serif;font-size:1.08rem;font-weight:700}
+.cnt-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.22);padding:4px 12px;border-radius:99px;font-family:'DM Mono',monospace;font-size:.66rem;color:var(--em)}
+.sort-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.slbl{font-family:'DM Mono',monospace;font-size:.59rem;color:var(--faint);letter-spacing:.1em;text-transform:uppercase}
+.sb{font-family:'DM Mono',monospace;font-size:.63rem;padding:5px 10px;border:1px solid var(--border2);background:rgba(255,255,255,.03);border-radius:7px;cursor:pointer;color:var(--muted);transition:all .15s;letter-spacing:.04em}
+.sb:hover{border-color:rgba(255,255,255,.22);color:var(--text);background:rgba(255,255,255,.07)}
+.sb.on{background:rgba(0,229,160,.12);color:var(--em);border-color:rgba(0,229,160,.38)}
+.twrap{border:1px solid var(--border);border-radius:14px;overflow:auto;max-height:450px;background:rgba(19,16,42,.5);backdrop-filter:blur(10px)}
+table{width:100%;border-collapse:collapse;font-size:.79rem}
+thead th{padding:10px 13px;text-align:left;font-family:'DM Mono',monospace;font-size:.59rem;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;white-space:nowrap}
+tbody td{padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;color:var(--muted)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,.03);color:var(--text)}
+.td-n{color:var(--faint);font-family:'DM Mono',monospace;font-size:.6rem;width:30px}
+.td-s{font-weight:500;color:var(--text);max-width:215px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-f{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'DM Mono',monospace;font-size:.63rem}
+.td-d{white-space:nowrap;font-family:'DM Mono',monospace;font-size:.63rem}
+.ud{display:inline-block;width:5px;height:5px;background:var(--em);border-radius:50%;margin-right:5px;vertical-align:middle;box-shadow:0 0 5px var(--em)}
+.ra{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border:1px solid var(--border2);background:rgba(255,255,255,.03);border-radius:7px;cursor:pointer;font-size:.76rem;transition:all .15s;margin-right:2px}
+.ra:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);transform:scale(1.1)}
+.ra.del:hover{background:rgba(251,113,133,.2);border-color:rgba(251,113,133,.45)}
+
+/* MODAL */
+.mov{display:none;position:fixed;inset:0;background:rgba(6,4,15,.78);backdrop-filter:blur(10px);z-index:100;align-items:center;justify-content:center;padding:20px}
+.mov.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;width:100%;max-width:640px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 40px 100px rgba(0,0,0,.6);overflow:hidden;animation:mIn .25s ease}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:none}}
+.mhd{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.mhd-t{font-family:'Playfair Display',serif;font-size:1.08rem;font-weight:700}
+.mx{background:rgba(255,255,255,.06);border:none;color:var(--muted);width:29px;height:29px;border-radius:7px;cursor:pointer;font-size:.95rem;transition:all .15s}
+.mx:hover{background:rgba(251,113,133,.2);color:var(--ro)}
+.mbd{padding:20px 24px;overflow-y:auto;flex:1}
+.mft{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}
+.mf{margin-bottom:15px}.mf:last-child{margin-bottom:0}
+.mf label{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:5px;display:block}
+.mv{font-size:.86rem;color:var(--text);padding:10px 13px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;line-height:1.6;word-break:break-word}
+.mbtext{font-size:.84rem;color:var(--muted);line-height:1.7;white-space:pre-wrap;max-height:190px;overflow-y:auto;padding:11px 13px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px}
+.m2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+
+/* TOAST */
+.toast{position:fixed;bottom:26px;right:26px;z-index:200;padding:11px 20px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.81rem;font-weight:600;box-shadow:0 12px 36px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:linear-gradient(135deg,var(--em2),var(--em));color:#06040f}
+.toast.err{background:linear-gradient(135deg,#e11d48,var(--ro));color:#fff}
+.toast.nn{background:var(--card2);border:1px solid var(--border2);color:var(--text)}
+
+/* FOOTER */
+.sfooter{margin-top:60px;padding:22px 0;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.fbrand{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;color:var(--text)}
+.fbrand span{color:var(--em)}
+.fmeta{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--faint);line-height:1.7;text-align:right}
+
+@keyframes fdDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+@keyframes fdUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+@media(max-width:600px){
+  .date-row{grid-template-columns:1fr}.darrow{display:none}
+  .exp-grid{grid-template-columns:1fr 1fr}.m2{grid-template-columns:1fr}
+  .tbhead{flex-direction:column;align-items:flex-start}
+}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.11);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-pill">Gmail Exporter · Google Apps Script</div>
+  <h1>Mail<span class="grd">Vault</span></h1>
+  <p class="hero-sub">Export your Gmail to CSV, PDF, or Text. Runs entirely inside your Google account — nothing leaves Google's servers.</p>
+  <div id="userPill" class="user-badge"><span class="live-dot"></span><span id="userEmailDisplay">loading…</span></div>
+</div>
+
+<!-- STEP 1 -->
+<div class="glass">
+  <div class="stripe s-em"></div>
+  <div class="chead"><span class="chip c-em">Step 01</span><span class="ctitle">Select Date Range</span></div>
+  <div class="field">
+    <div class="date-row">
+      <div><label class="flbl">From</label><input type="date" id="dateFrom"></div>
+      <div class="darrow">→</div>
+      <div><label class="flbl">To</label><input type="date" id="dateTo"></div>
+    </div>
+    <p class="hint">💡 Same date in both fields exports a single day</p>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="glass">
+  <div class="stripe s-vi"></div>
+  <div class="chead"><span class="chip c-vi">Step 02</span><span class="ctitle">Fetch Emails</span></div>
+  <p style="color:var(--muted);font-size:.875rem;line-height:1.7;margin-bottom:22px">Search your Gmail for the selected date range. Review, edit, or remove emails before exporting.</p>
+  <div class="brow">
+    <button class="btn btn-em" id="fetchBtn" onclick="fetchEmails()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Fetch Emails
+    </button>
+    <button class="btn btn-ghost" id="clearBtn" onclick="clearAll()" style="display:none">✕ Clear</button>
+  </div>
+  <div class="status" id="fetchStatus"><span class="sico" id="fetchIcon"></span><span id="fetchText"></span></div>
+  <div class="prog-wrap" id="fetchProg">
+    <div class="prog-top"><span id="progLabel">Searching Gmail…</span><span id="progPct">—</span></div>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  </div>
+</div>
+
+<!-- EMAIL TABLE -->
+<div class="es-wrap" id="emailSection">
+  <div class="glass">
+    <div class="stripe s-vi"></div>
+    <div class="tbhead">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div class="tblbl"><div class="eyebrow">Results</div><div class="tbtitle">Manage Emails</div></div>
+        <span class="cnt-badge">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span id="emailCount">0</span> emails
+        </span>
+      </div>
+      <div class="sort-row">
+        <span class="slbl">Sort</span>
+        <button class="sb on" id="sortNewest" onclick="sortEmails('newest')">Newest</button>
+        <button class="sb" id="sortOldest" onclick="sortEmails('oldest')">Oldest</button>
+        <button class="sb" id="sortSubject" onclick="sortEmails('subject')">Subject</button>
+        <button class="sb" id="sortFrom" onclick="sortEmails('from')">From</button>
+      </div>
+    </div>
+    <div class="twrap">
+      <table>
+        <thead><tr><th class="td-n">#</th><th>Subject</th><th>From</th><th>Date</th><th>Labels</th><th>Actions</th></tr></thead>
+        <tbody id="emailTbody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:.62rem;color:var(--faint);margin-top:9px;font-family:'DM Mono',monospace;line-height:1.5">
+      <span id="showNote"></span> · Edits only affect the export — your Gmail is unchanged.
+    </p>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="glass" id="exportCard" style="display:none">
+  <div class="stripe s-ro"></div>
+  <div class="chead"><span class="chip c-ro">Step 03</span><span class="ctitle">Export to Your Device</span></div>
+  <p style="color:var(--muted);font-size:.875rem;line-height:1.7;margin-bottom:22px">Files download straight to your device — nothing is sent to Google Drive or any server.</p>
+  <div class="exp-grid">
+    <div class="ec ec-csv sel" id="opt-csv" onclick="selectExport('csv')">
+      <div class="ck">✓</div><span class="eico">📊</span>
+      <div class="ename">CSV / Excel</div><div class="edesc">Opens in Excel or Sheets</div>
+    </div>
+    <div class="ec ec-pdf" id="opt-pdf" onclick="selectExport('pdf')">
+      <div class="ck">✓</div><span class="eico">📕</span>
+      <div class="ename">PDF</div><div class="edesc">Print-ready, save via browser</div>
+    </div>
+    <div class="ec ec-txt" id="opt-txt" onclick="selectExport('txt')">
+      <div class="ck">✓</div><span class="eico">📄</span>
+      <div class="ename">Text File</div><div class="edesc">Plain .txt, one email per block</div>
+    </div>
+  </div>
+  <div class="brow">
+    <button class="btn btn-em" id="exportBtn" onclick="runExport()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span id="expBtnLbl">Download as CSV</span>
+    </button>
+  </div>
+  <div class="status" id="exportStatus"><span class="sico" id="exportIcon"></span><span id="exportText"></span></div>
+</div>
+
+<footer class="sfooter">
+  <div class="fbrand">Mail<span>Vault</span></div>
+  <div class="fmeta">Runs inside your Google Account · No external servers<br>Files saved directly to your device</div>
+</footer>
+</div>
+
+<!-- MODAL -->
+<div class="mov" id="modal" onclick="closeMBg(event)">
+  <div class="modal">
+    <div class="mhd"><div class="mhd-t" id="modalTitle">Email</div><button class="mx" onclick="closeM()">✕</button></div>
+    <div class="mbd" id="modalBody"></div>
+    <div class="mft" id="modalFoot"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let emails=[],currentSort='newest',selExp='csv',editIdx=null;
+
+(function(){
+  const t=new Date().toISOString().split('T')[0];
+  document.getElementById('dateFrom').value=t;
+  document.getElementById('dateTo').value=t;
+  google.script.run
+    .withSuccessHandler(r=>{if(r&&r.email){document.getElementById('userEmailDisplay').textContent=r.email;document.getElementById('userPill').style.display='inline-flex';}})
+    .withFailureHandler(()=>{})
+    .getUserEmail();
+})();
+
+function setSt(bar,txt,ico,msg,type){
+  const m={info:'ℹ️',success:'✅',error:'❌',warning:'⚠️'};
+  document.getElementById(bar).className='status show '+type;
+  document.getElementById(txt).innerHTML=msg;
+  document.getElementById(ico).textContent=m[type]||'ℹ️';
+}
+function clrSt(bar){document.getElementById(bar).className='status';}
+function showPr(lbl){document.getElementById('fetchProg').classList.add('show');document.getElementById('progLabel').textContent=lbl||'Working…';document.getElementById('progFill').style.width='15%';document.getElementById('progPct').textContent='—';}
+function setPr(p){document.getElementById('progFill').style.width=p+'%';document.getElementById('progPct').textContent=Math.round(p)+'%';}
+function hidePr(){document.getElementById('fetchProg').classList.remove('show');}
+function busy(id,on,lbl){const b=document.getElementById(id);if(on){b._h=b.innerHTML;b.disabled=true;b.innerHTML='<div class="spin"></div> '+(lbl||'Working…');}else{b.disabled=false;if(b._h)b.innerHTML=b._h;}}
+function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'nn');clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast';},2800);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function hesc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function fetchEmails(){
+  const df=document.getElementById('dateFrom').value,dt=document.getElementById('dateTo').value;
+  if(!df||!dt){setSt('fetchStatus','fetchText','fetchIcon','Please select both dates.','warning');return;}
+  if(new Date(df)>new Date(dt)){setSt('fetchStatus','fetchText','fetchIcon','From date must be before To date.','warning');return;}
+  clrSt('fetchStatus');
+  document.getElementById('emailSection').classList.remove('show');
+  document.getElementById('exportCard').style.display='none';
+  document.getElementById('clearBtn').style.display='none';
+  emails=[];busy('fetchBtn',true,'Fetching…');showPr('Searching your Gmail…');
+  google.script.run
+    .withSuccessHandler(res=>{
+      busy('fetchBtn',false);
+      if(res.error){hidePr();setSt('fetchStatus','fetchText','fetchIcon','Error: '+res.error,'error');return;}
+      emails=res.emails||[];setPr(100);
+      setTimeout(()=>{
+        hidePr();
+        if(!emails.length){setSt('fetchStatus','fetchText','fetchIcon','No emails found for this date range.','warning');return;}
+        sortEmails(currentSort,true);
+        setSt('fetchStatus','fetchText','fetchIcon','Found <strong>'+emails.length+'</strong> email'+(emails.length!==1?'s':'')+'. Review below before exporting.','success');
+        document.getElementById('emailSection').classList.add('show');
+        document.getElementById('exportCard').style.display='';
+        document.getElementById('clearBtn').style.display='';
+        document.getElementById('emailSection').scrollIntoView({behavior:'smooth',block:'start'});
+      },300);
+    })
+    .withFailureHandler(err=>{busy('fetchBtn',false);hidePr();setSt('fetchStatus','fetchText','fetchIcon','Script error: '+err.message,'error');})
+    .fetchEmailsByDateRange(df,dt);
+}
+
+function sortEmails(mode,silent){
+  currentSort=mode;
+  ['newest','oldest','subject','from'].forEach(m=>document.getElementById('sort'+m[0].toUpperCase()+m.slice(1)).classList.toggle('on',m===mode));
+  emails.sort((a,b)=>mode==='newest'?b.dateTs-a.dateTs:mode==='oldest'?a.dateTs-b.dateTs:mode==='subject'?(a.subject||'').localeCompare(b.subject||''):(a.from||'').localeCompare(b.from||''));
+  renderTable();if(!silent)toast('Sorted: '+mode,'nn');
+}
+
+function renderTable(){
+  const tb=document.getElementById('emailTbody');
+  document.getElementById('emailCount').textContent=emails.length;
+  document.getElementById('showNote').textContent=emails.length+' email'+(emails.length!==1?'s':'')+' in list';
+  if(!emails.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--faint);font-family:\'DM Mono\',monospace;font-size:.7rem">All emails removed</td></tr>';return;}
+  tb.innerHTML=emails.map((e,i)=>{
+    const ud=!e.isRead?'<span class="ud"></span>':'',ds=(e.date||'').split(' ')[0],fr=(e.from||'').replace(/<[^>]+>/g,'').trim()||e.from||'—';
+    return `<tr><td class="td-n">${i+1}</td><td class="td-s">${ud}${esc(e.subject)}</td><td class="td-f" title="${esc(e.from)}">${esc(fr)}</td><td class="td-d">${ds}</td><td style="font-size:.6rem;color:var(--faint);max-width:85px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.labels||'—')}</td><td><button class="ra" onclick="viewEmail(${i})" title="View">👁</button><button class="ra" onclick="editEmail(${i})" title="Edit">✏️</button><button class="ra del" onclick="removeEmail(${i})" title="Remove">🗑</button></td></tr>`;
+  }).join('');
+}
+
+function viewEmail(i){
+  const e=emails[i];document.getElementById('modalTitle').textContent='Email #'+(i+1);
+  document.getElementById('modalBody').innerHTML=`<div class="mf"><label>Subject</label><div class="mv" style="font-weight:600;font-size:.98rem">${esc(e.subject)}</div></div><div class="m2"><div class="mf"><label>From</label><div class="mv">${esc(e.from||'—')}</div></div><div class="mf"><label>Date</label><div class="mv">${esc(e.date||'—')}</div></div><div class="mf"><label>To</label><div class="mv">${esc(e.to||'—')}</div></div><div class="mf"><label>Labels</label><div class="mv">${esc(e.labels||'—')}</div></div>${e.cc?`<div class="mf"><label>CC</label><div class="mv">${esc(e.cc)}</div></div>`:''}</div><div class="mf"><label>Body Preview</label><div class="mbtext">${esc(e.body||'(no body)')}</div></div><div style="font-size:.6rem;color:var(--faint);font-family:'DM Mono',monospace;margin-top:9px">Read: ${e.isRead?'Yes':'No'} · Starred: ${e.isStarred?'⭐ Yes':'No'} · ${e.size} bytes</div>`;
+  document.getElementById('modalFoot').innerHTML=`<button class="btn btn-ghost" onclick="closeM()">Close</button><button class="btn btn-vi" onclick="closeM();editEmail(${i})">Edit</button>`;
+  openM();
+}
+
+function editEmail(i){
+  const e=emails[i];editIdx=i;document.getElementById('modalTitle').textContent='Edit Email #'+(i+1);
+  document.getElementById('modalBody').innerHTML=`<p style="font-size:.72rem;color:var(--faint);margin-bottom:16px;line-height:1.5;font-family:'DM Mono',monospace">Changes only affect the export — your Gmail is untouched.</p><div class="mf"><label>Subject</label><input type="text" id="eSubj" value="${esc(e.subject)}"></div><div class="m2"><div class="mf"><label>From</label><input type="text" id="eFrom" value="${esc(e.from||'')}"></div><div class="mf"><label>To</label><input type="text" id="eTo" value="${esc(e.to||'')}"></div><div class="mf"><label>CC</label><input type="text" id="eCc" value="${esc(e.cc||'')}"></div><div class="mf"><label>Labels</label><input type="text" id="eLbl" value="${esc(e.labels||'')}"></div></div><div class="mf"><label>Body Preview</label><textarea id="eBody" rows="6" style="resize:vertical">${esc(e.body||'')}</textarea></div>`;
+  document.getElementById('modalFoot').innerHTML=`<button class="btn btn-ghost" onclick="closeM()">Cancel</button><button class="btn btn-em" onclick="saveEdit()">Save Changes</button>`;
+  openM();
+}
+function saveEdit(){
+  if(editIdx===null)return;
+  const e=emails[editIdx];
+  e.subject=document.getElementById('eSubj').value;e.from=document.getElementById('eFrom').value;
+  e.to=document.getElementById('eTo').value;e.cc=document.getElementById('eCc').value;
+  e.labels=document.getElementById('eLbl').value;e.body=document.getElementById('eBody').value;
+  e.snippet=e.body.substring(0,200).replace(/\n/g,' ');
+  closeM();renderTable();toast('Email #'+(editIdx+1)+' updated','ok');editIdx=null;
+}
+
+function removeEmail(i){const s=emails[i].subject||'(no subject)';emails.splice(i,1);renderTable();toast('Removed: '+s.substring(0,40),'nn');if(!emails.length){document.getElementById('exportCard').style.display='none';setSt('fetchStatus','fetchText','fetchIcon','All emails removed. Fetch again to start over.','warning');}}
+
+function openM(){document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';}
+function closeM(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';editIdx=null;}
+function closeMBg(e){if(e.target===document.getElementById('modal'))closeM();}
+
+function selectExport(type){
+  selExp=type;
+  document.getElementById('opt-csv').className='ec ec-csv'+(type==='csv'?' sel':'');
+  document.getElementById('opt-pdf').className='ec ec-pdf'+(type==='pdf'?' sel s-pdf':'');
+  document.getElementById('opt-txt').className='ec ec-txt'+(type==='txt'?' sel s-txt':'');
+  document.getElementById('expBtnLbl').textContent={csv:'Download as CSV',pdf:'Download as PDF',txt:'Download as Text'}[type];
+}
+
+function runExport(){
+  if(!emails.length){setSt('exportStatus','exportText','exportIcon','No emails to export.','warning');return;}
+  const df=document.getElementById('dateFrom').value,dt=document.getElementById('dateTo').value;
+  const ue=document.getElementById('userEmailDisplay').textContent||'unknown';
+  const fn='MailVault_'+df+(df!==dt?'_to_'+dt:'')+'_'+emails.length+'emails';
+  if(selExp==='pdf'){buildPdf(emails,ue,df,dt,fn);return;}
+  const content=selExp==='csv'?buildCsv(emails,ue,df,dt):buildTxt(emails,ue,df,dt);
+  const ext=selExp==='csv'?'.csv':'.txt',mime=selExp==='csv'?'text/csv;charset=utf-8;':'text/plain;charset=utf-8;';
+  const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=fn+ext;a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  setSt('exportStatus','exportText','exportIcon','<strong>'+emails.length+'</strong> emails saved as <strong>'+fn+ext+'</strong> — check your Downloads folder.','success');
+  toast('Downloaded '+fn+ext,'ok');
+}
+
+function buildCsv(emails,ue,df,dt){
+  const h=['#','Date','From','To','CC','BCC','Subject','Body Preview','Labels','Read','Starred','Size (bytes)','Message ID','Thread ID'],rows=[h];
+  emails.forEach((e,i)=>rows.push([i+1,e.date,e.from,e.to,e.cc,e.bcc,e.subject,(e.snippet||'').replace(/\n/g,' '),e.labels,e.isRead?'Yes':'No',e.isStarred?'Yes':'No',e.size,e.id,e.threadId]));
+  rows.push([],['--- SUMMARY ---'],['Account',ue],['Date Range',df+' to '+dt],['Total',emails.length],['Exported At',new Date().toLocaleString()]);
+  return rows.map(r=>r.map(c=>{const v=String(c==null?'':c);return(v.indexOf(',')>-1||v.indexOf('"')>-1||v.indexOf('\n')>-1)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',')).join('\r\n');
+}
+
+function buildPdf(emails,ue,df,dt,fn){
+  const rows=emails.map((e,i)=>`<div class="eb"><div class="en">#${i+1}</div><div class="es">${hesc(e.subject)}</div><table class="mt"><tr><td class="mk">From</td><td>${hesc(e.from||'—')}</td><td class="mk">Date</td><td>${hesc(e.date||'—')}</td></tr><tr><td class="mk">To</td><td>${hesc(e.to||'—')}</td><td class="mk">Labels</td><td>${hesc(e.labels||'—')}</td></tr>${e.cc?`<tr><td class="mk">CC</td><td colspan="3">${hesc(e.cc)}</td></tr>`:''}<tr><td class="mk">Read</td><td>${e.isRead?'Yes':'No'}</td><td class="mk">Starred</td><td>${e.isStarred?'⭐ Yes':'No'}</td></tr></table><div class="bl">BODY PREVIEW</div><div class="bt">${hesc(e.body||'(no body)')}</div></div>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${hesc(fn)}</title><style>body{font-family:Arial,sans-serif;font-size:10pt;color:#111;margin:0}.cover{padding:40pt 36pt 28pt;background:linear-gradient(135deg,#06040f,#1a0a3e);color:#fff}.cover h1{font-size:26pt;font-weight:900;margin:0 0 8pt}.cover h1 em{color:#00e5a0;font-style:normal}.cover-meta{font-size:8pt;color:rgba(255,255,255,.6);font-family:monospace;line-height:2}.eb{padding:16pt 36pt;border-bottom:1pt solid #eee;page-break-inside:avoid}.en{font-family:monospace;font-size:7pt;color:#999;margin-bottom:4pt}.es{font-size:13pt;font-weight:700;margin-bottom:10pt}.mt{width:100%;border-collapse:collapse;margin-bottom:10pt;font-size:8.5pt}.mt td{padding:3pt 6pt;border:1pt solid #e5e5e5;vertical-align:top}.mk{font-weight:700;color:#00b87c;background:#e6f9f3;width:48pt;white-space:nowrap}.bl{font-family:monospace;font-size:6.5pt;color:#aaa;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5pt}.bt{font-size:8.5pt;color:#555;line-height:1.65;white-space:pre-wrap;background:#fafafa;padding:8pt;border:1pt solid #eee}@media print{@page{margin:0}.cover{padding:28pt}.eb{padding:12pt 28pt}}</style></head><body><div class="cover"><h1>Mail<em>Vault</em></h1><div class="cover-meta">Account: ${hesc(ue)}<br>Range: ${hesc(df)} → ${hesc(dt)}<br>Total: ${emails.length} emails<br>Exported: ${new Date().toLocaleString()}</div></div>${rows}<script>window.onload=function(){window.print();}<\/script></body></html>`;
+  const w=window.open('','_blank','width=920,height=720');w.document.write(html);w.document.close();
+  setSt('exportStatus','exportText','exportIcon','PDF window opened — choose <strong>Save as PDF</strong> in the print dialog.','success');
+  toast('PDF ready — Print → Save as PDF','ok');
+}
+
+function buildTxt(emails,ue,df,dt){
+  const L=['═══════════════════════════════════════════════════════════','  MAILVAULT — GMAIL EXPORT','  Account : '+ue,'  Range   : '+df+' → '+dt,'  Total   : '+emails.length+' emails','  Exported: '+new Date().toLocaleString(),'═══════════════════════════════════════════════════════════',''];
+  emails.forEach((e,i)=>{L.push('┌─ EMAIL #'+(i+1)+' '+'─'.repeat(Math.max(0,48-String(i+1).length)));L.push('│ Subject : '+(e.subject||'(no subject)'));L.push('│ From    : '+(e.from||'—'));L.push('│ To      : '+(e.to||'—'));if(e.cc)L.push('│ CC      : '+e.cc);L.push('│ Date    : '+(e.date||'—'));L.push('│ Labels  : '+(e.labels||'—'));L.push('│ Read    : '+(e.isRead?'Yes':'No')+'   Starred: '+(e.isStarred?'Yes':'No'));L.push('│');L.push('│ BODY:');(e.body||'(no body)').split('\n').forEach(bl=>L.push('│   '+bl));L.push('└'+'─'.repeat(52));L.push('');});
+  return L.join('\n');
+}
+
+function clearAll(){emails=[];currentSort='newest';document.getElementById('emailSection').classList.remove('show');document.getElementById('exportCard').style.display='none';document.getElementById('clearBtn').style.display='none';clrSt('fetchStatus');clrSt('exportStatus');hidePr();toast('Cleared','nn');}
+</script>
+</body>
+</html>

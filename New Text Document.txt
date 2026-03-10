@@ -1,0 +1,8 @@
+add authorization acces instruction. and grant the system to have a full control on your email.
+and show this url : https://script.google.com/macros/s/AKfycbxbfKNTOwqhcnOjz6r3J7Tgy8x1Gjh-fIvb8DxMzPGL4xC0VTX8dp1hyot0hupCD72J/exec. When user finish reading from how it works to troubleshooting. User Must follow the instruction.
+
+
+
+
+why when user remove the access to mailvault from permissions. User cannot use the link again. Allow User to reconnect to web app again when accidentally remove 
+the connection to mailvault.
