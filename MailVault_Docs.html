@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MailVault — Setup Guide & Source Code</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --night:#06040f;--card:#13102a;--card2:#1a163a;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
+  --text:#f0eeff;--muted:rgba(240,238,255,.55);--faint:rgba(240,238,255,.28);
+  --em:#00e5a0;--em2:#00b87c;--vi:#a78bfa;--vi2:#7c3aed;
+  --ro:#fb7185;--am:#fbbf24;--bl:#60a5fa;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--night);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+.bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.25;animation:drift 22s ease-in-out infinite}
+.orb1{width:600px;height:600px;background:radial-gradient(circle,#7c3aed,transparent 70%);top:-180px;left:-150px}
+.orb2{width:480px;height:480px;background:radial-gradient(circle,#00e5a0,transparent 70%);top:40%;right:-200px;animation-delay:-9s}
+.orb3{width:380px;height:380px;background:radial-gradient(circle,#fb7185,transparent 70%);bottom:-80px;left:30%;animation-delay:-16s}
+@keyframes drift{0%,100%{transform:translate(0,0)}33%{transform:translate(26px,-32px)}66%{transform:translate(-16px,24px)}}
+
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:0 28px 100px}
+
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(6,4,15,.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:56px;
+}
+.nav-brand{font-family:'Playfair Display',serif;font-weight:700;font-size:1.05rem}
+.nav-brand span{color:var(--em)}
+.nav-links{display:flex;gap:4px}
+.nav-a{
+  font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--faint);text-decoration:none;padding:6px 12px;border-radius:7px;
+  transition:all .15s;
+}
+.nav-a:hover{color:var(--text);background:rgba(255,255,255,.07)}
+
+/* HERO */
+.hero{padding:80px 0 56px;text-align:center}
+.hero-pill{display:inline-flex;align-items:center;gap:8px;font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--em);background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.26);padding:6px 18px;border-radius:99px;margin-bottom:26px}
+.hero-pill::before{content:'';width:6px;height:6px;background:var(--em);border-radius:50%;animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.6rem,7vw,5.5rem);font-weight:900;line-height:.92;letter-spacing:-.03em;margin-bottom:18px}
+.grd{background:linear-gradient(135deg,var(--em) 0%,var(--vi) 55%,var(--ro) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1rem;color:var(--muted);max-width:520px;margin:0 auto 36px;line-height:1.75}
+.badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:0}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.05);border:1px solid var(--border2);backdrop-filter:blur(10px);padding:8px 16px;border-radius:99px;font-family:'DM Mono',monospace;font-size:.66rem;color:var(--muted)}
+.badge span{color:var(--em)}
+
+/* SECTIONS */
+.section{margin-bottom:60px}
+.section-label{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--em);margin-bottom:10px}
+.section-title{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;margin-bottom:16px;line-height:1.1}
+.section-sub{font-size:.96rem;color:var(--muted);line-height:1.75;margin-bottom:28px;max-width:640px}
+
+/* GLASS */
+.glass{background:rgba(19,16,42,.72);border:1px solid var(--border);border-radius:18px;backdrop-filter:blur(20px);padding:28px 32px;margin-bottom:16px;position:relative;overflow:hidden;transition:border-color .3s}
+.glass::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.035) 0%,transparent 55%);pointer-events:none;border-radius:inherit}
+.glass:hover{border-color:var(--border2)}
+.stripe{position:absolute;top:0;left:0;right:0;height:2px;border-radius:18px 18px 0 0}
+.s-em{background:linear-gradient(90deg,var(--em),var(--vi))}
+.s-vi{background:linear-gradient(90deg,var(--vi),var(--bl))}
+.s-ro{background:linear-gradient(90deg,var(--ro),var(--am))}
+.s-am{background:linear-gradient(90deg,var(--am),var(--em))}
+
+/* STEP BOXES */
+.step-grid{display:grid;gap:14px}
+.step-box{display:grid;grid-template-columns:60px 1fr;gap:0;border:1px solid var(--border2);border-radius:14px;overflow:hidden}
+.step-num{background:linear-gradient(180deg,var(--vi2),var(--vi));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px}
+.step-num .sn-label{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:2px}
+.step-num .sn-digit{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:#fff;line-height:1}
+.step-body{padding:16px 20px;background:rgba(167,139,250,.06)}
+.step-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;color:var(--vi);margin-bottom:8px}
+.step-body p{font-size:.84rem;color:var(--muted);line-height:1.65;margin-bottom:5px}
+.step-body p:last-child{margin-bottom:0}
+.step-code{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--em);background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);padding:4px 10px;border-radius:6px;display:inline-block;margin:4px 0}
+
+/* TIP BOXES */
+.tip{display:flex;gap:14px;padding:18px 20px;border-radius:12px;margin-bottom:14px;align-items:flex-start}
+.tip-em{background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.22)}
+.tip-vi{background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.22)}
+.tip-ro{background:rgba(251,113,133,.07);border:1px solid rgba(251,113,133,.22)}
+.tip-am{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.22)}
+.tip-ico{font-size:1.2rem;flex-shrink:0;margin-top:1px}
+.tip-content{}
+.tip-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;margin-bottom:5px}
+.tip-em .tip-title{color:var(--em)}.tip-vi .tip-title{color:var(--vi)}.tip-ro .tip-title{color:var(--ro)}.tip-am .tip-title{color:var(--am)}
+.tip-text{font-size:.82rem;color:var(--muted);line-height:1.65}
+
+/* FEATURE GRID */
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.feat{padding:20px;border:1px solid var(--border2);border-radius:14px;background:rgba(255,255,255,.03);text-align:center;transition:all .2s}
+.feat:hover{border-color:rgba(0,229,160,.3);background:rgba(0,229,160,.04);transform:translateY(-2px)}
+.feat-ico{font-size:1.8rem;margin-bottom:10px;display:block}
+.feat-name{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;color:var(--text);margin-bottom:4px}
+.feat-desc{font-size:.72rem;color:var(--faint);line-height:1.5}
+
+/* REMOVE STEPS */
+.remove-step{display:flex;gap:16px;margin-bottom:20px;align-items:flex-start}
+.rs-num{width:36px;height:36px;background:linear-gradient(135deg,#e11d48,var(--ro));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:900;color:#fff;flex-shrink:0}
+.rs-body{}
+.rs-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;color:var(--text);margin-bottom:6px}
+.rs-text{font-size:.84rem;color:var(--muted);line-height:1.65}
+.rs-url{font-family:'DM Mono',monospace;font-size:.75rem;color:var(--em);background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);padding:3px 9px;border-radius:6px;display:inline-block;margin:4px 0}
+
+/* CODE VIEWER */
+.code-viewer{border:1px solid var(--border2);border-radius:16px;overflow:hidden;margin-bottom:20px}
+.cv-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 18px;background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);
+}
+.cv-title{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--em);font-weight:500;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+.cv-title::before{content:'';width:8px;height:8px;background:var(--em);border-radius:50%;box-shadow:0 0 8px var(--em)}
+.cv-actions{display:flex;gap:6px}
+.cv-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:.06em;text-transform:uppercase;
+  padding:6px 12px;border:1px solid var(--border2);border-radius:7px;
+  background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;
+  transition:all .15s;
+}
+.cv-btn:hover{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.35);color:var(--em)}
+.cv-btn.copied{background:rgba(0,229,160,.15);border-color:var(--em);color:var(--em)}
+.cv-body{
+  background:#0a0818;
+  max-height:420px;overflow:auto;
+  padding:0;
+  position:relative;
+}
+.cv-body pre{
+  padding:20px 22px;
+  font-family:'DM Mono',monospace;
+  font-size:.73rem;
+  line-height:1.7;
+  color:#b8d4b0;
+  white-space:pre;
+  overflow-x:auto;
+  tab-size:2;
+}
+.cv-body textarea{
+  width:100%;
+  background:#0a0818;
+  border:none;
+  outline:none;
+  resize:none;
+  font-family:'DM Mono',monospace;
+  font-size:.73rem;
+  line-height:1.7;
+  color:#b8d4b0;
+  padding:20px 22px;
+  cursor:default;
+  user-select:all;
+  -webkit-user-select:all;
+  display:none;
+}
+.cv-line-count{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--faint);padding:8px 18px;background:rgba(255,255,255,.02);border-top:1px solid var(--border);text-align:right}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:48px 0}
+
+/* TOC */
+.toc{background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:14px;padding:22px 26px;margin-bottom:40px}
+.toc-title{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--vi);margin-bottom:14px}
+.toc-list{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.toc-list li a{font-size:.84rem;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:7px;transition:color .15s}
+.toc-list li a::before{content:'';width:4px;height:4px;background:var(--vi);border-radius:50%;flex-shrink:0}
+.toc-list li a:hover{color:var(--vi)}
+
+/* FOOTER */
+.sfooter{margin-top:60px;padding:22px 0;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.fbrand{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem}
+.fbrand span{color:var(--em)}
+.fmeta{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--faint);line-height:1.7;text-align:right}
+
+@media(max-width:640px){
+  .feat-grid{grid-template-columns:1fr 1fr}
+  .toc-list{grid-template-columns:1fr}
+  .nav-links{display:none}
+  .step-box{grid-template-columns:50px 1fr}
+}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">Mail<span>Vault</span></div>
+  <div class="nav-links">
+    <a class="nav-a" href="#how-it-works">How It Works</a>
+    <a class="nav-a" href="#setup">Setup</a>
+    <a class="nav-a" href="#features">Features</a>
+    <a class="nav-a" href="#remove">Remove Access</a>
+    <a class="nav-a" href="#code">Source Code</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-pill">Complete Setup Guide &amp; Source Code</div>
+  <h1>Mail<span class="grd">Vault</span></h1>
+  <p class="hero-sub">A free Gmail exporter that runs entirely inside your Google Account. No cloud setup, no subscriptions, no data leaving Google's servers.</p>
+  <div class="badges">
+    <div class="badge"><span>🔒</span> Zero Cloud Setup</div>
+    <div class="badge"><span>📁</span> Saves to Your Device</div>
+    <div class="badge"><span>⚡</span> 5-Minute Install</div>
+    <div class="badge"><span>👁️</span> Open Source</div>
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <div class="toc-title">On This Page</div>
+  <ul class="toc-list">
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#setup">One-Time Setup</a></li>
+    <li><a href="#features">App Features</a></li>
+    <li><a href="#remove">Remove Access</a></li>
+    <li><a href="#troubleshoot">Troubleshooting</a></li>
+    <li><a href="#code-gs">Source: Code.gs</a></li>
+    <li><a href="#code-html">Source: index.html</a></li>
+  </ul>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section" id="how-it-works">
+  <div class="section-label">Overview</div>
+  <div class="section-title">How It Works</div>
+  <p class="section-sub">MailVault is a Google Apps Script project that lives inside your own Google Account. It reads your Gmail on request, lets you review and manage the results, then downloads the export directly to your device.</p>
+
+  <div class="feat-grid">
+    <div class="feat"><span class="feat-ico">🏠</span><div class="feat-name">Stays in Google</div><div class="feat-desc">Runs on Google's servers inside your account. Never touches outside infrastructure.</div></div>
+    <div class="feat"><span class="feat-ico">📖</span><div class="feat-name">Read-Only Gmail</div><div class="feat-desc">Can only read emails. Cannot send, delete, or modify anything.</div></div>
+    <div class="feat"><span class="feat-ico">💾</span><div class="feat-name">Local Downloads</div><div class="feat-desc">CSV, PDF, and Text files download directly to your device — not to Drive.</div></div>
+    <div class="feat"><span class="feat-ico">✏️</span><div class="feat-name">Edit Before Export</div><div class="feat-desc">View, edit, or remove emails from the list before downloading.</div></div>
+    <div class="feat"><span class="feat-ico">🔀</span><div class="feat-name">Sort &amp; Filter</div><div class="feat-desc">Sort by newest, oldest, subject, or sender before exporting.</div></div>
+    <div class="feat"><span class="feat-ico">👁️</span><div class="feat-name">Open Source</div><div class="feat-desc">Full source code below — every line is readable and auditable.</div></div>
+  </div>
+
+  <div class="tip tip-em">
+    <div class="tip-ico">🔒</div>
+    <div class="tip-content">
+      <div class="tip-title">Your data never leaves Google</div>
+      <div class="tip-text">The script runs server-side inside your Google Account. Emails flow from Gmail to your browser to your local device. No third-party servers, no analytics, no data collection of any kind.</div>
+    </div>
+  </div>
+  <div class="tip tip-am">
+    <div class="tip-ico">⚠️</div>
+    <div class="tip-content">
+      <div class="tip-title">Each person needs their own deployment</div>
+      <div class="tip-text">Do NOT share your Web App URL with others — the script runs as your Google account and would expose your Gmail. Each person must follow this setup guide to deploy their own private copy.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SETUP -->
+<div class="section" id="setup">
+  <div class="section-label">Installation</div>
+  <div class="section-title">One-Time Setup</div>
+  <p class="section-sub">Takes about 5 minutes. After setup, just open your Web App URL anytime to export emails — no need to return here.</p>
+
+  <div class="step-grid">
+    <div class="step-box">
+      <div class="step-num"><div class="sn-label">Step</div><div class="sn-digit">01</div></div>
+      <div class="step-body">
+        <div class="step-title">Go to Google Apps Script</div>
+        <p>Open your browser and navigate to <span class="step-code">script.google.com</span></p>
+        <p>Sign in with the Gmail account whose emails you want to export.</p>
+      </div>
+    </div>
+    <div class="step-box">
+      <div class="step-num"><div class="sn-label">Step</div><div class="sn-digit">02</div></div>
+      <div class="step-body">
+        <div class="step-title">Create a New Project</div>
+        <p>Click <strong>+ New project</strong> in the top left.</p>
+        <p>Click "Untitled project" at the top → type <strong>MailVault</strong> → click Rename.</p>
+      </div>
+    </div>
+    <div class="step-box">
+      <div class="step-num"><div class="sn-label">Step</div><div class="sn-digit">03</div></div>
+      <div class="step-body">
+        <div class="step-title">Paste Code.gs</div>
+        <p>The editor opens with <strong>Code.gs</strong> by default. Click inside it → <strong>Ctrl+A</strong> → Delete to clear it.</p>
+        <p>Copy the full Code.gs source below, paste it in, press <strong>Ctrl+S</strong>.</p>
+      </div>
+    </div>
+    <div class="step-box">
+      <div class="step-num"><div class="sn-label">Step</div><div class="sn-digit">04</div></div>
+      <div class="step-body">
+        <div class="step-title">Add the index.html File</div>
+        <p>Hover over "Files" in the left sidebar → click the <strong>+</strong> icon → choose <strong>HTML</strong>.</p>
+        <p>Name it exactly <span class="step-code">index</span> (no .html extension) → press Enter.</p>
+        <p>Delete the placeholder → paste the full index.html source below → <strong>Ctrl+S</strong>.</p>
+      </div>
+    </div>
+    <div class="step-box">
+      <div class="step-num"><div class="sn-label">Step</div><div class="sn-digit">05</div></div>
+      <div class="step-body">
+        <div class="step-title">Deploy as a Web App</div>
+        <p>Click the blue <strong>Deploy</strong> button (top right) → <strong>New deployment</strong>.</p>
+        <p>Click the ⚙️ gear icon → select <strong>Web app</strong>.</p>
+        <p>Set: <strong>Execute as: Me</strong> · <strong>Who has access: Only myself</strong></p>
+        <p>Click <strong>Deploy</strong> → Authorize access → choose your account → <strong>Allow</strong>.</p>
+        <p><em style="color:var(--faint);font-size:.8rem">You may need to click "Advanced" → "Go to MailVault (unsafe)" first.</em></p>
+        <p><strong style="color:var(--em)">Copy the Web App URL — bookmark it!</strong></p>
+      </div>
+    </div>
+    <div class="step-box">
+      <div class="step-num"><div class="sn-label">Step</div><div class="sn-digit">06</div></div>
+      <div class="step-body">
+        <div class="step-title">Authorize Drive Permissions</div>
+        <p>In Apps Script editor, click the function dropdown (shows "doGet") → select <span class="step-code">exportToPdfFiles</span>.</p>
+        <p>Wait — there is no such function now. Skip this step. All exports now happen in the browser.</p>
+        <p style="color:var(--em);font-weight:600">✓ You're done! Open your Web App URL to start exporting.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip tip-vi" style="margin-top:20px">
+    <div class="tip-ico">💡</div>
+    <div class="tip-content">
+      <div class="tip-title">Updating the app</div>
+      <div class="tip-text">After editing Code.gs or index.html, go to Deploy → Manage deployments → ✏️ pencil → Version: New version → Deploy. Your URL stays the same.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<div class="section" id="features">
+  <div class="section-label">User Guide</div>
+  <div class="section-title">App Features</div>
+  <p class="section-sub">Open your Web App URL in any browser. The interface has three steps.</p>
+
+  <div class="glass" style="margin-bottom:14px">
+    <div class="stripe s-em"></div>
+    <p style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--em);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Step 01 — Date Range</p>
+    <p style="color:var(--muted);font-size:.875rem;line-height:1.7">Set a From and To date. Your Gmail address is automatically detected and shown in the header — no manual entry needed. For a single day, set both dates to the same date.</p>
+  </div>
+  <div class="glass" style="margin-bottom:14px">
+    <div class="stripe s-vi"></div>
+    <p style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--vi);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Step 02 — Fetch &amp; Manage</p>
+    <p style="color:var(--muted);font-size:.875rem;line-height:1.7;margin-bottom:12px">Click <strong>Fetch Emails</strong> to search Gmail. Results appear in a table with four actions per email:</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:12px 14px"><p style="font-size:.78rem;font-weight:600;margin-bottom:4px">👁 View</p><p style="font-size:.76rem;color:var(--faint);line-height:1.5">Opens a modal with all email fields: Subject, From, To, CC, Date, Labels, Body, Read/Starred status.</p></div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:12px 14px"><p style="font-size:.78rem;font-weight:600;margin-bottom:4px">✏️ Edit</p><p style="font-size:.76rem;color:var(--faint);line-height:1.5">Opens an editable form. Change Subject, From, To, CC, Labels, Body. Edits only affect the export — Gmail is untouched.</p></div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:12px 14px"><p style="font-size:.78rem;font-weight:600;margin-bottom:4px">🗑 Remove</p><p style="font-size:.76rem;color:var(--faint);line-height:1.5">Removes that email from the export list. Does not delete it from Gmail.</p></div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:12px 14px"><p style="font-size:.78rem;font-weight:600;margin-bottom:4px">🔀 Sort</p><p style="font-size:.76rem;color:var(--faint);line-height:1.5">Sort by Newest, Oldest, Subject A–Z, or From A–Z using the buttons above the table.</p></div>
+    </div>
+  </div>
+  <div class="glass">
+    <div class="stripe s-ro"></div>
+    <p style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--ro);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px">Step 03 — Export to Device</p>
+    <p style="color:var(--muted);font-size:.875rem;line-height:1.7;margin-bottom:14px">Choose a format and click Download. Files save directly to your device's Downloads folder:</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div style="background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:14px;text-align:center"><div style="font-size:1.4rem;margin-bottom:6px">📊</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">CSV</div><div style="font-size:.7rem;color:var(--faint);line-height:1.4">Opens in Excel or Google Sheets. Includes a summary section.</div></div>
+      <div style="background:rgba(251,113,133,.05);border:1px solid rgba(251,113,133,.2);border-radius:10px;padding:14px;text-align:center"><div style="font-size:1.4rem;margin-bottom:6px">📕</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">PDF</div><div style="font-size:.7rem;color:var(--faint);line-height:1.4">Print-ready. A window opens → choose Save as PDF in the print dialog.</div></div>
+      <div style="background:rgba(167,139,250,.05);border:1px solid rgba(167,139,250,.2);border-radius:10px;padding:14px;text-align:center"><div style="font-size:1.4rem;margin-bottom:6px">📄</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">Text</div><div style="font-size:.7rem;color:var(--faint);line-height:1.4">Plain .txt file. One email per block with ASCII borders.</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- REMOVE ACCESS -->
+<div class="section" id="remove">
+  <div class="section-label">Uninstall</div>
+  <div class="section-title">Remove MailVault from Your Account</div>
+  <p class="section-sub">Follow all three steps to completely remove MailVault. Each step removes a different component.</p>
+
+  <div class="remove-step">
+    <div class="rs-num">A</div>
+    <div class="rs-body">
+      <div class="rs-title">Revoke Gmail &amp; Drive Permissions</div>
+      <p class="rs-text">This stops the script from accessing your Gmail. After this, even if someone has the URL, it cannot read any data.</p>
+      <div class="rs-url">myaccount.google.com/permissions</div>
+      <p class="rs-text" style="margin-top:8px">1. Go to the URL above and sign in.<br>2. Find <strong>MailVault</strong> or the Apps Script project in the list.<br>3. Click it → click <strong>Remove Access</strong> → confirm.</p>
+    </div>
+  </div>
+
+  <div class="remove-step">
+    <div class="rs-num">B</div>
+    <div class="rs-body">
+      <div class="rs-title">Delete the Apps Script Project</div>
+      <p class="rs-text">This deletes the script code and permanently invalidates the Web App URL.</p>
+      <div class="rs-url">script.google.com</div>
+      <p class="rs-text" style="margin-top:8px">1. Go to the URL above.<br>2. Find your <strong>MailVault</strong> project in the list.<br>3. Click the ⋮ three-dot menu → click <strong>Remove</strong> → confirm.</p>
+    </div>
+  </div>
+
+  <div class="remove-step">
+    <div class="rs-num">C</div>
+    <div class="rs-body">
+      <div class="rs-title">Delete Exported Files (Optional)</div>
+      <p class="rs-text">Any CSV, PDF, or TXT files you downloaded live on your own device. Delete them from your Downloads folder manually if needed. If you ever ran the old version that saved to Google Drive, search Drive for "MailVault" and delete those files too.</p>
+    </div>
+  </div>
+
+  <div class="tip tip-em" style="margin-top:8px">
+    <div class="tip-ico">✅</div>
+    <div class="tip-content">
+      <div class="tip-title">Full Removal Checklist</div>
+      <div class="tip-text">✓ Revoked permissions at myaccount.google.com/permissions<br>✓ Deleted the project at script.google.com<br>✓ Deleted any exported files from your device / Google Drive<br><br>After all three steps, MailVault has zero presence in your Google account.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TROUBLESHOOTING -->
+<div class="section" id="troubleshoot">
+  <div class="section-label">Help</div>
+  <div class="section-title">Troubleshooting</div>
+
+  <div class="glass" style="margin-bottom:12px"><div class="stripe s-am"></div>
+    <p style="font-weight:600;font-size:.9rem;margin-bottom:8px;color:var(--am)">"Script function not found: doGet"</p>
+    <p style="color:var(--muted);font-size:.84rem;line-height:1.65">Code.gs was deployed before being saved. Go to Apps Script, re-paste Code.gs, press Ctrl+S, then create a new deployment version.</p>
+  </div>
+  <div class="glass" style="margin-bottom:12px"><div class="stripe s-am"></div>
+    <p style="font-weight:600;font-size:.9rem;margin-bottom:8px;color:var(--am)">"No emails found" for a date you know has emails</p>
+    <p style="color:var(--muted);font-size:.84rem;line-height:1.65">Widen the date range by one day in each direction. Gmail's after/before date search can be offset by your timezone.</p>
+  </div>
+  <div class="glass" style="margin-bottom:12px"><div class="stripe s-am"></div>
+    <p style="font-weight:600;font-size:.9rem;margin-bottom:8px;color:var(--am)">"Script timeout" error</p>
+    <p style="color:var(--muted);font-size:.84rem;line-height:1.65">Google Apps Script has a 6-minute execution limit. Use a shorter date range. Google Sheets export (old version) handles large batches faster.</p>
+  </div>
+  <div class="glass"><div class="stripe s-am"></div>
+    <p style="font-weight:600;font-size:.9rem;margin-bottom:8px;color:var(--am)">Export button is greyed out</p>
+    <p style="color:var(--muted);font-size:.84rem;line-height:1.65">You need to fetch emails first. Click Fetch Emails and wait for the preview table before the Export button becomes active.</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- CODE VIEWERS -->
+<div class="section" id="code">
+  <div class="section-label">Source Code</div>
+  <div class="section-title">Full Source Code</div>
+  <p class="section-sub">Both files are below. Click <strong>Copy Code</strong> on each, then paste into Apps Script. These are read-only previews.</p>
+
+  <div class="tip tip-vi" style="margin-bottom:24px">
+    <div class="tip-ico">📋</div>
+    <div class="tip-content">
+      <div class="tip-title">How to use these</div>
+      <div class="tip-text">1. Click <strong>Copy Code</strong> on the file you need.<br>2. Go to script.google.com → open your MailVault project.<br>3. Click inside the correct file (Code.gs or index.html) → Ctrl+A → Ctrl+V to paste.<br>4. Press Ctrl+S to save, then deploy a new version.</div>
+    </div>
+  </div>
+
+  <div id="code-gs" class="code-viewer">
+    <div class="cv-header">
+      <div class="cv-title">Code.gs — Backend Script</div>
+      <div class="cv-actions">
+        <button class="cv-btn" id="copyGsBtn" onclick="copyCode('gs')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy Code
+        </button>
+      </div>
+    </div>
+    <div class="cv-body">
+      <pre id="gsDisplay"></pre>
+    </div>
+    <div class="cv-line-count" id="gsLineCount"></div>
+  </div>
+
+  <div id="code-html" class="code-viewer" style="margin-top:24px">
+    <div class="cv-header">
+      <div class="cv-title">index.html — Frontend UI</div>
+      <div class="cv-actions">
+        <button class="cv-btn" id="copyHtmlBtn" onclick="copyCode('html')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy Code
+        </button>
+      </div>
+    </div>
+    <div class="cv-body">
+      <pre id="htmlDisplay"></pre>
+    </div>
+    <div class="cv-line-count" id="htmlLineCount"></div>
+  </div>
+</div>
+
+<footer class="sfooter">
+  <div class="fbrand">Mail<span>Vault</span></div>
+  <div class="fmeta">Runs inside your Google Account · No external servers<br>Files saved directly to your device · Full source above</div>
+</footer>
+
+</div><!-- /wrap -->
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:26px;right:26px;z-index:200;padding:11px 20px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.81rem;font-weight:600;box-shadow:0 12px 36px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;background:linear-gradient(135deg,#00b87c,#00e5a0);color:#06040f"></div>
+
+<script>
+const CODE_GS   = "// \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n// \u2551          MailVault \u2014 Google Apps Script Backend              \u2551\n// \u2551  Runs entirely inside your Google Account. No Cloud setup.  \u2551\n// \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\n\nfunction doGet() {\n  return HtmlService.createHtmlOutputFromFile('index')\n    .setTitle('MailVault \u2014 Gmail Exporter')\n    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);\n}\n\n// \u2500\u2500 GET LOGGED-IN USER EMAIL \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n// Called on page load so the UI can display the user's own address\nfunction getUserEmail() {\n  try {\n    return { email: Session.getActiveUser().getEmail(), error: null };\n  } catch (e) {\n    return { email: '', error: e.message };\n  }\n}\n\n// \u2500\u2500 FETCH EMAILS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunction fetchEmailsByDateRange(dateFrom, dateTo) {\n  try {\n    const after  = dateFrom.replace(/-/g, '/');\n    const before = _addOneDay(dateTo).replace(/-/g, '/');\n    const query  = 'after:' + after + ' before:' + before;\n\n    const emails = [];\n    let   start  = 0;\n    const perPage = 500;\n\n    while (true) {\n      const threads = GmailApp.search(query, start, perPage);\n      if (!threads || threads.length === 0) break;\n\n      threads.forEach(function(thread) {\n        thread.getMessages().forEach(function(msg) {\n          const msgDate = msg.getDate();\n          const from    = new Date(dateFrom + 'T00:00:00');\n          const to      = new Date(dateTo   + 'T23:59:59');\n          if (msgDate >= from && msgDate <= to) {\n            emails.push({\n              id:        msg.getId(),\n              threadId:  thread.getId(),\n              date:      Utilities.formatDate(msgDate, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'),\n              dateTs:    msgDate.getTime(),\n              from:      msg.getFrom(),\n              to:        msg.getTo(),\n              cc:        msg.getCc(),\n              bcc:       msg.getBcc(),\n              subject:   msg.getSubject() || '(no subject)',\n              body:      msg.getPlainBody().substring(0, 3000).replace(/\\r/g, ''),\n              snippet:   msg.getPlainBody().substring(0, 200).replace(/\\n/g, ' '),\n              labels:    thread.getLabels().map(function(l){ return l.getName(); }).join(', '),\n              isRead:    !msg.isUnread(),\n              isStarred: msg.isStarred(),\n              size:      msg.getRawContent().length,\n            });\n          }\n        });\n      });\n\n      if (threads.length < perPage) break;\n      start += perPage;\n    }\n\n    return { emails: emails, total: emails.length, error: null };\n  } catch (e) {\n    return { emails: [], total: 0, error: e.message };\n  }\n}\n\n// \u2500\u2500 HELPERS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunction _addOneDay(dateStr) {\n  const d = new Date(dateStr + 'T12:00:00');\n  d.setDate(d.getDate() + 1);\n  return d.toISOString().split('T')[0];\n}\n";
+const CODE_HTML = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>MailVault \u2014 Gmail Exporter</title>\n<link href=\"https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap\" rel=\"stylesheet\">\n<style>\n*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}\n:root{\n  --night:#06040f;--deep:#0d0a1e;--card:#13102a;--card2:#1a163a;\n  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);\n  --text:#f0eeff;--muted:rgba(240,238,255,.55);--faint:rgba(240,238,255,.28);\n  --em:#00e5a0;--em2:#00b87c;--vi:#a78bfa;--vi2:#7c3aed;\n  --ro:#fb7185;--am:#fbbf24;--bl:#60a5fa;\n}\nhtml{scroll-behavior:smooth}\nbody{font-family:'DM Sans',sans-serif;background:var(--night);color:var(--text);min-height:100vh;overflow-x:hidden}\n\n.bg-orbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}\n.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.3;animation:drift 22s ease-in-out infinite}\n.orb1{width:640px;height:640px;background:radial-gradient(circle,#7c3aed,transparent 70%);top:-220px;left:-180px}\n.orb2{width:520px;height:520px;background:radial-gradient(circle,#00e5a0,transparent 70%);top:35%;right:-220px;animation-delay:-8s}\n.orb3{width:420px;height:420px;background:radial-gradient(circle,#fb7185,transparent 70%);bottom:-120px;left:25%;animation-delay:-15s}\n@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(28px,-36px) scale(1.04)}66%{transform:translate(-18px,28px) scale(.96)}}\n\n.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 28px 100px}\n\n/* HERO */\n.hero{padding:80px 0 54px;text-align:center}\n.hero-pill{\n  display:inline-flex;align-items:center;gap:8px;\n  font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;\n  color:var(--em);background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.28);\n  padding:6px 18px;border-radius:99px;margin-bottom:28px;animation:fdDown .6s ease both;\n}\n.hero-pill::before{content:'';width:6px;height:6px;background:var(--em);border-radius:50%;animation:pulse 2s infinite}\n@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}\n.hero h1{\n  font-family:'Playfair Display',serif;font-size:clamp(2.8rem,8vw,6.2rem);\n  font-weight:900;line-height:.93;letter-spacing:-.03em;margin-bottom:20px;\n  animation:fdDown .7s .1s ease both;\n}\n.grd{background:linear-gradient(135deg,var(--em) 0%,var(--vi) 55%,var(--ro) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}\n.hero-sub{font-size:1.02rem;color:var(--muted);max-width:460px;margin:0 auto 34px;line-height:1.7;animation:fdDown .7s .2s ease both}\n.user-badge{\n  display:inline-flex;align-items:center;gap:9px;\n  background:rgba(255,255,255,.05);border:1px solid var(--border2);backdrop-filter:blur(14px);\n  padding:9px 20px;border-radius:99px;\n  font-family:'DM Mono',monospace;font-size:.73rem;color:var(--em);\n  animation:fdDown .7s .3s ease both;\n}\n.live-dot{width:7px;height:7px;background:var(--em);border-radius:50%;box-shadow:0 0 8px var(--em);animation:pulse 2s infinite;flex-shrink:0}\n#userPill{display:none}\n\n/* GLASS CARDS */\n.glass{\n  background:rgba(19,16,42,.72);border:1px solid var(--border);border-radius:20px;\n  backdrop-filter:blur(22px);padding:32px;margin-bottom:20px;\n  position:relative;overflow:hidden;\n  transition:border-color .3s,transform .2s,box-shadow .3s;\n  animation:fdUp .6s ease both;\n}\n.glass::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,transparent 55%);pointer-events:none;border-radius:inherit}\n.glass:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 20px 56px rgba(0,0,0,.4)}\n.glass:nth-child(1){animation-delay:.08s}.glass:nth-child(2){animation-delay:.16s}.glass:nth-child(3){animation-delay:.24s}\n.stripe{position:absolute;top:0;left:0;right:0;height:2px;border-radius:20px 20px 0 0}\n.s-em{background:linear-gradient(90deg,var(--em),var(--vi))}.s-vi{background:linear-gradient(90deg,var(--vi),var(--bl))}.s-ro{background:linear-gradient(90deg,var(--ro),var(--am))}\n\n.chead{display:flex;align-items:center;gap:14px;margin-bottom:26px}\n.chip{font-family:'DM Mono',monospace;font-size:.59rem;letter-spacing:.14em;text-transform:uppercase;padding:4px 10px;border-radius:6px;font-weight:500;flex-shrink:0}\n.c-em{background:rgba(0,229,160,.14);color:var(--em);border:1px solid rgba(0,229,160,.28)}\n.c-vi{background:rgba(167,139,250,.14);color:var(--vi);border:1px solid rgba(167,139,250,.28)}\n.c-ro{background:rgba(251,113,133,.14);color:var(--ro);border:1px solid rgba(251,113,133,.28)}\n.ctitle{font-family:'Playfair Display',serif;font-size:1.22rem;font-weight:700}\n\n/* FORM */\n.field{margin-bottom:20px}.field:last-child{margin-bottom:0}\n.flbl{font-family:'DM Mono',monospace;font-size:.63rem;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:7px;display:block}\n.date-row{display:grid;grid-template-columns:1fr 22px 1fr;align-items:end;gap:10px}\n.darrow{text-align:center;color:var(--faint);font-size:1.1rem;padding-bottom:13px}\ninput[type=date],input[type=text],input[type=email],textarea{\n  width:100%;padding:12px 15px;\n  background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:10px;\n  font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);\n  outline:none;transition:border-color .2s,box-shadow .2s,background .2s;-webkit-appearance:none;color-scheme:dark;\n}\ninput:focus,textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px rgba(0,229,160,.14);background:rgba(0,229,160,.04)}\ninput::placeholder,textarea::placeholder{color:var(--faint)}\n.hint{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint);margin-top:7px;line-height:1.5}\n\n/* BUTTONS */\n.brow{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}\n.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.84rem;border:none;border-radius:10px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}\n.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .2s}\n.btn:hover::after{background:rgba(255,255,255,.07)}\n.btn:active{transform:scale(.97)}.btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}\n.btn-em{background:linear-gradient(135deg,var(--em2),var(--em));color:#06040f;font-weight:700;box-shadow:0 4px 22px rgba(0,229,160,.3)}\n.btn-em:hover{box-shadow:0 6px 30px rgba(0,229,160,.5);transform:translateY(-1px)}\n.btn-vi{background:linear-gradient(135deg,var(--vi2),var(--vi));color:#fff;box-shadow:0 4px 18px rgba(124,58,237,.3)}\n.btn-vi:hover{box-shadow:0 6px 26px rgba(124,58,237,.5);transform:translateY(-1px)}\n.btn-ghost{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border2)}\n.btn-ghost:hover{background:rgba(255,255,255,.1);color:var(--text)}\n.btn-ro{background:linear-gradient(135deg,#e11d48,var(--ro));color:#fff;box-shadow:0 4px 18px rgba(251,113,133,.3)}\n.btn-ro:hover{box-shadow:0 6px 26px rgba(251,113,133,.5);transform:translateY(-1px)}\n.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:rot .6s linear infinite;flex-shrink:0}\n.spin-dk{border:2px solid rgba(0,0,0,.15);border-top-color:rgba(0,0,0,.8)}\n@keyframes rot{to{transform:rotate(360deg)}}\n\n/* STATUS */\n.status{display:none;padding:13px 17px;border-radius:10px;font-size:.85rem;line-height:1.6;margin-top:18px;align-items:flex-start;gap:10px}\n.status.show{display:flex}\n.status.info{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.28);color:var(--bl)}\n.status.success{background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.22);color:var(--em)}\n.status.error{background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.28);color:var(--ro)}\n.status.warning{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.28);color:var(--am)}\n.sico{flex-shrink:0}\n.prog-wrap{display:none;margin-top:18px}.prog-wrap.show{display:block}\n.prog-top{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint);margin-bottom:7px}\n.prog-track{height:3px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden}\n.prog-fill{height:100%;background:linear-gradient(90deg,var(--em2),var(--em));border-radius:99px;transition:width .35s ease;width:0%}\n\n/* EXPORT CARDS */\n.exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}\n.ec{border:1px solid var(--border2);border-radius:14px;padding:20px 14px;cursor:pointer;transition:all .2s;text-align:center;background:rgba(255,255,255,.03);position:relative;overflow:hidden}\n.ec::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;pointer-events:none}\n.ec.sel::before{opacity:1}\n.ec-csv::before{background:radial-gradient(circle at 50% 0%,rgba(0,229,160,.13),transparent 65%)}\n.ec-pdf::before{background:radial-gradient(circle at 50% 0%,rgba(251,113,133,.13),transparent 65%)}\n.ec-txt::before{background:radial-gradient(circle at 50% 0%,rgba(167,139,250,.13),transparent 65%)}\n.ec:hover{transform:translateY(-2px)}\n.ec.sel{border-color:var(--em);box-shadow:0 0 22px rgba(0,229,160,.14)}\n.ec.s-pdf{border-color:var(--ro)!important;box-shadow:0 0 22px rgba(251,113,133,.14)!important}\n.ec.s-txt{border-color:var(--vi)!important;box-shadow:0 0 22px rgba(167,139,250,.14)!important}\n.ec .ck{position:absolute;top:9px;right:9px;width:17px;height:17px;background:var(--em);border-radius:50%;color:#06040f;font-size:.58rem;display:none;align-items:center;justify-content:center;font-weight:800}\n.ec.sel .ck{display:flex}\n.eico{font-size:1.75rem;margin-bottom:7px;display:block}\n.ename{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.76rem;color:var(--text);margin-bottom:3px}\n.edesc{font-size:.67rem;color:var(--faint);line-height:1.4}\n\n/* EMAIL TABLE */\n.es-wrap{display:none;margin-top:0}.es-wrap.show{display:block}\n.tbhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}\n.tblbl{display:flex;flex-direction:column;gap:2px}\n.eyebrow{font-family:'DM Mono',monospace;font-size:.59rem;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}\n.tbtitle{font-family:'Playfair Display',serif;font-size:1.08rem;font-weight:700}\n.cnt-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.22);padding:4px 12px;border-radius:99px;font-family:'DM Mono',monospace;font-size:.66rem;color:var(--em)}\n.sort-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}\n.slbl{font-family:'DM Mono',monospace;font-size:.59rem;color:var(--faint);letter-spacing:.1em;text-transform:uppercase}\n.sb{font-family:'DM Mono',monospace;font-size:.63rem;padding:5px 10px;border:1px solid var(--border2);background:rgba(255,255,255,.03);border-radius:7px;cursor:pointer;color:var(--muted);transition:all .15s;letter-spacing:.04em}\n.sb:hover{border-color:rgba(255,255,255,.22);color:var(--text);background:rgba(255,255,255,.07)}\n.sb.on{background:rgba(0,229,160,.12);color:var(--em);border-color:rgba(0,229,160,.38)}\n.twrap{border:1px solid var(--border);border-radius:14px;overflow:auto;max-height:450px;background:rgba(19,16,42,.5);backdrop-filter:blur(10px)}\ntable{width:100%;border-collapse:collapse;font-size:.79rem}\nthead th{padding:10px 13px;text-align:left;font-family:'DM Mono',monospace;font-size:.59rem;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);background:rgba(255,255,255,.03);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;white-space:nowrap}\ntbody td{padding:10px 13px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;color:var(--muted)}\ntbody tr:last-child td{border-bottom:none}\ntbody tr:hover td{background:rgba(255,255,255,.03);color:var(--text)}\n.td-n{color:var(--faint);font-family:'DM Mono',monospace;font-size:.6rem;width:30px}\n.td-s{font-weight:500;color:var(--text);max-width:215px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\n.td-f{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'DM Mono',monospace;font-size:.63rem}\n.td-d{white-space:nowrap;font-family:'DM Mono',monospace;font-size:.63rem}\n.ud{display:inline-block;width:5px;height:5px;background:var(--em);border-radius:50%;margin-right:5px;vertical-align:middle;box-shadow:0 0 5px var(--em)}\n.ra{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border:1px solid var(--border2);background:rgba(255,255,255,.03);border-radius:7px;cursor:pointer;font-size:.76rem;transition:all .15s;margin-right:2px}\n.ra:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);transform:scale(1.1)}\n.ra.del:hover{background:rgba(251,113,133,.2);border-color:rgba(251,113,133,.45)}\n\n/* MODAL */\n.mov{display:none;position:fixed;inset:0;background:rgba(6,4,15,.78);backdrop-filter:blur(10px);z-index:100;align-items:center;justify-content:center;padding:20px}\n.mov.open{display:flex}\n.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;width:100%;max-width:640px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 40px 100px rgba(0,0,0,.6);overflow:hidden;animation:mIn .25s ease}\n@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:none}}\n.mhd{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}\n.mhd-t{font-family:'Playfair Display',serif;font-size:1.08rem;font-weight:700}\n.mx{background:rgba(255,255,255,.06);border:none;color:var(--muted);width:29px;height:29px;border-radius:7px;cursor:pointer;font-size:.95rem;transition:all .15s}\n.mx:hover{background:rgba(251,113,133,.2);color:var(--ro)}\n.mbd{padding:20px 24px;overflow-y:auto;flex:1}\n.mft{padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0}\n.mf{margin-bottom:15px}.mf:last-child{margin-bottom:0}\n.mf label{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:5px;display:block}\n.mv{font-size:.86rem;color:var(--text);padding:10px 13px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;line-height:1.6;word-break:break-word}\n.mbtext{font-size:.84rem;color:var(--muted);line-height:1.7;white-space:pre-wrap;max-height:190px;overflow-y:auto;padding:11px 13px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px}\n.m2{display:grid;grid-template-columns:1fr 1fr;gap:11px}\n\n/* TOAST */\n.toast{position:fixed;bottom:26px;right:26px;z-index:200;padding:11px 20px;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.81rem;font-weight:600;box-shadow:0 12px 36px rgba(0,0,0,.4);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none}\n.toast.show{transform:translateY(0);opacity:1}\n.toast.ok{background:linear-gradient(135deg,var(--em2),var(--em));color:#06040f}\n.toast.err{background:linear-gradient(135deg,#e11d48,var(--ro));color:#fff}\n.toast.nn{background:var(--card2);border:1px solid var(--border2);color:var(--text)}\n\n/* FOOTER */\n.sfooter{margin-top:60px;padding:22px 0;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}\n.fbrand{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;color:var(--text)}\n.fbrand span{color:var(--em)}\n.fmeta{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--faint);line-height:1.7;text-align:right}\n\n@keyframes fdDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}\n@keyframes fdUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}\n\n@media(max-width:600px){\n  .date-row{grid-template-columns:1fr}.darrow{display:none}\n  .exp-grid{grid-template-columns:1fr 1fr}.m2{grid-template-columns:1fr}\n  .tbhead{flex-direction:column;align-items:flex-start}\n}\n::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.11);border-radius:3px}\n</style>\n</head>\n<body>\n<div class=\"bg-orbs\"><div class=\"orb orb1\"></div><div class=\"orb orb2\"></div><div class=\"orb orb3\"></div></div>\n<div class=\"wrap\">\n\n<!-- HERO -->\n<div class=\"hero\">\n  <div class=\"hero-pill\">Gmail Exporter \u00b7 Google Apps Script</div>\n  <h1>Mail<span class=\"grd\">Vault</span></h1>\n  <p class=\"hero-sub\">Export your Gmail to CSV, PDF, or Text. Runs entirely inside your Google account \u2014 nothing leaves Google's servers.</p>\n  <div id=\"userPill\" class=\"user-badge\"><span class=\"live-dot\"></span><span id=\"userEmailDisplay\">loading\u2026</span></div>\n</div>\n\n<!-- STEP 1 -->\n<div class=\"glass\">\n  <div class=\"stripe s-em\"></div>\n  <div class=\"chead\"><span class=\"chip c-em\">Step 01</span><span class=\"ctitle\">Select Date Range</span></div>\n  <div class=\"field\">\n    <div class=\"date-row\">\n      <div><label class=\"flbl\">From</label><input type=\"date\" id=\"dateFrom\"></div>\n      <div class=\"darrow\">\u2192</div>\n      <div><label class=\"flbl\">To</label><input type=\"date\" id=\"dateTo\"></div>\n    </div>\n    <p class=\"hint\">\ud83d\udca1 Same date in both fields exports a single day</p>\n  </div>\n</div>\n\n<!-- STEP 2 -->\n<div class=\"glass\">\n  <div class=\"stripe s-vi\"></div>\n  <div class=\"chead\"><span class=\"chip c-vi\">Step 02</span><span class=\"ctitle\">Fetch Emails</span></div>\n  <p style=\"color:var(--muted);font-size:.875rem;line-height:1.7;margin-bottom:22px\">Search your Gmail for the selected date range. Review, edit, or remove emails before exporting.</p>\n  <div class=\"brow\">\n    <button class=\"btn btn-em\" id=\"fetchBtn\" onclick=\"fetchEmails()\">\n      <svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"><path d=\"M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z\"/></svg>\n      Fetch Emails\n    </button>\n    <button class=\"btn btn-ghost\" id=\"clearBtn\" onclick=\"clearAll()\" style=\"display:none\">\u2715 Clear</button>\n  </div>\n  <div class=\"status\" id=\"fetchStatus\"><span class=\"sico\" id=\"fetchIcon\"></span><span id=\"fetchText\"></span></div>\n  <div class=\"prog-wrap\" id=\"fetchProg\">\n    <div class=\"prog-top\"><span id=\"progLabel\">Searching Gmail\u2026</span><span id=\"progPct\">\u2014</span></div>\n    <div class=\"prog-track\"><div class=\"prog-fill\" id=\"progFill\"></div></div>\n  </div>\n</div>\n\n<!-- EMAIL TABLE -->\n<div class=\"es-wrap\" id=\"emailSection\">\n  <div class=\"glass\">\n    <div class=\"stripe s-vi\"></div>\n    <div class=\"tbhead\">\n      <div style=\"display:flex;align-items:center;gap:14px;flex-wrap:wrap\">\n        <div class=\"tblbl\"><div class=\"eyebrow\">Results</div><div class=\"tbtitle\">Manage Emails</div></div>\n        <span class=\"cnt-badge\">\n          <svg width=\"10\" height=\"10\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z\"/><polyline points=\"22,6 12,13 2,6\"/></svg>\n          <span id=\"emailCount\">0</span> emails\n        </span>\n      </div>\n      <div class=\"sort-row\">\n        <span class=\"slbl\">Sort</span>\n        <button class=\"sb on\" id=\"sortNewest\" onclick=\"sortEmails('newest')\">Newest</button>\n        <button class=\"sb\" id=\"sortOldest\" onclick=\"sortEmails('oldest')\">Oldest</button>\n        <button class=\"sb\" id=\"sortSubject\" onclick=\"sortEmails('subject')\">Subject</button>\n        <button class=\"sb\" id=\"sortFrom\" onclick=\"sortEmails('from')\">From</button>\n      </div>\n    </div>\n    <div class=\"twrap\">\n      <table>\n        <thead><tr><th class=\"td-n\">#</th><th>Subject</th><th>From</th><th>Date</th><th>Labels</th><th>Actions</th></tr></thead>\n        <tbody id=\"emailTbody\"></tbody>\n      </table>\n    </div>\n    <p style=\"font-size:.62rem;color:var(--faint);margin-top:9px;font-family:'DM Mono',monospace;line-height:1.5\">\n      <span id=\"showNote\"></span> \u00b7 Edits only affect the export \u2014 your Gmail is unchanged.\n    </p>\n  </div>\n</div>\n\n<!-- STEP 3 -->\n<div class=\"glass\" id=\"exportCard\" style=\"display:none\">\n  <div class=\"stripe s-ro\"></div>\n  <div class=\"chead\"><span class=\"chip c-ro\">Step 03</span><span class=\"ctitle\">Export to Your Device</span></div>\n  <p style=\"color:var(--muted);font-size:.875rem;line-height:1.7;margin-bottom:22px\">Files download straight to your device \u2014 nothing is sent to Google Drive or any server.</p>\n  <div class=\"exp-grid\">\n    <div class=\"ec ec-csv sel\" id=\"opt-csv\" onclick=\"selectExport('csv')\">\n      <div class=\"ck\">\u2713</div><span class=\"eico\">\ud83d\udcca</span>\n      <div class=\"ename\">CSV / Excel</div><div class=\"edesc\">Opens in Excel or Sheets</div>\n    </div>\n    <div class=\"ec ec-pdf\" id=\"opt-pdf\" onclick=\"selectExport('pdf')\">\n      <div class=\"ck\">\u2713</div><span class=\"eico\">\ud83d\udcd5</span>\n      <div class=\"ename\">PDF</div><div class=\"edesc\">Print-ready, save via browser</div>\n    </div>\n    <div class=\"ec ec-txt\" id=\"opt-txt\" onclick=\"selectExport('txt')\">\n      <div class=\"ck\">\u2713</div><span class=\"eico\">\ud83d\udcc4</span>\n      <div class=\"ename\">Text File</div><div class=\"edesc\">Plain .txt, one email per block</div>\n    </div>\n  </div>\n  <div class=\"brow\">\n    <button class=\"btn btn-em\" id=\"exportBtn\" onclick=\"runExport()\">\n      <svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\"><path d=\"M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/></svg>\n      <span id=\"expBtnLbl\">Download as CSV</span>\n    </button>\n  </div>\n  <div class=\"status\" id=\"exportStatus\"><span class=\"sico\" id=\"exportIcon\"></span><span id=\"exportText\"></span></div>\n</div>\n\n<footer class=\"sfooter\">\n  <div class=\"fbrand\">Mail<span>Vault</span></div>\n  <div class=\"fmeta\">Runs inside your Google Account \u00b7 No external servers<br>Files saved directly to your device</div>\n</footer>\n</div>\n\n<!-- MODAL -->\n<div class=\"mov\" id=\"modal\" onclick=\"closeMBg(event)\">\n  <div class=\"modal\">\n    <div class=\"mhd\"><div class=\"mhd-t\" id=\"modalTitle\">Email</div><button class=\"mx\" onclick=\"closeM()\">\u2715</button></div>\n    <div class=\"mbd\" id=\"modalBody\"></div>\n    <div class=\"mft\" id=\"modalFoot\"></div>\n  </div>\n</div>\n<div class=\"toast\" id=\"toast\"></div>\n\n<script>\nlet emails=[],currentSort='newest',selExp='csv',editIdx=null;\n\n(function(){\n  const t=new Date().toISOString().split('T')[0];\n  document.getElementById('dateFrom').value=t;\n  document.getElementById('dateTo').value=t;\n  google.script.run\n    .withSuccessHandler(r=>{if(r&&r.email){document.getElementById('userEmailDisplay').textContent=r.email;document.getElementById('userPill').style.display='inline-flex';}})\n    .withFailureHandler(()=>{})\n    .getUserEmail();\n})();\n\nfunction setSt(bar,txt,ico,msg,type){\n  const m={info:'\u2139\ufe0f',success:'\u2705',error:'\u274c',warning:'\u26a0\ufe0f'};\n  document.getElementById(bar).className='status show '+type;\n  document.getElementById(txt).innerHTML=msg;\n  document.getElementById(ico).textContent=m[type]||'\u2139\ufe0f';\n}\nfunction clrSt(bar){document.getElementById(bar).className='status';}\nfunction showPr(lbl){document.getElementById('fetchProg').classList.add('show');document.getElementById('progLabel').textContent=lbl||'Working\u2026';document.getElementById('progFill').style.width='15%';document.getElementById('progPct').textContent='\u2014';}\nfunction setPr(p){document.getElementById('progFill').style.width=p+'%';document.getElementById('progPct').textContent=Math.round(p)+'%';}\nfunction hidePr(){document.getElementById('fetchProg').classList.remove('show');}\nfunction busy(id,on,lbl){const b=document.getElementById(id);if(on){b._h=b.innerHTML;b.disabled=true;b.innerHTML='<div class=\"spin\"></div> '+(lbl||'Working\u2026');}else{b.disabled=false;if(b._h)b.innerHTML=b._h;}}\nfunction toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'nn');clearTimeout(t._t);t._t=setTimeout(()=>{t.className='toast';},2800);}\nfunction esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}\nfunction hesc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}\n\nfunction fetchEmails(){\n  const df=document.getElementById('dateFrom').value,dt=document.getElementById('dateTo').value;\n  if(!df||!dt){setSt('fetchStatus','fetchText','fetchIcon','Please select both dates.','warning');return;}\n  if(new Date(df)>new Date(dt)){setSt('fetchStatus','fetchText','fetchIcon','From date must be before To date.','warning');return;}\n  clrSt('fetchStatus');\n  document.getElementById('emailSection').classList.remove('show');\n  document.getElementById('exportCard').style.display='none';\n  document.getElementById('clearBtn').style.display='none';\n  emails=[];busy('fetchBtn',true,'Fetching\u2026');showPr('Searching your Gmail\u2026');\n  google.script.run\n    .withSuccessHandler(res=>{\n      busy('fetchBtn',false);\n      if(res.error){hidePr();setSt('fetchStatus','fetchText','fetchIcon','Error: '+res.error,'error');return;}\n      emails=res.emails||[];setPr(100);\n      setTimeout(()=>{\n        hidePr();\n        if(!emails.length){setSt('fetchStatus','fetchText','fetchIcon','No emails found for this date range.','warning');return;}\n        sortEmails(currentSort,true);\n        setSt('fetchStatus','fetchText','fetchIcon','Found <strong>'+emails.length+'</strong> email'+(emails.length!==1?'s':'')+'. Review below before exporting.','success');\n        document.getElementById('emailSection').classList.add('show');\n        document.getElementById('exportCard').style.display='';\n        document.getElementById('clearBtn').style.display='';\n        document.getElementById('emailSection').scrollIntoView({behavior:'smooth',block:'start'});\n      },300);\n    })\n    .withFailureHandler(err=>{busy('fetchBtn',false);hidePr();setSt('fetchStatus','fetchText','fetchIcon','Script error: '+err.message,'error');})\n    .fetchEmailsByDateRange(df,dt);\n}\n\nfunction sortEmails(mode,silent){\n  currentSort=mode;\n  ['newest','oldest','subject','from'].forEach(m=>document.getElementById('sort'+m[0].toUpperCase()+m.slice(1)).classList.toggle('on',m===mode));\n  emails.sort((a,b)=>mode==='newest'?b.dateTs-a.dateTs:mode==='oldest'?a.dateTs-b.dateTs:mode==='subject'?(a.subject||'').localeCompare(b.subject||''):(a.from||'').localeCompare(b.from||''));\n  renderTable();if(!silent)toast('Sorted: '+mode,'nn');\n}\n\nfunction renderTable(){\n  const tb=document.getElementById('emailTbody');\n  document.getElementById('emailCount').textContent=emails.length;\n  document.getElementById('showNote').textContent=emails.length+' email'+(emails.length!==1?'s':'')+' in list';\n  if(!emails.length){tb.innerHTML='<tr><td colspan=\"6\" style=\"text-align:center;padding:30px;color:var(--faint);font-family:\\'DM Mono\\',monospace;font-size:.7rem\">All emails removed</td></tr>';return;}\n  tb.innerHTML=emails.map((e,i)=>{\n    const ud=!e.isRead?'<span class=\"ud\"></span>':'',ds=(e.date||'').split(' ')[0],fr=(e.from||'').replace(/<[^>]+>/g,'').trim()||e.from||'\u2014';\n    return `<tr><td class=\"td-n\">${i+1}</td><td class=\"td-s\">${ud}${esc(e.subject)}</td><td class=\"td-f\" title=\"${esc(e.from)}\">${esc(fr)}</td><td class=\"td-d\">${ds}</td><td style=\"font-size:.6rem;color:var(--faint);max-width:85px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\">${esc(e.labels||'\u2014')}</td><td><button class=\"ra\" onclick=\"viewEmail(${i})\" title=\"View\">\ud83d\udc41</button><button class=\"ra\" onclick=\"editEmail(${i})\" title=\"Edit\">\u270f\ufe0f</button><button class=\"ra del\" onclick=\"removeEmail(${i})\" title=\"Remove\">\ud83d\uddd1</button></td></tr>`;\n  }).join('');\n}\n\nfunction viewEmail(i){\n  const e=emails[i];document.getElementById('modalTitle').textContent='Email #'+(i+1);\n  document.getElementById('modalBody').innerHTML=`<div class=\"mf\"><label>Subject</label><div class=\"mv\" style=\"font-weight:600;font-size:.98rem\">${esc(e.subject)}</div></div><div class=\"m2\"><div class=\"mf\"><label>From</label><div class=\"mv\">${esc(e.from||'\u2014')}</div></div><div class=\"mf\"><label>Date</label><div class=\"mv\">${esc(e.date||'\u2014')}</div></div><div class=\"mf\"><label>To</label><div class=\"mv\">${esc(e.to||'\u2014')}</div></div><div class=\"mf\"><label>Labels</label><div class=\"mv\">${esc(e.labels||'\u2014')}</div></div>${e.cc?`<div class=\"mf\"><label>CC</label><div class=\"mv\">${esc(e.cc)}</div></div>`:''}</div><div class=\"mf\"><label>Body Preview</label><div class=\"mbtext\">${esc(e.body||'(no body)')}</div></div><div style=\"font-size:.6rem;color:var(--faint);font-family:'DM Mono',monospace;margin-top:9px\">Read: ${e.isRead?'Yes':'No'} \u00b7 Starred: ${e.isStarred?'\u2b50 Yes':'No'} \u00b7 ${e.size} bytes</div>`;\n  document.getElementById('modalFoot').innerHTML=`<button class=\"btn btn-ghost\" onclick=\"closeM()\">Close</button><button class=\"btn btn-vi\" onclick=\"closeM();editEmail(${i})\">Edit</button>`;\n  openM();\n}\n\nfunction editEmail(i){\n  const e=emails[i];editIdx=i;document.getElementById('modalTitle').textContent='Edit Email #'+(i+1);\n  document.getElementById('modalBody').innerHTML=`<p style=\"font-size:.72rem;color:var(--faint);margin-bottom:16px;line-height:1.5;font-family:'DM Mono',monospace\">Changes only affect the export \u2014 your Gmail is untouched.</p><div class=\"mf\"><label>Subject</label><input type=\"text\" id=\"eSubj\" value=\"${esc(e.subject)}\"></div><div class=\"m2\"><div class=\"mf\"><label>From</label><input type=\"text\" id=\"eFrom\" value=\"${esc(e.from||'')}\"></div><div class=\"mf\"><label>To</label><input type=\"text\" id=\"eTo\" value=\"${esc(e.to||'')}\"></div><div class=\"mf\"><label>CC</label><input type=\"text\" id=\"eCc\" value=\"${esc(e.cc||'')}\"></div><div class=\"mf\"><label>Labels</label><input type=\"text\" id=\"eLbl\" value=\"${esc(e.labels||'')}\"></div></div><div class=\"mf\"><label>Body Preview</label><textarea id=\"eBody\" rows=\"6\" style=\"resize:vertical\">${esc(e.body||'')}</textarea></div>`;\n  document.getElementById('modalFoot').innerHTML=`<button class=\"btn btn-ghost\" onclick=\"closeM()\">Cancel</button><button class=\"btn btn-em\" onclick=\"saveEdit()\">Save Changes</button>`;\n  openM();\n}\nfunction saveEdit(){\n  if(editIdx===null)return;\n  const e=emails[editIdx];\n  e.subject=document.getElementById('eSubj').value;e.from=document.getElementById('eFrom').value;\n  e.to=document.getElementById('eTo').value;e.cc=document.getElementById('eCc').value;\n  e.labels=document.getElementById('eLbl').value;e.body=document.getElementById('eBody').value;\n  e.snippet=e.body.substring(0,200).replace(/\\n/g,' ');\n  closeM();renderTable();toast('Email #'+(editIdx+1)+' updated','ok');editIdx=null;\n}\n\nfunction removeEmail(i){const s=emails[i].subject||'(no subject)';emails.splice(i,1);renderTable();toast('Removed: '+s.substring(0,40),'nn');if(!emails.length){document.getElementById('exportCard').style.display='none';setSt('fetchStatus','fetchText','fetchIcon','All emails removed. Fetch again to start over.','warning');}}\n\nfunction openM(){document.getElementById('modal').classList.add('open');document.body.style.overflow='hidden';}\nfunction closeM(){document.getElementById('modal').classList.remove('open');document.body.style.overflow='';editIdx=null;}\nfunction closeMBg(e){if(e.target===document.getElementById('modal'))closeM();}\n\nfunction selectExport(type){\n  selExp=type;\n  document.getElementById('opt-csv').className='ec ec-csv'+(type==='csv'?' sel':'');\n  document.getElementById('opt-pdf').className='ec ec-pdf'+(type==='pdf'?' sel s-pdf':'');\n  document.getElementById('opt-txt').className='ec ec-txt'+(type==='txt'?' sel s-txt':'');\n  document.getElementById('expBtnLbl').textContent={csv:'Download as CSV',pdf:'Download as PDF',txt:'Download as Text'}[type];\n}\n\nfunction runExport(){\n  if(!emails.length){setSt('exportStatus','exportText','exportIcon','No emails to export.','warning');return;}\n  const df=document.getElementById('dateFrom').value,dt=document.getElementById('dateTo').value;\n  const ue=document.getElementById('userEmailDisplay').textContent||'unknown';\n  const fn='MailVault_'+df+(df!==dt?'_to_'+dt:'')+'_'+emails.length+'emails';\n  if(selExp==='pdf'){buildPdf(emails,ue,df,dt,fn);return;}\n  const content=selExp==='csv'?buildCsv(emails,ue,df,dt):buildTxt(emails,ue,df,dt);\n  const ext=selExp==='csv'?'.csv':'.txt',mime=selExp==='csv'?'text/csv;charset=utf-8;':'text/plain;charset=utf-8;';\n  const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');\n  a.href=url;a.download=fn+ext;a.style.display='none';document.body.appendChild(a);a.click();document.body.removeChild(a);\n  setTimeout(()=>URL.revokeObjectURL(url),2000);\n  setSt('exportStatus','exportText','exportIcon','<strong>'+emails.length+'</strong> emails saved as <strong>'+fn+ext+'</strong> \u2014 check your Downloads folder.','success');\n  toast('Downloaded '+fn+ext,'ok');\n}\n\nfunction buildCsv(emails,ue,df,dt){\n  const h=['#','Date','From','To','CC','BCC','Subject','Body Preview','Labels','Read','Starred','Size (bytes)','Message ID','Thread ID'],rows=[h];\n  emails.forEach((e,i)=>rows.push([i+1,e.date,e.from,e.to,e.cc,e.bcc,e.subject,(e.snippet||'').replace(/\\n/g,' '),e.labels,e.isRead?'Yes':'No',e.isStarred?'Yes':'No',e.size,e.id,e.threadId]));\n  rows.push([],['--- SUMMARY ---'],['Account',ue],['Date Range',df+' to '+dt],['Total',emails.length],['Exported At',new Date().toLocaleString()]);\n  return rows.map(r=>r.map(c=>{const v=String(c==null?'':c);return(v.indexOf(',')>-1||v.indexOf('\"')>-1||v.indexOf('\\n')>-1)?'\"'+v.replace(/\"/g,'\"\"')+'\"':v;}).join(',')).join('\\r\\n');\n}\n\nfunction buildPdf(emails,ue,df,dt,fn){\n  const rows=emails.map((e,i)=>`<div class=\"eb\"><div class=\"en\">#${i+1}</div><div class=\"es\">${hesc(e.subject)}</div><table class=\"mt\"><tr><td class=\"mk\">From</td><td>${hesc(e.from||'\u2014')}</td><td class=\"mk\">Date</td><td>${hesc(e.date||'\u2014')}</td></tr><tr><td class=\"mk\">To</td><td>${hesc(e.to||'\u2014')}</td><td class=\"mk\">Labels</td><td>${hesc(e.labels||'\u2014')}</td></tr>${e.cc?`<tr><td class=\"mk\">CC</td><td colspan=\"3\">${hesc(e.cc)}</td></tr>`:''}<tr><td class=\"mk\">Read</td><td>${e.isRead?'Yes':'No'}</td><td class=\"mk\">Starred</td><td>${e.isStarred?'\u2b50 Yes':'No'}</td></tr></table><div class=\"bl\">BODY PREVIEW</div><div class=\"bt\">${hesc(e.body||'(no body)')}</div></div>`).join('');\n  const html=`<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>${hesc(fn)}</title><style>body{font-family:Arial,sans-serif;font-size:10pt;color:#111;margin:0}.cover{padding:40pt 36pt 28pt;background:linear-gradient(135deg,#06040f,#1a0a3e);color:#fff}.cover h1{font-size:26pt;font-weight:900;margin:0 0 8pt}.cover h1 em{color:#00e5a0;font-style:normal}.cover-meta{font-size:8pt;color:rgba(255,255,255,.6);font-family:monospace;line-height:2}.eb{padding:16pt 36pt;border-bottom:1pt solid #eee;page-break-inside:avoid}.en{font-family:monospace;font-size:7pt;color:#999;margin-bottom:4pt}.es{font-size:13pt;font-weight:700;margin-bottom:10pt}.mt{width:100%;border-collapse:collapse;margin-bottom:10pt;font-size:8.5pt}.mt td{padding:3pt 6pt;border:1pt solid #e5e5e5;vertical-align:top}.mk{font-weight:700;color:#00b87c;background:#e6f9f3;width:48pt;white-space:nowrap}.bl{font-family:monospace;font-size:6.5pt;color:#aaa;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5pt}.bt{font-size:8.5pt;color:#555;line-height:1.65;white-space:pre-wrap;background:#fafafa;padding:8pt;border:1pt solid #eee}@media print{@page{margin:0}.cover{padding:28pt}.eb{padding:12pt 28pt}}</style></head><body><div class=\"cover\"><h1>Mail<em>Vault</em></h1><div class=\"cover-meta\">Account: ${hesc(ue)}<br>Range: ${hesc(df)} \u2192 ${hesc(dt)}<br>Total: ${emails.length} emails<br>Exported: ${new Date().toLocaleString()}</div></div>${rows}<script>window.onload=function(){window.print();}<\\/script></body></html>`;\n  const w=window.open('','_blank','width=920,height=720');w.document.write(html);w.document.close();\n  setSt('exportStatus','exportText','exportIcon','PDF window opened \u2014 choose <strong>Save as PDF</strong> in the print dialog.','success');\n  toast('PDF ready \u2014 Print \u2192 Save as PDF','ok');\n}\n\nfunction buildTxt(emails,ue,df,dt){\n  const L=['\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550','  MAILVAULT \u2014 GMAIL EXPORT','  Account : '+ue,'  Range   : '+df+' \u2192 '+dt,'  Total   : '+emails.length+' emails','  Exported: '+new Date().toLocaleString(),'\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',''];\n  emails.forEach((e,i)=>{L.push('\u250c\u2500 EMAIL #'+(i+1)+' '+'\u2500'.repeat(Math.max(0,48-String(i+1).length)));L.push('\u2502 Subject : '+(e.subject||'(no subject)'));L.push('\u2502 From    : '+(e.from||'\u2014'));L.push('\u2502 To      : '+(e.to||'\u2014'));if(e.cc)L.push('\u2502 CC      : '+e.cc);L.push('\u2502 Date    : '+(e.date||'\u2014'));L.push('\u2502 Labels  : '+(e.labels||'\u2014'));L.push('\u2502 Read    : '+(e.isRead?'Yes':'No')+'   Starred: '+(e.isStarred?'Yes':'No'));L.push('\u2502');L.push('\u2502 BODY:');(e.body||'(no body)').split('\\n').forEach(bl=>L.push('\u2502   '+bl));L.push('\u2514'+'\u2500'.repeat(52));L.push('');});\n  return L.join('\\n');\n}\n\nfunction clearAll(){emails=[];currentSort='newest';document.getElementById('emailSection').classList.remove('show');document.getElementById('exportCard').style.display='none';document.getElementById('clearBtn').style.display='none';clrSt('fetchStatus');clrSt('exportStatus');hidePr();toast('Cleared','nn');}\n</script>\n</body>\n</html>\n";
+
+function initCode(){
+  const gsPre  = document.getElementById('gsDisplay');
+  const htmlPre = document.getElementById('htmlDisplay');
+  const escHtml = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  gsPre.textContent  = CODE_GS;
+  htmlPre.textContent = CODE_HTML;
+  const gsLines   = CODE_GS.split('\n').length;
+  const htmlLines = CODE_HTML.split('\n').length;
+  document.getElementById('gsLineCount').textContent   = gsLines   + ' lines';
+  document.getElementById('htmlLineCount').textContent = htmlLines + ' lines';
+}
+initCode();
+
+function copyCode(which){
+  const code = which === 'gs' ? CODE_GS : CODE_HTML;
+  const btnId = which === 'gs' ? 'copyGsBtn' : 'copyHtmlBtn';
+  const btn = document.getElementById(btnId);
+  navigator.clipboard.writeText(code).then(()=>{
+    btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    btn.classList.add('copied');
+    showToast(which === 'gs' ? 'Code.gs copied to clipboard!' : 'index.html copied to clipboard!');
+    setTimeout(()=>{ btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy Code'; btn.classList.remove('copied'); }, 2500);
+  }).catch(()=>{
+    // Fallback: select all text in the pre
+    const pre = document.getElementById(which === 'gs' ? 'gsDisplay' : 'htmlDisplay');
+    const range = document.createRange(); range.selectNodeContents(pre);
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    showToast('Text selected — press Ctrl+C to copy');
+  });
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.transform = 'translateY(0)';
+  t.style.opacity = '1';
+  clearTimeout(t._t);
+  t._t = setTimeout(()=>{ t.style.transform = 'translateY(80px)'; t.style.opacity = '0'; }, 2800);
+}
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', e=>{
+    e.preventDefault();
+    const el = document.querySelector(a.getAttribute('href'));
+    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+</script>
+</body>
+</html>
