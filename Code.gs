@@ -111,7 +111,6 @@ function fetchEmailsByDateRange(dateFrom, dateTo) {
               labels:    thread.getLabels().map(function(l){ return l.getName(); }).join(', '),
               isRead:    !msg.isUnread(),
               isStarred: msg.isStarred(),
-              size:      msg.getRawContent().length,
             });
           }
         });
@@ -143,7 +142,7 @@ function exportToSheet(emails, dateFrom, dateTo) {
     var emailSheet = ss.getActiveSheet();
     emailSheet.setName('Emails');
 
-    var headers = ['#','Date','From','To','CC','BCC','Subject','Preview (200 chars)','Labels','Read','Starred','Size (bytes)','Message ID','Thread ID'];
+    var headers = ['#','Date','From','To','CC','BCC','Subject','Preview (200 chars)','Labels','Read','Starred','Message ID','Thread ID'];
     emailSheet.appendRow(headers);
     emailSheet.getRange(1,1,1,headers.length)
       .setBackground('#0a0a0f').setFontColor('#00e5ff')
@@ -152,10 +151,10 @@ function exportToSheet(emails, dateFrom, dateTo) {
     emails.forEach(function(e, i) {
       emailSheet.appendRow([i+1,e.date,e.from,e.to,e.cc,e.bcc,e.subject,
         e.snippet,e.labels,e.isRead?'Yes':'No',e.isStarred?'Yes':'No',
-        e.size,e.id,e.threadId]);
+        e.id,e.threadId]);
     });
 
-    [40,160,220,220,160,160,300,400,140,60,70,90,160,160].forEach(function(w,i){
+    [40,160,220,220,160,160,300,400,140,60,70,160,160].forEach(function(w,i){
       emailSheet.setColumnWidth(i+1, w);
     });
     emailSheet.setFrozenRows(1);

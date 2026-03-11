@@ -919,7 +919,7 @@ function renderTable(){
 
 function viewEmail(i){
   const e=emails[i];document.getElementById('modalTitle').textContent='Email #'+(i+1);
-  document.getElementById('modalBody').innerHTML=`<div class="mf"><label>Subject</label><div class="mv" style="font-weight:600;font-size:.98rem">${esc(e.subject)}</div></div><div class="m2"><div class="mf"><label>From</label><div class="mv">${esc(e.from||'—')}</div></div><div class="mf"><label>Date</label><div class="mv">${esc(e.date||'—')}</div></div><div class="mf"><label>To</label><div class="mv">${esc(e.to||'—')}</div></div><div class="mf"><label>Labels</label><div class="mv">${esc(e.labels||'—')}</div></div>${e.cc?`<div class="mf"><label>CC</label><div class="mv">${esc(e.cc)}</div></div>`:''}</div><div class="mf"><label>Body Preview</label><div class="mbtext">${esc(e.body||'(no body)')}</div></div><div style="font-size:.6rem;color:var(--faint);font-family:'DM Mono',monospace;margin-top:9px">Read: ${e.isRead?'Yes':'No'} · Starred: ${e.isStarred?'⭐ Yes':'No'} · ${e.size} bytes</div>`;
+  document.getElementById('modalBody').innerHTML=`<div class="mf"><label>Subject</label><div class="mv" style="font-weight:600;font-size:.98rem">${esc(e.subject)}</div></div><div class="m2"><div class="mf"><label>From</label><div class="mv">${esc(e.from||'—')}</div></div><div class="mf"><label>Date</label><div class="mv">${esc(e.date||'—')}</div></div><div class="mf"><label>To</label><div class="mv">${esc(e.to||'—')}</div></div><div class="mf"><label>Labels</label><div class="mv">${esc(e.labels||'—')}</div></div>${e.cc?`<div class="mf"><label>CC</label><div class="mv">${esc(e.cc)}</div></div>`:''}</div><div class="mf"><label>Body Preview</label><div class="mbtext">${esc(e.body||'(no body)')}</div></div><div style="font-size:.6rem;color:var(--faint);font-family:'DM Mono',monospace;margin-top:9px">Read: ${e.isRead?'Yes':'No'} · Starred: ${e.isStarred?'⭐ Yes':'No'}</div>`;
   document.getElementById('modalFoot').innerHTML=`<button class="btn btn-ghost" onclick="closeM()">Close</button><button class="btn btn-vi" onclick="closeM();editEmail(${i})">Edit</button>`;
   openM();
 }
@@ -970,8 +970,8 @@ function runExport(){
 }
 
 function buildCsv(emails,ue,df,dt){
-  const h=['#','Date','From','To','CC','BCC','Subject','Body Preview','Labels','Read','Starred','Size (bytes)','Message ID','Thread ID'],rows=[h];
-  emails.forEach((e,i)=>rows.push([i+1,e.date,e.from,e.to,e.cc,e.bcc,e.subject,(e.snippet||'').replace(/\n/g,' '),e.labels,e.isRead?'Yes':'No',e.isStarred?'Yes':'No',e.size,e.id,e.threadId]));
+  const h=['#','Date','From','To','CC','BCC','Subject','Body Preview','Labels','Read','Starred','Message ID','Thread ID'],rows=[h];
+  emails.forEach((e,i)=>rows.push([i+1,e.date,e.from,e.to,e.cc,e.bcc,e.subject,(e.snippet||'').replace(/\n/g,' '),e.labels,e.isRead?'Yes':'No',e.isStarred?'Yes':'No',e.id,e.threadId]));
   rows.push([],['--- SUMMARY ---'],['Account',ue],['Date Range',df+' to '+dt],['Total',emails.length],['Exported At',new Date().toLocaleString()]);
   return rows.map(r=>r.map(c=>{const v=String(c==null?'':c);return(v.indexOf(',')>-1||v.indexOf('"')>-1||v.indexOf('\n')>-1)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',')).join('\r\n');
 }
