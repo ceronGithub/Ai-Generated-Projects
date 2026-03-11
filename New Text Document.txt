@@ -1,12 +1,11 @@
-add authorization acces instruction. and grant the system to have a full control on your email.
+(done)add authorization acces instruction. and grant the system to have a full control on your email.
 and show this url : https://script.google.com/macros/s/AKfycbxbfKNTOwqhcnOjz6r3J7Tgy8x1Gjh-fIvb8DxMzPGL4xC0VTX8dp1hyot0hupCD72J/exec. When user finish reading from how it works to troubleshooting. User Must follow the instruction.
 
-
-
-
-why when user remove the access to mailvault from permissions. User cannot use the link again. Allow User to reconnect to web app again when accidentally remove 
+(done)why when user remove the access to mailvault from permissions. User cannot use the link again. Allow User to reconnect to web app again when accidentally remove 
 the connection to mailvault.
 
-add new feature on gs and index html : add unlink after the logout button. when unlick button click.
+(done)add new feature on gs and index html : add unlink after the logout button. when unlick button click.
 display modal with instructions. User must read all the instructions for the redirect button to be clickable, And when redirect button is clicked. no new tab
 myaccount.google.com/permissions
+
+Question : When fetching alot of emails what wi
