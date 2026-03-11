@@ -20,10 +20,12 @@
   <div class="nav-brand">Mail<span>Vault</span></div>
   <div class="nav-links">
     <a class="nav-a" href="#how-it-works">How It Works</a>
+    <a class="nav-a" href="#authorization">Authorization</a>
     <a class="nav-a" href="#setup">Setup</a>
     <a class="nav-a" href="#features">Features</a>
     <a class="nav-a" href="#remove">Remove Access</a>
-    <a class="nav-a" href="#code">Source Code</a>
+    <a class="nav-a" href="#troubleshoot">Troubleshooting</a>
+    <a class="nav-a nav-a-launch" href="#launch">&#128640; Launch App</a>
   </div>
 </nav>
 
@@ -31,7 +33,7 @@
 
 <!-- ── HERO ──────────────────────────────────────────── -->
 <div class="hero">
-  <div class="hero-pill">Complete Setup Guide &amp; Source Code</div>
+  <div class="hero-pill">Complete Guide &amp; Source Code</div>
   <h1>Mail<span class="grd">Vault</span></h1>
   <p class="hero-sub">A free Gmail exporter that runs entirely inside your Google Account. No cloud setup, no subscriptions, no data leaving Google's servers.</p>
   <div class="badges">
@@ -47,11 +49,13 @@
   <div class="toc-title">On This Page</div>
   <ul class="toc-list">
     <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#authorization">&#128273; Authorization Guide</a></li>
     <li><a href="#setup">One-Time Setup</a></li>
     <li><a href="#features">App Features</a></li>
     <li><a href="#remove">Remove Access</a></li>
     <li><a href="#troubleshoot">Troubleshooting</a></li>
     <li><a href="#code">Source Code</a></li>
+    <li><a href="#launch" style="color:var(--em);font-weight:600">&#128640; Launch App</a></li>
   </ul>
 </div>
 
@@ -78,10 +82,149 @@
     </div>
   </div>
   <div class="tip tip-am">
-    <div class="tip-ico">⚠️</div>
+    <div class="tip-ico">&#9888;&#65039;</div>
     <div class="tip-content">
-      <div class="tip-title">Each person needs their own deployment</div>
-      <div class="tip-text">Do NOT share your Web App URL with others — the script runs as your Google account. Each person must follow this setup guide to deploy their own private copy.</div>
+      <div class="tip-title">First-time users must complete Authorization</div>
+      <div class="tip-text">The first time anyone opens the app URL, Google will show an <strong>"Authorization needed"</strong> dialog. Users must complete all authorization steps to grant Gmail access. See the <a href="#authorization" style="color:var(--am);text-decoration:underline">Authorization Guide</a> section below for the exact steps.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── AUTHORIZATION ─────────────────────────────────── -->
+<div class="section" id="authorization">
+  <div class="section-label">Access &amp; Permissions</div>
+  <div class="section-title">Authorization Guide</div>
+  <p class="section-sub">The first time you open the app, Google will ask you to authorize MailVault. You must complete all four steps below — this only happens once.</p>
+
+  <div class="auth-intro-card">
+    <div class="aic-left">
+      <div class="aic-icon">&#128272;</div>
+    </div>
+    <div class="aic-right">
+      <div class="aic-title">Why authorization is required</div>
+      <p class="aic-text">MailVault is a Google Apps Script. Before it can read your Gmail, Google requires you to explicitly grant permission. The script runs entirely inside your own Google account &mdash; you are authorizing <em>your own script</em>, not a third-party company.</p>
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="auth-step" style="--auth-color:var(--bl);--auth-bg:rgba(96,165,250,.08);--auth-border:rgba(96,165,250,.25)">
+    <div class="as-num">1</div>
+    <div class="as-body">
+      <div class="as-title">Open the App URL &mdash; Click "Review Permissions"</div>
+      <p class="as-text">Open the app link above in your browser. A Google popup will appear titled <strong style="color:var(--text)">"MailVault (Unverified)"</strong> saying:</p>
+      <div class="auth-dialog-mock">
+        <div class="adm-header">
+          <span class="adm-logo">G</span>
+          <span style="font-size:.82rem;font-weight:600">Google Apps Script</span>
+        </div>
+        <div class="adm-title">MailVault <span style="color:#d93025">(Unverified)</span></div>
+        <div class="adm-text">MailVault needs your permission to access your data on Google.</div>
+        <div class="adm-warn">
+          <span style="color:#f9ab00;font-size:.9rem">&#9651;</span>
+          <span>When reviewing permissions, consider whether you trust <strong>MailVault</strong>.</span>
+        </div>
+        <div class="adm-btns">
+          <div class="adm-btn-cancel">CANCEL</div>
+          <div class="adm-btn-allow">REVIEW PERMISSIONS</div>
+        </div>
+      </div>
+      <p class="as-text" style="margin-top:10px">Click the blue <strong style="color:var(--bl)">REVIEW PERMISSIONS</strong> button to continue.</p>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="auth-step" style="--auth-color:var(--vi);--auth-bg:rgba(167,139,250,.08);--auth-border:rgba(167,139,250,.25)">
+    <div class="as-num">2</div>
+    <div class="as-body">
+      <div class="as-title">Choose Your Google Account</div>
+      <p class="as-text">Google will show a list of signed-in accounts. <strong style="color:var(--text)">Select the Google account</strong> whose Gmail you want to export from. Make sure it matches the email the app owner added to the access list.</p>
+      <div class="tip tip-vi" style="margin-top:12px;margin-bottom:0">
+        <div class="tip-ico">&#128161;</div>
+        <div class="tip-content">
+          <div class="tip-title">Not seeing your account?</div>
+          <div class="tip-text">Click <strong>"Use another account"</strong> on the account picker screen and sign in with the correct Gmail address.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="auth-step" style="--auth-color:var(--am);--auth-bg:rgba(251,191,36,.07);--auth-border:rgba(251,191,36,.28)">
+    <div class="as-num">3</div>
+    <div class="as-body">
+      <div class="as-title">Bypass the "Unverified App" Warning</div>
+      <p class="as-text">Google shows a safety screen: <strong style="color:var(--am)">"Google hasn't verified this app"</strong>. This is expected &mdash; MailVault is a personal script and has not gone through Google's commercial app review process.</p>
+      <div class="auth-unverified-box">
+        <div style="font-size:.78rem;color:#5f6368;margin-bottom:12px;line-height:1.5">&#9888;&#65039;&nbsp; Google hasn't verified this app<br><span style="font-size:.72rem">The app is requesting access to sensitive info in your Google Account. Until the developer (<strong>MailVault</strong>) verifies this app with Google, you shouldn't use it unless you trust the developer.</span></div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="font-size:.78rem;color:#1a73e8;cursor:pointer;font-weight:600">Back to safety</div>
+          <div style="font-size:.78rem;color:#5f6368;cursor:pointer;text-decoration:underline">Advanced</div>
+        </div>
+      </div>
+      <div class="as-action-row">
+        <span class="as-action-num">3a</span>
+        <span>Click <strong style="color:var(--am)">Advanced</strong> (small link, bottom-left of the warning screen)</span>
+      </div>
+      <div class="as-action-row">
+        <span class="as-action-num">3b</span>
+        <span>A new link appears: click <strong style="color:var(--am)">"Go to MailVault (unsafe)"</strong> to proceed past the warning</span>
+      </div>
+      <div class="tip tip-am" style="margin-top:12px;margin-bottom:0">
+        <div class="tip-ico">&#128273;</div>
+        <div class="tip-content">
+          <div class="tip-title">Is this safe?</div>
+          <div class="tip-text">Yes. "Unsafe" refers to the fact that the script hasn't been commercially verified by Google &mdash; not that it contains malware. The full source code is visible in this page's <a href="#code" style="color:var(--am);text-decoration:underline">Source Code</a> section so you can audit every line before proceeding.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="auth-step" style="--auth-color:var(--em);--auth-bg:rgba(0,229,160,.07);--auth-border:rgba(0,229,160,.28)">
+    <div class="as-num">4</div>
+    <div class="as-body">
+      <div class="as-title">Click Allow &mdash; Grant Full Gmail Read Access</div>
+      <p class="as-text">The final screen lists every permission MailVault needs. You must click <strong style="color:var(--em)">Allow</strong> to grant all of them. Without this, the app cannot function.</p>
+
+      <div class="perm-list">
+        <div class="perm-item">
+          <div class="perm-icon">&#128231;</div>
+          <div>
+            <div class="perm-name">Read, compose, send, and permanently delete all your email from Gmail</div>
+            <div class="perm-note">MailVault only <strong>reads</strong> email. It never composes, sends, or deletes &mdash; Google's permission dialog uses a broad label for the read scope.</div>
+          </div>
+        </div>
+        <div class="perm-item">
+          <div class="perm-icon">&#128100;</div>
+          <div>
+            <div class="perm-name">See your personal info including any personal info you've made publicly available</div>
+            <div class="perm-note">Used to display your name and profile photo in the app's nav bar only.</div>
+          </div>
+        </div>
+        <div class="perm-item">
+          <div class="perm-icon">&#9989;</div>
+          <div>
+            <div class="perm-name">Connect to an external service</div>
+            <div class="perm-note">Standard Apps Script permission. MailVault makes no external connections.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-allow-btn-mock">
+        Click <strong>Allow</strong> on that screen to complete authorization
+        <span class="aam-arrow">&#8594;</span>
+        <span class="aam-btn">Allow</span>
+      </div>
+
+      <div class="tip tip-em" style="margin-top:14px;margin-bottom:0">
+        <div class="tip-ico">&#9989;</div>
+        <div class="tip-content">
+          <div class="tip-title">Authorization complete &mdash; one time only</div>
+          <div class="tip-text">After clicking Allow, the app loads immediately. This 4-step process only happens <strong>once per Google account</strong>. Every future visit goes straight to the app.</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -332,6 +475,48 @@
   </div>
 </div>
 
+<!-- ── LAUNCH GATE ─────────────────────────────────── -->
+<div class="section" id="launch">
+  <div class="section-label">You're Ready</div>
+  <div class="section-title">Launch MailVault</div>
+  <p class="section-sub">You've read everything you need to know. Tick each confirmation below, then click the Launch button to open the app.</p>
+
+  <div class="launch-card" id="launchCard">
+    <div class="lc-checks">
+      <div class="lc-check" id="chk1" onclick="toggleCheck(1)">
+        <div class="lc-box" id="box1"><span class="lc-tick">&#10003;</span></div>
+        <span>I have read the <a href="#how-it-works" style="color:var(--em)" onclick="event.stopPropagation()">How It Works</a> section and understand MailVault runs inside my Google account</span>
+      </div>
+      <div class="lc-check" id="chk2" onclick="toggleCheck(2)">
+        <div class="lc-box" id="box2"><span class="lc-tick">&#10003;</span></div>
+        <span>I have read the <a href="#authorization" style="color:var(--em)" onclick="event.stopPropagation()">Authorization Guide</a> and I know how to complete the 4-step Google permission flow</span>
+      </div>
+      <div class="lc-check" id="chk3" onclick="toggleCheck(3)">
+        <div class="lc-box" id="box3"><span class="lc-tick">&#10003;</span></div>
+        <span>I understand that clicking <strong>Allow</strong> grants MailVault read access to my Gmail and I trust this script</span>
+      </div>
+      <div class="lc-check" id="chk4" onclick="toggleCheck(4)">
+        <div class="lc-box" id="box4"><span class="lc-tick">&#10003;</span></div>
+        <span>I have read the <a href="#troubleshoot" style="color:var(--em)" onclick="event.stopPropagation()">Troubleshooting</a> section so I know what to do if something goes wrong</span>
+      </div>
+    </div>
+
+    <div class="lc-progress-wrap">
+      <div class="lc-progress-bar" id="lcProgress" style="width:0%"></div>
+    </div>
+    <div class="lc-progress-label" id="lcLabel">Tick all 4 checkboxes to unlock the Launch button</div>
+
+    <a href="https://script.google.com/macros/s/AKfycbxbfKNTOwqhcnOjz6r3J7Tgy8x1Gjh-fIvb8DxMzPGL4xC0VTX8dp1hyot0hupCD72J/exec"
+       target="_blank"
+       class="lc-launch-btn" id="lcLaunchBtn"
+       onclick="return launchGate(event)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Open MailVault
+    </a>
+    <div class="lc-note" id="lcNote">You must tick all checkboxes before launching.</div>
+  </div>
+</div>
+
 <footer class="sfooter">
   <div class="fbrand">Mail<span>Vault</span></div>
   <div class="fmeta">Runs inside your Google Account · No external servers<br>Files saved directly to your device · Full source above</div>
@@ -341,5 +526,111 @@
 
 <div id="toast"></div>
 <script src="js/app.js"></script>
+<script>
+(function() {
+  // State — 4 independent boolean flags
+  var state = [false, false, false, false];
+
+  window.toggleCheck = function(n) {
+    var i = n - 1;
+    state[i] = !state[i];
+
+    // Update visual state of row
+    var box = document.getElementById('box' + n);
+    var row = document.getElementById('chk' + n);
+    if (state[i]) {
+      box.classList.add('ticked');
+      row.classList.add('ticked');
+    } else {
+      box.classList.remove('ticked');
+      row.classList.remove('ticked');
+    }
+
+    // Count how many are done
+    var done = state.filter(function(v){ return v; }).length;
+    var pct  = (done / 4) * 100;
+
+    // Update progress bar
+    document.getElementById('lcProgress').style.width = pct + '%';
+
+    // Update label + button
+    var btn  = document.getElementById('lcLaunchBtn');
+    var note = document.getElementById('lcNote');
+    var lbl  = document.getElementById('lcLabel');
+
+    if (done === 4) {
+      btn.classList.add('ready');
+      note.style.display = 'none';
+      lbl.textContent    = 'All confirmed — you are ready to launch!';
+      lbl.style.color    = 'var(--em)';
+    } else {
+      btn.classList.remove('ready');
+      note.style.display = 'block';
+      var remaining = 4 - done;
+      lbl.textContent = remaining + ' more confirmation' + (remaining === 1 ? '' : 's') + ' needed';
+      lbl.style.color = 'var(--faint)';
+    }
+  };
+
+  window.launchGate = function(e) {
+    var done = state.filter(function(v){ return v; }).length;
+    if (done < 4) {
+      e.preventDefault();
+      showToast('Please tick all 4 checkboxes first.');
+      var card = document.getElementById('launchCard');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    }
+    return true;
+  };
+
+  window.copyAppUrl = function() {
+    var url = 'https://script.google.com/macros/s/AKfycbxbfKNTOwqhcnOjz6r3J7Tgy8x1Gjh-fIvb8DxMzPGL4xC0VTX8dp1hyot0hupCD72J/exec';
+    var btn = document.getElementById('aucCopyBtn');
+    if (!navigator.clipboard) {
+      // Fallback for file:// protocol
+      var ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      flashCopyBtn(btn);
+      return;
+    }
+    navigator.clipboard.writeText(url).then(function() {
+      flashCopyBtn(btn);
+    }).catch(function() {
+      showToast('Could not copy. Please copy the URL manually.');
+    });
+  };
+
+  function flashCopyBtn(btn) {
+    if (!btn) return;
+    var orig = btn.innerHTML;
+    btn.textContent = '✓ Copied!';
+    btn.style.background     = 'rgba(0,229,160,.2)';
+    btn.style.borderColor    = 'var(--em)';
+    btn.style.color          = 'var(--em)';
+    setTimeout(function() {
+      btn.innerHTML         = orig;
+      btn.style.background  = '';
+      btn.style.borderColor = '';
+      btn.style.color       = '';
+    }, 2000);
+  }
+
+  function showToast(msg, type) {
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className   = 'show' + (type === 'err' ? ' err' : '');
+    clearTimeout(t._tid);
+    t._tid = setTimeout(function() { t.className = ''; }, 2800);
+  }
+
+  window.showToast = showToast;
+})();
+</script>
 </body>
 </html>

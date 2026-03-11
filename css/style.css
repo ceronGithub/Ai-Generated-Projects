@@ -205,3 +205,272 @@ nav{
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+
+/* ═══════════════════════════════════════════════
+   NEW COMPONENTS — Authorization + Launch Gate
+═══════════════════════════════════════════════ */
+
+/* ── NAV LAUNCH BUTTON ───────────────────────── */
+.nav-a-launch{
+  color:var(--em)!important;
+  background:rgba(0,229,160,.1)!important;
+  border:1px solid rgba(0,229,160,.28)!important;
+  margin-left:6px;
+}
+.nav-a-launch:hover{
+  background:rgba(0,229,160,.2)!important;
+  border-color:rgba(0,229,160,.5)!important;
+  box-shadow:0 0 16px rgba(0,229,160,.2);
+}
+
+/* ── APP URL CARD ────────────────────────────── */
+.app-url-card{
+  background:rgba(0,229,160,.06);
+  border:1px solid rgba(0,229,160,.32);
+  border-radius:18px;
+  padding:26px 30px;
+  position:relative;
+  overflow:hidden;
+}
+.app-url-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--em),var(--vi));
+}
+.auc-label{
+  font-family:'DM Mono',monospace;font-size:.6rem;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:var(--em);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.auc-url{
+  display:block;
+  font-family:'DM Mono',monospace;font-size:.78rem;
+  color:var(--em);word-break:break-all;line-height:1.7;
+  text-decoration:none;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(0,229,160,.2);
+  border-radius:10px;
+  padding:12px 16px;
+  margin-bottom:14px;
+  transition:all .2s;
+}
+.auc-url:hover{
+  border-color:rgba(0,229,160,.45);
+  background:rgba(0,229,160,.06);
+  box-shadow:0 0 24px rgba(0,229,160,.1);
+}
+.auc-meta{
+  display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;
+  font-size:.8rem;color:var(--faint);line-height:1.6;margin-bottom:16px;
+}
+.auc-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.2);
+  padding:4px 12px;border-radius:99px;
+  font-family:'DM Mono',monospace;font-size:.62rem;color:var(--em);
+  white-space:nowrap;flex-shrink:0;
+}
+.auc-dot{
+  width:6px;height:6px;background:var(--em);border-radius:50%;
+  box-shadow:0 0 6px var(--em);animation:pulse 2s infinite;flex-shrink:0;
+}
+.auc-copy{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:9px;cursor:pointer;
+  background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);
+  color:var(--em);font-family:'DM Mono',monospace;font-size:.65rem;
+  letter-spacing:.06em;text-transform:uppercase;
+  transition:all .2s;
+}
+.auc-copy:hover{background:rgba(0,229,160,.2);border-color:rgba(0,229,160,.55);transform:translateY(-1px)}
+.auc-copy:active{transform:scale(.97)}
+
+/* ── AUTHORIZATION INTRO CARD ────────────────── */
+.auth-intro-card{
+  display:flex;gap:20px;align-items:flex-start;
+  background:rgba(255,255,255,.03);border:1px solid var(--border2);
+  border-radius:16px;padding:22px 24px;margin-bottom:28px;
+}
+.aic-left{flex-shrink:0}
+.aic-icon{
+  width:52px;height:52px;border-radius:14px;
+  background:linear-gradient(135deg,var(--vi2),var(--vi));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;
+}
+.aic-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;color:var(--text);margin-bottom:8px}
+.aic-text{font-size:.84rem;color:var(--muted);line-height:1.7;margin:0}
+
+/* ── AUTH STEP CARDS ─────────────────────────── */
+.auth-step{
+  border:1px solid var(--auth-border, var(--border2));
+  border-radius:16px;
+  background:var(--auth-bg, rgba(255,255,255,.03));
+  padding:22px 24px;
+  margin-bottom:14px;
+  position:relative;
+  overflow:hidden;
+}
+.auth-step::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--auth-color,var(--em));opacity:.7;
+}
+.as-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:9px;
+  background:var(--auth-color,var(--em));
+  color:#06040f;font-family:'Playfair Display',serif;
+  font-size:1.1rem;font-weight:900;
+  margin-bottom:12px;flex-shrink:0;
+}
+.as-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.94rem;color:var(--text);margin-bottom:10px}
+.as-text{font-size:.84rem;color:var(--muted);line-height:1.7;margin-bottom:8px}
+.as-text:last-child{margin-bottom:0}
+
+/* ── GOOGLE DIALOG MOCK ──────────────────────── */
+.auth-dialog-mock{
+  background:#fff;border-radius:12px;padding:20px 22px;
+  max-width:420px;margin:14px auto;
+  box-shadow:0 8px 40px rgba(0,0,0,.5);
+  border:1px solid rgba(0,0,0,.1);
+}
+.adm-header{
+  display:flex;align-items:center;gap:8px;
+  font-size:.78rem;color:#5f6368;margin-bottom:14px;padding-bottom:12px;
+  border-bottom:1px solid #e8eaed;
+}
+.adm-logo{
+  width:20px;height:20px;border-radius:50%;
+  background:linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:.65rem;font-weight:700;
+}
+.adm-title{font-size:1rem;font-weight:600;color:#202124;margin-bottom:8px}
+.adm-text{font-size:.82rem;color:#5f6368;line-height:1.5;margin-bottom:12px}
+.adm-warn{
+  display:flex;align-items:flex-start;gap:8px;
+  background:#fef7e0;border-radius:8px;padding:10px 12px;
+  font-size:.78rem;color:#5f6368;line-height:1.5;margin-bottom:14px;
+}
+.adm-btns{display:flex;justify-content:flex-end;gap:10px}
+.adm-btn-cancel{
+  font-size:.78rem;font-weight:600;color:#1a73e8;
+  padding:8px 16px;border-radius:6px;cursor:pointer;
+  transition:background .15s;
+}
+.adm-btn-cancel:hover{background:#e8f0fe}
+.adm-btn-allow{
+  font-size:.78rem;font-weight:600;color:#fff;
+  background:#1a73e8;padding:8px 18px;border-radius:6px;
+  cursor:pointer;transition:background .15s;
+}
+.adm-btn-allow:hover{background:#1557b0}
+
+/* ── UNVERIFIED BOX MOCK ─────────────────────── */
+.auth-unverified-box{
+  background:#fff;border:1px solid #dadce0;border-radius:10px;
+  padding:14px 16px;max-width:420px;margin:12px 0;
+}
+
+/* ── AUTH ACTION ROWS ────────────────────────── */
+.as-action-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 14px;margin:8px 0;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:9px;font-size:.84rem;color:var(--muted);line-height:1.6;
+}
+.as-action-num{
+  flex-shrink:0;min-width:24px;height:24px;
+  background:var(--auth-color,var(--em));color:#06040f;
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:.62rem;font-weight:700;
+}
+
+/* ── PERMISSIONS LIST ────────────────────────── */
+.perm-list{
+  background:rgba(0,0,0,.2);border:1px solid var(--border2);
+  border-radius:12px;padding:14px;margin:12px 0;
+}
+.perm-item{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.perm-item:last-child{border-bottom:none;padding-bottom:0}
+.perm-item:first-child{padding-top:0}
+.perm-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.perm-name{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.4}
+.perm-note{font-size:.76rem;color:var(--muted);line-height:1.5}
+
+/* ── ALLOW BUTTON MOCK ───────────────────────── */
+.auth-allow-btn-mock{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:13px 16px;margin:12px 0;
+  background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.25);
+  border-radius:10px;font-size:.84rem;color:var(--muted);
+}
+.aam-arrow{color:var(--em);font-size:1.1rem}
+.aam-btn{
+  background:#1a73e8;color:#fff;font-size:.78rem;font-weight:600;
+  padding:8px 20px;border-radius:6px;
+}
+
+/* ── LAUNCH GATE ─────────────────────────────── */
+.launch-card{
+  background:rgba(19,16,42,.72);border:1px solid var(--border2);
+  border-radius:20px;padding:32px;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(22px);
+}
+.launch-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--em),var(--vi),var(--ro));
+}
+.lc-checks{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.lc-check{
+  display:flex;align-items:flex-start;gap:13px;
+  padding:13px 16px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border2);
+  cursor:pointer;user-select:none;
+  transition:all .2s;font-size:.86rem;color:var(--muted);line-height:1.6;
+}
+.lc-check:hover{background:rgba(255,255,255,.06);border-color:rgba(0,229,160,.25)}
+.lc-check.ticked{background:rgba(0,229,160,.06);border-color:rgba(0,229,160,.3);color:var(--text)}
+.lc-box{
+  width:22px;height:22px;border-radius:6px;border:2px solid var(--border2);
+  flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.lc-check.ticked .lc-box{background:var(--em);border-color:var(--em)}
+.lc-tick{color:#06040f;font-size:.75rem;font-weight:900;display:none}
+.lc-check.ticked .lc-tick{display:block}
+
+/* progress */
+.lc-progress-wrap{height:3px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;margin-bottom:8px}
+.lc-progress-bar{height:100%;background:linear-gradient(90deg,var(--em2),var(--em));border-radius:99px;transition:width .3s ease}
+.lc-progress-label{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint);margin-bottom:20px}
+
+/* launch button */
+.lc-launch-btn{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  width:100%;padding:15px;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-weight:700;font-size:.94rem;
+  text-decoration:none;
+  background:rgba(255,255,255,.06);border:1px solid var(--border2);
+  color:var(--faint);
+  pointer-events:none;
+  transition:all .3s;cursor:not-allowed;
+}
+.lc-launch-btn.ready{
+  background:linear-gradient(135deg,var(--em2),var(--em));
+  border-color:var(--em);color:#06040f;
+  pointer-events:auto;cursor:pointer;
+  box-shadow:0 6px 32px rgba(0,229,160,.35);
+}
+.lc-launch-btn.ready:hover{
+  box-shadow:0 8px 42px rgba(0,229,160,.55);
+  transform:translateY(-2px);
+}
+.lc-note{
+  font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint);
+  text-align:center;margin-top:10px;
+}

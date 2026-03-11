@@ -204,9 +204,300 @@ tbody tr:hover td{background:rgba(255,255,255,.03);color:var(--text)}
   .tbhead{flex-direction:column;align-items:flex-start}
 }
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.11);border-radius:3px}
+
+/* ─── RECONNECT BANNER ────────────────────────────────────────── */
+#reconnectBanner{
+  display:none;position:fixed;top:0;left:0;right:0;z-index:999;
+  background:linear-gradient(135deg,#1a0a0a,#2d0f1f);
+  border-bottom:1px solid rgba(251,113,133,.4);
+  padding:0;
+}
+#reconnectBanner.show{display:block;animation:slideDown .35s ease both}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:none;opacity:1}}
+.rb-inner{
+  max-width:900px;margin:0 auto;padding:14px 28px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.rb-icon{font-size:1.3rem;flex-shrink:0}
+.rb-text{flex:1;min-width:200px}
+.rb-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:.88rem;color:var(--ro);margin-bottom:2px}
+.rb-sub{font-size:.75rem;color:rgba(251,113,133,.7);font-family:'DM Mono',monospace;line-height:1.5}
+.rb-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.btn-reconnect{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:9px;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;
+  background:linear-gradient(135deg,#e11d48,var(--ro));color:#fff;
+  box-shadow:0 4px 16px rgba(251,113,133,.4);
+  transition:all .2s;
+}
+.btn-reconnect:hover{box-shadow:0 6px 22px rgba(251,113,133,.6);transform:translateY(-1px)}
+.btn-reconnect:active{transform:scale(.97)}
+.btn-reconnect svg{flex-shrink:0}
+.rb-dismiss{
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  color:var(--muted);padding:8px 14px;border-radius:8px;
+  font-family:'DM Mono',monospace;font-size:.65rem;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.rb-dismiss:hover{background:rgba(255,255,255,.14);color:var(--text)}
+
+/* Push page content down when banner is visible */
+body.banner-on .wrap{padding-top:20px}
+body.banner-on .hero{padding-top:96px}
+
+/* ─── FULL-PAGE RECONNECT OVERLAY ────────────────────────────── */
+#reconnectOverlay{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(6,4,15,.92);backdrop-filter:blur(16px);
+  align-items:center;justify-content:center;padding:24px;
+}
+#reconnectOverlay.show{display:flex;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.ro-card{
+  background:rgba(19,16,42,.98);border:1px solid rgba(251,113,133,.35);
+  border-radius:24px;padding:42px 38px;max-width:500px;width:100%;
+  position:relative;overflow:hidden;
+  box-shadow:0 48px 120px rgba(0,0,0,.8);
+  animation:mIn .3s ease;
+  text-align:center;
+}
+.ro-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--ro),var(--am),var(--vi));
+}
+.ro-icon-wrap{
+  width:72px;height:72px;border-radius:20px;
+  background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;margin:0 auto 20px;
+}
+.ro-badge{
+  display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;
+  font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ro);background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.25);
+  padding:5px 13px;border-radius:99px;
+}
+.ro-card h2{
+  font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:900;
+  margin-bottom:10px;line-height:1.1;
+}
+.ro-card p{font-size:.875rem;color:var(--muted);line-height:1.75;margin-bottom:14px}
+.ro-steps{
+  text-align:left;background:rgba(255,255,255,.03);
+  border:1px solid var(--border2);border-radius:12px;
+  padding:16px 18px;margin:18px 0 24px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.ro-step{display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:var(--muted);line-height:1.55}
+.ro-sn{
+  flex-shrink:0;min-width:22px;height:22px;
+  background:rgba(0,229,160,.14);border:1px solid rgba(0,229,160,.3);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:.6rem;color:var(--em);font-weight:700;
+}
+.ro-step strong{color:var(--text)}
+.ro-card-actions{display:flex;flex-direction:column;gap:10px}
+.btn-reconnect-lg{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  width:100%;padding:15px;border-radius:12px;border:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;font-weight:700;font-size:.94rem;
+  background:linear-gradient(135deg,#e11d48,var(--ro));color:#fff;
+  box-shadow:0 6px 28px rgba(251,113,133,.4);transition:all .2s;
+}
+.btn-reconnect-lg:hover{box-shadow:0 8px 36px rgba(251,113,133,.65);transform:translateY(-2px)}
+.btn-reconnect-lg:active{transform:scale(.97)}
+.ro-later{
+  font-family:'DM Mono',monospace;font-size:.65rem;color:var(--faint);
+  cursor:pointer;padding:6px;transition:color .15s;background:none;border:none;
+  text-decoration:underline;
+}
+.ro-later:hover{color:var(--muted)}
+
+
+/* ─── STICKY TOP NAV ─────────────────────────────────────────── */
+.topnav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  background:rgba(6,4,15,.82);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0;
+  transition:transform .3s ease;
+}
+.topnav-inner{
+  max-width:900px;margin:0 auto;padding:0 28px;
+  height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.topnav-brand{
+  font-family:'Playfair Display',serif;font-weight:900;font-size:1.08rem;
+  color:var(--text);text-decoration:none;flex-shrink:0;
+}
+.topnav-brand span{color:var(--em)}
+.topnav-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.nav-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;border:1px solid var(--border2);
+  background:rgba(255,255,255,.05);color:var(--muted);
+  font-family:'DM Sans',sans-serif;font-weight:600;font-size:.78rem;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.nav-pill:hover{background:rgba(255,255,255,.1);color:var(--text);border-color:rgba(255,255,255,.25)}
+.nav-pill svg{flex-shrink:0}
+.nav-pill-help:hover{background:rgba(167,139,250,.12);color:var(--vi);border-color:rgba(167,139,250,.3)}
+.nav-pill-logout{color:var(--ro)}
+.nav-pill-logout:hover{background:rgba(251,113,133,.12);color:var(--ro);border-color:rgba(251,113,133,.3)}
+/* push hero down so it doesn't hide under nav */
+body{padding-top:54px}
+body.banner-on .hero{padding-top:106px}
+
+/* ─── HELP MODAL ─────────────────────────────────────────────── */
+#helpModal .modal{max-width:580px}
+.help-section{margin-bottom:22px}
+.help-section:last-child{margin-bottom:0}
+.help-h{
+  font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--em);margin-bottom:10px;
+  display:flex;align-items:center;gap:7px;
+}
+.help-h::after{content:'';flex:1;height:1px;background:rgba(0,229,160,.18)}
+.help-item{
+  display:flex;align-items:flex-start;gap:11px;
+  padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.03);
+  border:1px solid var(--border);margin-bottom:7px;
+  font-size:.83rem;color:var(--muted);line-height:1.6;
+}
+.help-item:last-child{margin-bottom:0}
+.help-ico{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.help-item strong{color:var(--text);display:block;margin-bottom:2px;font-size:.82rem}
+.help-tip{
+  background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);
+  border-radius:9px;padding:11px 14px;font-size:.78rem;color:var(--bl);
+  line-height:1.65;display:flex;gap:9px;align-items:flex-start;
+}
+.help-tip-ico{flex-shrink:0;margin-top:1px}
+
+/* ─── LOGOUT CONFIRM MODAL ───────────────────────────────────── */
+#logoutModal .modal{max-width:420px}
+.logout-body{text-align:center;padding:10px 0 4px}
+.logout-icon{font-size:2.8rem;margin-bottom:14px;display:block}
+.logout-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;margin-bottom:8px}
+.logout-sub{font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:0}
+.logout-sub strong{color:var(--text)}
+
+/* ─── UNLINK MODAL ───────────────────────────────────────────── */
+#unlinkModal .modal{max-width:500px}
+.nav-pill-unlink{color:var(--am)}
+.nav-pill-unlink:hover{background:rgba(251,191,36,.12);color:var(--am);border-color:rgba(251,191,36,.3)}
+.unlink-scroll-box{
+  max-height:260px;overflow-y:auto;
+  border:1px solid var(--border2);border-radius:12px;
+  padding:18px 20px;background:rgba(255,255,255,.03);
+  font-size:.84rem;color:var(--muted);line-height:1.75;
+  scroll-behavior:smooth;
+}
+.unlink-scroll-box::-webkit-scrollbar{width:4px}
+.unlink-scroll-box::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
+.unlink-read-notice{
+  display:flex;align-items:center;gap:8px;
+  font-family:'DM Mono',monospace;font-size:.62rem;color:var(--am);
+  margin-top:10px;letter-spacing:.05em;transition:opacity .3s;
+}
+.unlink-read-notice svg{flex-shrink:0}
+.unlink-scroll-box h4{
+  font-family:'Playfair Display',serif;font-size:1rem;
+  color:var(--text);margin-bottom:12px;
+}
+.unlink-step{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.unlink-step:last-child{border-bottom:none;padding-bottom:0}
+.unlink-sn{
+  flex-shrink:0;width:22px;height:22px;
+  background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.3);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:.6rem;color:var(--am);font-weight:700;
+}
+.unlink-step p{margin:0;font-size:.83rem}
+.unlink-step strong{color:var(--text)}
+.unlink-warning{
+  display:flex;gap:10px;align-items:flex-start;
+  background:rgba(251,113,133,.08);border:1px solid rgba(251,113,133,.25);
+  border-radius:9px;padding:12px 14px;
+  font-size:.8rem;color:var(--ro);line-height:1.65;margin-top:14px;
+}
+.btn-unlink-redirect{
+  background:linear-gradient(135deg,#d97706,var(--am));
+  color:#06040f;font-weight:700;
+  box-shadow:0 4px 18px rgba(251,191,36,.3);
+}
+.btn-unlink-redirect:hover:not(:disabled){box-shadow:0 6px 26px rgba(251,191,36,.55);transform:translateY(-1px)}
+.btn-unlink-redirect:disabled{opacity:.32;cursor:not-allowed;pointer-events:none}
+
 </style>
 </head>
 <body>
+
+<!-- ─── STICKY TOP NAV ─────────────────────────────────────────── -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <a class="topnav-brand" href="#">Mail<span>Vault</span></a>
+    <div class="topnav-actions">
+      <button class="nav-pill nav-pill-help" onclick="openHelp()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Help
+      </button>
+      <button class="nav-pill nav-pill-logout" id="logoutNavBtn" onclick="openLogout()" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+      <button class="nav-pill nav-pill-unlink" id="unlinkNavBtn" onclick="openUnlink()" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/><line x1="2" y1="2" x2="22" y2="22" stroke-width="2"/></svg>
+        Unlink
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── RECONNECT BANNER (shown when permissions are revoked) ─── -->
+<div id="reconnectBanner">
+  <div class="rb-inner">
+    <div class="rb-icon">🔌</div>
+    <div class="rb-text">
+      <div class="rb-title">MailVault is disconnected</div>
+      <div class="rb-sub" id="rbEmail">Gmail access was removed from this account — reconnect to restore full access.</div>
+    </div>
+    <div class="rb-actions">
+      <button class="btn-reconnect" id="rbReconnectBtn" onclick="doReconnect()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Reconnect Now
+      </button>
+      <button class="rb-dismiss" onclick="dismissBanner()">Dismiss</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── RECONNECT FULL-PAGE OVERLAY ─────────────────────────────── -->
+<div id="reconnectOverlay">
+  <div class="ro-card">
+    <div class="ro-icon-wrap">🔌</div>
+    <div class="ro-badge">Connection Lost</div>
+    <h2>Reconnect to<br>Mail<span class="grd">Vault</span></h2>
+    <p>MailVault lost access to your Gmail because permissions were removed from your Google account. This usually happens after visiting <strong style="color:var(--text)">myaccount.google.com/permissions</strong> and removing the app.</p>
+    <div class="ro-steps">
+      <div class="ro-step"><div class="ro-sn">1</div><span>Click <strong>Reconnect</strong> below — you will be taken back to the app URL.</span></div>
+      <div class="ro-step"><div class="ro-sn">2</div><span>Google will show the <strong>authorization dialog</strong> again automatically.</span></div>
+      <div class="ro-step"><div class="ro-sn">3</div><span>Click <strong>Allow</strong> to restore Gmail access — then use the app normally.</span></div>
+    </div>
+    <div class="ro-card-actions">
+      <button class="btn-reconnect-lg" id="overlayReconnectBtn" onclick="doReconnect()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Reconnect to MailVault
+      </button>
+      <button class="ro-later" onclick="dismissOverlay()">Continue without reconnecting</button>
+    </div>
+  </div>
+</div>
+
 <div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
 <div class="wrap">
 
@@ -317,6 +608,138 @@ tbody tr:hover td{background:rgba(255,255,255,.03);color:var(--text)}
 </footer>
 </div>
 
+
+<!-- ─── HELP MODAL ──────────────────────────────────────────────── -->
+<div class="mov" id="helpModal" onclick="closeHelpBg(event)">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mhd-t">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vi)" stroke-width="2.5" style="margin-right:8px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Help &amp; Guide
+      </div>
+      <button class="mx" onclick="closeHelp()">✕</button>
+    </div>
+    <div class="mbd">
+
+      <div class="help-section">
+        <div class="help-h">Getting Started</div>
+        <div class="help-item"><div class="help-ico">📅</div><div><strong>Step 1 — Select Date Range</strong>Pick a From and To date. Use the same date in both fields to export a single day.</div></div>
+        <div class="help-item"><div class="help-ico">📬</div><div><strong>Step 2 — Fetch Emails</strong>Click Fetch Emails to search your Gmail. Large inboxes may take a moment — the progress bar shows status.</div></div>
+        <div class="help-item"><div class="help-ico">✏️</div><div><strong>Review &amp; Edit</strong>Use the table to view, edit, or remove emails before exporting. Changes only affect the export — your Gmail is untouched.</div></div>
+        <div class="help-item"><div class="help-ico">💾</div><div><strong>Step 3 — Export</strong>Choose CSV, PDF, or Text and click Download. The file saves directly to your device — nothing goes to Google Drive.</div></div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-h">Export Formats</div>
+        <div class="help-item"><div class="help-ico">📊</div><div><strong>CSV / Excel</strong>Best for analysis. Opens in Excel, Google Sheets, or any spreadsheet app. Includes all fields and a summary sheet.</div></div>
+        <div class="help-item"><div class="help-ico">📕</div><div><strong>PDF</strong>Opens a print dialog — choose "Save as PDF" to download. Best for archiving or sharing.</div></div>
+        <div class="help-item"><div class="help-ico">📄</div><div><strong>Text File</strong>Plain .txt with one email per block. Best for reading in a text editor or scripting.</div></div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-h">Privacy &amp; Security</div>
+        <div class="help-item"><div class="help-ico">🔒</div><div><strong>Runs inside your Google Account</strong>MailVault is a Google Apps Script. It never contacts external servers — all processing happens inside Google's own infrastructure.</div></div>
+        <div class="help-item"><div class="help-ico">👁</div><div><strong>Read-only Gmail access</strong>MailVault only reads emails. It cannot send, delete, or modify anything in your Gmail.</div></div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-h">Troubleshooting</div>
+        <div class="help-item"><div class="help-ico">⚠️</div><div><strong>"Gmail access was revoked"</strong>You may have removed MailVault from your Google account permissions. Use the Reconnect button that appears, or reload the page.</div></div>
+        <div class="help-item"><div class="help-ico">🔍</div><div><strong>No emails found</strong>Check your date range. Gmail search uses UTC dates, so emails near midnight may appear on a different day.</div></div>
+        <div class="help-item"><div class="help-ico">🐢</div><div><strong>Fetch is slow</strong>Large date ranges with thousands of emails take longer. Try narrowing the range to a week at a time.</div></div>
+        <div class="help-tip">
+          <div class="help-tip-ico">💡</div>
+          <div>MailVault processes emails in batches of 500. For very large mailboxes, split into multiple smaller exports by date range.</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="mft">
+      <button class="btn btn-ghost" onclick="closeHelp()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── LOGOUT CONFIRM MODAL ─────────────────────────────────────── -->
+<div class="mov" id="logoutModal" onclick="closeLogoutBg(event)">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mhd-t">Sign Out</div>
+      <button class="mx" onclick="closeLogout()">✕</button>
+    </div>
+    <div class="mbd">
+      <div class="logout-body">
+        <span class="logout-icon">👋</span>
+        <div class="logout-title">Sign out of MailVault?</div>
+        <p class="logout-sub">You'll be signed out of your Google account in this browser. You're currently signed in as <strong id="logoutEmailDisplay">—</strong>.</p>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-ghost" onclick="closeLogout()">Cancel</button>
+      <button class="btn btn-ro" id="confirmLogoutBtn" onclick="doLogout()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── UNLINK MODAL ──────────────────────────────────────────────── -->
+<div class="mov" id="unlinkModal" onclick="closeUnlinkBg(event)">
+  <div class="modal">
+    <div class="mhd">
+      <div class="mhd-t">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--am)" stroke-width="2.5" style="margin-right:7px;vertical-align:-2px"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/><line x1="2" y1="2" x2="22" y2="22" stroke-width="2"/></svg>
+        Unlink MailVault
+      </div>
+      <button class="mx" onclick="closeUnlink()">✕</button>
+    </div>
+    <div class="mbd">
+      <div id="unlinkScrollBox" class="unlink-scroll-box" onscroll="onUnlinkScroll()">
+        <h4>⚠️ Before you unlink — please read carefully</h4>
+
+        <div class="unlink-step">
+          <div class="unlink-sn">1</div>
+          <p>Clicking <strong>Go to Google Permissions</strong> will open <strong>myaccount.google.com/permissions</strong> in this same tab. You will leave MailVault.</p>
+        </div>
+        <div class="unlink-step">
+          <div class="unlink-sn">2</div>
+          <p>On that page, find <strong>MailVault</strong> (or your Apps Script app name) in the list of apps that have access to your Google account.</p>
+        </div>
+        <div class="unlink-step">
+          <div class="unlink-sn">3</div>
+          <p>Click the app name, then click <strong>"Remove Access"</strong> to revoke Gmail permissions for MailVault.</p>
+        </div>
+        <div class="unlink-step">
+          <div class="unlink-sn">4</div>
+          <p>After removing access, MailVault will no longer be able to read your Gmail. To use it again, you will need to <strong>reconnect and re-authorize</strong> the app.</p>
+        </div>
+        <div class="unlink-step">
+          <div class="unlink-sn">5</div>
+          <p><strong>Your Gmail is not affected.</strong> Unlinking only removes MailVault's read access — no emails are deleted or modified.</p>
+        </div>
+
+        <div class="unlink-warning">
+          <span style="font-size:1.1rem;flex-shrink:0">🔴</span>
+          <span>This action is <strong>irreversible</strong> until you re-authorize. Any in-progress exports will stop working immediately after unlinking.</span>
+        </div>
+      </div>
+
+      <div class="unlink-read-notice" id="unlinkReadNotice">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        Scroll down to read all instructions to continue
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn btn-ghost" onclick="closeUnlink()">Cancel</button>
+      <button class="btn btn-unlink-redirect" id="unlinkRedirectBtn" onclick="doUnlinkRedirect()" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/><line x1="2" y1="2" x2="22" y2="22" stroke-width="2"/></svg>
+        Go to Google Permissions
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="mov" id="modal" onclick="closeMBg(event)">
   <div class="modal">
@@ -330,15 +753,96 @@ tbody tr:hover td{background:rgba(255,255,255,.03);color:var(--text)}
 <script>
 let emails=[],currentSort='newest',selExp='csv',editIdx=null;
 
+// ── page init ──────────────────────────────────────────────────
+var _reconnectUrl = '';
+
 (function(){
   const t=new Date().toISOString().split('T')[0];
   document.getElementById('dateFrom').value=t;
   document.getElementById('dateTo').value=t;
+
+  // Check permissions on load — catches revoked access immediately
   google.script.run
-    .withSuccessHandler(r=>{if(r&&r.email){document.getElementById('userEmailDisplay').textContent=r.email;document.getElementById('userPill').style.display='inline-flex';}})
-    .withFailureHandler(()=>{})
-    .getUserEmail();
+    .withSuccessHandler(function(r){
+      if (!r) return;
+
+      // Always update the user pill with the email
+      if (r.email) {
+        document.getElementById('userEmailDisplay').textContent = r.email;
+        document.getElementById('userPill').style.display = 'inline-flex';
+        // Show logout button + populate logout modal email
+        document.getElementById('logoutNavBtn').style.display = 'inline-flex';
+        document.getElementById('unlinkNavBtn').style.display = 'inline-flex';
+        document.getElementById('logoutEmailDisplay').textContent = r.email;
+      }
+
+      if (r.status === 'revoked') {
+        // Store reconnect URL for buttons
+        _reconnectUrl = r.reconnectUrl || '';
+
+        // Update banner email line
+        if (r.email) {
+          document.getElementById('rbEmail').textContent =
+            r.email + ' — Gmail access was removed. Reconnect to restore it.';
+        }
+
+        // Decide: show overlay (first load, nothing done yet) or just banner
+        showReconnectBanner();
+
+      } else {
+        // All good — hide any leftover banner
+        hideReconnectBanner();
+      }
+    })
+    .withFailureHandler(function(){
+      // checkPermissions failed (script error) — fall back to getUserEmail silently
+      google.script.run
+        .withSuccessHandler(function(r){
+          if(r&&r.email){
+            document.getElementById('userEmailDisplay').textContent=r.email;
+            document.getElementById('userPill').style.display='inline-flex';
+          }
+        })
+        .withFailureHandler(function(){})
+        .getUserEmail();
+    })
+    .checkPermissions();
 })();
+
+// ── reconnect banner helpers ───────────────────────────────────
+function showReconnectBanner() {
+  document.getElementById('reconnectBanner').classList.add('show');
+  document.body.classList.add('banner-on');
+}
+function hideReconnectBanner() {
+  document.getElementById('reconnectBanner').classList.remove('show');
+  document.getElementById('reconnectOverlay').classList.remove('show');
+  document.body.classList.remove('banner-on');
+}
+function showReconnectOverlay() {
+  document.getElementById('reconnectOverlay').classList.add('show');
+}
+function dismissBanner() {
+  document.getElementById('reconnectBanner').classList.remove('show');
+  document.body.classList.remove('banner-on');
+  toast('Reconnect any time using the banner at the top.', 'nn');
+}
+function dismissOverlay() {
+  document.getElementById('reconnectOverlay').classList.remove('show');
+}
+function doReconnect() {
+  if (!_reconnectUrl) {
+    // Fallback: reload the page — Apps Script will re-prompt auth
+    window.top.location.reload();
+    return;
+  }
+  // Show spinner on both buttons while navigating
+  ['rbReconnectBtn','overlayReconnectBtn'].forEach(function(id){
+    var b = document.getElementById(id);
+    if (b) { b.innerHTML = '<div class="spin"></div> Reconnecting…'; b.disabled = true; }
+  });
+  window.top.location.href = _reconnectUrl;
+}
 
 function setSt(bar,txt,ico,msg,type){
   const m={info:'ℹ️',success:'✅',error:'❌',warning:'⚠️'};
@@ -367,7 +871,18 @@ function fetchEmails(){
   google.script.run
     .withSuccessHandler(res=>{
       busy('fetchBtn',false);
-      if(res.error){hidePr();setSt('fetchStatus','fetchText','fetchIcon','Error: '+res.error,'error');return;}
+      if(res.error){
+        hidePr();
+        // Detect mid-session permissions revocation
+        if(res.errorType==='permissions_revoked'){
+          setSt('fetchStatus','fetchText','fetchIcon','Gmail access was revoked. Please reconnect MailVault to continue.','error');
+          showReconnectBanner();
+          showReconnectOverlay();
+          return;
+        }
+        setSt('fetchStatus','fetchText','fetchIcon','Error: '+res.error,'error');
+        return;
+      }
       emails=res.emails||[];setPr(100);
       setTimeout(()=>{
         hidePr();
@@ -473,6 +988,59 @@ function buildTxt(emails,ue,df,dt){
   const L=['═══════════════════════════════════════════════════════════','  MAILVAULT — GMAIL EXPORT','  Account : '+ue,'  Range   : '+df+' → '+dt,'  Total   : '+emails.length+' emails','  Exported: '+new Date().toLocaleString(),'═══════════════════════════════════════════════════════════',''];
   emails.forEach((e,i)=>{L.push('┌─ EMAIL #'+(i+1)+' '+'─'.repeat(Math.max(0,48-String(i+1).length)));L.push('│ Subject : '+(e.subject||'(no subject)'));L.push('│ From    : '+(e.from||'—'));L.push('│ To      : '+(e.to||'—'));if(e.cc)L.push('│ CC      : '+e.cc);L.push('│ Date    : '+(e.date||'—'));L.push('│ Labels  : '+(e.labels||'—'));L.push('│ Read    : '+(e.isRead?'Yes':'No')+'   Starred: '+(e.isStarred?'Yes':'No'));L.push('│');L.push('│ BODY:');(e.body||'(no body)').split('\n').forEach(bl=>L.push('│   '+bl));L.push('└'+'─'.repeat(52));L.push('');});
   return L.join('\n');
+}
+
+// ── HELP MODAL ────────────────────────────────────────────────
+function openHelp(){document.getElementById('helpModal').classList.add('open');document.body.style.overflow='hidden';}
+function closeHelp(){document.getElementById('helpModal').classList.remove('open');document.body.style.overflow='';}
+function closeHelpBg(e){if(e.target===document.getElementById('helpModal'))closeHelp();}
+
+// ── LOGOUT ────────────────────────────────────────────────────
+function openLogout(){document.getElementById('logoutModal').classList.add('open');document.body.style.overflow='hidden';}
+function closeLogout(){document.getElementById('logoutModal').classList.remove('open');document.body.style.overflow='';}
+function closeLogoutBg(e){if(e.target===document.getElementById('logoutModal'))closeLogout();}
+function doLogout(){
+  const btn=document.getElementById('confirmLogoutBtn');
+  btn.innerHTML='<div class="spin"></div> Signing out…';btn.disabled=true;
+  // Get the app URL from the backend, then redirect to Google logout → back to app
+  google.script.run
+    .withSuccessHandler(function(url){
+      const appUrl=url||window.top.location.href.split('?')[0];
+      const logoutUrl='https://accounts.google.com/logout?continue='+encodeURIComponent(appUrl);
+      window.top.location.href=logoutUrl;
+    })
+    .withFailureHandler(function(){
+      // Fallback if backend call fails
+      window.top.location.href='https://accounts.google.com/logout';
+    })
+    .getAppUrl();
+}
+
+// ── UNLINK ────────────────────────────────────────────────────
+function openUnlink(){
+  // Reset scroll & button state each time modal opens
+  const box=document.getElementById('unlinkScrollBox');
+  box.scrollTop=0;
+  document.getElementById('unlinkRedirectBtn').disabled=true;
+  document.getElementById('unlinkReadNotice').style.opacity='1';
+  document.getElementById('unlinkModal').classList.add('open');
+  document.body.style.overflow='hidden';
+  // Check immediately in case content is short enough without scrolling
+  _checkUnlinkScrolled();
+}
+function closeUnlink(){document.getElementById('unlinkModal').classList.remove('open');document.body.style.overflow='';}
+function closeUnlinkBg(e){if(e.target===document.getElementById('unlinkModal'))closeUnlink();}
+function onUnlinkScroll(){_checkUnlinkScrolled();}
+function _checkUnlinkScrolled(){
+  const box=document.getElementById('unlinkScrollBox');
+  const atBottom=box.scrollHeight-box.scrollTop<=box.clientHeight+8;
+  if(atBottom){
+    document.getElementById('unlinkRedirectBtn').disabled=false;
+    document.getElementById('unlinkReadNotice').style.opacity='0';
+  }
+}
+function doUnlinkRedirect(){
+  window.top.location.href='https://myaccount.google.com/permissions';
 }
 
 function clearAll(){emails=[];currentSort='newest';document.getElementById('emailSection').classList.remove('show');document.getElementById('exportCard').style.display='none';document.getElementById('clearBtn').style.display='none';clrSt('fetchStatus');clrSt('exportStatus');hidePr();toast('Cleared','nn');}
