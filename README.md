@@ -1,5 +1,6 @@
+# General
+https://general-collection.netlify.app/
 # Ai-Generated-Projects
-
 Gemini prompt. 
 enter first what you cant.
 save the current code "save this as the original".
