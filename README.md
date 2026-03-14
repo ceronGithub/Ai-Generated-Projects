@@ -25,7 +25,7 @@ victorias haven mailer : https://hv-mailer.netlify.app/
 <br>
 victorias haven book recorder : https://hv-book-record.netlify.app/
 <br>
-email collector web app : https://mail-vault.netlify.app/
+email collector web app : https://matth-el-mail-vault.netlify.app/
 # E-Com
 https://endorse-2txk.onrender.com
 
