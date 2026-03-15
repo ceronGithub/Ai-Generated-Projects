@@ -24,6 +24,11 @@
   const scaleNote     = document.getElementById('scaleNote');
   const sessionCount  = document.getElementById('sessionCount');
   const sessionArea   = document.getElementById('sessionArea');
+  const apiKeyInput   = document.getElementById('apiKeyInput');
+  const apiKeyToggle  = document.getElementById('apiKeyToggle');
+  const howtoToggle   = document.getElementById('howtoToggle');
+  const howtoSteps    = document.getElementById('howtoSteps');
+  const howtoChevron  = document.getElementById('howtoChevron');
 
   /* ---- State ---- */
   let base64Data = null;
@@ -50,6 +55,31 @@
     'CROSS-REFERENCING SCALE DATA...',
     'GENERATING SPATIAL REPORT...',
   ];
+
+  /* ---- How-to guide toggle ---- */
+  howtoToggle.addEventListener('click', () => {
+    const isOpen = howtoSteps.classList.toggle('open');
+    howtoChevron.classList.toggle('open', isOpen);
+  });
+
+  /* ---- API Key toggle visibility ---- */
+  apiKeyToggle.addEventListener('click', () => {
+    const isPassword = apiKeyInput.type === 'password';
+    apiKeyInput.type = isPassword ? 'text' : 'password';
+    apiKeyToggle.title = isPassword ? 'Hide key' : 'Show key';
+  });
+
+  /* ---- API Key live validation ---- */
+  apiKeyInput.addEventListener('input', () => {
+    const val = apiKeyInput.value.trim();
+    apiKeyInput.classList.remove('key-valid', 'key-invalid');
+    if (val.length === 0) return;
+    if (val.startsWith('sk-ant-')) {
+      apiKeyInput.classList.add('key-valid');
+    } else {
+      apiKeyInput.classList.add('key-invalid');
+    }
+  });
 
   /* ---- Upload Zone drag events ---- */
   uploadZone.addEventListener('dragover', e => {
@@ -105,6 +135,19 @@
 
   async function runAnalysis() {
     if (!base64Data) return;
+
+    // Validate API key
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+      showError('API KEY REQUIRED: Enter your Anthropic API key above before scanning.');
+      apiKeyInput.focus();
+      return;
+    }
+    if (!apiKey.startsWith('sk-ant-')) {
+      showError('INVALID API KEY: Key should start with "sk-ant-". Get yours at console.anthropic.com');
+      apiKeyInput.focus();
+      return;
+    }
 
     analyzeBtn.disabled = true;
     hideError();
@@ -165,7 +208,12 @@ Rules:
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1500,
