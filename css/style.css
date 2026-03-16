@@ -1540,3 +1540,121 @@ body {
 @media (max-width: 700px) {
   .boq-upload-grid { grid-template-columns: 1fr; }
 }
+
+/* ===========================
+   MODE SELECTOR
+   =========================== */
+.mode-selector {
+  margin-bottom: 16px;
+}
+
+.mode-selector-label {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 2.5px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mode-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 14px;
+  border: 1px solid rgba(0,245,255,0.15);
+  border-radius: var(--border-radius-lg);
+  background: rgba(0,10,30,0.5);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--border-radius-lg);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.mode-card:hover {
+  border-color: rgba(0,245,255,0.35);
+  background: rgba(0,20,50,0.6);
+  transform: translateY(-1px);
+}
+
+/* Normal active */
+.mode-card#modeCardNormal.active {
+  border-color: rgba(0,245,255,0.6);
+  background: rgba(0,245,255,0.06);
+  box-shadow: 0 0 16px rgba(0,245,255,0.1), inset 0 0 20px rgba(0,245,255,0.04);
+}
+
+/* Advanced active */
+.mode-card#modeCardAdvanced.active {
+  border-color: rgba(123,47,255,0.6);
+  background: rgba(123,47,255,0.06);
+  box-shadow: 0 0 16px rgba(123,47,255,0.1), inset 0 0 20px rgba(123,47,255,0.04);
+}
+
+.mode-card-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  filter: drop-shadow(0 0 6px rgba(0,245,255,0.3));
+}
+
+.mode-card#modeCardAdvanced .mode-card-icon {
+  filter: drop-shadow(0 0 6px rgba(123,47,255,0.4));
+}
+
+.mode-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mode-card-title {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--holo-cyan);
+  line-height: 1;
+}
+
+.mode-card#modeCardAdvanced .mode-card-title {
+  color: var(--holo-violet);
+}
+
+.mode-card-sub {
+  font-family: var(--font-display);
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.mode-card-desc {
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  opacity: 0.75;
+}
+
+.mode-card-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}

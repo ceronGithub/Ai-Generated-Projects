@@ -69,73 +69,87 @@
           <div class="panel-line"></div>
         </div>
 
-        <!-- API Key Block -->
-        <div class="apikey-block" id="apikeyBlock">
+        <!-- Mode Selector -->
+        <div class="mode-selector" id="modeSelectorBlock">
+          <div class="mode-selector-label">SELECT ANALYSIS MODE</div>
+          <div class="mode-cards">
+
+            <!-- Normal Mode -->
+            <div class="mode-card active" id="modeCardNormal" onclick="setMode('normal')">
+              <div class="mode-card-icon">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                  <circle cx="14" cy="14" r="11" stroke="#00f5ff" stroke-width="1.2"/>
+                  <path d="M9 14l3 3 7-7" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="mode-card-body">
+                <span class="mode-card-title">NORMAL</span>
+                <span class="mode-card-sub">No API key needed</span>
+                <span class="mode-card-desc">Instant results using built-in standard floor plan dimensions.</span>
+              </div>
+              <div class="mode-card-check" id="checkNormal">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#00f5ff"/><path d="M4 7l2 2 4-4" stroke="#0a0e1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+
+            <!-- Advanced Mode -->
+            <div class="mode-card" id="modeCardAdvanced" onclick="setMode('advanced')">
+              <div class="mode-card-icon">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                  <polygon points="14,3 25,9 25,21 14,27 3,21 3,9" stroke="#7b2fff" stroke-width="1.2" fill="none"/>
+                  <circle cx="14" cy="14" r="3" fill="#7b2fff"/>
+                  <line x1="14" y1="3" x2="14" y2="8" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                  <line x1="14" y1="20" x2="14" y2="27" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                  <line x1="3" y1="9" x2="7.5" y2="11.5" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                  <line x1="20.5" y1="16.5" x2="25" y2="21" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                </svg>
+              </div>
+              <div class="mode-card-body">
+                <span class="mode-card-title">ADVANCED</span>
+                <span class="mode-card-sub">Requires API key</span>
+                <span class="mode-card-desc">AI-powered analysis with precise room detection and smart observations.</span>
+              </div>
+              <div class="mode-card-check" id="checkAdvanced" style="opacity:0;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#7b2fff"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- API Key Block (Advanced mode only) -->
+        <div class="apikey-block" id="apikeyBlock" style="display:none;">
           <label class="apikey-label" for="apiKeyInput">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="flex-shrink:0">
-              <circle cx="4.5" cy="4.5" r="3" stroke="#00f5ff" stroke-width="1"/>
-              <line x1="6.5" y1="6.5" x2="10" y2="10" stroke="#00f5ff" stroke-width="1.2" stroke-linecap="round"/>
+              <circle cx="4.5" cy="4.5" r="3" stroke="#7b2fff" stroke-width="1"/>
+              <line x1="6.5" y1="6.5" x2="10" y2="10" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round"/>
             </svg>
             ANTHROPIC API KEY
           </label>
-
-          <!-- How to get key — collapsible -->
           <div class="howto-toggle" id="howtoToggle">
             <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#7b2fff" stroke-width="1"/><text x="5" y="7.5" text-anchor="middle" fill="#7b2fff" font-size="7" font-family="monospace">?</text></svg>
             HOW TO GET YOUR API KEY
             <svg class="chevron" id="howtoChevron" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,3 5,7 8,3" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
           </div>
-
           <div class="howto-steps" id="howtoSteps">
             <ol class="steps-list">
-              <li class="step-item">
-                <span class="step-num">01</span>
-                <div class="step-body">
-                  <span class="step-title">GO TO CONSOLE</span>
-                  <span class="step-desc">Visit <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and sign in or create a free account.</span>
-                </div>
-              </li>
-              <li class="step-item">
-                <span class="step-num">02</span>
-                <div class="step-body">
-                  <span class="step-title">OPEN API KEYS</span>
-                  <span class="step-desc">Click your profile icon → <strong>API Keys</strong> in the left sidebar.</span>
-                </div>
-              </li>
-              <li class="step-item">
-                <span class="step-num">03</span>
-                <div class="step-body">
-                  <span class="step-title">CREATE NEW KEY</span>
-                  <span class="step-desc">Click <strong>+ Create Key</strong>, give it a name (e.g. "Floor Plan App"), then click <strong>Create</strong>.</span>
-                </div>
-              </li>
-              <li class="step-item">
-                <span class="step-num">04</span>
-                <div class="step-body">
-                  <span class="step-title">COPY &amp; PASTE</span>
-                  <span class="step-desc">Copy the key shown (starts with <code>sk-ant-</code>) and paste it into the field below. It is only shown once.</span>
-                </div>
-              </li>
-              <li class="step-item">
-                <span class="step-num">05</span>
-                <div class="step-body">
-                  <span class="step-title">ADD BILLING (IF NEEDED)</span>
-                  <span class="step-desc">New accounts may need to add a payment method under <strong>Plans &amp; Billing</strong> to activate API access.</span>
-                </div>
-              </li>
+              <li class="step-item"><span class="step-num">01</span><div class="step-body"><span class="step-title">GO TO CONSOLE</span><span class="step-desc">Visit <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and sign in or create a free account.</span></div></li>
+              <li class="step-item"><span class="step-num">02</span><div class="step-body"><span class="step-title">OPEN API KEYS</span><span class="step-desc">Click your profile icon → <strong>API Keys</strong> in the left sidebar.</span></div></li>
+              <li class="step-item"><span class="step-num">03</span><div class="step-body"><span class="step-title">CREATE NEW KEY</span><span class="step-desc">Click <strong>+ Create Key</strong>, give it a name, then click <strong>Create</strong>.</span></div></li>
+              <li class="step-item"><span class="step-num">04</span><div class="step-body"><span class="step-title">COPY &amp; PASTE</span><span class="step-desc">Copy the key (starts with <code>sk-ant-</code>) and paste below. Shown only once.</span></div></li>
+              <li class="step-item"><span class="step-num">05</span><div class="step-body"><span class="step-title">ADD BILLING (IF NEEDED)</span><span class="step-desc">New accounts may need a payment method under <strong>Plans &amp; Billing</strong>.</span></div></li>
             </ol>
             <div class="howto-note">
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1L10 9.5H1L5.5 1Z" stroke="#ffb700" stroke-width="1" fill="none"/><line x1="5.5" y1="4.5" x2="5.5" y2="6.5" stroke="#ffb700" stroke-width="1" stroke-linecap="round"/><circle cx="5.5" cy="7.8" r="0.5" fill="#ffb700"/></svg>
-              Key is used only in your browser — never sent to any third-party server.
+              Key lives only in your browser — never sent to any third-party server.
             </div>
           </div>
-
           <div class="apikey-row">
             <input type="password" id="apiKeyInput" class="apikey-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false" />
             <button class="apikey-toggle" id="apiKeyToggle" title="Show/Hide">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <ellipse cx="8" cy="8" rx="6" ry="3.5" stroke="#00f5ff" stroke-width="1.2"/>
-                <circle cx="8" cy="8" r="1.8" fill="#00f5ff"/>
+                <ellipse cx="8" cy="8" rx="6" ry="3.5" stroke="#7b2fff" stroke-width="1.2"/>
+                <circle cx="8" cy="8" r="1.8" fill="#7b2fff"/>
               </svg>
             </button>
           </div>
