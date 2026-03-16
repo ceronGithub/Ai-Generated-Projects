@@ -225,7 +225,7 @@ body {
 /* ---- Main Grid ---- */
 .main-grid {
   display: grid;
-  grid-template-columns: 1fr 1.4fr;
+  grid-template-columns: 1fr;
   gap: 20px;
   flex: 1;
   align-items: start;
@@ -522,7 +522,7 @@ body {
 .err-icon { font-size: 16px; flex-shrink: 0; }
 
 /* ---- Results Panel ---- */
-.panel-results { min-height: 480px; }
+.panel-results { min-height: 320px; }
 
 /* ---- Loading State ---- */
 .loading-state {
@@ -716,7 +716,7 @@ body {
 /* ---- Rooms Grid ---- */
 .rooms-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 8px;
 }
 
@@ -1086,7 +1086,6 @@ body {
 
 /* ---- Responsive ---- */
 @media (max-width: 960px) {
-  .main-grid { grid-template-columns: 1fr; }
   .metrics-row { grid-template-columns: repeat(2, 1fr); }
 }
 
@@ -1657,4 +1656,172 @@ body {
   right: 10px;
   transition: opacity 0.2s;
   flex-shrink: 0;
+}
+
+/* ===========================
+   MODE COMPARISON TABLE
+   =========================== */
+.mode-compare {
+  margin-top: 14px;
+  border: 1px solid rgba(0,245,255,0.12);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 90px;
+  align-items: center;
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(0,245,255,0.06);
+  gap: 8px;
+}
+.compare-row:last-child { border-bottom: none; }
+
+.compare-header {
+  background: rgba(0,15,40,0.8);
+  padding: 8px 12px;
+}
+
+.compare-row:not(.compare-header):nth-child(even) {
+  background: rgba(0,10,28,0.5);
+}
+.compare-row:not(.compare-header):nth-child(odd) {
+  background: rgba(0,5,18,0.3);
+}
+
+.compare-feature {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+.compare-header .compare-feature { font-size: 0; }
+
+.compare-normal,
+.compare-advanced {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.compare-header .compare-normal {
+  color: var(--holo-cyan);
+  text-shadow: 0 0 6px rgba(0,245,255,0.4);
+  font-size: 8px;
+}
+.compare-header .compare-advanced {
+  color: var(--holo-violet);
+  text-shadow: 0 0 6px rgba(123,47,255,0.4);
+  font-size: 8px;
+}
+
+.compare-row:not(.compare-header) .compare-normal {
+  font-size: 9px;
+  color: rgba(0,245,255,0.7);
+  letter-spacing: 0.5px;
+  font-family: var(--font-body);
+}
+.compare-row:not(.compare-header) .compare-advanced {
+  font-size: 9px;
+  color: rgba(123,47,255,0.85);
+  letter-spacing: 0.5px;
+  font-family: var(--font-body);
+}
+
+/* ===========================
+   MODE INSTRUCTIONS
+   =========================== */
+.mode-instructions {
+  margin-top: 14px;
+}
+
+.instr-title {
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--holo-cyan);
+  text-shadow: 0 0 8px rgba(0,245,255,0.4);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.instr-steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.instr-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 11px;
+  color: rgba(232,244,255,0.65);
+  line-height: 1.55;
+}
+
+.instr-steps li strong {
+  color: rgba(232,244,255,0.9);
+  font-weight: 500;
+}
+
+.instr-steps li a {
+  color: var(--holo-cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.instr-steps li code {
+  font-family: var(--font-display);
+  font-size: 9px;
+  color: var(--holo-green);
+  background: rgba(0,255,157,0.07);
+  border: 1px solid rgba(0,255,157,0.2);
+  border-radius: 2px;
+  padding: 1px 5px;
+}
+
+.instr-num {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--holo-cyan);
+  background: rgba(0,245,255,0.07);
+  border: 1px solid rgba(0,245,255,0.25);
+  border-radius: 2px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  letter-spacing: 0.5px;
+}
+
+.instr-note {
+  font-size: 10px;
+  line-height: 1.6;
+  padding: 9px 12px;
+  border-radius: var(--border-radius-md);
+  letter-spacing: 0.3px;
+}
+
+.instr-note-cyan {
+  background: rgba(0,245,255,0.05);
+  border: 1px solid rgba(0,245,255,0.15);
+  color: rgba(0,245,255,0.6);
+}
+
+.instr-note-violet {
+  background: rgba(123,47,255,0.06);
+  border: 1px solid rgba(123,47,255,0.2);
+  color: rgba(180,140,255,0.75);
 }

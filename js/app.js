@@ -96,6 +96,9 @@
       checkNormal.style.opacity   = '0';
       apikeyBlock.style.display   = 'block';
     }
+    // Toggle instruction panels
+    document.getElementById('instructNormal').style.display   = mode === 'normal'   ? 'block' : 'none';
+    document.getElementById('instructAdvanced').style.display = mode === 'advanced' ? 'block' : 'none';
     // Reset results when mode changes
     hideError();
     showEmpty();
