@@ -52,8 +52,14 @@
       </div>
     </header>
 
+    <!-- Nav tabs -->
+    <nav class="holo-nav">
+      <button class="nav-tab active" id="tabAnalyzer" onclick="switchTab('analyzer')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="4" stroke="#00f5ff" stroke-width="1"/><rect x="7" y="1" width="4" height="4" stroke="#00f5ff" stroke-width="1"/><rect x="1" y="7" width="4" height="4" stroke="#00f5ff" stroke-width="1"/><rect x="7" y="7" width="4" height="4" stroke="#00f5ff" stroke-width="1"/></svg> FLOOR PLAN ANALYZER</button>
+      <button class="nav-tab" id="tabBoq" onclick="switchTab('boq')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="2" stroke="#00f5ff" stroke-width="1"/><rect x="1" y="5" width="10" height="2" stroke="#00f5ff" stroke-width="1"/><rect x="1" y="9" width="10" height="2" stroke="#00f5ff" stroke-width="1"/></svg> BOQ &mdash; CONCRETE WORKS</button>
+    </nav>
+
     <!-- Main content -->
-    <main class="main-grid">
+    <main class="main-grid" id="viewAnalyzer">
 
       <!-- Left panel: Upload -->
       <section class="panel panel-upload" id="uploadPanel">
@@ -262,6 +268,133 @@
 
     </main>
 
+    <!-- BOQ MODULE -->
+    <section class="boq-view" id="viewBoq" style="display:none;">
+
+      <!-- MODULE 03 header -->
+      <div class="boq-header-bar">
+        <div>
+          <span class="panel-tag">MODULE 03</span>
+          <h2 class="panel-title" style="margin-bottom:0;">BILL OF QUANTITIES — CONCRETE WORKS</h2>
+        </div>
+        <div class="boq-header-actions" id="boqActionBtns" style="display:none;">
+          <span class="boq-badge" id="boqProjectBadge">AI-Analyzed Floor Plan</span>
+          <button class="ghost-btn" onclick="exportBOQCSV()">⬇ EXPORT CSV</button>
+          <button class="ghost-btn" onclick="resetBOQRates()" style="border-color:rgba(123,47,255,0.4);color:#7b2fff;">↺ RESET RATES</button>
+          <button class="ghost-btn" onclick="clearBOQScan()" style="border-color:rgba(255,45,120,0.4);color:#ff2d78;">✕ CLEAR</button>
+        </div>
+      </div>
+
+      <!-- UPLOAD ZONE for BOQ -->
+      <div class="boq-upload-panel" id="boqUploadPanel">
+        <div class="boq-upload-grid">
+
+          <!-- Left: upload -->
+          <div class="boq-upload-left">
+            <div class="boq-upload-zone" id="boqUploadZone">
+              <input type="file" id="boqFileInput" accept="image/*" />
+              <div class="boq-upload-inner">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                  <polygon points="32,4 58,18 58,46 32,60 6,46 6,18" stroke="#00f5ff" stroke-width="1" fill="rgba(0,245,255,0.03)" class="hex-anim"/>
+                  <polygon points="32,14 50,24 50,44 32,54 14,44 14,24" stroke="#00f5ff" stroke-width="0.5" fill="none" opacity="0.3"/>
+                  <g class="upload-arrow">
+                    <line x1="32" y1="42" x2="32" y2="24" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
+                    <polyline points="25,31 32,24 39,31" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <line x1="24" y1="44" x2="40" y2="44" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
+                  </g>
+                </svg>
+                <p class="upload-label" style="font-size:10px;">UPLOAD FLOOR PLAN</p>
+                <p class="upload-sub">Drag &amp; drop or click to browse</p>
+                <div class="upload-formats">
+                  <span class="fmt-tag">JPG</span><span class="fmt-tag">PNG</span><span class="fmt-tag">WEBP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: preview + button -->
+          <div class="boq-upload-right" id="boqPreviewPanel" style="display:none;">
+            <div class="boq-preview-frame">
+              <img id="boqPreviewImg" src="" alt="Floor plan preview" />
+              <div class="preview-corners"><span></span><span></span><span></span><span></span></div>
+              <div class="boq-preview-label">INPUT SCAN READY</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Instruction text -->
+        <div class="boq-upload-hint" id="boqUploadHint">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#00f5ff" stroke-width="1"/><line x1="7" y1="4" x2="7" y2="7.5" stroke="#00f5ff" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="10" r="0.7" fill="#00f5ff"/></svg>
+          Upload your floor plan image — the AI will analyze room dimensions and automatically generate a customized BOQ for concrete works.
+        </div>
+
+        <!-- BOQ Analysis Button -->
+        <button class="boq-analyze-btn" id="boqAnalyzeBtn" disabled onclick="runBOQAnalysis()">
+          <span class="btn-glow"></span>
+          <span class="btn-text">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+              <rect x="2" y="2" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
+              <rect x="9" y="2" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
+              <rect x="2" y="9" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
+              <rect x="9" y="9" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
+            </svg>
+            GENERATE BOQ ANALYSIS
+          </span>
+        </button>
+
+        <!-- BOQ error -->
+        <div class="error-panel" id="boqErrorPanel" style="margin-top:10px;">
+          <span class="err-icon">⚠</span>
+          <span id="boqErrorMsg">Analysis failed.</span>
+        </div>
+
+        <!-- BOQ Loading -->
+        <div class="boq-loading" id="boqLoadingState" style="display:none;">
+          <div class="holo-scanner" style="width:70px;height:70px;">
+            <div class="scanner-ring r1" style="width:70px;height:70px;"></div>
+            <div class="scanner-ring r2" style="width:48px;height:48px;"></div>
+            <div class="scanner-ring r3" style="width:28px;height:28px;"></div>
+            <div class="scanner-core"></div>
+          </div>
+          <p class="loading-msg" id="boqLoadingMsg">ANALYZING FLOOR PLAN...</p>
+          <div class="loading-bar" style="width:280px;"><div class="loading-fill" id="boqLoadingFill"></div></div>
+        </div>
+
+      </div>
+
+      <!-- BOQ RESULTS (hidden until analysis done) -->
+      <div id="boqResultsArea" style="display:none;">
+        <div class="boq-info-strip">
+          <div class="boq-info-item"><span class="boq-info-label">TOTAL FLOOR AREA</span><span class="boq-info-val" id="boqArea">—</span></div>
+          <div class="boq-info-item"><span class="boq-info-label">TOTAL ROOMS</span><span class="boq-info-val" id="boqRooms">—</span></div>
+          <div class="boq-info-item"><span class="boq-info-label">CONCRETE GRADE</span><span class="boq-info-val">C25/30 (1:2:4)</span></div>
+          <div class="boq-info-item"><span class="boq-info-label">CURRENCY</span><span class="boq-info-val">PHP</span></div>
+        </div>
+        <div class="boq-table-wrap">
+          <table class="boq-table" id="boqTable">
+            <thead>
+              <tr>
+                <th class="col-no">No.</th>
+                <th class="col-desc">Description of Work</th>
+                <th class="col-loc">Location / Scope</th>
+                <th class="col-num">L (m)</th>
+                <th class="col-num">W (m)</th>
+                <th class="col-num">D/T (m)</th>
+                <th class="col-num">Vol (m³)</th>
+                <th class="col-rate">Unit Rate (PHP)</th>
+                <th class="col-amt">Amount (PHP)</th>
+              </tr>
+            </thead>
+            <tbody id="boqBody"></tbody>
+            <tfoot id="boqFoot"></tfoot>
+          </table>
+        </div>
+        <div class="boq-disclaimer">Blue unit rates are editable — click any rate cell to update. All quantities are AI-estimated from the uploaded floor plan. Verify against approved structural drawings before use.</div>
+      </div>
+
+    </section>
+
     <!-- Footer -->
     <footer class="holo-footer">
       <span>HOLO·PLAN © 2025 — SPATIAL INTELLIGENCE SYSTEM</span>
@@ -272,5 +405,6 @@
 
   <script src="js/bg.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/boq.js"></script>
 </body>
 </html>
