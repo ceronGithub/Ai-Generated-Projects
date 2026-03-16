@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HOLO·PLAN — Floor Plan Analyzer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800;900&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <!-- NOTE: Open index.html from the html/ folder, or move all files to one folder and update paths -->
 </head>
@@ -244,7 +244,7 @@
         </div>
 
         <div class="upload-zone" id="uploadZone">
-          <input type="file" id="fileInput" accept="image/*" />
+          <input type="file" id="fileInput" accept="image/*" multiple />
           <div class="upload-inner">
             <div class="upload-hexagon">
               <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
@@ -260,8 +260,8 @@
                 </g>
               </svg>
             </div>
-            <p class="upload-label">DRAG &amp; DROP FLOOR PLAN</p>
-            <p class="upload-sub">or click to select image file</p>
+            <p class="upload-label">DRAG &amp; DROP FLOOR PLANS</p>
+            <p class="upload-sub">or click to select — multiple images supported</p>
             <div class="upload-formats">
               <span class="fmt-tag">JPG</span>
               <span class="fmt-tag">PNG</span>
@@ -271,10 +271,19 @@
           </div>
         </div>
 
-        <!-- Preview -->
+        <!-- Multi-image thumbnails -->
+        <div class="thumb-bar" id="thumbBar" style="display:none;">
+          <div class="thumb-bar-header">
+            <span class="thumb-bar-label" id="thumbBarLabel">0 IMAGES QUEUED</span>
+            <button class="ghost-btn" id="clearAllBtn">✕ CLEAR ALL</button>
+          </div>
+          <div class="thumb-grid" id="thumbGrid"></div>
+        </div>
+
+        <!-- Preview (single selected image) -->
         <div class="preview-wrap" id="previewWrap">
           <div class="preview-header">
-            <span class="preview-label">INPUT SCAN</span>
+            <span class="preview-label" id="previewLabel">ACTIVE SCAN — IMAGE 1</span>
             <button class="ghost-btn" id="clearBtn">✕ CLEAR</button>
           </div>
           <div class="preview-frame">
@@ -282,6 +291,12 @@
             <div class="preview-corners">
               <span></span><span></span><span></span><span></span>
             </div>
+          </div>
+          <!-- Image navigation for multiple uploads -->
+          <div class="img-nav" id="imgNav" style="display:none;">
+            <button class="img-nav-btn" id="prevImgBtn" onclick="navigateImage(-1)" disabled>&#8592; PREV</button>
+            <span class="img-nav-counter" id="imgNavCounter">1 / 1</span>
+            <button class="img-nav-btn" id="nextImgBtn" onclick="navigateImage(1)" disabled>NEXT &#8594;</button>
           </div>
           <button class="holo-btn" id="analyzeBtn">
             <span class="btn-glow"></span>
@@ -499,6 +514,7 @@
     <!-- Footer -->
     <footer class="holo-footer">
       <span>HOLO·PLAN © 2025 — SPATIAL INTELLIGENCE SYSTEM</span>
+      <span>Created by: Ceron Calsena</span>
       <span class="footer-right">POWERED BY CLAUDE AI</span>
     </footer>
 
