@@ -1,0 +1,13 @@
+{
+  "name": "streetwise-ph/store",
+  "description": "Streetwise PH Luxury Apparel Store",
+  "require": {
+    "tecnickcom/tcpdf": "^6.7",
+    "phpoffice/phpspreadsheet": "^2.2",
+    "phpoffice/phpword": "^1.2",
+    "phpoffice/phppresentation": "^1.0"
+  },
+  "autoload": {
+    "psr-4": { "Streetwise PH\\": "src/" }
+  }
+}

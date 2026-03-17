@@ -1,0 +1,40 @@
+/* STREETWISE PH - Owner Dashboard */
+.dashboard-layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+.sidebar { background: var(--bg-secondary); border-right: 1px solid var(--border); padding-top: 72px; position: fixed; left: 0; top: 0; bottom: 0; width: 260px; overflow-y: auto; z-index: 100; }
+.sidebar-logo { padding: 24px 24px 0; font-family: var(--font-display); font-size: 1.125rem; color: var(--accent); letter-spacing: 0.15em; }
+.sidebar-section { padding: 24px 12px 8px; font-size: 0.6875rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); padding-left: 16px; }
+.sidebar-link { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.875rem; transition: var(--transition); margin: 2px 8px; }
+.sidebar-link:hover, .sidebar-link.active { background: var(--bg-elevated); color: var(--text-primary); }
+.sidebar-link.active { color: var(--accent); }
+.sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+.dashboard-main { margin-left: 260px; padding-top: 72px; }
+.dashboard-content { padding: 40px; }
+.dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.dash-title { font-family: var(--font-display); font-size: 2rem; font-weight: 300; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+.stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; }
+.stat-label { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.stat-value { font-family: var(--font-display); font-size: 2rem; font-weight: 300; color: var(--text-primary); margin-bottom: 4px; }
+.stat-change { font-size: 0.75rem; }
+.stat-change.up { color: var(--success); } .stat-change.down { color: var(--danger); }
+.stat-icon { float: right; width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+.section-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 24px; }
+.section-card-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.section-card-title { font-family: var(--font-display); font-size: 1.125rem; font-weight: 300; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { padding: 12px 16px; font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); text-align: left; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 14px 16px; font-size: 0.875rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg-elevated); }
+.tab-nav { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.tab-btn { padding: 12px 20px; font-size: 0.8125rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: var(--transition); }
+.tab-btn.active, .tab-btn:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.export-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.chart-container { padding: 24px; height: 300px; position: relative; }
+.inventory-table { width: 100%; }
+.stock-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 4px; }
+.stock-bar-fill { height: 100%; border-radius: 2px; background: var(--success); transition: var(--transition); }
+.stock-bar-fill.warning { background: var(--warning); }
+.stock-bar-fill.danger { background: var(--danger); }
+@media(max-width:1024px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.dashboard-layout{grid-template-columns:1fr}.sidebar{transform:translateX(-100%);transition:transform .3s ease}.sidebar.open{transform:translateX(0)}.dashboard-main{margin-left:0}.dashboard-content{padding:20px}.stats-grid{grid-template-columns:repeat(2,1fr)}}

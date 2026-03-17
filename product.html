@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — Streetwise PH</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/products.css">
+  <style>
+    main { padding-top: 80px; padding-bottom: 80px; }
+    .breadcrumb { padding: 24px 0 16px; font-size: .8125rem; color: var(--text-muted); display: flex; gap: 8px; align-items: center; }
+    .breadcrumb a:hover { color: var(--accent); }
+    .comments-section { margin-top: 80px; padding-top: 48px; border-top: 1px solid var(--border); }
+    .star-select { display: flex; gap: 4px; margin-bottom: 8px; font-size: 1.25rem; cursor: pointer; color: var(--text-muted); }
+    .star-select span.active, .star-select span:hover ~ span { color: var(--text-muted); }
+    .star-select span:hover, .star-select:hover span { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="page-loader"><div style="text-align:center"><p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH</p><div class="spinner" style="margin:16px auto"></div></div></div>
+  <div id="toast-container"></div>
+  <nav class="navbar" id="navbar">
+    <div style="display:flex;align-items:center;gap:48px">
+      <a href="index.html" class="nav-brand">STREETWISE PH</a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="shop.html" class="nav-link">Shop</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="cart-badge hidden" id="cart-badge">0</span></a>
+      <a href="#" id="nav-login-btn" class="nav-login-btn" onclick="openModal('login-modal');return false;">Sign In</a>
+      <div class="nav-user hidden" id="nav-user"><div class="nav-user-avatar">O</div><span class="nav-user-name"></span><a href="owner-dashboard.html" id="nav-owner-link" class="nav-login-btn hidden">Dashboard</a><button class="nav-logout" id="nav-logout">Logout</button></div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span>›</span><a href="shop.html">Shop</a><span>›</span><span id="breadcrumb-name" style="color:var(--text-secondary)">Product</span></div>
+      <div class="product-detail">
+        <!-- GALLERY -->
+        <div class="product-gallery">
+          <div class="product-main-img" id="product-main-img"><div style="width:100%;height:100%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:4rem;color:var(--text-muted)">◈</div></div>
+        </div>
+        <!-- PRODUCT INFO -->
+        <div class="product-detail-info">
+          <p class="product-category text-accent" id="product-category"></p>
+          <h1 class="product-detail-name" id="product-name">Loading...</h1>
+          <div id="product-price" class="product-detail-price" style="margin-bottom:20px"></div>
+          <p style="color:var(--text-secondary);line-height:1.8;margin-bottom:28px;font-size:.9375rem" id="product-desc"></p>
+          <!-- SIZES -->
+          <div class="size-selector" id="size-selector">
+            <label>Size</label>
+            <div class="size-options" id="size-options"></div>
+          </div>
+          <!-- COLORS -->
+          <div class="color-selector" id="color-selector">
+            <label>Color — <span id="selected-color-name" style="color:var(--accent)"></span></label>
+            <div class="color-options" id="color-options"></div>
+          </div>
+          <!-- QUANTITY -->
+          <div class="qty-control">
+            <button class="qty-btn" id="qty-minus">−</button>
+            <input class="qty-input" type="number" id="qty-input" value="1" min="1" max="99">
+            <button class="qty-btn" id="qty-plus">+</button>
+          </div>
+          <!-- ADD TO CART -->
+          <div style="display:flex;gap:12px;margin-bottom:24px">
+            <button id="add-to-cart-btn" class="btn btn-primary btn-lg" style="flex:1">Add to Cart</button>
+            <a href="cart.html" class="btn btn-outline btn-lg">View Cart</a>
+          </div>
+          <div style="padding:16px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.8125rem;color:var(--text-muted)">
+            <p style="margin-bottom:4px">💳 Payment: <span style="color:var(--text-secondary)">Cash on Delivery</span></p>
+            <p>🚚 Shipping: <span style="color:var(--text-secondary)">₱150 flat rate · Metro Manila</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMMENTS SECTION -->
+      <div class="comments-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
+          <div>
+            <p class="section-subtitle">Community</p>
+            <h2 style="font-family:var(--font-display);font-size:2rem;font-weight:300">Reviews</h2>
+          </div>
+        </div>
+        <div id="comments-list" style="margin-bottom:48px"></div>
+        <!-- COMMENT FORM -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:28px">
+          <h3 style="font-family:var(--font-display);font-size:1.25rem;font-weight:300;margin-bottom:20px">Leave a Review</h3>
+          <form id="comment-form">
+            <input type="hidden" name="rating" id="rating-value" value="5">
+            <div class="form-group">
+              <label class="form-label">Your Name <span style="color:var(--text-muted)">(guests)</span></label>
+              <input type="text" name="guest_name" class="form-input" placeholder="Your name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Rating</label>
+              <div class="star-select" id="star-select">
+                <span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5" class="active">★</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Your Review</label>
+              <textarea name="content" class="form-input" placeholder="Share your thoughts about this piece..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Post Review</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="login-modal">
+    <div class="modal"><div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div>
+    <div class="modal-body"><form id="signin-form"><div class="form-group"><label class="form-label">Username or Email</label><input type="text" class="form-input" id="si-username" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required></div><button type="submit" class="btn btn-primary" style="width:100%">Sign In</button></form></div></div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/product.js"></script>
+  <script>
+  // Star rating
+  document.querySelectorAll('.star-select span').forEach(star => {
+    star.addEventListener('click', () => {
+      const v = star.dataset.v;
+      document.getElementById('rating-value').value = v;
+      document.querySelectorAll('.star-select span').forEach((s,i) => s.style.color = i < v ? 'var(--accent)' : 'var(--text-muted)');
+    });
+  });
+  document.getElementById('signin-form')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = new URLSearchParams({ action:'login', username: document.getElementById('si-username').value, password: document.getElementById('si-password').value });
+    const res  = await fetch('php/controllers/auth.php', { method:'POST', body });
+    const data = await res.json();
+    if (data.success) { showToast('Welcome back!','success'); closeModal('login-modal'); setTimeout(()=>window.location.reload(),600); }
+    else showToast(data.message,'error');
+  });
+  // Update breadcrumb name after product loads
+  const origRender = typeof renderProduct !== 'undefined' ? renderProduct : null;
+  document.addEventListener('productLoaded', e => {
+    const bc = document.getElementById('breadcrumb-name');
+    if (bc && e.detail?.name) bc.textContent = e.detail.name;
+  });
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+/* STREETWISE PH - Shop Page */
+.shop-page { padding-top: 100px; min-height: 100vh; }
+.shop-layout { display: grid; grid-template-columns: 240px 1fr; gap: 40px; }
+.shop-sidebar { position: sticky; top: 100px; align-self: start; }
+.filter-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; }
+.filter-title { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+.filter-option { display: flex; align-items: center; gap: 10px; padding: 6px 0; cursor: pointer; color: var(--text-secondary); font-size: 0.875rem; transition: var(--transition); }
+.filter-option:hover { color: var(--text-primary); }
+.filter-option input { accent-color: var(--accent); }
+.shop-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.shop-results { font-size: 0.875rem; color: var(--text-muted); }
+.shop-sort { display: flex; align-items: center; gap: 10px; font-size: 0.8125rem; color: var(--text-secondary); }
+.shop-sort select { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 0.8125rem; }
+.search-bar { position: relative; margin-bottom: 16px; }
+.search-bar input { padding-left: 40px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 40px; }
+.page-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.875rem; transition: var(--transition); }
+.page-btn:hover, .page-btn.active { border-color: var(--accent); color: var(--accent); }
+@media(max-width:768px){.shop-layout{grid-template-columns:1fr}.shop-sidebar{position:static}}

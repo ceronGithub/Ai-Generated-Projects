@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart & Checkout — Streetwise PH</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/cart.css">
+</head>
+<body>
+  <div id="page-loader" class="page-loader"><div style="text-align:center"><p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH</p><div class="spinner" style="margin:16px auto"></div></div></div>
+  <div id="toast-container"></div>
+  <nav class="navbar" id="navbar">
+    <div style="display:flex;align-items:center;gap:48px">
+      <a href="index.html" class="nav-brand">STREETWISE PH</a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="shop.html" class="nav-link">Shop</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="cart-badge hidden" id="cart-badge">0</span></a>
+      <a href="#" id="nav-login-btn" class="nav-login-btn" onclick="openModal('login-modal');return false;">Sign In</a>
+      <div class="nav-user hidden" id="nav-user"><div class="nav-user-avatar">O</div><span class="nav-user-name"></span><a href="owner-dashboard.html" id="nav-owner-link" class="nav-login-btn hidden">Dashboard</a><button class="nav-logout" id="nav-logout">Logout</button></div>
+    </div>
+  </nav>
+
+  <!-- CART VIEW -->
+  <main class="cart-page" id="cart-view">
+    <div class="container">
+      <div style="padding:24px 0 32px;border-bottom:1px solid var(--border);margin-bottom:40px">
+        <p class="section-subtitle">Review Your</p>
+        <h1 class="section-title">Shopping Cart</h1>
+      </div>
+      <div class="cart-layout">
+        <div id="cart-items"><div class="flex-center" style="padding:60px"><div class="spinner"></div></div></div>
+        <div id="cart-summary-section">
+          <div class="cart-summary">
+            <h2 class="cart-summary-title">Order Summary</h2>
+            <div class="summary-line"><span>Subtotal</span><span id="summary-subtotal">—</span></div>
+            <div class="summary-line"><span>Shipping</span><span id="summary-shipping">₱150.00</span></div>
+            <div class="summary-total"><span>Total</span><span id="summary-total">—</span></div>
+            <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center" id="checkout-btn">Proceed to Checkout</button>
+            <a href="shop.html" class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:12px">Continue Shopping</a>
+            <div style="margin-top:20px;padding:14px;background:var(--bg-elevated);border-radius:var(--radius-sm);font-size:.8125rem;color:var(--text-muted);text-align:center">
+              💳 Payment via Cash on Delivery
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- CHECKOUT VIEW -->
+  <main class="checkout-page hidden" id="checkout-view">
+    <div class="container">
+      <div style="padding:24px 0 32px;border-bottom:1px solid var(--border);margin-bottom:40px;display:flex;align-items:center;gap:16px">
+        <button id="back-to-cart-btn" class="btn btn-ghost" style="padding:8px 0">← Back to Cart</button>
+        <div>
+          <p class="section-subtitle">Almost There</p>
+          <h1 class="section-title">Checkout</h1>
+        </div>
+      </div>
+      <div class="checkout-layout">
+        <div>
+          <form id="checkout-form">
+            <div class="section-card" style="margin-bottom:24px">
+              <div class="section-card-header"><h3 class="checkout-section-title" style="border:none;padding:0;margin:0">Delivery Information</h3></div>
+              <div style="padding:24px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                  <div class="form-group"><label class="form-label">Full Name *</label><input type="text" name="guest_name" class="form-input" required placeholder="Juan dela Cruz"></div>
+                  <div class="form-group"><label class="form-label">Phone *</label><input type="tel" name="guest_phone" class="form-input" required placeholder="09XX XXX XXXX"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Email *</label><input type="email" name="guest_email" class="form-input" required placeholder="juan@email.com"></div>
+                <div class="form-group"><label class="form-label">Shipping Address *</label><textarea name="shipping_address" class="form-input" required placeholder="House/Unit No., Street, Barangay, City, Province, ZIP" style="min-height:80px"></textarea></div>
+                <div class="form-group"><label class="form-label">Order Notes <span style="color:var(--text-muted)">(optional)</span></label><input type="text" name="notes" class="form-input" placeholder="Any special instructions..."></div>
+              </div>
+            </div>
+            <div class="section-card" style="margin-bottom:24px">
+              <div class="section-card-header"><h3 class="checkout-section-title" style="border:none;padding:0;margin:0">Payment Method</h3></div>
+              <div style="padding:24px">
+                <div class="payment-method-card selected">
+                  <div class="payment-radio"></div>
+                  <div>
+                    <p style="font-weight:500;font-size:.9375rem">Cash on Delivery</p>
+                    <p style="font-size:.8125rem;color:var(--text-muted);margin-top:2px">Pay when your order arrives at your door</p>
+                  </div>
+                  <span style="margin-left:auto;font-size:1.5rem">💵</span>
+                </div>
+              </div>
+            </div>
+            <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">Place Order — Cash on Delivery</button>
+          </form>
+        </div>
+        <!-- ORDER SUMMARY SIDEBAR -->
+        <div>
+          <div class="cart-summary" style="position:sticky;top:100px">
+            <h2 class="cart-summary-title">Your Order</h2>
+            <div id="checkout-items-preview" style="margin-bottom:16px;max-height:300px;overflow-y:auto"></div>
+            <div class="summary-total"><span>Total</span><span id="checkout-total" style="color:var(--accent)">—</span></div>
+            <p style="font-size:.75rem;color:var(--text-muted);text-align:center;margin-top:12px">Order confirmation will be sent to your email</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ORDER CONFIRMED -->
+  <div id="order-confirm" class="hidden" style="padding-top:160px;padding-bottom:80px">
+    <div class="container">
+      <div class="order-confirm">
+        <div class="order-confirm-icon">✓</div>
+        <h2 style="font-family:var(--font-display);font-size:2.5rem;font-weight:300;margin-bottom:8px">Order Placed!</h2>
+        <p style="color:var(--text-secondary);margin-bottom:24px">Your order has been confirmed. We'll prepare it right away.</p>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:24px;max-width:360px;margin:0 auto 32px">
+          <p style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">Order Number</p>
+          <p style="font-family:var(--font-display);font-size:1.25rem;color:var(--accent)" id="confirm-order-num"></p>
+          <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
+          <p style="font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">Total (COD)</p>
+          <p style="font-size:1.125rem;font-weight:500" id="confirm-total"></p>
+        </div>
+        <a href="shop.html" class="btn btn-primary btn-lg">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="login-modal"><div class="modal"><div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div><div class="modal-body"><form id="signin-form"><div class="form-group"><label class="form-label">Username or Email</label><input type="text" class="form-input" id="si-username" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required></div><button type="submit" class="btn btn-primary" style="width:100%">Sign In</button></form></div></div></div>
+  <script src="js/main.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+  document.getElementById('signin-form')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = new URLSearchParams({action:'login',username:document.getElementById('si-username').value,password:document.getElementById('si-password').value});
+    const res=await fetch('php/controllers/auth.php',{method:'POST',body});
+    const data=await res.json();
+    if(data.success){showToast('Welcome back!','success');closeModal('login-modal');setTimeout(()=>window.location.reload(),600);}
+    else showToast(data.message,'error');
+  });
+  </script>
+</body>
+</html>

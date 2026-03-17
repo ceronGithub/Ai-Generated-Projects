@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop — Streetwise PH</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/products.css">
+  <link rel="stylesheet" href="css/shop.css">
+</head>
+<body>
+  <div id="page-loader" class="page-loader"><div style="text-align:center"><p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH</p><div class="spinner" style="margin:16px auto"></div></div></div>
+  <div id="toast-container"></div>
+  <nav class="navbar" id="navbar">
+    <div style="display:flex;align-items:center;gap:48px">
+      <a href="index.html" class="nav-brand">STREETWISE PH</a>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="shop.html" class="nav-link active">Shop</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="cart-badge hidden" id="cart-badge">0</span></a>
+      <a href="#" id="nav-login-btn" class="nav-login-btn" onclick="openModal('login-modal');return false;">Sign In</a>
+      <div class="nav-user hidden" id="nav-user"><div class="nav-user-avatar">O</div><span class="nav-user-name"></span><a href="owner-dashboard.html" id="nav-owner-link" class="nav-login-btn hidden">Dashboard</a><button class="nav-logout" id="nav-logout">Logout</button></div>
+    </div>
+  </nav>
+
+  <main class="shop-page">
+    <div class="container">
+      <div style="padding:24px 0 32px;border-bottom:1px solid var(--border);margin-bottom:40px">
+        <p class="section-subtitle">All Collections</p>
+        <h1 class="section-title">The Shop</h1>
+      </div>
+      <div class="shop-layout">
+        <!-- SIDEBAR FILTERS -->
+        <aside class="shop-sidebar">
+          <div class="filter-card">
+            <div class="search-bar"><span class="search-icon">⌕</span><input type="text" class="form-input" id="search-input" placeholder="Search products..."></div>
+          </div>
+          <div class="filter-card">
+            <p class="filter-title">Category</p>
+            <div id="category-filters"><div class="spinner" style="width:16px;height:16px"></div></div>
+          </div>
+          <div class="filter-card">
+            <p class="filter-title">Price Range</p>
+            <div class="filter-option"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="price" value="all" checked> All prices</label></div>
+            <div class="filter-option"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="price" value="low"> Under ₱1,000</label></div>
+            <div class="filter-option"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="price" value="mid"> ₱1,000 – ₱2,500</label></div>
+            <div class="filter-option"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="price" value="high"> Over ₱2,500</label></div>
+          </div>
+        </aside>
+        <!-- PRODUCTS -->
+        <div>
+          <div class="shop-header">
+            <span class="shop-results" id="results-count">Loading...</span>
+            <div class="shop-sort">
+              <span>Sort:</span>
+              <select class="form-input" style="width:auto;padding:6px 12px">
+                <option>Newest</option>
+                <option>Price: Low to High</option>
+                <option>Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="products-grid" id="products-grid"></div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal-overlay" id="login-modal">
+    <div class="modal">
+      <div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div>
+      <div class="modal-body">
+        <form id="signin-form">
+          <div class="form-group"><label class="form-label">Username or Email</label><input type="text" class="form-input" id="si-username" required></div>
+          <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required></div>
+          <button type="submit" class="btn btn-primary" style="width:100%">Sign In</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/shop.js"></script>
+  <script>
+  document.getElementById('signin-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = new URLSearchParams({ action:'login', username: document.getElementById('si-username').value, password: document.getElementById('si-password').value });
+    const res  = await fetch('php/controllers/auth.php', { method:'POST', body });
+    const data = await res.json();
+    if (data.success) { showToast('Welcome back!','success'); closeModal('login-modal'); setTimeout(()=>window.location.reload(),600); }
+    else showToast(data.message,'error');
+  });
+  // Pre-filter from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('cat')) { document.addEventListener('DOMContentLoaded',()=>{ setTimeout(()=>setCategory(urlParams.get('cat')),500); }); }
+  </script>
+</body>
+</html>
