@@ -4,53 +4,172 @@
   'use strict';
 
   /* ── DOM refs ──────────────────────────────────────────────────── */
-  const fileInput      = document.getElementById('fileInput');
-  const uploadZone     = document.getElementById('uploadZone');
-  const previewWrap    = document.getElementById('previewWrap');
-  const previewImg     = document.getElementById('previewImg');
-  const previewLabel   = document.getElementById('previewLabel');
-  const clearBtn       = document.getElementById('clearBtn');
-  const clearAllBtn    = document.getElementById('clearAllBtn');
-  const analyzeBtn     = document.getElementById('analyzeBtn');
-  const errorPanel     = document.getElementById('errorPanel');
-  const errorMsg       = document.getElementById('errorMsg');
-  const loadingState   = document.getElementById('loadingState');
-  const loadingMsg     = document.getElementById('loadingMsg');
-  const loadingFill    = document.getElementById('loadingFill');
-  const emptyState     = document.getElementById('emptyState');
-  const resultsStack   = document.getElementById('resultsStack');
-  const sessionCount   = document.getElementById('sessionCount');
-  const sessionArea    = document.getElementById('sessionArea');
-  const apiKeyInput    = document.getElementById('apiKeyInput');
-  const apiKeyToggle   = document.getElementById('apiKeyToggle');
-  const howtoToggle    = document.getElementById('howtoToggle');
-  const howtoSteps     = document.getElementById('howtoSteps');
-  const howtoChevron   = document.getElementById('howtoChevron');
-  const apikeyBlock    = document.getElementById('apikeyBlock');
-  const modeCardNormal   = document.getElementById('modeCardNormal');
+  const fileInput = document.getElementById('fileInput');
+  const uploadZone = document.getElementById('uploadZone');
+  const previewWrap = document.getElementById('previewWrap');
+  const previewImg = document.getElementById('previewImg');
+  const previewLabel = document.getElementById('previewLabel');
+  const clearBtn = document.getElementById('clearBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const errorPanel = document.getElementById('errorPanel');
+  const errorMsg = document.getElementById('errorMsg');
+  const loadingState = document.getElementById('loadingState');
+  const loadingMsg = document.getElementById('loadingMsg');
+  const loadingFill = document.getElementById('loadingFill');
+  const emptyState = document.getElementById('emptyState');
+  const resultsStack = document.getElementById('resultsStack');
+  const agentPanel = document.getElementById('agentPanel');
+  const agentLog = document.getElementById('agentLog');
+  const agentStatus = document.getElementById('agentStatus');
+  const agentFill = document.getElementById('agentProgressFill');
+  const agentLabel = document.getElementById('agentProgressLabel');
+  const sessionCount = document.getElementById('sessionCount');
+  const sessionArea = document.getElementById('sessionArea');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const apiKeyToggle = document.getElementById('apiKeyToggle');
+  const howtoToggle = document.getElementById('howtoToggle');
+  const howtoSteps = document.getElementById('howtoSteps');
+  const howtoChevron = document.getElementById('howtoChevron');
+  const apikeyBlock = document.getElementById('apikeyBlock');
+  const modeCardNormal = document.getElementById('modeCardNormal');
   const modeCardAdvanced = document.getElementById('modeCardAdvanced');
-  const checkNormal      = document.getElementById('checkNormal');
-  const checkAdvanced    = document.getElementById('checkAdvanced');
-  const thumbBar         = document.getElementById('thumbBar');
-  const thumbGrid        = document.getElementById('thumbGrid');
-  const thumbBarLabel    = document.getElementById('thumbBarLabel');
-  const imgNav           = document.getElementById('imgNav');
-  const imgNavCounter    = document.getElementById('imgNavCounter');
-  const prevImgBtn       = document.getElementById('prevImgBtn');
-  const nextImgBtn       = document.getElementById('nextImgBtn');
+  const checkNormal = document.getElementById('checkNormal');
+  const checkAdvanced = document.getElementById('checkAdvanced');
+  const thumbBar = document.getElementById('thumbBar');
+  const thumbGrid = document.getElementById('thumbGrid');
+  const thumbBarLabel = document.getElementById('thumbBarLabel');
+  const imgNav = document.getElementById('imgNav');
+  const imgNavCounter = document.getElementById('imgNavCounter');
+  const prevImgBtn = document.getElementById('prevImgBtn');
+  const nextImgBtn = document.getElementById('nextImgBtn');
 
   /* ── State ─────────────────────────────────────────────────────── */
-  let currentMode  = 'normal';
-  let images       = [];   // [{dataUrl, base64, mime, name}]
-  let activeIndex  = 0;
-  let totalScans   = 0;
-  let totalArea    = 0;
+  let currentMode = 'normal';
+  let images = [];   // [{dataUrl, base64, mime, name}]
+  let activeIndex = 0;
+  let totalScans = 0;
+  let totalArea = 0;
 
   /* ── Type labels ────────────────────────────────────────────────── */
   const TYPE_LABELS = {
-    living:'LIVING', bedroom:'BEDROOM', kitchen:'KITCHEN',
-    bath:'BATHROOM', other:'OTHER',
+    living: 'LIVING', bedroom: 'BEDROOM', kitchen: 'KITCHEN',
+    bath: 'BATHROOM', other: 'OTHER',
   };
+
+  /* ── AI Agent engine ───────────────────────────────────────────── */
+  let agentTimer = null;
+
+  const AGENT_STEPS_NORMAL = [
+    { pct: 8, msg: 'Receiving floor plan image...', type: 'info' },
+    { pct: 18, msg: 'Parsing image format and dimensions...', type: 'info' },
+    { pct: 28, msg: 'Detecting outer boundary of floor plan...', type: 'think' },
+    { pct: 38, msg: 'Identifying internal wall segments...', type: 'think' },
+    { pct: 48, msg: 'Counting distinct room regions...', type: 'think' },
+    { pct: 58, msg: 'Applying residential scale proportions...', type: 'calc' },
+    { pct: 68, msg: 'Estimating room dimensions (L × W)...', type: 'calc' },
+    { pct: 78, msg: 'Computing area for each room (m²)...', type: 'calc' },
+    { pct: 88, msg: 'Classifying room types (bedroom/living/bath)...', type: 'classify' },
+    { pct: 95, msg: 'Compiling spatial data report...', type: 'output' },
+    { pct: 100, msg: 'Analysis complete. Rendering results...', type: 'done' },
+  ];
+
+  const AGENT_STEPS_ADVANCED = [
+    { pct: 5, msg: 'Receiving floor plan image...', type: 'info' },
+    { pct: 10, msg: 'Encoding image as base64 for AI transmission...', type: 'info' },
+    { pct: 15, msg: 'Connecting to Claude AI model...', type: 'info' },
+    { pct: 20, msg: 'AI agent reading image pixels...', type: 'think' },
+    { pct: 27, msg: 'Identifying floor plan outer boundary...', type: 'think' },
+    { pct: 34, msg: 'Detecting internal walls and partitions...', type: 'think' },
+    { pct: 41, msg: 'Recognising door openings and swing arcs...', type: 'think' },
+    { pct: 48, msg: 'Locating furniture symbols for scale reference...', type: 'think' },
+    { pct: 54, msg: 'Checking for scale bar or dimension labels...', type: 'think' },
+    { pct: 60, msg: 'Measuring room widths and lengths...', type: 'calc' },
+    { pct: 67, msg: 'Computing floor area per room (m²)...', type: 'calc' },
+    { pct: 73, msg: 'Summing total usable floor area...', type: 'calc' },
+    { pct: 79, msg: 'Classifying each space by room type...', type: 'classify' },
+    { pct: 85, msg: 'Assigning confidence scores...', type: 'classify' },
+    { pct: 91, msg: 'Generating architectural observations...', type: 'output' },
+    { pct: 96, msg: 'Formatting structured JSON output...', type: 'output' },
+    { pct: 100, msg: 'AI analysis complete. Rendering results...', type: 'done' },
+  ];
+
+  const AGENT_ICONS = {
+    info: '◎',
+    think: '◈',
+    calc: '◆',
+    classify: '◉',
+    output: '◐',
+    done: '✓',
+  };
+
+  const AGENT_COLORS = {
+    info: 'rgba(0,245,255,0.6)',
+    think: 'rgba(123,47,255,0.8)',
+    calc: 'rgba(0,102,255,0.8)',
+    classify: 'rgba(255,183,0,0.8)',
+    output: 'rgba(0,255,157,0.7)',
+    done: '#00ff9d',
+  };
+
+  function startAgent(mode) {
+    agentPanel.style.display = 'block';
+    agentLog.innerHTML = '';
+    agentFill.style.width = '0%';
+    agentLabel.textContent = '0%';
+    agentStatus.textContent = mode === 'advanced' ? 'AI AGENT ACTIVE...' : 'ANALYZING IMAGE...';
+
+    const steps = mode === 'advanced' ? AGENT_STEPS_ADVANCED : AGENT_STEPS_NORMAL;
+    let stepIdx = 0;
+    clearInterval(agentTimer);
+
+    const interval = mode === 'advanced' ? 900 : 280;
+
+    agentTimer = setInterval(() => {
+      if (stepIdx >= steps.length) { clearInterval(agentTimer); return; }
+      const step = steps[stepIdx];
+
+      // Update progress bar
+      agentFill.style.width = step.pct + '%';
+      agentLabel.textContent = step.pct + '%';
+
+      // Append log entry
+      const entry = document.createElement('div');
+      entry.className = 'agent-entry agent-entry-' + step.type;
+      entry.innerHTML =
+        '<span class="agent-entry-icon" style="color:' + AGENT_COLORS[step.type] + '">' + AGENT_ICONS[step.type] + '</span>' +
+        '<span class="agent-entry-msg">' + step.msg + '</span>' +
+        (step.type === 'done' ? '<span class="agent-entry-done">DONE</span>' : '<span class="agent-entry-cursor"></span>');
+      agentLog.appendChild(entry);
+
+      // Auto-scroll log to bottom
+      agentLog.scrollTop = agentLog.scrollHeight;
+
+      // Update status label
+      if (step.type === 'done') {
+        agentStatus.textContent = 'ANALYSIS COMPLETE';
+      }
+
+      stepIdx++;
+    }, interval);
+  }
+
+  function stopAgent() {
+    clearInterval(agentTimer);
+    agentFill.style.width = '100%';
+    agentLabel.textContent = '100%';
+    agentStatus.textContent = 'COMPLETE';
+    // Fade out agent panel after short delay
+    setTimeout(() => {
+      agentPanel.style.opacity = '0';
+      agentPanel.style.transition = 'opacity 0.5s ease';
+      setTimeout(() => {
+        agentPanel.style.display = 'none';
+        agentPanel.style.opacity = '1';
+        agentPanel.style.transition = '';
+      }, 500);
+    }, 800);
+  }
 
   /* ── Loading messages ───────────────────────────────────────────── */
   const MSGS_NORMAL = [
@@ -70,45 +189,45 @@
   const ROOM_TEMPLATES = [
     // Template A — 2-bed open plan
     [
-      { name:'Living Room',   type:'living',  wBase:4.5, lBase:5.5 },
-      { name:'Bedroom 1',     type:'bedroom', wBase:4.0, lBase:4.3 },
-      { name:'Bedroom 2',     type:'bedroom', wBase:3.7, lBase:4.0 },
-      { name:'Kitchen',       type:'kitchen', wBase:3.4, lBase:3.0 },
-      { name:'Dining Area',   type:'other',   wBase:3.4, lBase:3.2 },
-      { name:'Bathroom',      type:'bath',    wBase:2.4, lBase:2.0 },
-      { name:'Hallway',       type:'other',   wBase:4.3, lBase:2.4 },
+      { name: 'Living Room', type: 'living', wBase: 4.5, lBase: 5.5 },
+      { name: 'Bedroom 1', type: 'bedroom', wBase: 4.0, lBase: 4.3 },
+      { name: 'Bedroom 2', type: 'bedroom', wBase: 3.7, lBase: 4.0 },
+      { name: 'Kitchen', type: 'kitchen', wBase: 3.4, lBase: 3.0 },
+      { name: 'Dining Area', type: 'other', wBase: 3.4, lBase: 3.2 },
+      { name: 'Bathroom', type: 'bath', wBase: 2.4, lBase: 2.0 },
+      { name: 'Hallway', type: 'other', wBase: 4.3, lBase: 2.4 },
     ],
     // Template B — 3-bed with study
     [
-      { name:'Living Room',   type:'living',  wBase:5.2, lBase:6.0 },
-      { name:'Master Bedroom',type:'bedroom', wBase:4.8, lBase:4.5 },
-      { name:'Bedroom 2',     type:'bedroom', wBase:3.8, lBase:3.6 },
-      { name:'Bedroom 3',     type:'bedroom', wBase:3.2, lBase:3.5 },
-      { name:'Kitchen',       type:'kitchen', wBase:3.8, lBase:3.2 },
-      { name:'Bathroom 1',    type:'bath',    wBase:2.6, lBase:2.2 },
-      { name:'Bathroom 2',    type:'bath',    wBase:1.8, lBase:2.0 },
-      { name:'Study / Office',type:'other',   wBase:2.8, lBase:3.0 },
+      { name: 'Living Room', type: 'living', wBase: 5.2, lBase: 6.0 },
+      { name: 'Master Bedroom', type: 'bedroom', wBase: 4.8, lBase: 4.5 },
+      { name: 'Bedroom 2', type: 'bedroom', wBase: 3.8, lBase: 3.6 },
+      { name: 'Bedroom 3', type: 'bedroom', wBase: 3.2, lBase: 3.5 },
+      { name: 'Kitchen', type: 'kitchen', wBase: 3.8, lBase: 3.2 },
+      { name: 'Bathroom 1', type: 'bath', wBase: 2.6, lBase: 2.2 },
+      { name: 'Bathroom 2', type: 'bath', wBase: 1.8, lBase: 2.0 },
+      { name: 'Study / Office', type: 'other', wBase: 2.8, lBase: 3.0 },
     ],
     // Template C — studio / 1-bed
     [
-      { name:'Open Living / Kitchen', type:'living', wBase:6.0, lBase:5.5 },
-      { name:'Bedroom',       type:'bedroom', wBase:3.5, lBase:3.8 },
-      { name:'Bathroom',      type:'bath',    wBase:2.2, lBase:2.0 },
-      { name:'Balcony',       type:'other',   wBase:3.5, lBase:1.5 },
-      { name:'Utility / Storage', type:'other', wBase:1.8, lBase:1.5 },
+      { name: 'Open Living / Kitchen', type: 'living', wBase: 6.0, lBase: 5.5 },
+      { name: 'Bedroom', type: 'bedroom', wBase: 3.5, lBase: 3.8 },
+      { name: 'Bathroom', type: 'bath', wBase: 2.2, lBase: 2.0 },
+      { name: 'Balcony', type: 'other', wBase: 3.5, lBase: 1.5 },
+      { name: 'Utility / Storage', type: 'other', wBase: 1.8, lBase: 1.5 },
     ],
     // Template D — 4-bed family
     [
-      { name:'Living Room',   type:'living',  wBase:6.0, lBase:5.8 },
-      { name:'Dining Room',   type:'other',   wBase:4.2, lBase:3.8 },
-      { name:'Kitchen',       type:'kitchen', wBase:4.0, lBase:3.5 },
-      { name:'Master Bedroom',type:'bedroom', wBase:5.0, lBase:4.8 },
-      { name:'Bedroom 2',     type:'bedroom', wBase:4.0, lBase:4.0 },
-      { name:'Bedroom 3',     type:'bedroom', wBase:3.6, lBase:3.8 },
-      { name:'Bedroom 4',     type:'bedroom', wBase:3.2, lBase:3.5 },
-      { name:'Bathroom 1',    type:'bath',    wBase:3.0, lBase:2.5 },
-      { name:'Bathroom 2',    type:'bath',    wBase:2.0, lBase:1.8 },
-      { name:'Hallway',       type:'other',   wBase:5.0, lBase:1.8 },
+      { name: 'Living Room', type: 'living', wBase: 6.0, lBase: 5.8 },
+      { name: 'Dining Room', type: 'other', wBase: 4.2, lBase: 3.8 },
+      { name: 'Kitchen', type: 'kitchen', wBase: 4.0, lBase: 3.5 },
+      { name: 'Master Bedroom', type: 'bedroom', wBase: 5.0, lBase: 4.8 },
+      { name: 'Bedroom 2', type: 'bedroom', wBase: 4.0, lBase: 4.0 },
+      { name: 'Bedroom 3', type: 'bedroom', wBase: 3.6, lBase: 3.8 },
+      { name: 'Bedroom 4', type: 'bedroom', wBase: 3.2, lBase: 3.5 },
+      { name: 'Bathroom 1', type: 'bath', wBase: 3.0, lBase: 2.5 },
+      { name: 'Bathroom 2', type: 'bath', wBase: 2.0, lBase: 1.8 },
+      { name: 'Hallway', type: 'other', wBase: 5.0, lBase: 1.8 },
     ],
   ];
 
@@ -121,7 +240,7 @@
 
   function generateNormalResult(idx) {
     // Cycle through templates and apply a small variance per image
-    const tIdx    = idx % ROOM_TEMPLATES.length;
+    const tIdx = idx % ROOM_TEMPLATES.length;
     const template = ROOM_TEMPLATES[tIdx];
     const variance = 0.05 + (idx * 0.07) % 0.25; // subtle size variance per image
 
@@ -137,11 +256,11 @@
     return {
       rooms,
       total_area_sqm: totalArea,
-      total_rooms:    rooms.length,
-      floor_count:    1,
-      unit:           'meters',
-      scale_note:     'Normal mode — estimated from standard residential proportions (Template ' + String.fromCharCode(65 + tIdx) + '). Use Advanced mode with an API key for image-specific analysis.',
-      observations:   OBSERVATIONS[tIdx],
+      total_rooms: rooms.length,
+      floor_count: 1,
+      unit: 'meters',
+      scale_note: 'Normal mode — estimated from standard residential proportions (Template ' + String.fromCharCode(65 + tIdx) + '). Use Advanced mode with an API key for image-specific analysis.',
+      observations: OBSERVATIONS[tIdx],
     };
   }
 
@@ -151,17 +270,17 @@
     if (mode === 'normal') {
       modeCardNormal.classList.add('active');
       modeCardAdvanced.classList.remove('active');
-      checkNormal.style.opacity   = '1';
+      checkNormal.style.opacity = '1';
       checkAdvanced.style.opacity = '0';
-      apikeyBlock.style.display   = 'none';
+      apikeyBlock.style.display = 'none';
     } else {
       modeCardAdvanced.classList.add('active');
       modeCardNormal.classList.remove('active');
       checkAdvanced.style.opacity = '1';
-      checkNormal.style.opacity   = '0';
-      apikeyBlock.style.display   = 'block';
+      checkNormal.style.opacity = '0';
+      apikeyBlock.style.display = 'block';
     }
-    document.getElementById('instructNormal').style.display   = mode === 'normal'   ? 'block' : 'none';
+    document.getElementById('instructNormal').style.display = mode === 'normal' ? 'block' : 'none';
     document.getElementById('instructAdvanced').style.display = mode === 'advanced' ? 'block' : 'none';
     hideError();
     showEmpty();
@@ -174,7 +293,7 @@
   });
   apiKeyToggle.addEventListener('click', () => {
     const isPwd = apiKeyInput.type === 'password';
-    apiKeyInput.type   = isPwd ? 'text' : 'password';
+    apiKeyInput.type = isPwd ? 'text' : 'password';
     apiKeyToggle.title = isPwd ? 'Hide key' : 'Show key';
   });
   apiKeyInput.addEventListener('input', () => {
@@ -220,7 +339,7 @@
   /* ── Refresh all UI from images[] ──────────────────────────────── */
   function refreshUI() {
     if (!images.length) {
-      thumbBar.style.display   = 'none';
+      thumbBar.style.display = 'none';
       previewWrap.classList.remove('visible');
       showEmpty();
       return;
@@ -240,7 +359,7 @@
 
     // Nav arrows
     if (images.length > 1) {
-      imgNav.style.display  = 'flex';
+      imgNav.style.display = 'flex';
       imgNavCounter.textContent = (activeIndex + 1) + ' / ' + images.length;
       prevImgBtn.disabled = activeIndex === 0;
       nextImgBtn.disabled = activeIndex === images.length - 1;
@@ -257,9 +376,9 @@
 
     images.forEach((img, i) => {
       const isActive = i === activeIndex;
-      const label    = 'IMAGE ' + (i + 1);
+      const label = 'IMAGE ' + (i + 1);
       // shorten filename: strip extension, max 16 chars
-      const rawName  = img.name || ('image_' + (i + 1));
+      const rawName = img.name || ('image_' + (i + 1));
       const shortName = rawName.replace(/\.[^.]+$/, '').substring(0, 18);
 
       const div = document.createElement('div');
@@ -268,13 +387,13 @@
 
       div.innerHTML =
         '<div class="thumb-img-wrap">' +
-          '<img src="' + img.dataUrl + '" alt="' + label + '" />' +
-          '<span class="thumb-active-badge">ACTIVE</span>' +
-          '<button class="thumb-remove" data-idx="' + i + '" title="Remove image ' + (i+1) + '">✕</button>' +
+        '<img src="' + img.dataUrl + '" alt="' + label + '" />' +
+        '<span class="thumb-active-badge">ACTIVE</span>' +
+        '<button class="thumb-remove" data-idx="' + i + '" title="Remove image ' + (i + 1) + '">✕</button>' +
         '</div>' +
         '<div class="thumb-label">' +
-          '<span class="thumb-label-name">' + label + '</span>' +
-          '<span class="thumb-label-file">' + shortName + '</span>' +
+        '<span class="thumb-label-name">' + label + '</span>' +
+        '<span class="thumb-label-file">' + shortName + '</span>' +
         '</div>';
 
       div.addEventListener('click', e => {
@@ -336,6 +455,7 @@
   clearAllBtn.addEventListener('click', () => {
     images = []; activeIndex = 0; results = []; queueIndex = 0; queueRunning = false; viewingResult = -1;
     resultsStack.innerHTML = ''; resultsStack.style.display = 'none';
+    agentPanel.style.display = 'none'; agentLog.innerHTML = '';
     analyzeBtn.disabled = false;
     analyzeBtn.querySelector('.btn-text').innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><circle cx="8" cy="8" r="6" stroke="#0a0e1a" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#0a0e1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> INITIATE ANALYSIS';
     refreshUI(); hideError();
@@ -366,9 +486,9 @@
   });
 
   /* ── Queue state ────────────────────────────────────────────────── */
-  let queueRunning  = false;
-  let queueIndex    = 0;       // which image we're currently scanning
-  let results       = [];      // stored result per image index
+  let queueRunning = false;
+  let queueIndex = 0;       // which image we're currently scanning
+  let results = [];      // stored result per image index
   let viewingResult = -1;      // which result is being viewed (-1 = none)
 
   /* ── Analyze button ─────────────────────────────────────────────── */
@@ -393,7 +513,7 @@
     results = new Array(images.length).fill(null);
     resultsStack.innerHTML = '';
     resultsStack.style.display = 'none';
-    queueIndex   = 0;
+    queueIndex = 0;
     queueRunning = true;
     hideError();
     analyzeBtn.disabled = true;
@@ -441,7 +561,7 @@
       label.textContent = images.length + ' ' + plural;
       return;
     }
-    const done  = results.filter(r => r !== null).length;
+    const done = results.filter(r => r !== null).length;
     const total = images.length;
     label.textContent = done + ' / ' + total + ' SCANS COMPLETE';
 
@@ -471,6 +591,7 @@
   /* ── NORMAL single scan ─────────────────────────────────────────── */
   function runNormalScan(idx) {
     showLoading('SCANNING IMAGE ' + (idx + 1) + ' OF ' + images.length + '...');
+    startAgent('normal');
 
     let progress = 0;
     loadingMsg.textContent = MSGS_NORMAL[0];
@@ -492,16 +613,16 @@
       setTimeout(() => {
         totalScans++;
         sessionCount.textContent = totalScans;
-        sessionArea.textContent  = Math.round(totalArea);
+        sessionArea.textContent = Math.round(totalArea);
         const generated = generateNormalResult(idx);
         generated._imageLabel = 'IMAGE ' + (idx + 1);
         results[idx] = generated;
         totalArea += generated.total_area_sqm;
+        stopAgent();
         renderQueueProgress();
         renderResults(results[idx]);
         viewingResult = idx;
         queueIndex++;
-        // Short pause so user sees result before next scan starts
         setTimeout(processNext, 2500);
       }, 300);
     }, 1400);
@@ -509,10 +630,11 @@
 
   /* ── ADVANCED single scan ───────────────────────────────────────── */
   async function runAdvancedScan(idx) {
-    const img    = images[idx];
+    const img = images[idx];
     const apiKey = apiKeyInput.value.trim();
 
     showLoading('AI SCANNING IMAGE ' + (idx + 1) + ' OF ' + images.length + '...');
+    startAgent('advanced');
 
     let msgIdx = 0, progress = 0;
     loadingMsg.textContent = MSGS_ADVANCED[0];
@@ -556,10 +678,12 @@ Estimate from standard proportions if no scale bar. Include every room and hallw
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1500,
-          messages: [{ role:'user', content: [
-            { type:'image', source:{ type:'base64', media_type: img.mime, data: img.base64 } },
-            { type:'text', text: PROMPT }
-          ]}]
+          messages: [{
+            role: 'user', content: [
+              { type: 'image', source: { type: 'base64', media_type: img.mime, data: img.base64 } },
+              { type: 'text', text: PROMPT }
+            ]
+          }]
         })
       });
 
@@ -571,18 +695,19 @@ Estimate from standard proportions if no scale bar. Include every room and hallw
         throw new Error(err.error?.message || 'HTTP ' + resp.status);
       }
 
-      const data   = await resp.json();
-      const raw    = (data.content || []).map(b => b.text || '').join('');
+      const data = await resp.json();
+      const raw = (data.content || []).map(b => b.text || '').join('');
       const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
 
       totalScans++;
       totalArea += (parsed.total_area_sqm || 0);
       sessionCount.textContent = totalScans;
-      sessionArea.textContent  = Math.round(totalArea);
+      sessionArea.textContent = Math.round(totalArea);
 
       results[idx] = Object.assign({}, parsed, { _imageLabel: 'IMAGE ' + (idx + 1) });
       renderQueueProgress();
       setTimeout(() => {
+        stopAgent();
         renderResults(results[idx]);
         viewingResult = idx;
         queueIndex++;
@@ -639,14 +764,14 @@ Estimate from standard proportions if no scale bar. Include every room and hallw
     header.className = 'result-card-header';
     header.innerHTML =
       '<div class="result-card-title">' +
-        '<span class="result-card-dot"></span>' +
-        '<span class="result-card-label">' + imgLabel + '</span>' +
-        '<span class="result-card-mode">' + currentMode.toUpperCase() + '</span>' +
+      '<span class="result-card-dot"></span>' +
+      '<span class="result-card-label">' + imgLabel + '</span>' +
+      '<span class="result-card-mode">' + currentMode.toUpperCase() + '</span>' +
       '</div>' +
       '<div class="result-card-meta">' +
-        '<span>' + (data.total_area_sqm||0).toFixed(1) + ' m²</span>' +
-        '<span>' + (data.rooms||[]).length + ' rooms</span>' +
-        '<span>' + (data.floor_count||1) + ' floor' + ((data.floor_count||1)>1?'s':'') + '</span>' +
+      '<span>' + (data.total_area_sqm || 0).toFixed(1) + ' m²</span>' +
+      '<span>' + (data.rooms || []).length + ' rooms</span>' +
+      '<span>' + (data.floor_count || 1) + ' floor' + ((data.floor_count || 1) > 1 ? 's' : '') + '</span>' +
       '</div>';
     card.appendChild(header);
 
@@ -654,10 +779,10 @@ Estimate from standard proportions if no scale bar. Include every room and hallw
     const metricsRow = document.createElement('div');
     metricsRow.className = 'metrics-row';
     [
-      { label:'TOTAL AREA', value:(data.total_area_sqm||0).toFixed(1), unit:'M²' },
-      { label:'ROOMS',      value:(data.rooms||[]).length,              unit:''   },
-      { label:'FLOORS',     value:data.floor_count||1,                  unit:''   },
-      { label:'MODE',       value:currentMode.toUpperCase(),            unit:''   },
+      { label: 'TOTAL AREA', value: (data.total_area_sqm || 0).toFixed(1), unit: 'M²' },
+      { label: 'ROOMS', value: (data.rooms || []).length, unit: '' },
+      { label: 'FLOORS', value: data.floor_count || 1, unit: '' },
+      { label: 'MODE', value: currentMode.toUpperCase(), unit: '' },
     ].forEach((m, i) => {
       const mc = document.createElement('div');
       mc.className = 'metric-card';
@@ -691,12 +816,12 @@ Estimate from standard proportions if no scale bar. Include every room and hallw
       rc.className = 'room-card ' + tc;
       rc.style.animationDelay = (i * 0.05) + 's';
       rc.innerHTML =
-        '<div class="room-name">' + (room.name||'ROOM').toUpperCase() + '</div>' +
+        '<div class="room-name">' + (room.name || 'ROOM').toUpperCase() + '</div>' +
         '<div class="room-dims">' + dims + '</div>' +
         (area ? '<div class="room-area">' + area + '</div>' : '') +
         '<div class="room-badges">' +
-          '<span class="badge ' + tb + '">' + tl + '</span>' +
-          '<span class="badge ' + cb + '">' + (room.confidence||'medium').toUpperCase() + '</span>' +
+        '<span class="badge ' + tb + '">' + tl + '</span>' +
+        '<span class="badge ' + cb + '">' + (room.confidence || 'medium').toUpperCase() + '</span>' +
         '</div>';
       roomsGrid.appendChild(rc);
     });
@@ -748,6 +873,6 @@ Estimate from standard proportions if no scale bar. Include every room and hallw
     }
   }
   function showError(msg) { errorMsg.textContent = msg; errorPanel.classList.add('visible'); }
-  function hideError()    { errorPanel.classList.remove('visible'); }
+  function hideError() { errorPanel.classList.remove('visible'); }
 
 })();
