@@ -175,10 +175,18 @@ nav{
 .divider{height:1px;background:var(--border);margin:48px 0}
 
 /* ── FOOTER ──────────────────────────────── */
-.sfooter{margin-top:60px;padding:22px 0;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.sfooter{margin-top:60px;padding:22px 0 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:14px}
+.sfooter-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .fbrand{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem}
 .fbrand span{color:var(--em)}
 .fmeta{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--faint);line-height:1.7;text-align:right}
+.sfooter-bottom{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border)}
+.footer-powered{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint);display:inline-flex;align-items:center;gap:7px}
+.footer-ai-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);padding:2px 9px;border-radius:99px;font-size:.59rem;color:var(--vi);letter-spacing:.06em}
+.footer-author{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint)}
+.footer-author strong{color:var(--muted);font-weight:500}
+.footer-copy{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint)}
+.footer-sep{color:rgba(240,238,255,.15);font-size:.7rem}
 
 /* ── TOAST ───────────────────────────────── */
 #toast{
@@ -474,3 +482,39 @@ nav{
   font-family:'DM Mono',monospace;font-size:.62rem;color:var(--faint);
   text-align:center;margin-top:10px;
 }
+/* RECONNECT BANNER + OVERLAY */
+.nav-a-launch{color:var(--em)!important;background:rgba(0,229,160,.1)!important;border:1px solid rgba(0,229,160,.28)!important;margin-left:6px}
+.nav-a-launch:hover{background:rgba(0,229,160,.2)!important;border-color:rgba(0,229,160,.5)!important;box-shadow:0 0 16px rgba(0,229,160,.2)}
+#reconnectBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:linear-gradient(135deg,#1a0a0a,#2d0f1f);border-bottom:1px solid rgba(251,113,133,.4)}
+#reconnectBanner.show{display:block;animation:slideDown .35s ease both}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:none;opacity:1}}
+.rb-inner{max-width:860px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.rb-icon{font-size:1.3rem;flex-shrink:0}
+.rb-text{flex:1;min-width:200px}
+.rb-title{font-family:'DM Sans',sans-serif;font-weight:700;font-size:.88rem;color:var(--ro);margin-bottom:2px}
+.rb-sub{font-size:.75rem;color:rgba(251,113,133,.7);font-family:'DM Mono',monospace;line-height:1.5}
+.rb-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.btn-reconnect{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:9px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;background:linear-gradient(135deg,#e11d48,var(--ro));color:#fff;box-shadow:0 4px 16px rgba(251,113,133,.4);transition:all .2s}
+.btn-reconnect:hover{box-shadow:0 6px 22px rgba(251,113,133,.6);transform:translateY(-1px)}
+.rb-dismiss{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--muted);padding:8px 14px;border-radius:8px;font-family:'DM Mono',monospace;font-size:.65rem;cursor:pointer;transition:all .15s;white-space:nowrap}
+.rb-dismiss:hover{background:rgba(255,255,255,.14);color:var(--text)}
+body.banner-on .wrap{padding-top:20px}
+body.banner-on .hero{padding-top:100px}
+#reconnectOverlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(6,4,15,.92);backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:24px}
+#reconnectOverlay.show{display:flex;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.ro-card{background:rgba(19,16,42,.98);border:1px solid rgba(251,113,133,.35);border-radius:24px;padding:42px 38px;max-width:500px;width:100%;position:relative;overflow:hidden;box-shadow:0 48px 120px rgba(0,0,0,.8);animation:mIn .3s ease;text-align:center}
+.ro-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--ro),var(--am),var(--vi))}
+.ro-icon-wrap{width:72px;height:72px;border-radius:20px;background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.3);display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 20px}
+.ro-badge{display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ro);background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.25);padding:5px 13px;border-radius:99px}
+.ro-card h2{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:900;margin-bottom:10px;line-height:1.1}
+.ro-card p{font-size:.875rem;color:var(--muted);line-height:1.75;margin-bottom:14px}
+.ro-steps{text-align:left;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:12px;padding:16px 18px;margin:18px 0 24px;display:flex;flex-direction:column;gap:10px}
+.ro-step{display:flex;align-items:flex-start;gap:10px;font-size:.82rem;color:var(--muted);line-height:1.55}
+.ro-sn{flex-shrink:0;min-width:22px;height:22px;background:rgba(0,229,160,.14);border:1px solid rgba(0,229,160,.3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.6rem;color:var(--em);font-weight:700}
+.ro-step strong{color:var(--text)}
+.ro-card-actions{display:flex;flex-direction:column;gap:10px}
+.btn-reconnect-lg{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:15px;border-radius:12px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.94rem;background:linear-gradient(135deg,#e11d48,var(--ro));color:#fff;box-shadow:0 6px 28px rgba(251,113,133,.4);transition:all .2s}
+.btn-reconnect-lg:hover{box-shadow:0 8px 36px rgba(251,113,133,.65);transform:translateY(-2px)}
+.ro-later{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--faint);cursor:pointer;padding:6px;transition:color .15s;background:none;border:none;text-decoration:underline}
+.ro-later:hover{color:var(--muted)}

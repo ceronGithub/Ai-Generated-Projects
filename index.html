@@ -9,6 +9,46 @@
 </head>
 <body>
 
+
+<!-- RECONNECT BANNER -->
+<div id="reconnectBanner">
+  <div class="rb-inner">
+    <div class="rb-icon">🔌</div>
+    <div class="rb-text">
+      <div class="rb-title">MailVault is disconnected</div>
+      <div class="rb-sub" id="rbEmail">Gmail access was removed — reconnect to restore full access.</div>
+    </div>
+    <div class="rb-actions">
+      <button class="btn-reconnect" id="rbReconnectBtn" onclick="doReconnect()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Reconnect Now
+      </button>
+      <button class="rb-dismiss" onclick="dismissBanner()">Dismiss</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECONNECT OVERLAY -->
+<div id="reconnectOverlay">
+  <div class="ro-card">
+    <div class="ro-icon-wrap">🔌</div>
+    <div class="ro-badge">Connection Lost</div>
+    <h2>Reconnect to MailVault</h2>
+    <p>MailVault lost access to your Gmail because permissions were removed from your Google account. Visit <strong>myaccount.google.com/permissions</strong> if this was accidental.</p>
+    <div class="ro-steps">
+      <div class="ro-step"><div class="ro-sn">1</div><span>Click <strong>Reconnect</strong> below — you will be taken back to the app URL.</span></div>
+      <div class="ro-step"><div class="ro-sn">2</div><span>Google will show the <strong>authorization dialog</strong> again automatically.</span></div>
+      <div class="ro-step"><div class="ro-sn">3</div><span>Click <strong>Allow</strong> to restore Gmail access — then use the app normally.</span></div>
+    </div>
+    <div class="ro-card-actions">
+      <button class="btn-reconnect-lg" id="overlayReconnectBtn" onclick="doReconnect()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Reconnect to MailVault
+      </button>
+      <button class="ro-later" onclick="dismissOverlay()">Continue without reconnecting</button>
+    </div>
+  </div>
+</div>
 <div class="bg-orbs">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
@@ -87,6 +127,26 @@
       <div class="tip-title">First-time users must complete Authorization</div>
       <div class="tip-text">The first time anyone opens the app URL, Google will show an <strong>"Authorization needed"</strong> dialog. Users must complete all authorization steps to grant Gmail access. See the <a href="#authorization" style="color:var(--am);text-decoration:underline">Authorization Guide</a> section below for the exact steps.</div>
     </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── APP URL ──────────────────────────────────────── -->
+<div class="section" id="app-url" style="margin-bottom:0;padding-bottom:0">
+  <div class="app-url-card">
+    <div class="auc-label">&#128279; Live App URL &mdash; Share This</div>
+    <a class="auc-url" href="https://script.google.com/macros/s/AKfycbxbfKNTOwqhcnOjz6r3J7Tgy8x1Gjh-fIvb8DxMzPGL4xC0VTX8dp1hyot0hupCD72J/exec" target="_blank">
+      https://script.google.com/macros/s/AKfycbxbfKNTOwqhcnOjz6r3J7Tgy8x1Gjh-fIvb8DxMzPGL4xC0VTX8dp1hyot0hupCD72J/exec
+    </a>
+    <div class="auc-meta">
+      <div class="auc-badge"><span class="auc-dot"></span>Live on Google Apps Script</div>
+      <div>Read all sections below &mdash; especially the <a href="#authorization" style="color:var(--em);text-decoration:underline">Authorization Guide</a> &mdash; before opening this link.</div>
+    </div>
+    <button class="auc-copy" onclick="copyAppUrl()" id="aucCopyBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copy URL
+    </button>
   </div>
 </div>
 
@@ -518,8 +578,17 @@
 </div>
 
 <footer class="sfooter">
-  <div class="fbrand">Mail<span>Vault</span></div>
-  <div class="fmeta">Runs inside your Google Account · No external servers<br>Files saved directly to your device · Full source above</div>
+  <div class="sfooter-top">
+    <div class="fbrand">Mail<span>Vault</span></div>
+    <div class="fmeta">Runs inside your Google Account · No external servers<br>Files saved directly to your device · Full source above</div>
+  </div>
+  <div class="sfooter-bottom">
+    <span class="footer-powered">Powered by <span class="footer-ai-badge">✦ Claude AI</span></span>
+    <span class="footer-sep">·</span>
+    <span class="footer-author">Created by <strong>Ceron Matthew Calsena</strong></span>
+    <span class="footer-sep">·</span>
+    <span class="footer-copy">MailVault &copy; 2026</span>
+  </div>
 </footer>
 
 </div><!-- /wrap -->

@@ -190,10 +190,55 @@ tbody tr:hover td{background:rgba(255,255,255,.03);color:var(--text)}
 .toast.nn{background:var(--card2);border:1px solid var(--border2);color:var(--text)}
 
 /* FOOTER */
-.sfooter{margin-top:60px;padding:22px 0;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.fbrand{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;color:var(--text)}
+.sfooter{
+  margin-top:80px;padding:40px 0 28px;
+  border-top:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  text-align:center;position:relative;
+}
+.sfooter::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:120px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--em),transparent);
+}
+.fbrand{
+  font-family:'Playfair Display',serif;font-weight:900;font-size:1.45rem;
+  color:var(--text);letter-spacing:-.02em;
+}
 .fbrand span{color:var(--em)}
-.fmeta{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--faint);line-height:1.7;text-align:right}
+.footer-tagline{
+  font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);
+}
+.footer-divider{
+  width:32px;height:1px;background:var(--border2);
+}
+.footer-credits{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.footer-powered{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--muted);
+}
+.footer-powered-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);
+  padding:3px 10px;border-radius:99px;
+  font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;
+  color:var(--vi);font-weight:500;
+}
+.footer-powered-badge::before{
+  content:'✦';font-size:.55rem;
+}
+.footer-author{
+  font-family:'DM Mono',monospace;font-size:.63rem;color:var(--faint);
+  line-height:1.7;
+}
+.footer-author strong{color:var(--muted);font-weight:500;}
+.footer-copy{
+  font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.08em;
+  color:rgba(240,238,255,.18);margin-top:4px;
+}
 
 @keyframes fdDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
 @keyframes fdUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
@@ -383,56 +428,6 @@ body.banner-on .hero{padding-top:106px}
 .logout-sub{font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:0}
 .logout-sub strong{color:var(--text)}
 
-/* ─── UNLINK MODAL ───────────────────────────────────────────── */
-#unlinkModal .modal{max-width:500px}
-.nav-pill-unlink{color:var(--am)}
-.nav-pill-unlink:hover{background:rgba(251,191,36,.12);color:var(--am);border-color:rgba(251,191,36,.3)}
-.unlink-scroll-box{
-  max-height:260px;overflow-y:auto;
-  border:1px solid var(--border2);border-radius:12px;
-  padding:18px 20px;background:rgba(255,255,255,.03);
-  font-size:.84rem;color:var(--muted);line-height:1.75;
-  scroll-behavior:smooth;
-}
-.unlink-scroll-box::-webkit-scrollbar{width:4px}
-.unlink-scroll-box::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:3px}
-.unlink-read-notice{
-  display:flex;align-items:center;gap:8px;
-  font-family:'DM Mono',monospace;font-size:.62rem;color:var(--am);
-  margin-top:10px;letter-spacing:.05em;transition:opacity .3s;
-}
-.unlink-read-notice svg{flex-shrink:0}
-.unlink-scroll-box h4{
-  font-family:'Playfair Display',serif;font-size:1rem;
-  color:var(--text);margin-bottom:12px;
-}
-.unlink-step{
-  display:flex;align-items:flex-start;gap:10px;
-  padding:10px 0;border-bottom:1px solid var(--border);
-}
-.unlink-step:last-child{border-bottom:none;padding-bottom:0}
-.unlink-sn{
-  flex-shrink:0;width:22px;height:22px;
-  background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.3);
-  border-radius:6px;display:flex;align-items:center;justify-content:center;
-  font-family:'DM Mono',monospace;font-size:.6rem;color:var(--am);font-weight:700;
-}
-.unlink-step p{margin:0;font-size:.83rem}
-.unlink-step strong{color:var(--text)}
-.unlink-warning{
-  display:flex;gap:10px;align-items:flex-start;
-  background:rgba(251,113,133,.08);border:1px solid rgba(251,113,133,.25);
-  border-radius:9px;padding:12px 14px;
-  font-size:.8rem;color:var(--ro);line-height:1.65;margin-top:14px;
-}
-.btn-unlink-redirect{
-  background:linear-gradient(135deg,#d97706,var(--am));
-  color:#06040f;font-weight:700;
-  box-shadow:0 4px 18px rgba(251,191,36,.3);
-}
-.btn-unlink-redirect:hover:not(:disabled){box-shadow:0 6px 26px rgba(251,191,36,.55);transform:translateY(-1px)}
-.btn-unlink-redirect:disabled{opacity:.32;cursor:not-allowed;pointer-events:none}
-
 </style>
 </head>
 <body>
@@ -449,10 +444,6 @@ body.banner-on .hero{padding-top:106px}
       <button class="nav-pill nav-pill-logout" id="logoutNavBtn" onclick="openLogout()" style="display:none">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Sign Out
-      </button>
-      <button class="nav-pill nav-pill-unlink" id="unlinkNavBtn" onclick="openUnlink()" style="display:none">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/><line x1="2" y1="2" x2="22" y2="22" stroke-width="2"/></svg>
-        Unlink
       </button>
     </div>
   </div>
@@ -604,7 +595,18 @@ body.banner-on .hero{padding-top:106px}
 
 <footer class="sfooter">
   <div class="fbrand">Mail<span>Vault</span></div>
-  <div class="fmeta">Runs inside your Google Account · No external servers<br>Files saved directly to your device</div>
+  <div class="footer-tagline">Gmail Exporter · Google Apps Script</div>
+  <div class="footer-divider"></div>
+  <div class="footer-credits">
+    <div class="footer-powered">
+      Powered by
+      <span class="footer-powered-badge">Claude AI</span>
+    </div>
+    <div class="footer-author">
+      Created by <strong>Ceron Matthew Calsena</strong>
+    </div>
+  </div>
+  <div class="footer-copy">MailVault &copy; 2026 &nbsp;&middot;&nbsp; Runs inside your Google Account &nbsp;&middot;&nbsp; No external servers</div>
 </footer>
 </div>
 
@@ -684,62 +686,6 @@ body.banner-on .hero{padding-top:106px}
   </div>
 </div>
 
-<!-- ─── UNLINK MODAL ──────────────────────────────────────────────── -->
-<div class="mov" id="unlinkModal" onclick="closeUnlinkBg(event)">
-  <div class="modal">
-    <div class="mhd">
-      <div class="mhd-t">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--am)" stroke-width="2.5" style="margin-right:7px;vertical-align:-2px"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/><line x1="2" y1="2" x2="22" y2="22" stroke-width="2"/></svg>
-        Unlink MailVault
-      </div>
-      <button class="mx" onclick="closeUnlink()">✕</button>
-    </div>
-    <div class="mbd">
-      <div id="unlinkScrollBox" class="unlink-scroll-box" onscroll="onUnlinkScroll()">
-        <h4>⚠️ Before you unlink — please read carefully</h4>
-
-        <div class="unlink-step">
-          <div class="unlink-sn">1</div>
-          <p>Clicking <strong>Go to Google Permissions</strong> will open <strong>myaccount.google.com/permissions</strong> in this same tab. You will leave MailVault.</p>
-        </div>
-        <div class="unlink-step">
-          <div class="unlink-sn">2</div>
-          <p>On that page, find <strong>MailVault</strong> (or your Apps Script app name) in the list of apps that have access to your Google account.</p>
-        </div>
-        <div class="unlink-step">
-          <div class="unlink-sn">3</div>
-          <p>Click the app name, then click <strong>"Remove Access"</strong> to revoke Gmail permissions for MailVault.</p>
-        </div>
-        <div class="unlink-step">
-          <div class="unlink-sn">4</div>
-          <p>After removing access, MailVault will no longer be able to read your Gmail. To use it again, you will need to <strong>reconnect and re-authorize</strong> the app.</p>
-        </div>
-        <div class="unlink-step">
-          <div class="unlink-sn">5</div>
-          <p><strong>Your Gmail is not affected.</strong> Unlinking only removes MailVault's read access — no emails are deleted or modified.</p>
-        </div>
-
-        <div class="unlink-warning">
-          <span style="font-size:1.1rem;flex-shrink:0">🔴</span>
-          <span>This action is <strong>irreversible</strong> until you re-authorize. Any in-progress exports will stop working immediately after unlinking.</span>
-        </div>
-      </div>
-
-      <div class="unlink-read-notice" id="unlinkReadNotice">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-        Scroll down to read all instructions to continue
-      </div>
-    </div>
-    <div class="mft">
-      <button class="btn btn-ghost" onclick="closeUnlink()">Cancel</button>
-      <button class="btn btn-unlink-redirect" id="unlinkRedirectBtn" onclick="doUnlinkRedirect()" disabled>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/><line x1="2" y1="2" x2="22" y2="22" stroke-width="2"/></svg>
-        Go to Google Permissions
-      </button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL -->
 <div class="mov" id="modal" onclick="closeMBg(event)">
   <div class="modal">
@@ -772,7 +718,6 @@ var _reconnectUrl = '';
         document.getElementById('userPill').style.display = 'inline-flex';
         // Show logout button + populate logout modal email
         document.getElementById('logoutNavBtn').style.display = 'inline-flex';
-        document.getElementById('unlinkNavBtn').style.display = 'inline-flex';
         document.getElementById('logoutEmailDisplay').textContent = r.email;
       }
 
@@ -919,7 +864,7 @@ function renderTable(){
 
 function viewEmail(i){
   const e=emails[i];document.getElementById('modalTitle').textContent='Email #'+(i+1);
-  document.getElementById('modalBody').innerHTML=`<div class="mf"><label>Subject</label><div class="mv" style="font-weight:600;font-size:.98rem">${esc(e.subject)}</div></div><div class="m2"><div class="mf"><label>From</label><div class="mv">${esc(e.from||'—')}</div></div><div class="mf"><label>Date</label><div class="mv">${esc(e.date||'—')}</div></div><div class="mf"><label>To</label><div class="mv">${esc(e.to||'—')}</div></div><div class="mf"><label>Labels</label><div class="mv">${esc(e.labels||'—')}</div></div>${e.cc?`<div class="mf"><label>CC</label><div class="mv">${esc(e.cc)}</div></div>`:''}</div><div class="mf"><label>Body Preview</label><div class="mbtext">${esc(e.body||'(no body)')}</div></div><div style="font-size:.6rem;color:var(--faint);font-family:'DM Mono',monospace;margin-top:9px">Read: ${e.isRead?'Yes':'No'} · Starred: ${e.isStarred?'⭐ Yes':'No'}</div>`;
+  document.getElementById('modalBody').innerHTML=`<div class="mf"><label>Subject</label><div class="mv" style="font-weight:600;font-size:.98rem">${esc(e.subject)}</div></div><div class="m2"><div class="mf"><label>From</label><div class="mv">${esc(e.from||'—')}</div></div><div class="mf"><label>Date</label><div class="mv">${esc(e.date||'—')}</div></div><div class="mf"><label>To</label><div class="mv">${esc(e.to||'—')}</div></div><div class="mf"><label>Labels</label><div class="mv">${esc(e.labels||'—')}</div></div>${e.cc?`<div class="mf"><label>CC</label><div class="mv">${esc(e.cc)}</div></div>`:''}</div><div class="mf"><label>Body Preview</label><div class="mbtext">${esc(e.body||'(no body)')}</div></div><div style="font-size:.6rem;color:var(--faint);font-family:'DM Mono',monospace;margin-top:9px">Read: ${e.isRead?'Yes':'No'} · Starred: ${e.isStarred?'⭐ Yes':'No'} · ${e.size} bytes</div>`;
   document.getElementById('modalFoot').innerHTML=`<button class="btn btn-ghost" onclick="closeM()">Close</button><button class="btn btn-vi" onclick="closeM();editEmail(${i})">Edit</button>`;
   openM();
 }
@@ -970,8 +915,8 @@ function runExport(){
 }
 
 function buildCsv(emails,ue,df,dt){
-  const h=['#','Date','From','To','CC','BCC','Subject','Body Preview','Labels','Read','Starred','Message ID','Thread ID'],rows=[h];
-  emails.forEach((e,i)=>rows.push([i+1,e.date,e.from,e.to,e.cc,e.bcc,e.subject,(e.snippet||'').replace(/\n/g,' '),e.labels,e.isRead?'Yes':'No',e.isStarred?'Yes':'No',e.id,e.threadId]));
+  const h=['#','Date','From','To','CC','BCC','Subject','Body Preview','Labels','Read','Starred','Size (bytes)','Message ID','Thread ID'],rows=[h];
+  emails.forEach((e,i)=>rows.push([i+1,e.date,e.from,e.to,e.cc,e.bcc,e.subject,(e.snippet||'').replace(/\n/g,' '),e.labels,e.isRead?'Yes':'No',e.isStarred?'Yes':'No',e.size,e.id,e.threadId]));
   rows.push([],['--- SUMMARY ---'],['Account',ue],['Date Range',df+' to '+dt],['Total',emails.length],['Exported At',new Date().toLocaleString()]);
   return rows.map(r=>r.map(c=>{const v=String(c==null?'':c);return(v.indexOf(',')>-1||v.indexOf('"')>-1||v.indexOf('\n')>-1)?'"'+v.replace(/"/g,'""')+'"':v;}).join(',')).join('\r\n');
 }
@@ -1014,33 +959,6 @@ function doLogout(){
       window.top.location.href='https://accounts.google.com/logout';
     })
     .getAppUrl();
-}
-
-// ── UNLINK ────────────────────────────────────────────────────
-function openUnlink(){
-  // Reset scroll & button state each time modal opens
-  const box=document.getElementById('unlinkScrollBox');
-  box.scrollTop=0;
-  document.getElementById('unlinkRedirectBtn').disabled=true;
-  document.getElementById('unlinkReadNotice').style.opacity='1';
-  document.getElementById('unlinkModal').classList.add('open');
-  document.body.style.overflow='hidden';
-  // Check immediately in case content is short enough without scrolling
-  _checkUnlinkScrolled();
-}
-function closeUnlink(){document.getElementById('unlinkModal').classList.remove('open');document.body.style.overflow='';}
-function closeUnlinkBg(e){if(e.target===document.getElementById('unlinkModal'))closeUnlink();}
-function onUnlinkScroll(){_checkUnlinkScrolled();}
-function _checkUnlinkScrolled(){
-  const box=document.getElementById('unlinkScrollBox');
-  const atBottom=box.scrollHeight-box.scrollTop<=box.clientHeight+8;
-  if(atBottom){
-    document.getElementById('unlinkRedirectBtn').disabled=false;
-    document.getElementById('unlinkReadNotice').style.opacity='0';
-  }
-}
-function doUnlinkRedirect(){
-  window.top.location.href='https://myaccount.google.com/permissions';
 }
 
 function clearAll(){emails=[];currentSort='newest';document.getElementById('emailSection').classList.remove('show');document.getElementById('exportCard').style.display='none';document.getElementById('clearBtn').style.display='none';clrSt('fetchStatus');clrSt('exportStatus');hidePr();toast('Cleared','nn');}
