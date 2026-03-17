@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>HOLO·PLAN — Floor Plan Analyzer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800;900&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -358,27 +358,9 @@
           <p class="empty-sub">Upload an image to begin spatial analysis</p>
         </div>
 
-        <!-- Results content -->
-        <div class="results-content" id="resultsContent">
-
-          <!-- Summary metrics -->
-          <div class="metrics-row" id="metricsRow"></div>
-
-          <!-- Room cards -->
-          <div class="rooms-section">
-            <div class="section-label">ROOM BREAKDOWN</div>
-            <div class="rooms-grid" id="roomsGrid"></div>
-          </div>
-
-          <!-- Observations -->
-          <div class="obs-section" id="obsSection">
-            <div class="section-label">AI OBSERVATIONS</div>
-            <div class="obs-box" id="obsBox"></div>
-          </div>
-
-          <!-- Scale note -->
-          <div class="scale-note" id="scaleNote"></div>
-
+        <!-- Results stack — all scan results shown here, one below the other -->
+        <div class="results-stack" id="resultsStack" style="display:none;">
+          <!-- Result cards injected here dynamically by app.js -->
         </div>
       </section>
 
@@ -514,7 +496,6 @@
     <!-- Footer -->
     <footer class="holo-footer">
       <span>HOLO·PLAN © 2025 — SPATIAL INTELLIGENCE SYSTEM</span>
-      <span>Created by: Ceron Calsena</span>
       <span class="footer-right">POWERED BY CLAUDE AI</span>
     </footer>
 
