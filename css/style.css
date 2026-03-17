@@ -2837,3 +2837,211 @@ body {
   .result-export-row { flex-wrap: wrap; gap: 6px; }
   .export-btn { font-size: 7px; padding: 4px 10px; }
 }
+
+/* ============================================================
+   MODULE 04 — FLOOR PLAN GENERATOR
+   ============================================================ */
+
+/* ── Area input row ── */
+.gen-area-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 10px;
+}
+.gen-area-input {
+  flex: 1;
+  background: var(--holo-bg2);
+  border: 1px solid rgba(0,245,255,0.25);
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--holo-cyan);
+  outline: none;
+  transition: border-color .2s;
+  -moz-appearance: textfield;
+}
+.gen-area-input::-webkit-inner-spin-button,
+.gen-area-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.gen-area-input:focus {
+  border-color: var(--holo-cyan);
+  box-shadow: 0 0 12px rgba(0,245,255,0.1);
+}
+.gen-area-unit {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: rgba(0,245,255,0.05);
+  border: 1px solid rgba(0,245,255,0.25);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--holo-text2);
+}
+
+/* ── Area presets ── */
+.gen-presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gen-preset.sel,
+.gen-preset:focus {
+  border-color: var(--holo-cyan) !important;
+  color: var(--holo-cyan) !important;
+  background: rgba(0,245,255,0.06) !important;
+}
+
+/* ── Space type pills ── */
+.gen-pill-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gen-pill.sel {
+  border-color: var(--holo-violet) !important;
+  color: var(--holo-violet) !important;
+  background: rgba(123,47,255,0.1) !important;
+  box-shadow: 0 0 10px rgba(123,47,255,0.15);
+}
+
+/* ── Layout shape grid ── */
+.gen-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.gen-layout-card {
+  padding: 12px 8px !important;
+  text-align: center;
+  cursor: pointer;
+}
+.gen-layout-card svg { display: block; margin: 0 auto 6px; }
+.gen-layout-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--holo-text2);
+  display: block;
+}
+.gen-layout-card.active .gen-layout-label { color: var(--holo-violet); }
+.gen-layout-card.active {
+  border-color: var(--holo-violet) !important;
+  background: rgba(123,47,255,0.08) !important;
+}
+
+/* ── Custom textarea ── */
+.gen-custom-textarea {
+  width: 100%;
+  background: var(--holo-bg2);
+  border: 1px solid rgba(0,245,255,0.25);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--holo-text);
+  outline: none;
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.7;
+  transition: border-color .2s;
+}
+.gen-custom-textarea:focus { border-color: var(--holo-violet); }
+
+/* ── Room summary cards ── */
+.gen-room-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.gen-room-card {
+  background: var(--holo-bg3);
+  border: 1px solid var(--holo-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.gen-room-card-name {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--holo-cyan);
+  margin-bottom: 4px;
+}
+.gen-room-card-area { font-size: 18px; font-weight: 700; color: var(--holo-text); }
+.gen-room-card-unit { font-family: var(--font-mono); font-size: 9px; color: var(--holo-text2); }
+
+/* ── SVG floor plan draw animations ── */
+@keyframes genDrawWall   { from { stroke-dashoffset: var(--len,1000); } to { stroke-dashoffset: 0; } }
+@keyframes genRoomReveal { from { opacity:0; transform:scale(.92); }    to { opacity:1; transform:scale(1); } }
+@keyframes genLabelFade  { from { opacity:0; }                          to { opacity:1; } }
+
+.gen-wall-anim {
+  stroke-dasharray: var(--len,1000);
+  stroke-dashoffset: var(--len,1000);
+  animation: genDrawWall var(--dur,.6s) var(--delay,0s) ease forwards;
+}
+.gen-room-fill-anim {
+  opacity: 0;
+  animation: genRoomReveal .4s var(--delay,0s) ease forwards;
+}
+.gen-label-anim {
+  opacity: 0;
+  animation: genLabelFade .3s var(--delay,0s) ease forwards;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .gen-layout-grid { grid-template-columns: repeat(2,1fr); }
+}
+
+/* ── Module 04 thumbnail grid (simple img + delete button) ── */
+#genUpThumbGrid .thumb-item,
+#genRefThumbGrid .thumb-item {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--holo-border);
+  flex-shrink: 0;
+}
+#genUpThumbGrid .thumb-item img,
+#genRefThumbGrid .thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity .2s;
+}
+#genUpThumbGrid .thumb-item.active,
+#genRefThumbGrid .thumb-item.active {
+  border-color: var(--holo-cyan);
+  box-shadow: 0 0 8px rgba(0,245,255,0.3);
+}
+#genUpThumbGrid .thumb-item:hover img,
+#genRefThumbGrid .thumb-item:hover img { opacity: 0.8; }
+
+.thumb-del {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(10,14,26,0.85);
+  border: 1px solid rgba(255,45,120,0.5);
+  color: #ff2d78;
+  font-size: 9px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .15s;
+}
+#genUpThumbGrid .thumb-item:hover .thumb-del,
+#genRefThumbGrid .thumb-item:hover .thumb-del { opacity: 1; }

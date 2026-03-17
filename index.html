@@ -56,6 +56,7 @@
     <nav class="holo-nav">
       <button class="nav-tab active" id="tabAnalyzer" onclick="switchTab('analyzer')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="4" height="4" stroke="#00f5ff" stroke-width="1"/><rect x="7" y="1" width="4" height="4" stroke="#00f5ff" stroke-width="1"/><rect x="1" y="7" width="4" height="4" stroke="#00f5ff" stroke-width="1"/><rect x="7" y="7" width="4" height="4" stroke="#00f5ff" stroke-width="1"/></svg> FLOOR PLAN ANALYZER</button>
       <button class="nav-tab" id="tabBoq" onclick="switchTab('boq')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="2" stroke="#00f5ff" stroke-width="1"/><rect x="1" y="5" width="10" height="2" stroke="#00f5ff" stroke-width="1"/><rect x="1" y="9" width="10" height="2" stroke="#00f5ff" stroke-width="1"/></svg> BOQ &mdash; CONCRETE WORKS</button>
+      <button class="nav-tab" id="tabGenerator" onclick="switchTab('generator')"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><polygon points="6,1 11,4 11,8 6,11 1,8 1,4" stroke="#00f5ff" stroke-width="1" fill="none"/><line x1="6" y1="1" x2="6" y2="11" stroke="#00f5ff" stroke-width="0.6" opacity="0.4"/><line x1="1" y1="4" x2="11" y2="8" stroke="#00f5ff" stroke-width="0.6" opacity="0.4"/><line x1="11" y1="4" x2="1" y2="8" stroke="#00f5ff" stroke-width="0.6" opacity="0.4"/></svg> FLOOR PLAN GENERATOR</button>
     </nav>
 
     <!-- Main content -->
@@ -649,6 +650,575 @@
 
     </section>
 
+    <!-- ═══════════════════════════════════════════════════════
+         MODULE 04 — FLOOR PLAN GENERATOR
+    ═══════════════════════════════════════════════════════ -->
+    <section class="boq-view" id="viewGenerator" style="display:none;">
+
+      <!-- Header bar -->
+      <div class="boq-header-bar">
+        <div>
+          <span class="panel-tag">MODULE 04</span>
+          <h2 class="panel-title" style="margin-bottom:0;">FLOOR PLAN GENERATOR</h2>
+        </div>
+      </div>
+
+      <!-- Mode selector -->
+      <div class="mode-selector" style="margin-bottom:16px;">
+        <div class="mode-selector-label">SELECT GENERATION MODE</div>
+        <div class="mode-cards">
+
+          <!-- Option 1: Upload -->
+          <div class="mode-card" id="genCardUpload" onclick="selectGenOption('upload')">
+            <div class="mode-card-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" stroke="#00f5ff" stroke-width="1.2" fill="rgba(0,245,255,0.04)"/>
+                <line x1="14" y1="18" x2="14" y2="10" stroke="#00f5ff" stroke-width="1.4" stroke-linecap="round"/>
+                <polyline points="10,14 14,10 18,14" stroke="#00f5ff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <line x1="10" y1="20" x2="18" y2="20" stroke="#00f5ff" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="mode-card-body">
+              <span class="mode-card-title">UPLOAD IMAGE</span>
+              <span class="mode-card-sub">No API key needed · Free</span>
+              <span class="mode-card-desc">Upload an existing floor plan. <strong style="color:rgba(255,183,0,0.9);">Does NOT generate a new plan</strong> — reads rooms and labels from your image.</span>
+            </div>
+            <div class="mode-card-check" id="genCheckUpload" style="opacity:0;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#00f5ff"/><path d="M4 7l2 2 4-4" stroke="#0a0e1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+
+          <!-- Option 2: Generate from area -->
+          <div class="mode-card" id="genCardGenerate" onclick="selectGenOption('generate')">
+            <div class="mode-card-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" stroke="#7b2fff" stroke-width="1.2" fill="rgba(123,47,255,0.06)"/>
+                <circle cx="14" cy="14" r="3.5" fill="#7b2fff"/>
+                <line x1="14" y1="2"  x2="14" y2="7"  stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                <line x1="14" y1="21" x2="14" y2="26" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                <line x1="2"  y1="8"  x2="6.5" y2="10.5" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                <line x1="21.5" y1="17.5" x2="26" y2="20" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+              </svg>
+            </div>
+            <div class="mode-card-body">
+              <span class="mode-card-title">GENERATE FROM AREA</span>
+              <span class="mode-card-sub">Requires API key · ~₱1 per scan</span>
+              <span class="mode-card-desc"><strong style="color:rgba(0,255,157,0.9);">AI Agent builds your floor plan</strong> — enter area, type &amp; layout, watch it draw live.</span>
+            </div>
+            <div class="mode-card-check" id="genCheckGenerate" style="opacity:0;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#7b2fff"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+
+        </div><!-- /mode-cards -->
+
+        <!-- Comparison table -->
+        <div class="mode-compare">
+          <div class="compare-row compare-header">
+            <span class="compare-feature"></span>
+            <span class="compare-normal">UPLOAD</span>
+            <span class="compare-advanced">GENERATE</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">API Key Required</span>
+            <span class="compare-normal"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#00f5ff" stroke-width="1"/><path d="M4 6.5l1.8 1.8 3.5-3.5" stroke="#00f5ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> No</span>
+            <span class="compare-advanced"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#7b2fff" stroke-width="1"/><line x1="4" y1="4" x2="9" y2="9" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round"/><line x1="9" y1="4" x2="4" y2="9" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round"/></svg> Yes</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Cost</span>
+            <span class="compare-normal">Free</span>
+            <span class="compare-advanced">~₱1.00</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Speed</span>
+            <span class="compare-normal">Instant</span>
+            <span class="compare-advanced">10–20 sec</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Input</span>
+            <span class="compare-normal">Your image file</span>
+            <span class="compare-advanced">Floor area + preferences</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Output</span>
+            <span class="compare-normal">Reads existing plan</span>
+            <span class="compare-advanced">Builds new floor plan</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">AI draws plan</span>
+            <span class="compare-normal"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#888" stroke-width="1" opacity="0.4"/><line x1="4" y1="4" x2="9" y2="9" stroke="#888" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/><line x1="9" y1="4" x2="4" y2="9" stroke="#888" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/></svg> No</span>
+            <span class="compare-advanced"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#7b2fff" stroke-width="1"/><path d="M4 6.5l1.8 1.8 3.5-3.5" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Yes</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Layout shapes</span>
+            <span class="compare-normal">From your image</span>
+            <span class="compare-advanced">8 shapes + custom</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Best for</span>
+            <span class="compare-normal">Existing floor plans</span>
+            <span class="compare-advanced">New plan from scratch</span>
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="mode-instructions" id="genModeInstructions">
+
+          <!-- Upload instructions (default shown) -->
+          <div id="genInstructUpload">
+            <div class="instr-title">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#00f5ff" stroke-width="1"/><line x1="5" y1="3" x2="5" y2="5.5" stroke="#00f5ff" stroke-width="1" stroke-linecap="round"/><circle cx="5" cy="7" r="0.5" fill="#00f5ff"/></svg>
+              HOW TO USE — UPLOAD MODE
+            </div>
+            <ol class="instr-steps">
+              <li><span class="instr-num">1</span><span>Drag and drop your floor plan image into the zone below, or click to browse.</span></li>
+              <li><span class="instr-num">2</span><span>Click <strong>ANALYZE FLOOR PLAN</strong> — no API key needed, completely free.</span></li>
+              <li><span class="instr-num">3</span><span>The AI reads your image and extracts room labels, dimensions, and spatial data.</span></li>
+              <li><span class="instr-num">4</span><span>Review the spatial output and use it to generate a BOQ in Module 03.</span></li>
+            </ol>
+            <div class="instr-note instr-note-cyan">
+              <strong style="color:rgba(255,183,0,0.9);">⚠ Note:</strong> Upload mode reads your existing floor plan image — it does not create a new one. To generate a brand-new floor plan from scratch, switch to <strong>Generate from Area</strong> mode.
+            </div>
+          </div>
+
+          <!-- Generate instructions (hidden by default) -->
+          <div id="genInstructGenerate" style="display:none;">
+            <div class="instr-title" style="color:var(--holo-violet);text-shadow:0 0 8px var(--holo-violet);">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polygon points="5,1 9,3 9,7 5,9 1,7 1,3" stroke="#7b2fff" stroke-width="1" fill="none"/><circle cx="5" cy="5" r="1.5" fill="#7b2fff"/></svg>
+              HOW TO USE — GENERATE MODE
+            </div>
+            <ol class="instr-steps">
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">1</span><span>Get a free API key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--holo-violet);">console.anthropic.com</a> — new accounts get $5 free credits (~250 scans).</span></li>
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">2</span><span>Paste your key (starts with <code>sk-ant-</code>) into the API key field below.</span></li>
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">3</span><span>Enter your total floor area, select the space type, and choose a layout shape.</span></li>
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">4</span><span>Click <strong>GENERATE FLOOR PLAN</strong>. The AI Agent builds and animates your plan in real time.</span></li>
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">5</span><span>Download the result as SVG or regenerate with different parameters.</span></li>
+            </ol>
+            <div class="instr-note instr-note-violet">
+              <strong style="color:rgba(0,255,157,0.9);">✓ AI-generated:</strong> Claude builds a complete, dimensioned floor plan based on your inputs — rooms, doors, windows, and scale. Each generation costs ~₱1.00. Key is never stored.
+            </div>
+          </div>
+
+        </div><!-- /mode-instructions -->
+
+      </div><!-- /mode-selector -->
+
+      <!-- ── UPLOAD PANEL (Option 1) ── -->
+      <div id="genUploadPanel" style="display:none;">
+
+        <!-- Step 1: Area -->
+        <div class="mode-selector" style="margin-bottom:12px;">
+          <div class="mode-selector-label">STEP 01 — ENTER FLOOR AREA</div>
+          <div class="gen-area-row">
+            <input type="number" id="genUpAreaInput" class="gen-area-input" placeholder="80" min="20" max="500" oninput="genUpOnAreaInput()"/>
+            <div class="gen-area-unit">sqm</div>
+          </div>
+          <div class="gen-presets">
+            <button class="ghost-btn gen-preset" onclick="genUpSetArea(30)">30 sqm</button>
+            <button class="ghost-btn gen-preset" onclick="genUpSetArea(50)">50 sqm</button>
+            <button class="ghost-btn gen-preset" onclick="genUpSetArea(80)">80 sqm</button>
+            <button class="ghost-btn gen-preset" onclick="genUpSetArea(120)">120 sqm</button>
+            <button class="ghost-btn gen-preset" onclick="genUpSetArea(200)">200 sqm</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Space type -->
+        <div class="mode-selector" style="margin-bottom:12px;">
+          <div class="mode-selector-label">STEP 02 — SELECT SPACE TYPE</div>
+          <div class="gen-pill-grid" id="genUpTypePills">
+            <button class="ghost-btn gen-pill" onclick="genUpSelectType(this,'Studio / 1-Bedroom')">Studio / 1-Bedroom</button>
+            <button class="ghost-btn gen-pill" onclick="genUpSelectType(this,'2-Bedroom Home')">2-Bedroom Home</button>
+            <button class="ghost-btn gen-pill" onclick="genUpSelectType(this,'3-Bedroom Home')">3-Bedroom Home</button>
+            <button class="ghost-btn gen-pill" onclick="genUpSelectType(this,'4-Bedroom Home')">4-Bedroom Home</button>
+            <button class="ghost-btn gen-pill" onclick="genUpSelectType(this,'Office / Commercial')">Office / Commercial</button>
+            <button class="ghost-btn gen-pill" onclick="genUpSelectType(this,'Apartment Unit')">Apartment Unit</button>
+            <button class="ghost-btn gen-pill" onclick="genUpSelectType(this,'Townhouse')">Townhouse</button>
+            <button class="ghost-btn gen-pill" onclick="genUpSelectType(this,'Bungalow')">Bungalow</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Layout shape -->
+        <div class="mode-selector" style="margin-bottom:12px;">
+          <div class="mode-selector-label">STEP 03 — SELECT LAYOUT SHAPE</div>
+          <div class="gen-layout-grid" id="genUpLayoutCards">
+            <div class="mode-card gen-layout-card" onclick="genUpSelectLayout(this,'Square')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="6" y="6" width="32" height="32" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">SQUARE</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genUpSelectLayout(this,'Rectangular')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="3" y="10" width="38" height="24" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">RECTANGULAR</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genUpSelectLayout(this,'L-Shaped')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><polygon points="4,4 24,4 24,20 40,20 40,40 4,40" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">L-SHAPED</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genUpSelectLayout(this,'T-Shaped')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><polygon points="4,4 40,4 40,18 28,18 28,40 16,40 16,18 4,18" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">T-SHAPED</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genUpSelectLayout(this,'U-Shaped')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><polygon points="4,4 16,4 16,30 28,30 28,4 40,4 40,40 4,40" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">U-SHAPED</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genUpSelectLayout(this,'Open Plan')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="4" y="4" width="36" height="36" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/><line x1="22" y1="4" x2="22" y2="28" stroke="currentColor" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/><line x1="4" y1="22" x2="40" y2="22" stroke="currentColor" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/></svg>
+              <span class="gen-layout-label">OPEN PLAN</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genUpSelectLayout(this,'Courtyard')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="4" y="4" width="36" height="36" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/><rect x="14" y="14" width="16" height="16" stroke="currentColor" stroke-width="0.8" fill="rgba(10,14,26,0.9)"/></svg>
+              <span class="gen-layout-label">COURTYARD</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genUpSelectLayout(this,'Custom')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><polygon points="22,4 38,12 38,28 30,40 14,40 6,28 6,12" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/><line x1="22" y1="16" x2="22" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="22" x2="25" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <span class="gen-layout-label">CUSTOM</span>
+            </div>
+          </div>
+          <div id="genUpCustomWrap" style="display:none; margin-top:12px;">
+            <textarea id="genUpCustomDesc" class="gen-custom-textarea" rows="3"
+              placeholder="Describe your layout... e.g. 'Two-storey with garage on left, open kitchen-dining-living ground floor, master bedroom with en-suite upstairs.'"></textarea>
+            <p class="apikey-hint" style="margin-top:6px;">💡 Be specific — the AI reads your description to generate a tailored floor plan.</p>
+          </div>
+        </div>
+
+        <!-- Step 4: Upload multiple images -->
+        <div class="mode-selector" style="margin-bottom:12px;">
+          <div class="mode-selector-label">STEP 04 — UPLOAD FLOOR PLAN IMAGES</div>
+          <div class="upload-zone" id="genUploadZone" style="min-height:180px;">
+            <input type="file" id="genFileInput" accept="image/*" multiple/>
+            <div class="upload-inner">
+              <div class="upload-hexagon">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                  <polygon points="32,4 58,18 58,46 32,60 6,46 6,18" stroke="#00f5ff" stroke-width="1" fill="rgba(0,245,255,0.03)" class="hex-anim"/>
+                  <polygon points="32,14 50,24 50,44 32,54 14,44 14,24" stroke="#00f5ff" stroke-width="0.5" fill="none" opacity="0.3"/>
+                  <g class="upload-arrow">
+                    <line x1="32" y1="42" x2="32" y2="24" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
+                    <polyline points="25,31 32,24 39,31" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <line x1="24" y1="44" x2="40" y2="44" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
+                  </g>
+                </svg>
+              </div>
+              <p class="upload-label">DRAG &amp; DROP FLOOR PLANS</p>
+              <p class="upload-sub">or click to select — multiple images supported</p>
+              <div class="upload-formats">
+                <span class="fmt-tag">JPG</span><span class="fmt-tag">PNG</span><span class="fmt-tag">WEBP</span><span class="fmt-tag">BMP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thumbnails -->
+          <div class="thumb-bar" id="genUpThumbBar" style="display:none;">
+            <div class="thumb-bar-header">
+              <span class="thumb-bar-label" id="genUpThumbBarLabel">0 IMAGES QUEUED</span>
+              <button class="ghost-btn" id="genUpClearAllBtn" onclick="genUpClearAll()">✕ CLEAR ALL</button>
+            </div>
+            <div class="thumb-grid" id="genUpThumbGrid"></div>
+          </div>
+
+          <!-- Active preview -->
+          <div class="preview-wrap" id="genPreviewWrap" style="display:none;">
+            <div class="preview-header">
+              <span class="preview-label" id="genPreviewName">ACTIVE — IMAGE 1</span>
+              <button class="ghost-btn" onclick="clearGenUpload()">✕ CLEAR</button>
+            </div>
+            <div class="preview-frame">
+              <img id="genPreviewImg" src="" alt=""/>
+              <div class="preview-corners"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="img-nav" id="genUpImgNav" style="display:none;">
+              <button class="img-nav-btn" id="genUpPrevBtn" onclick="genUpNavigate(-1)" disabled>&#8592; PREV</button>
+              <span class="img-nav-counter" id="genUpNavCounter">1 / 1</span>
+              <button class="img-nav-btn" id="genUpNextBtn" onclick="genUpNavigate(1)" disabled>NEXT &#8594;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analyze button -->
+        <button class="boq-analyze-btn" id="genAnalyzeUploadBtn" onclick="genAnalyzeUpload()" disabled>
+          <span class="btn-glow"></span>
+          <span class="btn-text" id="genAnalyzeBtnText">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><circle cx="8" cy="8" r="6" stroke="#0a0e1a" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="#0a0e1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            INITIATE ANALYSIS
+          </span>
+        </button>
+
+        <!-- AI Agent panel -->
+        <div class="agent-panel" id="genUpAgentPanel" style="display:none; margin-top:20px;">
+          <div class="agent-header">
+            <div class="agent-avatar">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <polygon points="11,2 20,6.5 20,15.5 11,20 2,15.5 2,6.5" stroke="#00f5ff" stroke-width="1.2" fill="rgba(0,245,255,0.06)"/>
+                <circle cx="11" cy="11" r="3" fill="#00f5ff"/>
+                <circle cx="11" cy="11" r="5" stroke="#00f5ff" stroke-width="0.5" fill="none" opacity="0.4" class="agent-pulse-ring"/>
+              </svg>
+            </div>
+            <div class="agent-identity">
+              <span class="agent-name">HOLO·AGENT</span>
+              <span class="agent-status" id="genUpAgentStatus">INITIALIZING...</span>
+            </div>
+            <div class="agent-indicator" id="genUpAgentDots">
+              <span class="agent-dot"></span>
+              <span class="agent-dot"></span>
+              <span class="agent-dot"></span>
+            </div>
+          </div>
+          <div class="agent-log" id="genUpAgentLog"></div>
+          <div class="agent-progress-wrap">
+            <div class="agent-progress-bar"><div class="agent-progress-fill" id="genUpAgentFill"></div></div>
+            <span class="agent-progress-label" id="genUpAgentPct">0%</span>
+          </div>
+        </div>
+
+        <!-- Floor plan output -->
+        <div id="genUpOutputPanel" style="display:none; margin-top:20px; border:1px solid var(--holo-border); border-radius:8px; background:var(--holo-bg2); padding:20px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <span class="panel-tag" style="font-size:10px; letter-spacing:2px;" id="genUpOutputTitle">GENERATED FLOOR PLAN</span>
+            <div style="display:flex; gap:8px;">
+              <button class="ghost-btn" onclick="genUpDownloadSVG()">⬇ SVG</button>
+              <button class="ghost-btn" onclick="genUpRegenerate()">↺ REGENERATE</button>
+            </div>
+          </div>
+          <svg id="genUpFpCanvas" viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg"
+            style="width:100%; border:2px solid #2C3A47; border-radius:4px; background:#F8F4EE; display:block; box-shadow:0 4px 24px rgba(0,0,0,0.18);"></svg>
+          <div id="genUpRoomCards" class="gen-room-cards"></div>
+        </div>
+
+        <!-- Error -->
+        <div class="error-panel" id="genUpErrorPanel" style="display:none; margin-top:14px;">
+          <span class="err-icon">⚠</span>
+          <span id="genUpErrorMsg">Analysis failed.</span>
+        </div>
+
+      </div><!-- /genUploadPanel -->
+
+      <!-- ── GENERATE PANEL ── -->
+      <div id="genGeneratePanel" style="display:none;">
+
+        <!-- Step 1: Area -->
+        <div class="mode-selector" style="margin-bottom:12px;">
+          <div class="mode-selector-label">STEP 01 — ENTER FLOOR AREA</div>
+          <div class="gen-area-row">
+            <input type="number" id="genAreaInput" class="gen-area-input" placeholder="80" min="20" max="500" oninput="genOnAreaInput()"/>
+            <div class="gen-area-unit">sqm</div>
+          </div>
+          <div class="gen-presets">
+            <button class="ghost-btn gen-preset" onclick="genSetArea(30)">30 sqm</button>
+            <button class="ghost-btn gen-preset" onclick="genSetArea(50)">50 sqm</button>
+            <button class="ghost-btn gen-preset" onclick="genSetArea(80)">80 sqm</button>
+            <button class="ghost-btn gen-preset" onclick="genSetArea(120)">120 sqm</button>
+            <button class="ghost-btn gen-preset" onclick="genSetArea(200)">200 sqm</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Space type -->
+        <div class="mode-selector" style="margin-bottom:12px;">
+          <div class="mode-selector-label">STEP 02 — SELECT SPACE TYPE</div>
+          <div class="gen-pill-grid" id="genTypePills">
+            <button class="ghost-btn gen-pill" onclick="genSelectType(this,'Studio / 1-Bedroom')">Studio / 1-Bedroom</button>
+            <button class="ghost-btn gen-pill" onclick="genSelectType(this,'2-Bedroom Home')">2-Bedroom Home</button>
+            <button class="ghost-btn gen-pill" onclick="genSelectType(this,'3-Bedroom Home')">3-Bedroom Home</button>
+            <button class="ghost-btn gen-pill" onclick="genSelectType(this,'4-Bedroom Home')">4-Bedroom Home</button>
+            <button class="ghost-btn gen-pill" onclick="genSelectType(this,'Office / Commercial')">Office / Commercial</button>
+            <button class="ghost-btn gen-pill" onclick="genSelectType(this,'Apartment Unit')">Apartment Unit</button>
+            <button class="ghost-btn gen-pill" onclick="genSelectType(this,'Townhouse')">Townhouse</button>
+            <button class="ghost-btn gen-pill" onclick="genSelectType(this,'Bungalow')">Bungalow</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Layout shape -->
+        <div class="mode-selector" style="margin-bottom:12px;">
+          <div class="mode-selector-label">STEP 03 — SELECT LAYOUT SHAPE</div>
+          <div class="gen-layout-grid" id="genLayoutCards">
+            <div class="mode-card gen-layout-card" onclick="genSelectLayout(this,'Square')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="6" y="6" width="32" height="32" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">SQUARE</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genSelectLayout(this,'Rectangular')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="3" y="10" width="38" height="24" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">RECTANGULAR</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genSelectLayout(this,'L-Shaped')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><polygon points="4,4 24,4 24,20 40,20 40,40 4,40" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">L-SHAPED</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genSelectLayout(this,'T-Shaped')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><polygon points="4,4 40,4 40,18 28,18 28,40 16,40 16,18 4,18" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">T-SHAPED</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genSelectLayout(this,'U-Shaped')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><polygon points="4,4 16,4 16,30 28,30 28,4 40,4 40,40 4,40" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/></svg>
+              <span class="gen-layout-label">U-SHAPED</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genSelectLayout(this,'Open Plan')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="4" y="4" width="36" height="36" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/><line x1="22" y1="4" x2="22" y2="28" stroke="currentColor" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/><line x1="4" y1="22" x2="40" y2="22" stroke="currentColor" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/></svg>
+              <span class="gen-layout-label">OPEN PLAN</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genSelectLayout(this,'Courtyard')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><rect x="4" y="4" width="36" height="36" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/><rect x="14" y="14" width="16" height="16" stroke="currentColor" stroke-width="0.8" fill="rgba(10,14,26,0.9)"/></svg>
+              <span class="gen-layout-label">COURTYARD</span>
+            </div>
+            <div class="mode-card gen-layout-card" onclick="genSelectLayout(this,'Custom')">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><polygon points="22,4 38,12 38,28 30,40 14,40 6,28 6,12" stroke="currentColor" stroke-width="1.2" fill="rgba(123,47,255,0.05)"/><line x1="22" y1="16" x2="22" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="19" y1="22" x2="25" y2="22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <span class="gen-layout-label">CUSTOM</span>
+            </div>
+          </div>
+          <!-- Custom description -->
+          <div id="genCustomWrap" style="display:none; margin-top:12px;">
+            <textarea id="genCustomDesc" class="gen-custom-textarea" rows="3"
+              placeholder="Describe your layout... e.g. 'Two-storey with garage on left, open kitchen-dining-living ground floor, master bedroom with en-suite upstairs.'"></textarea>
+            <p class="apikey-hint" style="margin-top:6px;">💡 Be specific — the AI reads your description to generate a tailored floor plan.</p>
+          </div>
+        </div>
+
+        <!-- Step 4: Upload reference images (optional) -->
+        <div class="mode-selector" style="margin-bottom:12px;">
+          <div class="mode-selector-label">STEP 04 — UPLOAD REFERENCE IMAGES <span style="font-size:9px;color:var(--holo-text2);letter-spacing:0;">(OPTIONAL)</span></div>
+          <div class="upload-zone" id="genRefUploadZone" style="min-height:160px;">
+            <input type="file" id="genRefFileInput" accept="image/*" multiple/>
+            <div class="upload-inner">
+              <div class="upload-hexagon">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                  <polygon points="32,4 58,18 58,46 32,60 6,46 6,18" stroke="#00f5ff" stroke-width="1" fill="rgba(0,245,255,0.03)" class="hex-anim"/>
+                  <polygon points="32,14 50,24 50,44 32,54 14,44 14,24" stroke="#00f5ff" stroke-width="0.5" fill="none" opacity="0.3"/>
+                  <g class="upload-arrow">
+                    <line x1="32" y1="42" x2="32" y2="24" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
+                    <polyline points="25,31 32,24 39,31" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <line x1="24" y1="44" x2="40" y2="44" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
+                  </g>
+                </svg>
+              </div>
+              <p class="upload-label">DRAG &amp; DROP REFERENCE IMAGES</p>
+              <p class="upload-sub">or click to select — multiple images supported</p>
+              <div class="upload-formats">
+                <span class="fmt-tag">JPG</span><span class="fmt-tag">PNG</span><span class="fmt-tag">WEBP</span><span class="fmt-tag">BMP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thumbnails -->
+          <div class="thumb-bar" id="genRefThumbBar" style="display:none;">
+            <div class="thumb-bar-header">
+              <span class="thumb-bar-label" id="genRefThumbBarLabel">0 IMAGES QUEUED</span>
+              <button class="ghost-btn" onclick="genRefClearAll()">✕ CLEAR ALL</button>
+            </div>
+            <div class="thumb-grid" id="genRefThumbGrid"></div>
+          </div>
+
+          <!-- Active preview -->
+          <div class="preview-wrap" id="genRefPreviewWrap" style="display:none;">
+            <div class="preview-header">
+              <span class="preview-label" id="genRefPreviewName">ACTIVE — IMAGE 1</span>
+              <button class="ghost-btn" onclick="genRefClearActive()">✕ CLEAR</button>
+            </div>
+            <div class="preview-frame">
+              <img id="genRefPreviewImg" src="" alt=""/>
+              <div class="preview-corners"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="img-nav" id="genRefImgNav" style="display:none;">
+              <button class="img-nav-btn" id="genRefPrevBtn" onclick="genRefNavigate(-1)" disabled>&#8592; PREV</button>
+              <span class="img-nav-counter" id="genRefNavCounter">1 / 1</span>
+              <button class="img-nav-btn" id="genRefNextBtn" onclick="genRefNavigate(1)" disabled>NEXT &#8594;</button>
+            </div>
+          </div>
+          <p class="apikey-hint" style="margin-top:8px;">💡 Upload existing floor plans as reference — the AI uses them to inform the generated layout.</p>
+        </div>
+
+        <!-- Step 5: API Key with howto-toggle -->
+        <div class="apikey-block" id="genApikeyBlock" style="margin-bottom:16px;">
+          <label class="apikey-label">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="flex-shrink:0"><circle cx="4.5" cy="4.5" r="3" stroke="#7b2fff" stroke-width="1"/><line x1="6.5" y1="6.5" x2="10" y2="10" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+            STEP 05 — ANTHROPIC API KEY
+          </label>
+          <div class="howto-toggle" id="genHowtoToggle">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#7b2fff" stroke-width="1"/><text x="5" y="7.5" text-anchor="middle" fill="#7b2fff" font-size="7" font-family="monospace">?</text></svg>
+            HOW TO GET YOUR API KEY
+            <svg class="chevron" id="genHowtoChevron" width="10" height="10" viewBox="0 0 10 10" fill="none"><polyline points="2,3 5,7 8,3" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </div>
+          <div class="howto-steps" id="genHowtoSteps" style="display:none;">
+            <ol class="steps-list">
+              <li class="step-item"><span class="step-num">01</span><div class="step-body"><span class="step-title">GO TO CONSOLE</span><span class="step-desc">Visit <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and sign in or create a free account.</span></div></li>
+              <li class="step-item"><span class="step-num">02</span><div class="step-body"><span class="step-title">OPEN API KEYS</span><span class="step-desc">Click your profile icon → <strong>API Keys</strong> in the left sidebar.</span></div></li>
+              <li class="step-item"><span class="step-num">03</span><div class="step-body"><span class="step-title">CREATE NEW KEY</span><span class="step-desc">Click <strong>+ Create Key</strong>, give it a name, then click <strong>Create</strong>.</span></div></li>
+              <li class="step-item"><span class="step-num">04</span><div class="step-body"><span class="step-title">COPY &amp; PASTE</span><span class="step-desc">Copy the key (starts with <code>sk-ant-</code>) and paste below. Shown only once.</span></div></li>
+              <li class="step-item"><span class="step-num">05</span><div class="step-body"><span class="step-title">ADD BILLING (IF NEEDED)</span><span class="step-desc">New accounts may need a payment method under <strong>Plans &amp; Billing</strong>.</span></div></li>
+            </ol>
+            <div class="howto-note">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1L10 9.5H1L5.5 1Z" stroke="#ffb700" stroke-width="1" fill="none"/><line x1="5.5" y1="4.5" x2="5.5" y2="6.5" stroke="#ffb700" stroke-width="1" stroke-linecap="round"/><circle cx="5.5" cy="7.8" r="0.5" fill="#ffb700"/></svg>
+              Key lives only in your browser — never sent to any third-party server.
+            </div>
+          </div>
+          <div class="apikey-row">
+            <input type="password" id="genApiKey" class="apikey-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false" oninput="genCheckReady()"/>
+            <button class="apikey-toggle" id="genApiKeyToggle" onclick="genToggleKey('genApiKey')">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="8" rx="6" ry="3.5" stroke="#7b2fff" stroke-width="1.2"/><circle cx="8" cy="8" r="1.8" fill="#7b2fff"/></svg>
+            </button>
+          </div>
+          <p class="apikey-hint">🔒 Never stored — lives only in memory for this session.</p>
+        </div>
+
+        <!-- Generate button -->
+        <button class="boq-analyze-btn" id="genGenerateBtn" onclick="genGeneratePlan()" disabled>
+          <span class="btn-glow"></span>
+          <span class="btn-text">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+              <polygon points="8,2 14,6 14,10 8,14 2,10 2,6" stroke="#0a0e1a" stroke-width="1.5" fill="none"/>
+              <circle cx="8" cy="8" r="2.5" fill="#0a0e1a"/>
+            </svg>
+            GENERATE FLOOR PLAN WITH AI AGENT
+          </span>
+        </button>
+
+        <!-- AI Agent — reuses existing agent-panel styles -->
+        <div class="agent-panel" id="genAgentPanel" style="display:none; margin-top:20px;">
+          <div class="agent-header">
+            <div class="agent-avatar">
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <polygon points="11,2 20,6.5 20,15.5 11,20 2,15.5 2,6.5" stroke="#00f5ff" stroke-width="1.2" fill="rgba(0,245,255,0.06)"/>
+                <circle cx="11" cy="11" r="3" fill="#00f5ff"/>
+                <circle cx="11" cy="11" r="5" stroke="#00f5ff" stroke-width="0.5" fill="none" opacity="0.4" class="agent-pulse-ring"/>
+              </svg>
+            </div>
+            <div class="agent-identity">
+              <span class="agent-name">HOLO·AGENT</span>
+              <span class="agent-status" id="genAgentStatus">INITIALIZING...</span>
+            </div>
+            <div class="agent-indicator" id="genAgentDots">
+              <span class="agent-dot"></span>
+              <span class="agent-dot"></span>
+              <span class="agent-dot"></span>
+            </div>
+          </div>
+          <div class="agent-log" id="genAgentLog"></div>
+          <div class="agent-progress-wrap">
+            <div class="agent-progress-bar"><div class="agent-progress-fill" id="genAgentFill"></div></div>
+            <span class="agent-progress-label" id="genAgentPct">0%</span>
+          </div>
+        </div>
+
+        <!-- Floor plan output -->
+        <div id="genOutputPanel" style="display:none; margin-top:20px; border:1px solid var(--holo-border); border-radius:8px; background:var(--holo-bg2); padding:20px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <span class="panel-tag" style="font-size:10px; letter-spacing:2px;" id="genOutputTitle">GENERATED FLOOR PLAN</span>
+            <div style="display:flex; gap:8px;">
+              <button class="ghost-btn" onclick="genDownloadSVG()">⬇ SVG</button>
+              <button class="ghost-btn" onclick="genRegenerate()">↺ REGENERATE</button>
+            </div>
+          </div>
+          <svg id="genFpCanvas" viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg"
+            style="width:100%; border:1px solid var(--holo-border); border-radius:6px; background:var(--holo-bg3); display:block;"></svg>
+          <div id="genRoomCards" class="gen-room-cards"></div>
+        </div>
+
+        <!-- Error -->
+        <div class="error-panel" id="genErrorPanel" style="display:none; margin-top:14px;">
+          <span class="err-icon">⚠</span>
+          <span id="genErrorMsg">Generation failed.</span>
+        </div>
+
+      </div><!-- /genGeneratePanel -->
+
+    </section><!-- /viewGenerator -->
+
     <!-- Footer -->
     <footer class="holo-footer">
       <div class="footer-left">
@@ -661,13 +1231,11 @@
         </div>
         <span class="footer-copy">© 2025 — SPATIAL INTELLIGENCE SYSTEM v2.0</span>
       </div>
-
       <div class="footer-center">
         <span class="footer-divider">|</span>
         <span class="footer-powered">POWERED BY CLAUDE AI</span>
         <span class="footer-divider">|</span>
       </div>
-
       <div class="footer-right-block">
         <span class="footer-created-label">CREATED BY</span>
         <span class="footer-author">Ceron Matthew Calsena</span>
@@ -682,5 +1250,6 @@
   <script src="js/app.js"></script>
   <script src="js/boq.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/generator.js"></script>
 </body>
 </html>
