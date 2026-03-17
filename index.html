@@ -89,7 +89,7 @@
               <div class="mode-card-body">
                 <span class="mode-card-title">NORMAL</span>
                 <span class="mode-card-sub">No API key needed · Free</span>
-                <span class="mode-card-desc">Instant results using standard residential proportions. Great for quick estimates.</span>
+                <span class="mode-card-desc">Uses built-in templates. <strong style="color:rgba(255,183,0,0.9);">Does NOT read your image</strong> — no text or room labels extracted.</span>
               </div>
               <div class="mode-card-check" id="checkNormal">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#00f5ff"/><path d="M4 7l2 2 4-4" stroke="#0a0e1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -111,7 +111,7 @@
               <div class="mode-card-body">
                 <span class="mode-card-title">ADVANCED</span>
                 <span class="mode-card-sub">Requires API key · ~₱1 per scan</span>
-                <span class="mode-card-desc">Claude AI reads your actual floor plan for precise, room-specific dimensions.</span>
+                <span class="mode-card-desc"><strong style="color:rgba(0,255,157,0.9);">Actually reads your image</strong> — room labels, text, scale bar, and all dimensions extracted by AI.</span>
               </div>
               <div class="mode-card-check" id="checkAdvanced" style="opacity:0;">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#7b2fff"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -148,6 +148,11 @@
               <span class="compare-advanced">Reads your image</span>
             </div>
             <div class="compare-row">
+              <span class="compare-feature">Reads image text</span>
+              <span class="compare-normal"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#888" stroke-width="1" opacity="0.4"/><line x1="4" y1="4" x2="9" y2="9" stroke="#888" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/><line x1="9" y1="4" x2="4" y2="9" stroke="#888" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/></svg> No</span>
+              <span class="compare-advanced"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#7b2fff" stroke-width="1"/><path d="M4 6.5l1.8 1.8 3.5-3.5" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Yes</span>
+            </div>
+            <div class="compare-row">
               <span class="compare-feature">Dimension accuracy</span>
               <span class="compare-normal">Estimated</span>
               <span class="compare-advanced">AI-measured</span>
@@ -180,10 +185,13 @@
               <ol class="instr-steps">
                 <li><span class="instr-num">1</span><span>Upload your floor plan image by dragging it into the zone below or clicking to browse.</span></li>
                 <li><span class="instr-num">2</span><span>Click <strong>INITIATE ANALYSIS</strong> — no API key needed, completely free.</span></li>
-                <li><span class="instr-num">3</span><span>Results appear instantly using standard residential room proportions as a baseline.</span></li>
-                <li><span class="instr-num">4</span><span>Use results for rough area estimates or as a starting point for the BOQ in Module 03.</span></li>
+                <li><span class="instr-num">3</span><span>The AI Agent animation plays, but results come from a <strong>built-in residential template</strong> — not from reading your image.</span></li>
+                <li><span class="instr-num">4</span><span>Room names, labels, and text on your floor plan are <strong>not read</strong> in this mode. Use results only for rough ballpark estimates.</span></li>
+                <li><span class="instr-num">5</span><span>For image-specific analysis, switch to <strong>Advanced mode</strong>.</span></li>
               </ol>
-              <div class="instr-note instr-note-cyan">Results are template-based — dimensions are typical for a residential unit of the detected size, not extracted from your specific image. For image-specific analysis, switch to Advanced mode.</div>
+              <div class="instr-note instr-note-cyan">
+                <strong style="color:rgba(255,183,0,0.9);">⚠ Important:</strong> Normal mode does NOT read text from your image. Labels like "Bedroom", "836 sq. ft.", or "1 Bathroom" on your floor plan are ignored — results are generated from standard templates only. Switch to Advanced mode for real AI image reading.
+              </div>
             </div>
             <!-- Advanced instructions (hidden by default) -->
             <div id="instructAdvanced" style="display:none;">
@@ -192,13 +200,15 @@
                 HOW TO USE — ADVANCED MODE
               </div>
               <ol class="instr-steps">
-                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">1</span><span>Get a free API key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--holo-violet);">console.anthropic.com</a> — new accounts get $5 free credits.</span></li>
-                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">2</span><span>Paste your key (starts with <code>sk-ant-</code>) into the API key field that appears below.</span></li>
-                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">3</span><span>Upload your floor plan image and click <strong>INITIATE ANALYSIS</strong>.</span></li>
-                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">4</span><span>Claude AI reads your specific image — detecting every room, measuring dimensions, and generating tailored observations.</span></li>
-                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">5</span><span>Results include per-room dimensions, confidence levels, AI observations, and a scale note — use these for accurate BOQ generation in Module 03.</span></li>
+                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">1</span><span>Get a free API key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--holo-violet);">console.anthropic.com</a> — new accounts get $5 free credits (~250 scans).</span></li>
+                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">2</span><span>Paste your key (starts with <code>sk-ant-</code>) into the API key field below.</span></li>
+                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">3</span><span>Upload your floor plan and click <strong>INITIATE ANALYSIS</strong>. Claude AI will <strong>actually read your image</strong>.</span></li>
+                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">4</span><span>The AI reads all text labels (e.g. "Bedroom", "836 sq. ft.", "1 Bathroom"), scale bars, room boundaries, and furniture symbols.</span></li>
+                <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">5</span><span>Results include real per-room dimensions, confidence scores, architectural observations, and a scale note — ideal for accurate BOQ generation.</span></li>
               </ol>
-              <div class="instr-note instr-note-violet">Each scan costs approximately ₱1.00 (about $0.02 USD). Your $5 free credits cover ~250 scans. The API key is never stored — it lives only in your browser session.</div>
+              <div class="instr-note instr-note-violet">
+                <strong style="color:rgba(0,255,157,0.9);">✓ Real AI reading:</strong> Claude reads every label, number, and room name directly from your floor plan image — just like a human would. Text like "836 sq. ft." is used as a known anchor to derive accurate room dimensions. Each scan costs ~₱1.00. Key is never stored.
+              </div>
             </div>
           </div>
 
@@ -666,8 +676,11 @@
 
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
   <script src="js/bg.js"></script>
   <script src="js/app.js"></script>
   <script src="js/boq.js"></script>
+  <script src="js/export.js"></script>
 </body>
 </html>
