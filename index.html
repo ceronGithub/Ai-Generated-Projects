@@ -24,7 +24,7 @@
     <!-- ASIDE LEFT -->
     <aside class="sidebar" id="sidebar">
 
-      <div class="sidebar-logo">HV-Mailer</div>
+      <div class="sidebar-logo">VH-Mailer</div>
 
       <!-- Sidebar Header: Date / Day / Event -->
       <div class="sidebar-header">
@@ -324,9 +324,21 @@
         </div>
       </section>
 
+      <!-- FOOTER -->
+      <footer class="app-footer">
+        <div class="footer-inner">
+          <span class="footer-brand">VH-Mailer</span>
+          <span class="footer-sep">◈</span>
+          <span class="footer-credit">Created by <strong>Ceron Matthew Calsena</strong></span>
+          <span class="footer-sep">◈</span>
+          <span class="footer-copy">&copy; <span id="footerYear"></span> Victoria's Haven</span>
+        </div>
+      </footer>
+
     </main>
   </div>
 
+  <script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
   <script src="matrix.js"></script>
   <script src="booking.js"></script>
   <script src="preview.js"></script>
