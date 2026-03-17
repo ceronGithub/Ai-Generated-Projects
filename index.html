@@ -383,71 +383,218 @@
         </div>
       </div>
 
-      <!-- UPLOAD ZONE for BOQ -->
+      <!-- BOQ Mode Selector -->
+      <div class="mode-selector" id="boqModeSelectorBlock" style="margin-bottom:16px;">
+
+        <div class="mode-selector-label">SELECT BOQ GENERATION MODE</div>
+
+        <div class="mode-cards">
+          <!-- Standard Mode -->
+          <div class="mode-card active" id="boqModeCardStd" onclick="setBOQMode('standard')">
+            <div class="mode-card-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="11" stroke="#00f5ff" stroke-width="1.2"/>
+                <path d="M9 14l3 3 7-7" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="mode-card-body">
+              <span class="mode-card-title">STANDARD</span>
+              <span class="mode-card-sub">No API key needed · Free</span>
+              <span class="mode-card-desc">Instant BOQ using built-in residential concrete work templates. Great for quick estimates.</span>
+            </div>
+            <div class="mode-card-check" id="boqCheckStd">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#00f5ff"/><path d="M4 7l2 2 4-4" stroke="#0a0e1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+
+          <!-- AI Mode -->
+          <div class="mode-card" id="boqModeCardAI" onclick="setBOQMode('ai')">
+            <div class="mode-card-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <polygon points="14,3 25,9 25,21 14,27 3,21 3,9" stroke="#7b2fff" stroke-width="1.2" fill="none"/>
+                <circle cx="14" cy="14" r="3" fill="#7b2fff"/>
+                <line x1="14" y1="3" x2="14" y2="8" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                <line x1="14" y1="20" x2="14" y2="27" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                <line x1="3" y1="9" x2="7.5" y2="11.5" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+                <line x1="20.5" y1="16.5" x2="25" y2="21" stroke="#7b2fff" stroke-width="1" opacity="0.5"/>
+              </svg>
+            </div>
+            <div class="mode-card-body">
+              <span class="mode-card-title">AI-POWERED</span>
+              <span class="mode-card-sub">Requires API key · ~₱1 per scan</span>
+              <span class="mode-card-desc">Claude AI reads your actual floor plan image and generates a precise, image-specific BOQ.</span>
+            </div>
+            <div class="mode-card-check" id="boqCheckAI" style="opacity:0;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" fill="#7b2fff"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="mode-compare">
+          <div class="compare-row compare-header">
+            <span class="compare-feature"></span>
+            <span class="compare-normal">STANDARD</span>
+            <span class="compare-advanced">AI-POWERED</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">API Key Required</span>
+            <span class="compare-normal"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#00f5ff" stroke-width="1"/><path d="M4 6.5l1.8 1.8 3.5-3.5" stroke="#00f5ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> No</span>
+            <span class="compare-advanced"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5.5" stroke="#7b2fff" stroke-width="1"/><line x1="4" y1="4" x2="9" y2="9" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round"/><line x1="9" y1="4" x2="4" y2="9" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round"/></svg> Yes</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Cost per scan</span>
+            <span class="compare-normal">Free</span>
+            <span class="compare-advanced">~₱1.00</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Generation speed</span>
+            <span class="compare-normal">Instant</span>
+            <span class="compare-advanced">10–20 sec</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Quantity basis</span>
+            <span class="compare-normal">Template-based</span>
+            <span class="compare-advanced">Image-extracted</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Room-specific scope</span>
+            <span class="compare-normal">Generic</span>
+            <span class="compare-advanced">Tailored to plan</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Dimension accuracy</span>
+            <span class="compare-normal">Estimated</span>
+            <span class="compare-advanced">AI-measured</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-feature">Best for</span>
+            <span class="compare-normal">Budget ballpark</span>
+            <span class="compare-advanced">Accurate estimation</span>
+          </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="mode-instructions" style="margin-top:14px;">
+          <!-- Standard -->
+          <div id="boqInstructStd">
+            <div class="instr-title">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#00f5ff" stroke-width="1"/><line x1="5" y1="3" x2="5" y2="5.5" stroke="#00f5ff" stroke-width="1" stroke-linecap="round"/><circle cx="5" cy="7" r="0.5" fill="#00f5ff"/></svg>
+              HOW TO USE — STANDARD MODE
+            </div>
+            <ol class="instr-steps">
+              <li><span class="instr-num">1</span><span>Upload one or more floor plan images — multiple files supported.</span></li>
+              <li><span class="instr-num">2</span><span>Click <strong>GENERATE BOQ ANALYSIS</strong> — no API key needed, completely free.</span></li>
+              <li><span class="instr-num">3</span><span>Each image is processed in sequence. Results stack below — one full BOQ per image.</span></li>
+              <li><span class="instr-num">4</span><span>Click any thumbnail to scroll to that image's BOQ. Edit unit rates by clicking blue values.</span></li>
+            </ol>
+            <div class="instr-note instr-note-cyan">BOQ quantities are template-based — derived from standard residential concrete work proportions, not extracted from your specific image. For image-specific quantities, switch to AI-Powered mode.</div>
+          </div>
+          <!-- AI-Powered -->
+          <div id="boqInstructAI" style="display:none;">
+            <div class="instr-title" style="color:var(--holo-violet);text-shadow:0 0 8px var(--holo-violet);">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polygon points="5,1 9,3 9,7 5,9 1,7 1,3" stroke="#7b2fff" stroke-width="1" fill="none"/><circle cx="5" cy="5" r="1.5" fill="#7b2fff"/></svg>
+              HOW TO USE — AI-POWERED MODE
+            </div>
+            <ol class="instr-steps">
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">1</span><span>Enter your Anthropic API key in <strong>Module 01</strong> (Floor Plan Analyzer tab) — it will be used here automatically.</span></li>
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">2</span><span>Upload your floor plan images — multiple files supported.</span></li>
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">3</span><span>Click <strong>GENERATE BOQ ANALYSIS</strong>. Claude AI reads each image and generates tailored concrete work quantities.</span></li>
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">4</span><span>Each image produces a unique BOQ based on detected rooms, wall lengths, and slab areas from your actual plan.</span></li>
+              <li><span class="instr-num" style="border-color:rgba(123,47,255,0.3);color:var(--holo-violet);">5</span><span>Edit unit rates by clicking any blue value. Export all BOQs to CSV with one click.</span></li>
+            </ol>
+            <div class="instr-note instr-note-violet">Each scan costs ~₱1.00. Your $5 free Anthropic credits cover ~250 scans. Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--holo-violet);">console.anthropic.com</a>.</div>
+          </div>
+        </div>
+
+        <!-- AI API key field (shown when AI mode selected) -->
+        <div class="apikey-block" id="boqApikeyBlock" style="display:none;margin-top:12px;">
+          <label class="apikey-label">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="flex-shrink:0"><circle cx="4.5" cy="4.5" r="3" stroke="#7b2fff" stroke-width="1"/><line x1="6.5" y1="6.5" x2="10" y2="10" stroke="#7b2fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+            ANTHROPIC API KEY
+          </label>
+          <div class="apikey-row">
+            <input type="password" id="boqApiKeyInput" class="apikey-input" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false" />
+            <button class="apikey-toggle" id="boqApiKeyToggle" title="Show/Hide">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="8" rx="6" ry="3.5" stroke="#7b2fff" stroke-width="1.2"/><circle cx="8" cy="8" r="1.8" fill="#7b2fff"/></svg>
+            </button>
+          </div>
+          <p class="apikey-hint">🔒 Never stored — lives only in memory for this session.</p>
+        </div>
+
+      </div>
+
+      <!-- Upload zone -->
       <div class="boq-upload-panel" id="boqUploadPanel">
-        <div class="boq-upload-grid">
-
-          <!-- Left: upload -->
-          <div class="boq-upload-left">
-            <div class="boq-upload-zone" id="boqUploadZone">
-              <input type="file" id="boqFileInput" accept="image/*" />
-              <div class="boq-upload-inner">
-                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                  <polygon points="32,4 58,18 58,46 32,60 6,46 6,18" stroke="#00f5ff" stroke-width="1" fill="rgba(0,245,255,0.03)" class="hex-anim"/>
-                  <polygon points="32,14 50,24 50,44 32,54 14,44 14,24" stroke="#00f5ff" stroke-width="0.5" fill="none" opacity="0.3"/>
-                  <g class="upload-arrow">
-                    <line x1="32" y1="42" x2="32" y2="24" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
-                    <polyline points="25,31 32,24 39,31" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    <line x1="24" y1="44" x2="40" y2="44" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
-                  </g>
-                </svg>
-                <p class="upload-label" style="font-size:10px;">UPLOAD FLOOR PLAN</p>
-                <p class="upload-sub">Drag &amp; drop or click to browse</p>
-                <div class="upload-formats">
-                  <span class="fmt-tag">JPG</span><span class="fmt-tag">PNG</span><span class="fmt-tag">WEBP</span>
-                </div>
-              </div>
+        <div class="upload-zone" id="boqUploadZone" style="min-height:200px;">
+          <input type="file" id="boqFileInput" accept="image/*" multiple />
+          <div class="upload-inner">
+            <div class="upload-hexagon">
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <polygon points="32,4 58,18 58,46 32,60 6,46 6,18" stroke="#00f5ff" stroke-width="1" fill="rgba(0,245,255,0.03)" class="hex-anim"/>
+                <polygon points="32,14 50,24 50,44 32,54 14,44 14,24" stroke="#00f5ff" stroke-width="0.5" fill="none" opacity="0.3"/>
+                <g class="upload-arrow">
+                  <line x1="32" y1="42" x2="32" y2="24" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
+                  <polyline points="25,31 32,24 39,31" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                  <line x1="24" y1="44" x2="40" y2="44" stroke="#00f5ff" stroke-width="1.5" stroke-linecap="round"/>
+                </g>
+              </svg>
+            </div>
+            <p class="upload-label">DRAG &amp; DROP FLOOR PLANS</p>
+            <p class="upload-sub">or click to select — multiple images supported</p>
+            <div class="upload-formats">
+              <span class="fmt-tag">JPG</span><span class="fmt-tag">PNG</span><span class="fmt-tag">WEBP</span><span class="fmt-tag">BMP</span>
             </div>
           </div>
+        </div>
 
-          <!-- Right: preview + button -->
-          <div class="boq-upload-right" id="boqPreviewPanel" style="display:none;">
-            <div class="boq-preview-frame">
-              <img id="boqPreviewImg" src="" alt="Floor plan preview" />
-              <div class="preview-corners"><span></span><span></span><span></span><span></span></div>
-              <div class="boq-preview-label">INPUT SCAN READY</div>
-            </div>
+        <!-- Thumbnail gallery -->
+        <div class="thumb-bar" id="boqThumbBar" style="display:none;">
+          <div class="thumb-bar-header">
+            <span class="thumb-bar-label" id="boqThumbBarLabel">0 IMAGES LOADED</span>
+            <button class="ghost-btn" id="boqClearAllBtn">✕ CLEAR ALL</button>
+          </div>
+          <div class="thumb-grid" id="boqThumbGrid"></div>
+        </div>
+
+        <!-- Active preview -->
+        <div class="preview-wrap" id="boqPreviewWrap">
+          <div class="preview-header">
+            <span class="preview-label" id="boqPreviewLabel">ACTIVE SCAN — IMAGE 1</span>
+            <button class="ghost-btn" id="boqClearBtn">✕ CLEAR</button>
+          </div>
+          <div class="preview-frame">
+            <img id="boqPreviewImg" src="" alt="Floor plan" />
+            <div class="preview-corners"><span></span><span></span><span></span><span></span></div>
+          </div>
+          <div class="img-nav" id="boqImgNav" style="display:none;">
+            <button class="img-nav-btn" id="boqPrevBtn" onclick="boqNavigate(-1)" disabled>&#8592; PREV</button>
+            <span class="img-nav-counter" id="boqNavCounter">1 / 1</span>
+            <button class="img-nav-btn" id="boqNextBtn" onclick="boqNavigate(1)" disabled>NEXT &#8594;</button>
           </div>
 
+          <!-- Analyze button -->
+          <button class="boq-analyze-btn" id="boqAnalyzeBtn" disabled>
+            <span class="btn-glow"></span>
+            <span class="btn-text" id="boqBtnText">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+                <rect x="2" y="2" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
+                <rect x="9" y="2" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
+                <rect x="2" y="9" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
+                <rect x="9" y="9" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
+              </svg>
+              GENERATE BOQ ANALYSIS
+            </span>
+          </button>
         </div>
 
-        <!-- Instruction text -->
-        <div class="boq-upload-hint" id="boqUploadHint">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#00f5ff" stroke-width="1"/><line x1="7" y1="4" x2="7" y2="7.5" stroke="#00f5ff" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="10" r="0.7" fill="#00f5ff"/></svg>
-          Upload your floor plan image — the AI will analyze room dimensions and automatically generate a customized BOQ for concrete works.
-        </div>
-
-        <!-- BOQ Analysis Button -->
-        <button class="boq-analyze-btn" id="boqAnalyzeBtn" disabled onclick="runBOQAnalysis()">
-          <span class="btn-glow"></span>
-          <span class="btn-text">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
-              <rect x="2" y="2" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
-              <rect x="9" y="2" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
-              <rect x="2" y="9" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
-              <rect x="9" y="9" width="5" height="5" stroke="#0a0e1a" stroke-width="1.3" rx="1"/>
-            </svg>
-            GENERATE BOQ ANALYSIS
-          </span>
-        </button>
-
-        <!-- BOQ error -->
-        <div class="error-panel" id="boqErrorPanel" style="margin-top:10px;">
+        <!-- Error -->
+        <div class="error-panel" id="boqErrorPanel">
           <span class="err-icon">⚠</span>
           <span id="boqErrorMsg">Analysis failed.</span>
         </div>
 
-        <!-- BOQ Loading -->
+        <!-- Loading -->
         <div class="boq-loading" id="boqLoadingState" style="display:none;">
           <div class="holo-scanner" style="width:70px;height:70px;">
             <div class="scanner-ring r1" style="width:70px;height:70px;"></div>
@@ -458,45 +605,36 @@
           <p class="loading-msg" id="boqLoadingMsg">ANALYZING FLOOR PLAN...</p>
           <div class="loading-bar" style="width:280px;"><div class="loading-fill" id="boqLoadingFill"></div></div>
         </div>
-
       </div>
 
-      <!-- BOQ RESULTS (hidden until analysis done) -->
-      <div id="boqResultsArea" style="display:none;">
-        <div class="boq-info-strip">
-          <div class="boq-info-item"><span class="boq-info-label">TOTAL FLOOR AREA</span><span class="boq-info-val" id="boqArea">—</span></div>
-          <div class="boq-info-item"><span class="boq-info-label">TOTAL ROOMS</span><span class="boq-info-val" id="boqRooms">—</span></div>
-          <div class="boq-info-item"><span class="boq-info-label">CONCRETE GRADE</span><span class="boq-info-val">C25/30 (1:2:4)</span></div>
-          <div class="boq-info-item"><span class="boq-info-label">CURRENCY</span><span class="boq-info-val">PHP</span></div>
-        </div>
-        <div class="boq-table-wrap">
-          <table class="boq-table" id="boqTable">
-            <thead>
-              <tr>
-                <th class="col-no">No.</th>
-                <th class="col-desc">Description of Work</th>
-                <th class="col-loc">Location / Scope</th>
-                <th class="col-num">L (m)</th>
-                <th class="col-num">W (m)</th>
-                <th class="col-num">D/T (m)</th>
-                <th class="col-num">Vol (m³)</th>
-                <th class="col-rate">Unit Rate (PHP)</th>
-                <th class="col-amt">Amount (PHP)</th>
-              </tr>
-            </thead>
-            <tbody id="boqBody"></tbody>
-            <tfoot id="boqFoot"></tfoot>
-          </table>
-        </div>
-        <div class="boq-disclaimer">Blue unit rates are editable — click any rate cell to update. All quantities are AI-estimated from the uploaded floor plan. Verify against approved structural drawings before use.</div>
-      </div>
+      <!-- BOQ Results stack — all results stacked here -->
+      <div class="boq-results-stack" id="boqResultsStack" style="display:none;"></div>
 
     </section>
 
     <!-- Footer -->
     <footer class="holo-footer">
-      <span>HOLO·PLAN © 2025 — SPATIAL INTELLIGENCE SYSTEM</span>
-      <span class="footer-right">POWERED BY CLAUDE AI</span>
+      <div class="footer-left">
+        <div class="footer-logo">
+          <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+            <polygon points="16,2 30,10 30,22 16,30 2,22 2,10" stroke="#00f5ff" stroke-width="1.5" fill="none" opacity="0.7"/>
+            <circle cx="16" cy="16" r="3" fill="#00f5ff" opacity="0.7"/>
+          </svg>
+          <span class="footer-brand">HOLO·PLAN</span>
+        </div>
+        <span class="footer-copy">© 2025 — SPATIAL INTELLIGENCE SYSTEM v2.0</span>
+      </div>
+
+      <div class="footer-center">
+        <span class="footer-divider">|</span>
+        <span class="footer-powered">POWERED BY CLAUDE AI</span>
+        <span class="footer-divider">|</span>
+      </div>
+
+      <div class="footer-right-block">
+        <span class="footer-created-label">CREATED BY</span>
+        <span class="footer-author">Ceron Matthew Calsena</span>
+      </div>
     </footer>
 
   </div>

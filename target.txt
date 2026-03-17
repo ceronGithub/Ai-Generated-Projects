@@ -1,5 +1,8 @@
+all done.
 module 1 : display all uploaded images and put a name like "image 1, image 2, and so on...
 module 1 : analysis flow : analyze 1 uploaded image then result. repeat until all uploaded image is analyzed.
 
 module 3 : allow user to uploaded multiple images
 module 3 : on each result display the image, and BOQ estimation.
+
+all it needs is API KEY.
