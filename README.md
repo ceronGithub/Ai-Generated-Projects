@@ -17,15 +17,17 @@ db password : MxacRsEwzJe51J0b
 db password : 687uyruydTjFwB4e
 
 # Websites
-PDF-extractor : https://matth-el-pdf-extractor-v1.netlify.app/
-- Compressed PDF file
-- Split 1  big pdf to multiple pdf files.
+PDF Extractor : https://matth-el-pdf-extractor-v1.netlify.app/
+- added footer
+- new feature : split the 1 big pdf file to small pdfs
+- new feature : compressed the pdf file.
+- new feature : user auth.
 <br>
 multiplication, Addition, game : https://matthh-el-multiplication-game.netlify.app/
 <br>
 victorias haven mailer : https://hv-mailer.netlify.app/
 - add login for us
-- no footer
+- added footer
 <br>
 victorias haven book recorder : https://hv-book-record.netlify.app/
 - add login for us
@@ -41,11 +43,7 @@ Laravel-instruction : https://matth-el-laravel-instruction.netlify.app/
 for achitect and civil : https://archivil-estimation.netlify.app/
 - added footer
 <br>
-PDF Extractor : https://matth-el-pdf-extractor-v1.netlify.app/
-- added footer
-- new feature : split the 1 big pdf file to small pdfs
-- new feature : compressed the pdf file.
-- new feature : user auth.
+
 
 # E-Com
 https://endorse-2txk.onrender.com
