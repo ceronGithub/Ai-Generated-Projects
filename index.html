@@ -1,683 +1,509 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PDF Extract — Cosmic</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <link rel="icon" type="image/png" sizes="48x48" href="icon-48.png" />
-    <link rel="apple-touch-icon" href="icon.png" />
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="media.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  </head>
-  <body>
-    <!-- Star Field Canvas -->
-    <canvas id="starCanvas"></canvas>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Extract — Cosmic</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="media.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
 
-    <!-- Nebula atmosphere wisps -->
-    <div class="nebula-wisp"></div>
-    <div class="nebula-wisp"></div>
-    <div class="nebula-wisp"></div>
-    <div class="nebula-wisp"></div>
+  <!-- Star Field Canvas -->
+  <canvas id="starCanvas"></canvas>
 
-    <!-- Cursor glow follower -->
-    <div class="cursor-glow" id="cursorGlow"></div>
+  <!-- Nebula atmosphere wisps -->
+  <div class="nebula-wisp"></div>
+  <div class="nebula-wisp"></div>
+  <div class="nebula-wisp"></div>
+  <div class="nebula-wisp"></div>
 
-    <!-- ============ HEADER ============ -->
-    <header class="site-header">
-      <div class="logo">
-        <img class="logo-icon logo-icon--img" src="icon.png" alt="PDF Extract icon" />
-        <span class="logo-text">PDF<strong>Extract</strong></span>
+  <!-- Cursor glow follower -->
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <span class="logo-text">PDF<strong>Extract</strong></span>
+    </div>
+    <p class="tagline">Extract · Search · Export · Traverse the cosmos of your documents</p>
+
+    <!-- ── Live Widgets ── -->
+    <div class="header-widgets">
+
+      <!-- Widget 1 · EVENT — holiday / weekend / weekday -->
+      <div class="hw-pill" id="hw-day">
+        <span class="hw-icon" id="hw-day-icon">💼</span>
+        <div class="hw-text">
+          <span class="hw-label" id="hw-day-label">WEEKDAY</span>
+          <span class="hw-value" id="hw-day-value">Loading…</span>
+        </div>
       </div>
-      <p class="tagline">
-        Extract · Search · Export · Traverse the cosmos of your documents
-      </p>
-      <button class="help-btn" id="helpBtn" title="How to use PDFExtract">
-        <span class="help-btn-icon">?</span>
-        <span class="help-btn-text">Help</span>
+
+      <!-- Widget 2 · CLOCK — 12-hr live tick -->
+      <div class="hw-pill" id="hw-clock">
+        <span class="hw-icon" id="hw-clock-icon">🕐</span>
+        <div class="hw-text">
+          <span class="hw-label">TIME</span>
+          <span class="hw-value" id="hw-clock-value">Loading…</span>
+        </div>
+      </div>
+
+      <!-- Widget 3 · DATE — current calendar date -->
+      <div class="hw-pill" id="hw-date">
+        <span class="hw-icon">🗓️</span>
+        <div class="hw-text">
+          <span class="hw-label">DATE</span>
+          <span class="hw-value" id="hw-date-value">Loading…</span>
+        </div>
+      </div>
+
+      <!-- Help button -->
+      <button class="hlp-open-btn" id="helpBtn" title="Help &amp; Guide">
+        <span class="hlp-open-icon">?</span>
+        <span class="hlp-open-label">Help</span>
       </button>
 
-      <!-- ── Live Widgets ── -->
-      <div class="header-widgets">
-        <!-- Widget 1 · EVENT — holiday / weekend / weekday -->
-        <div class="hw-pill" id="hw-day">
-          <span class="hw-icon" id="hw-day-icon">💼</span>
-          <div class="hw-text">
-            <span class="hw-label" id="hw-day-label">WEEKDAY</span>
-            <span class="hw-value" id="hw-day-value">Loading…</span>
-          </div>
-        </div>
+    </div>
+    <!-- ── /Live Widgets ── -->
+  </header>
 
-        <!-- Widget 2 · CLOCK — 12-hr live tick -->
-        <div class="hw-pill" id="hw-clock">
-          <span class="hw-icon" id="hw-clock-icon">🕐</span>
-          <div class="hw-text">
-            <span class="hw-label">TIME</span>
-            <span class="hw-value" id="hw-clock-value">Loading…</span>
-          </div>
-        </div>
+  <!-- ============ MAIN ============ -->
+  <main class="container">
 
-        <!-- Widget 3 · DATE — current calendar date -->
-        <div class="hw-pill" id="hw-date">
-          <span class="hw-icon">🗓️</span>
-          <div class="hw-text">
-            <span class="hw-label">DATE</span>
-            <span class="hw-value" id="hw-date-value">Loading…</span>
-          </div>
-        </div>
+    <!-- STEP 1: Upload -->
+    <section class="card" id="step-upload">
+      <div class="card-glow-top"></div>
+      <div class="step-label"><span>01</span> Upload PDF Files</div>
+
+      <div class="drop-zone" id="dropZone">
+        <span class="drop-icon">📄</span>
+        <p class="drop-title">Drag &amp; Drop PDF files here</p>
+        <p class="drop-sub">or click to browse your system</p>
+        <label class="btn btn-outline" for="fileInput">Browse Files</label>
+        <input type="file" id="fileInput" accept=".pdf" multiple hidden />
+        <p class="drop-upload-note">⚠ Max upload is 2,000 PDF files per batch.</p>
       </div>
-      <!-- ── /Live Widgets ── -->
-    </header>
 
-    <!-- ============ MAIN ============ -->
-    <main class="container">
-      <!-- STEP 1: Upload -->
-      <section class="card" id="step-upload">
-        <div class="card-glow-top"></div>
-        <div class="step-label"><span>01</span> Upload PDF Files</div>
+      <div class="file-list-header" id="fileListHeader" style="display:none;">
+        <span class="file-count" id="fileCount">0 files uploaded</span>
+        <button class="btn btn-danger-sm" id="deleteAllBtn">⊗ Delete All</button>
+      </div>
+      <ul class="file-list" id="fileList"></ul>
+    </section>
 
-        <div class="drop-zone" id="dropZone">
-          <span class="drop-icon">📄</span>
-          <p class="drop-title">Drag &amp; Drop PDF files here</p>
-          <p class="drop-sub">or click to browse your system</p>
-          <label class="btn btn-outline" for="fileInput">Browse Files</label>
-          <input type="file" id="fileInput" accept=".pdf" multiple hidden />
-          <p class="drop-upload-note" id="uploadNote">
-            ⚠ Max upload is 2,000 PDF files per batch.
-          </p>
+    <!-- STEP 2: Mode -->
+    <section class="card disabled-card" id="step-mode">
+      <div class="card-glow-top"></div>
+      <div class="step-label"><span>02</span> Select Extraction Mode</div>
+      <p class="step-desc">Choose how you want to extract text from your PDF files.</p>
+
+      <div class="mode-buttons" id="modeButtons">
+        <button class="mode-btn" id="modeMultiple" data-mode="multiple">
+          <span class="mode-icon">🔑</span>
+          <span class="mode-name">Multiple Keywords</span>
+          <span class="mode-desc">Search several keywords across all files</span>
+        </button>
+        <button class="mode-btn" id="modeSingle" data-mode="single">
+          <span class="mode-icon">🔍</span>
+          <span class="mode-name">Single Keyword</span>
+          <span class="mode-desc">Search one keyword &amp; rename files by result</span>
+        </button>
+        <button class="mode-btn" id="modeExtractAll" data-mode="extractall">
+          <span class="mode-icon">📋</span>
+          <span class="mode-name">Extract All</span>
+          <span class="mode-desc">Dump all text from every uploaded PDF</span>
+        </button>
+      </div>
+
+      <div class="mode-display" id="modeDisplay" style="display:none;">
+        <span class="mode-badge" id="modeBadge"></span>
+        <button class="btn-link" id="changeModeBtn">↺ Change Mode</button>
+      </div>
+    </section>
+
+    <!-- STEP 3: Keywords -->
+    <section class="card disabled-card" id="step-keywords">
+      <div class="card-glow-top"></div>
+      <div class="step-label"><span>03</span> Keywords</div>
+
+      <div id="keywordsSection">
+        <div class="keyword-input-row" id="keywordInputArea">
+          <input type="text" class="keyword-input" id="keywordInput"
+                 placeholder="Type a keyword and press Enter…" />
+          <button class="btn btn-accent" id="addKeywordBtn">+ Add</button>
         </div>
+        <div class="keyword-chips" id="keywordChips"></div>
+        <p class="keyword-hint" id="keywordHint"></p>
+      </div>
+    </section>
 
-        <div class="file-list-header" id="fileListHeader" style="display: none">
-          <span class="file-count" id="fileCount">0 files uploaded</span>
-          <button class="btn btn-danger-sm" id="deleteAllBtn">
-            ⊗ Delete All
-          </button>
+    <!-- STEP 4: Run & Results -->
+    <section class="card disabled-card" id="step-results">
+      <div class="card-glow-top"></div>
+      <div class="step-label"><span>04</span> Results</div>
+
+      <div class="run-row">
+        <button class="btn btn-primary btn-lg" id="runBtn" disabled>
+          <span id="runBtnText">▶ Run Extraction</span>
+          <span id="runSpinner" class="spinner" style="display:none;"></span>
+        </button>
+      </div>
+
+      <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <span class="progress-label" id="progressLabel" style="display:none;"></span>
+
+      <div class="results-container" id="resultsContainer" style="display:none;">
+        <div class="results-toolbar">
+          <h3 class="results-title">⬡ Extraction Results</h3>
+          <div class="results-actions" id="resultsActions"></div>
         </div>
-        <ul class="file-list" id="fileList"></ul>
-      </section>
+        <div class="results-list" id="resultsList"></div>
+      </div>
 
-      <!-- STEP 2: Mode -->
-      <section class="card disabled-card" id="step-mode">
-        <div class="card-glow-top"></div>
-        <div class="step-label"><span>02</span> Select Extraction Mode</div>
-        <p class="step-desc">
-          Choose how you want to extract text from your PDF files.
-        </p>
+      <!-- ── AI AGENT PANEL (Extract All mode only) ── -->
+      <div id="aiAgentPanel" class="ai-panel" style="display:none;">
 
-        <div class="mode-buttons" id="modeButtons">
-          <button class="mode-btn" id="modeMultiple" data-mode="multiple">
-            <span class="mode-icon">🔑</span>
-            <span class="mode-name">Multiple Keywords</span>
-            <span class="mode-desc">Finds values next to specific labels — great for invoices &amp; forms. Not suited for large tables or transaction rows.</span>
-          </button>
-          <button class="mode-btn" id="modeSingle" data-mode="single">
-            <span class="mode-icon">🔍</span>
-            <span class="mode-name">Single Keyword</span>
-            <span class="mode-desc">Search one keyword &amp; rename files by result</span>
-          </button>
-          <button class="mode-btn" id="modeExtractAll" data-mode="extractall">
-            <span class="mode-icon">📋</span>
-            <span class="mode-name">Extract All</span>
-            <span class="mode-desc">Dump all text from every uploaded PDF</span>
-          </button>
-          <!-- ── NEW: Table Mode ── -->
-          <button class="mode-btn mode-btn--table" id="modeTable" data-mode="tablemode">
-            <span class="mode-icon">🗂️</span>
-            <span class="mode-name">Table Mode</span>
-            <span class="mode-desc">Designed for large tables — parses every row automatically and captures Tag, Zone, Entry, Exit &amp; Toll Fee without any keywords.</span>
-          </button>
-        </div>
-
-        <div class="mode-display" id="modeDisplay" style="display: none">
-          <span class="mode-badge" id="modeBadge"></span>
-          <button class="btn-link" id="changeModeBtn">↺ Change Mode</button>
-        </div>
-      </section>
-
-      <!-- STEP 3: Keywords -->
-      <section class="card disabled-card" id="step-keywords">
-        <div class="card-glow-top"></div>
-        <div class="step-label"><span>03</span> Keywords</div>
-
-        <div id="keywordsSection">
-          <div class="keyword-input-row" id="keywordInputArea">
-            <input
-              type="text"
-              class="keyword-input"
-              id="keywordInput"
-              placeholder="Type a keyword and press Enter…"
-            />
-            <button class="btn btn-accent" id="addKeywordBtn">+ Add</button>
-          </div>
-          <div class="keyword-chips" id="keywordChips"></div>
-          <p class="keyword-hint" id="keywordHint"></p>
-        </div>
-      </section>
-
-      <!-- STEP 4: Run & Results -->
-      <section class="card disabled-card" id="step-results">
-        <div class="card-glow-top"></div>
-        <div class="step-label"><span>04</span> Results</div>
-
-        <div class="run-row">
-          <button class="btn btn-primary btn-lg" id="runBtn" disabled>
-            <span id="runBtnText">▶ Run Extraction</span>
-            <span id="runSpinner" class="spinner" style="display: none"></span>
-          </button>
-        </div>
-
-        <div class="progress-bar-wrap" id="progressWrap" style="display: none">
-          <div class="progress-bar" id="progressBar"></div>
-        </div>
-        <span class="progress-label" id="progressLabel" style="display: none"></span>
-
-        <div class="results-container" id="resultsContainer" style="display: none">
-          <div class="results-toolbar">
-            <h3 class="results-title">⬡ Extraction Results</h3>
-            <div class="results-actions" id="resultsActions"></div>
-          </div>
-          <div class="results-list" id="resultsList"></div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="site-footer">
-      ⬡ PDF Extract — all processing is local. No files leave your browser.
-    </footer>
-
-    <!-- ============ HELP MODAL ============ -->
-    <div
-      id="helpOverlay"
-      class="hlp-overlay"
-      style="display: none"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Help — How to use PDFExtract"
-    >
-      <div class="hlp-backdrop" id="helpBackdrop"></div>
-      <div class="hlp-panel">
         <!-- Header -->
-        <div class="hlp-header">
-          <div class="hlp-title-row">
-            <span class="hlp-icon">✦</span>
-            <h2 class="hlp-title">How to Use <strong>PDFExtract</strong></h2>
+        <div class="ai-panel-header">
+          <div class="ai-panel-title">
+            <span class="ai-panel-orb"></span>
+            <span>AI Agent</span>
+            <span class="ai-panel-badge">AUTO-EXTRACT</span>
           </div>
-          <button class="hlp-close-btn" id="helpClose" title="Close (Esc)">✕</button>
+          <div class="ai-panel-meta">Automatically extracts all information from your PDFs</div>
         </div>
 
-        <!-- Tab Nav -->
-        <div class="hlp-tabs" role="tablist">
-          <button class="hlp-tab hlp-tab--active" data-tab="overview" role="tab">
-            <span class="hlp-tab-icon">🏠</span> Overview
-          </button>
-          <button class="hlp-tab" data-tab="modes" role="tab">
-            <span class="hlp-tab-icon">⚙️</span> Modes
-          </button>
-          <button class="hlp-tab" data-tab="keywords" role="tab">
-            <span class="hlp-tab-icon">🔑</span> Keywords
-          </button>
-          <button class="hlp-tab" data-tab="export" role="tab">
-            <span class="hlp-tab-icon">📥</span> Export
-          </button>
-          <button class="hlp-tab" data-tab="tips" role="tab">
-            <span class="hlp-tab-icon">💡</span> Tips &amp; Tricks
-          </button>
+        <!-- Quick prompts -->
+        <div class="ai-quick-prompts" id="aiQuickPrompts"></div>
+
+        <!-- Chat log -->
+        <div class="ai-log" id="aiAgentLog">
+          <div class="ai-placeholder">
+            <div class="ai-placeholder-icon">✦</div>
+            <p>AI is ready to analyze your PDFs.</p>
+          </div>
         </div>
 
-        <!-- Tab Content -->
-        <div class="hlp-body">
-
-          <!-- ── OVERVIEW ── -->
-          <div class="hlp-pane hlp-pane--active" data-pane="overview">
-            <div class="hlp-intro">
-              <p>
-                PDFExtract lets you search for specific keywords inside one or
-                many PDF files and pull out the exact values next to those
-                keywords — no manual reading required.
-              </p>
-            </div>
-            <div class="hlp-steps">
-              <div class="hlp-step">
-                <div class="hlp-step-num">01</div>
-                <div class="hlp-step-body">
-                  <h3>📄 Upload PDFs</h3>
-                  <p>
-                    Drag and drop your PDF files into the upload zone, or click
-                    <em>Browse Files</em>. You can upload multiple files at once.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-step">
-                <div class="hlp-step-num">02</div>
-                <div class="hlp-step-body">
-                  <h3>⚙️ Choose a Mode</h3>
-                  <p>
-                    Select <em>Multiple Keywords</em>, <em>Single Keyword</em>,
-                    <em>Extract All</em>, or <em>Table Mode</em> depending on what
-                    you need. See the <strong>Modes</strong> tab for details.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-step">
-                <div class="hlp-step-num">03</div>
-                <div class="hlp-step-body">
-                  <h3>🔑 Enter Keywords</h3>
-                  <p>
-                    Type the label that appears in your PDF (e.g.
-                    <code>Account Name</code>, <code>Date</code>,
-                    <code>Total</code>). See the <strong>Keywords</strong> tab
-                    for special keywords. Not needed for Extract All or Table Mode.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-step">
-                <div class="hlp-step-num">04</div>
-                <div class="hlp-step-body">
-                  <h3>▶ Run &amp; Review</h3>
-                  <p>
-                    Click <em>Run Extraction</em>. Results appear as cards
-                    below. Click the <em>View</em> button on any card to jump
-                    directly to that page in the PDF.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-step">
-                <div class="hlp-step-num">05</div>
-                <div class="hlp-step-body">
-                  <h3>📥 Export to Excel</h3>
-                  <p>
-                    Click <em>Download to Excel</em> to save all results as a
-                    spreadsheet. Choose Rows or Columns layout before exporting.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ── MODES ── -->
-          <div class="hlp-pane" data-pane="modes">
-            <div class="hlp-mode-grid">
-
-              <div class="hlp-mode-card hlp-mode-card--cyan">
-                <div class="hlp-mode-icon">🔑</div>
-                <h3>Multiple Keywords</h3>
-                <p>
-                  Finds values next to specific labels — great for invoices &amp;
-                  forms where you need many fields at once. Each keyword produces
-                  its own result card per file. <strong>Not suited for large
-                  tables or transaction rows</strong> — use Table Mode instead
-                  when your data is structured in rows.
-                </p>
-                <div class="hlp-tag">Best for: invoices &amp; forms</div>
-              </div>
-
-              <div class="hlp-mode-card hlp-mode-card--violet">
-                <div class="hlp-mode-icon">🔍</div>
-                <h3>Single Keyword</h3>
-                <p>
-                  Focus on one keyword across all PDFs. Results are grouped per
-                  file and you can rename each PDF using the captured value. Use
-                  this when you need to find every occurrence of one specific
-                  field across many documents.
-                </p>
-                <div class="hlp-tag">Best for: bulk scanning &amp; renaming</div>
-              </div>
-
-              <div class="hlp-mode-card hlp-mode-card--gold">
-                <div class="hlp-mode-icon">📋</div>
-                <h3>Extract All</h3>
-                <p>
-                  Automatically detects and extracts all label–value pairs from
-                  every page of every PDF — no keyword input needed. Ideal for
-                  exploring an unfamiliar document or doing a full data dump.
-                </p>
-                <div class="hlp-tag">Best for: auto-detect &amp; exploration</div>
-              </div>
-
-              <div class="hlp-mode-card hlp-mode-card--table">
-                <div class="hlp-mode-icon">🗂️</div>
-                <h3>Table Mode</h3>
-                <p>
-                  Designed for large tables — parses every row automatically and
-                  captures Tag, Zone, Entry, Exit &amp; Toll Fee without any
-                  keywords. Purpose-built for SMC Skyway Transaction History
-                  Reports spanning many pages. Results are shown as individual
-                  transaction cards and can be exported to Excel.
-                </p>
-                <div class="hlp-tag">Best for: large transaction tables</div>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- ── KEYWORDS ── -->
-          <div class="hlp-pane" data-pane="keywords">
-            <p class="hlp-pane-intro">
-              Keywords match the labels printed in your PDF. You can type them
-              with or without a colon. A few keywords have special smart behaviour:
-            </p>
-            <div class="hlp-kw-table">
-              <div class="hlp-kw-row hlp-kw-row--header">
-                <span>Keyword</span>
-                <span>What it extracts</span>
-                <span>Example output</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>📅 Date</code>
-                <span>Every date value on the page (date part only, no time)</span>
-                <span class="hlp-ex">02/01/2026</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>🕐 Time</code>
-                <span>Every time value with exactly two colons (HH:MM:SS)</span>
-                <span class="hlp-ex">16:41:37</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>🛣️ Zone</code>
-                <span>Highway / zone codes from transaction rows</span>
-                <span class="hlp-ex">NAIAX · SKYWAY</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>🏢 Account Name</code>
-                <span>Text value after the "Account Name" label</span>
-                <span class="hlp-ex">National Grid Corp.</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>💰 Total</code>
-                <span>Numeric/currency value after "Total"</span>
-                <span class="hlp-ex">Php 78,979.20</span>
-              </div>
-              <div class="hlp-kw-row">
-                <code>🪪 TIN</code>
-                <span>Tax ID number after "TIN"</span>
-                <span class="hlp-ex">006-977-514-000</span>
-              </div>
-            </div>
-            <div class="hlp-note">
-              <span class="hlp-note-icon">💡</span>
-              <p>
-                You can enter keywords in any case — <code>date</code>,
-                <code>Date</code>, and <code>DATE</code> all work the same way.
-              </p>
-            </div>
-            <div class="hlp-note">
-              <span class="hlp-note-icon">💡</span>
-              <p>
-                If a keyword has multiple values on the same page, a
-                <em>picker card</em> appears so you can choose which value to
-                keep before exporting.
-              </p>
-            </div>
-          </div>
-
-          <!-- ── EXPORT ── -->
-          <div class="hlp-pane" data-pane="export">
-            <p class="hlp-pane-intro">
-              After running an extraction, click <em>Download to Excel</em> to
-              save your results as an <code>.xlsx</code> file.
-            </p>
-            <div class="hlp-export-grid">
-              <div class="hlp-export-card">
-                <h3>📋 Rows Layout</h3>
-                <p>
-                  Each result is its own row. Best for reviewing individual hits
-                  or comparing many files side-by-side (e.g. batch of invoices).
-                </p>
-                <div class="hlp-layout-preview hlp-layout-preview--rows">
-                  <div class="hlp-lp-head">
-                    <span>File</span><span>Date</span><span>Total</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>invoice1.pdf</span><span>02/01</span><span>45.00</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>invoice2.pdf</span><span>02/03</span><span>99.00</span>
-                  </div>
-                </div>
-              </div>
-              <div class="hlp-export-card">
-                <h3>📊 Columns Layout</h3>
-                <p>
-                  Each keyword becomes its own column. Results stack vertically
-                  per keyword. Best for single-document deep extraction or
-                  grouping by Tag Number in Table Mode.
-                </p>
-                <div class="hlp-layout-preview hlp-layout-preview--cols">
-                  <div class="hlp-lp-head">
-                    <span>Keyword</span><span>Value</span><span>Page</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>Date</span><span>02/01</span><span>1</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>Total</span><span>45.00</span><span>1</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="hlp-note">
-              <span class="hlp-note-icon">⚠️</span>
-              <p>
-                You can rename PDF files before exporting — click the pencil
-                icon next to any filename in the results to set a custom display
-                name in the Excel output.
-              </p>
-            </div>
-          </div>
-
-          <!-- ── TIPS ── -->
-          <div class="hlp-pane" data-pane="tips">
-            <div class="hlp-tips-list">
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">🔍</span>
-                <div>
-                  <h3>View PDF pages inline</h3>
-                  <p>
-                    Every result card has a <em>View</em> button. Click it to
-                    open the PDF at the exact page where the value was found —
-                    no need to leave the app.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">🗑️</span>
-                <div>
-                  <h3>Remove individual results</h3>
-                  <p>
-                    Don't need a particular result card? Click the <em>✕</em> on
-                    any card to remove it before exporting. Only the remaining
-                    cards go into the Excel file.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">✏️</span>
-                <div>
-                  <h3>Edit extracted values inline</h3>
-                  <p>
-                    Click directly on an extracted value in a result card to edit
-                    it before exporting. Useful for correcting OCR artefacts or
-                    reformatting data.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">📅</span>
-                <div>
-                  <h3>Date vs Time keywords</h3>
-                  <p>
-                    Use <code>Date</code> to get only the calendar date (e.g.
-                    <em>02/01/2026</em>) and <code>Time</code> to get only the
-                    clock value (e.g. <em>16:41:37</em>). They are independent
-                    and can both be added to the same extraction.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">🗂️</span>
-                <div>
-                  <h3>Use Table Mode for large reports</h3>
-                  <p>
-                    When your PDF contains rows of transaction data — like an
-                    SMC Skyway toll report — skip keywords entirely and use
-                    Table Mode. It reads every row automatically and gives you
-                    clean, structured cards ready to export.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">📁</span>
-                <div>
-                  <h3>Batch multiple PDFs</h3>
-                  <p>
-                    Upload many PDF files at once and run a single extraction.
-                    Every file is processed in one pass and all results are
-                    combined in the Excel export, labelled by filename.
-                  </p>
-                </div>
-              </div>
-              <div class="hlp-tip">
-                <span class="hlp-tip-icon">↺</span>
-                <div>
-                  <h3>Change mode mid-session</h3>
-                  <p>
-                    Click <em>↺ Change Mode</em> at any time to switch between
-                    modes without re-uploading your files.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        <!-- Thinking indicator -->
+        <div class="ai-thinking" id="aiThinkingDots" style="display:none;">
+          <span class="ai-thinking-orb"></span>
+          <span>Analyzing</span>
+          <span class="ai-thinking-dots"><span></span><span></span><span></span></span>
         </div>
-        <!-- /Tab Content -->
 
-        <!-- Footer -->
-        <div class="hlp-footer">
-          <span class="hlp-footer-hint">Press <kbd>Esc</kbd> to close</span>
-          <button class="btn btn-accent hlp-done-btn" id="helpDone">Got it ✦</button>
+        <!-- Input row -->
+        <div class="ai-input-row">
+          <textarea
+            id="aiAgentInput"
+            class="ai-input"
+            placeholder="Ask a follow-up question… (Enter to send)"
+            rows="1"
+          ></textarea>
+          <div class="ai-input-actions">
+            <button class="ai-clear-btn" id="aiAgentRerunBtn" title="Re-analyze PDFs">↺</button>
+            <button class="ai-send-btn" id="aiAgentSendBtn" title="Send (Enter)">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 8L14 2L10 8L14 14L2 8Z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
         </div>
+
       </div>
-      <!-- /Panel -->
-    </div>
-    <!-- ============ /HELP MODAL ============ -->
+      <!-- ── /AI AGENT PANEL ── -->
+    </section>
 
-    <!-- ============ PDF VIEWER MODAL ============ -->
-    <div
-      id="pdfViewerOverlay"
-      class="pvm-overlay"
-      style="display: none"
-      role="dialog"
-      aria-modal="true"
-      aria-label="PDF Viewer"
-    >
-      <div id="pdfViewerBackdrop" class="pvm-backdrop"></div>
-      <div class="pvm-panel">
-        <div class="pvm-header">
-          <div class="pvm-header-left">
-            <span class="pvm-logo-dot"></span>
-            <span class="pvm-header-title">PDF Viewer</span>
-          </div>
-          <button class="pvm-close-btn" id="pdfViewerClose" title="Close (Esc)">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-note">⬡ PDF Extract — all processing is local. No files leave your browser.</div>
+    <div class="site-footer-credit">
+      <span class="site-footer-divider">·</span>
+      Created by <span class="site-footer-name">Ceron Matthew Calsena</span>
+      <span class="site-footer-divider">·</span>
+    </div>
+  </footer>
+
+  <!-- ============ PDF VIEWER MODAL ============ -->
+  <div id="pdfViewerOverlay" class="pvm-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="PDF Viewer">
+
+    <!-- Click-outside backdrop -->
+    <div id="pdfViewerBackdrop" class="pvm-backdrop"></div>
+
+    <!-- Modal panel -->
+    <div class="pvm-panel">
+
+      <!-- Header bar -->
+      <div class="pvm-header">
+        <div class="pvm-header-left">
+          <span class="pvm-logo-dot"></span>
+          <span class="pvm-header-title">PDF Viewer</span>
         </div>
-        <div class="pvm-canvas-wrap" id="pdfViewerCanvasWrap">
-          <div class="pvm-loader" id="pdfViewerLoader">
-            <div class="pvm-spinner"></div>
-            <span>Rendering…</span>
-          </div>
-          <canvas id="pdfViewerCanvas" class="pvm-canvas"></canvas>
-        </div>
-        <div class="pvm-footer">
-          <div class="pvm-filename-row">
-            <span class="pvm-file-icon">📄</span>
-            <span class="pvm-filename" id="pdfViewerFilename">file.pdf</span>
-          </div>
-          <div class="pvm-controls">
-            <div class="pvm-control-group pvm-nav">
-              <button class="pvm-btn pvm-btn--nav" id="pdfViewerPrev" title="Previous page (←)" disabled>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <div class="pvm-page-indicator">
-                <input type="number" id="pdfViewerPageInput" class="pvm-page-input" min="1" value="1" title="Jump to page"/>
-                <span class="pvm-page-sep">/</span>
-                <span class="pvm-page-total" id="pdfViewerTotalPages">1</span>
-              </div>
-              <button class="pvm-btn pvm-btn--nav" id="pdfViewerNext" title="Next page (→)" disabled>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M5 2L10 7L5 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-            </div>
-            <div class="pvm-divider"></div>
-            <div class="pvm-control-group pvm-zoom">
-              <button class="pvm-btn pvm-btn--zoom" id="pdfViewerZoomOut" title="Zoom out (−)">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.6"/>
-                  <path d="M3.5 6h5M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-              </button>
-              <span class="pvm-zoom-label" id="pdfViewerZoomLabel">120%</span>
-              <button class="pvm-btn pvm-btn--zoom" id="pdfViewerZoomIn" title="Zoom in (+)">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.6"/>
-                  <path d="M6 3.5v5M3.5 6h5M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                </svg>
-              </button>
-              <button class="pvm-btn pvm-btn--reset" id="pdfViewerZoomReset" title="Reset zoom (Ctrl+0)">Reset</button>
-            </div>
-          </div>
-          <div class="pvm-hints">
-            <span>← → navigate</span>
-            <span class="pvm-dot">·</span>
-            <span>+ − zoom</span>
-            <span class="pvm-dot">·</span>
-            <span>Esc close</span>
-          </div>
-        </div>
+        <button class="pvm-close-btn" id="pdfViewerClose" title="Close (Esc)">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
-    </div>
-    <!-- ============ /PDF VIEWER MODAL ============ -->
 
-    <!-- JS modules (order matters) -->
-    <script src="pdf-processor.js"></script>
-    <script src="keyword-handler.js"></script>
-    <script src="table-parser.js"></script>
-    <script src="excel-exporter.js"></script>
-    <script src="extract-all.js"></script>
-    <script src="rename-handler.js"></script>
-    <script src="ui-manager.js"></script>
-    <script src="stars.js"></script>
-    <script src="datetime-widget.js"></script>
-    <script src="pdf-viewer.js"></script>
-    <script src="app.js"></script>
-    <script src="help.js"></script>
+      <!-- Canvas area (scrollable) -->
+      <div class="pvm-canvas-wrap" id="pdfViewerCanvasWrap">
 
-    <!-- ── Table-detected modal ── -->
-    <div id="tableWarnOverlay" class="tw-overlay" style="display:none" aria-modal="true" role="alertdialog">
-      <div class="tw-modal">
-        <div class="tw-modal-glow"></div>
-        <!-- corner brackets via CSS -->
-        <div class="tw-icon">⚠</div>
-        <h2 class="tw-title">Table Detected</h2>
-        <p class="tw-body">
-          I'm sorry, I cannot deal with huge data in a table.<br>
-          Choose <strong>Table Mode</strong> for that option.<br><br>
-          However, I could still capture keywords <em>outside</em> the table.
-        </p>
-        <div class="tw-btn-row">
-          <button class="tw-btn tw-btn--ok"      id="tableWarnOk">OK</button>
-          <button class="tw-btn tw-btn--proceed" id="tableWarnProceed">Proceed</button>
+        <!-- Loading spinner -->
+        <div class="pvm-loader" id="pdfViewerLoader">
+          <div class="pvm-spinner"></div>
+          <span>Rendering…</span>
         </div>
+
+        <!-- PDF Canvas -->
+        <canvas id="pdfViewerCanvas" class="pvm-canvas"></canvas>
+
       </div>
+
+      <!-- Footer bar: filename + controls -->
+      <div class="pvm-footer">
+
+        <!-- Filename (centered) -->
+        <div class="pvm-filename-row">
+          <span class="pvm-file-icon">📄</span>
+          <span class="pvm-filename" id="pdfViewerFilename">file.pdf</span>
+        </div>
+
+        <!-- Controls row -->
+        <div class="pvm-controls">
+
+          <!-- Page navigation -->
+          <div class="pvm-control-group pvm-nav">
+            <button class="pvm-btn pvm-btn--nav" id="pdfViewerPrev" title="Previous page (←)" disabled>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M9 2L4 7L9 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="pvm-page-indicator">
+              <input type="number" id="pdfViewerPageInput" class="pvm-page-input" min="1" value="1" title="Jump to page" />
+              <span class="pvm-page-sep">/</span>
+              <span class="pvm-page-total" id="pdfViewerTotalPages">1</span>
+            </div>
+            <button class="pvm-btn pvm-btn--nav" id="pdfViewerNext" title="Next page (→)" disabled>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M5 2L10 7L5 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Divider -->
+          <div class="pvm-divider"></div>
+
+          <!-- Zoom controls -->
+          <div class="pvm-control-group pvm-zoom">
+            <button class="pvm-btn pvm-btn--zoom" id="pdfViewerZoomOut" title="Zoom out (−)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M3.5 6h5M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <span class="pvm-zoom-label" id="pdfViewerZoomLabel">120%</span>
+            <button class="pvm-btn pvm-btn--zoom" id="pdfViewerZoomIn" title="Zoom in (+)">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.6"/>
+                <path d="M6 3.5v5M3.5 6h5M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <button class="pvm-btn pvm-btn--reset" id="pdfViewerZoomReset" title="Reset zoom (Ctrl+0)">Reset</button>
+          </div>
+
+        </div>
+        <!-- /Controls -->
+
+        <!-- Keyboard hint -->
+        <div class="pvm-hints">
+          <span>← → navigate</span>
+          <span class="pvm-dot">·</span>
+          <span>+ − zoom</span>
+          <span class="pvm-dot">·</span>
+          <span>Esc close</span>
+        </div>
+
+      </div>
+      <!-- /Footer -->
+
     </div>
-  </body>
+    <!-- /Panel -->
+
+  </div>
+  <!-- ============ /PDF VIEWER MODAL ============ -->
+  <!-- ============ HELP MODAL ============ -->
+  <div id="helpOverlay" class="hlp-overlay" style="display:none;" role="dialog" aria-modal="true" aria-label="Help">
+
+    <div id="helpBackdrop" class="hlp-backdrop"></div>
+
+    <div class="hlp-panel">
+
+      <!-- Header -->
+      <div class="hlp-header">
+        <div class="hlp-header-left">
+          <span class="hlp-logo-orb"></span>
+          <span class="hlp-header-title">Help &amp; Guide</span>
+        </div>
+        <button class="hlp-close" id="helpClose" title="Close (Esc)">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M2 2L13 13M13 2L2 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="hlp-tabs" role="tablist">
+        <button class="hlp-tab hlp-tab--active" data-tab="overview"  role="tab">⬡ Overview</button>
+        <button class="hlp-tab"                  data-tab="modes"     role="tab">⚙ Modes</button>
+        <button class="hlp-tab"                  data-tab="keywords"  role="tab">🔑 Keywords</button>
+        <button class="hlp-tab"                  data-tab="ai"        role="tab">✦ AI Agent</button>
+        <button class="hlp-tab"                  data-tab="export"    role="tab">📊 Export</button>
+        <button class="hlp-tab"                  data-tab="tips"      role="tab">💡 Tips</button>
+      </div>
+
+      <!-- Panes -->
+      <div class="hlp-body">
+
+        <!-- Overview -->
+        <div class="hlp-pane hlp-pane--active" data-pane="overview">
+          <h2 class="hlp-pane-title">Welcome to PDF<strong>Extract</strong></h2>
+          <p class="hlp-pane-desc">A cosmic-powered tool to extract, search, and export data from your PDF files — entirely in your browser. No files ever leave your device.</p>
+          <div class="hlp-steps">
+            <div class="hlp-step"><span class="hlp-step-num">01</span><div><strong>Upload PDFs</strong><p>Drag &amp; drop or browse up to 2,000 PDF files at once.</p></div></div>
+            <div class="hlp-step"><span class="hlp-step-num">02</span><div><strong>Select Mode</strong><p>Choose how you want to extract — Multiple Keywords, Single Keyword, or Extract All.</p></div></div>
+            <div class="hlp-step"><span class="hlp-step-num">03</span><div><strong>Add Keywords</strong><p>Type the labels you want to find (e.g. "Invoice No. :", "Total Amount :").</p></div></div>
+            <div class="hlp-step"><span class="hlp-step-num">04</span><div><strong>Run &amp; Export</strong><p>Hit Run Extraction, review results, then download as Excel.</p></div></div>
+          </div>
+        </div>
+
+        <!-- Modes -->
+        <div class="hlp-pane" data-pane="modes">
+          <h2 class="hlp-pane-title">Extraction Modes</h2>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">🔑</span>
+            <div>
+              <strong>Multiple Keywords</strong>
+              <p>Search many keywords at once across all uploaded files. Results show each matched value per file and page. Best for extracting structured data from invoices, reports, or forms.</p>
+            </div>
+          </div>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">🔍</span>
+            <div>
+              <strong>Single Keyword</strong>
+              <p>Search one keyword and use the extracted value to automatically rename your PDF files. Ideal for sorting batches of invoices by invoice number, date, or client name.</p>
+            </div>
+          </div>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">📋</span>
+            <div>
+              <strong>Extract All</strong>
+              <p>Dumps all detected fields and text from every page of every uploaded PDF. No keywords needed. Also activates the <strong>AI Agent</strong> so you can ask questions about your documents.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="hlp-pane" data-pane="keywords">
+          <h2 class="hlp-pane-title">Keyword Formatting</h2>
+          <p class="hlp-pane-desc">Keywords tell the extractor what label to find in the PDF. The value that follows the label is captured.</p>
+          <div class="hlp-kw-examples">
+            <div class="hlp-kw-row"><code>Invoice No. :</code><span>Spaced colon — matches "Invoice No. : 12345"</span></div>
+            <div class="hlp-kw-row"><code>Total Amount:</code><span>Attached colon — matches "Total Amount:1,200.00"</span></div>
+            <div class="hlp-kw-row"><code>Date</code><span>Bare word — captures all dates on the page</span></div>
+            <div class="hlp-kw-row"><code>Zone :</code><span>Toll column — extracts zone codes like NAIAX, SLEX</span></div>
+            <div class="hlp-kw-row"><code>Entry :</code><span>Entry point column from toll transaction tables</span></div>
+            <div class="hlp-kw-row"><code>Exit :</code><span>Exit point column from toll transaction tables</span></div>
+            <div class="hlp-kw-row"><code>E-SI No. :</code><span>E-SI reference number from toll PDFs</span></div>
+            <div class="hlp-kw-row"><code>Ref No. :</code><span>Transaction reference / IER number</span></div>
+          </div>
+          <p class="hlp-pane-desc" style="margin-top:14px;">💡 Use <strong>Pick Option</strong> cards to match one of several possible values per keyword. Use <strong>Record Both</strong> to capture the first <em>and</em> second occurrence.</p>
+        </div>
+
+        <!-- AI Agent -->
+        <div class="hlp-pane" data-pane="ai">
+          <h2 class="hlp-pane-title">✦ AI Agent</h2>
+          <p class="hlp-pane-desc">The AI Agent appears automatically after running <strong>Extract All</strong>. It reads the full text of all your PDFs and lets you ask questions in plain language.</p>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">📋</span>
+            <div><strong>Summarize</strong><p>Get a concise summary of all extracted content across every file.</p></div>
+          </div>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">💰</span>
+            <div><strong>Find Totals</strong><p>Ask it to list all monetary amounts, fees, and totals it found.</p></div>
+          </div>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">🔍</span>
+            <div><strong>Any Question</strong><p>Ask anything — "What is the invoice number on page 2?", "Which file has the highest total?", "List all plate numbers found."</p></div>
+          </div>
+          <p class="hlp-pane-desc" style="margin-top:12px;">The agent remembers your last 10 messages. Click <strong>↺</strong> to reset the conversation.</p>
+        </div>
+
+        <!-- Export -->
+        <div class="hlp-pane" data-pane="export">
+          <h2 class="hlp-pane-title">Exporting Results</h2>
+          <p class="hlp-pane-desc">All results can be downloaded as an Excel (.xlsx) file with one click.</p>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">📊</span>
+            <div><strong>Multiple Keywords</strong><p>Each keyword gets its own column. Each file is a row. Multi-value results are comma-separated.</p></div>
+          </div>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">🗂</span>
+            <div><strong>Extract All</strong><p>Each detected field label and value is exported with its filename and page number.</p></div>
+          </div>
+          <div class="hlp-mode-card">
+            <span class="hlp-mode-icon">🏷</span>
+            <div><strong>Single Keyword (Rename)</strong><p>Files are renamed using the extracted value. Download the renamed copies as a ZIP, or copy the rename map.</p></div>
+          </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="hlp-pane" data-pane="tips">
+          <h2 class="hlp-pane-title">Tips &amp; Tricks</h2>
+          <ul class="hlp-tips-list">
+            <li>✦ Drag &amp; drop hundreds of PDFs at once — batch processing is fully supported.</li>
+            <li>✦ Keywords are case-insensitive. "invoice no." and "INVOICE NO." both work.</li>
+            <li>✦ Add a trailing space + colon (<code>Label :</code>) when the PDF uses spaced colons.</li>
+            <li>✦ Use <strong>Extract All</strong> first on a new PDF type to discover what labels are available.</li>
+            <li>✦ The AI Agent can calculate totals — ask "What is the sum of all toll fees?"</li>
+            <li>✦ Click the 👁 eye icon on any uploaded file to preview it in the built-in PDF viewer.</li>
+            <li>✦ Results can be individually removed with the ✕ button, or cleared all at once.</li>
+            <li>✦ All processing is 100% local — no data ever leaves your browser.</li>
+          </ul>
+        </div>
+
+      </div>
+      <!-- /Panes -->
+
+      <!-- Footer -->
+      <div class="hlp-footer">
+        <span class="hlp-footer-note">⬡ PDF Extract — all processing is local. No files leave your browser.</span>
+        <button class="btn btn-accent" id="helpDone">Got it ✓</button>
+      </div>
+
+    </div>
+  </div>
+  <!-- ============ /HELP MODAL ============ -->
+
+  <!-- JS modules (order matters) -->
+  <script src="pdf-processor.js"></script>
+  <script src="keyword-handler.js"></script>
+  <script src="excel-exporter.js"></script>
+  <script src="rename-handler.js"></script>
+  <script src="ui-manager.js"></script>
+  <script src="stars.js"></script>
+  <script src="datetime-widget.js"></script>
+  <script src="pdf-viewer.js"></script>
+  <script src="help.js"></script>
+  <script src="ai-agent.js"></script>
+  <script src="app.js"></script>
+
+</body>
 </html>
