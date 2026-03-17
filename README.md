@@ -24,14 +24,22 @@ PDF-extractor : https://matth-el-pdf-extractor-v1.netlify.app/
 multiplication, Addition, game : https://matthh-el-multiplication-game.netlify.app/
 <br>
 victorias haven mailer : https://hv-mailer.netlify.app/
+- add login for us
+- no footer
 <br>
 victorias haven book recorder : https://hv-book-record.netlify.app/
+- add login for us
+- no footer
 - put customized time on check-in
 <br>
-email collector web app : https://matth-el-mail-vault.netlify.app/
+email collector web app : https://matth-el-mail-vault.netlify.app/ 
+- added footer
 <br>
 Laravel-instruction : https://matth-el-laravel-instruction.netlify.app/
+- added footer
 - ask user to download the attachment files.
+for achitect and civil : https://archivil-estimation.netlify.app/
+- added footer
 
 
 # E-Com
