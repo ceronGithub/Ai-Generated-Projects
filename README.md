@@ -29,7 +29,7 @@ victorias haven mailer : https://hv-mailer.netlify.app/
 <br>
 victorias haven book recorder : https://hv-book-record.netlify.app/
 - add login for us
-- no footer
+- added footer
 - put customized time on check-in
 <br>
 email collector web app : https://matth-el-mail-vault.netlify.app/ 
