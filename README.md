@@ -40,7 +40,12 @@ Laravel-instruction : https://matth-el-laravel-instruction.netlify.app/
 - ask user to download the attachment files.
 for achitect and civil : https://archivil-estimation.netlify.app/
 - added footer
-
+<br>
+PDF Extractor : https://matth-el-pdf-extractor-v1.netlify.app/
+- added footer
+- new feature : split the 1 big pdf file to small pdfs
+- new feature : compressed the pdf file.
+- new feature : user auth.
 
 # E-Com
 https://endorse-2txk.onrender.com
