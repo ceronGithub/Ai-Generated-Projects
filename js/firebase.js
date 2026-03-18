@@ -226,18 +226,23 @@ async function initFirebase() {
   try {
     const rows = await FB.fetchAll();
 
-    Object.keys(Bookings).forEach(k => delete Bookings[k]);
-    rows.forEach(row => {
-      const flat = flattenRow(row);
-      const key  = flat.dateKey;
-      if (!key) return;
-      if (!Bookings[key]) Bookings[key] = [];
-      Bookings[key].push(flat);
-    });
-
-    saveBookingsLocal(Bookings);
+    // Only replace local data if Firebase actually returned records
+    // This prevents wiping localStorage cache when connected to an empty/new database
+    if (rows.length > 0) {
+      Object.keys(Bookings).forEach(k => delete Bookings[k]);
+      rows.forEach(row => {
+        const flat = flattenRow(row);
+        const key  = flat.dateKey;
+        if (!key) return;
+        if (!Bookings[key]) Bookings[key] = [];
+        Bookings[key].push(flat);
+      });
+      saveBookingsLocal(Bookings);
+      console.log('✅ Firebase connected — ' + rows.length + ' booking(s) loaded.');
+    } else {
+      console.warn('⚠️ Firebase connected but returned 0 records — keeping local cache. Database may be empty or path may be wrong.');
+    }
     setDbStatus('online');
-    console.log('✅ Firebase connected — ' + rows.length + ' booking(s) loaded.');
 
   } catch (e) {
     setDbStatus('offline');
