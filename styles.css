@@ -3843,17 +3843,9 @@ mark {
   justify-content: center;
   animation: twFadeIn .2s ease both;
 }
-.tw-overlay.tw-closing {
-  animation: twFadeOut .28s ease forwards;
-  pointer-events: none;
-}
 @keyframes twFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-@keyframes twFadeOut {
-  from { opacity: 1; backdrop-filter: blur(6px); }
-  to   { opacity: 0; backdrop-filter: blur(0px); }
 }
 
 .tw-modal {
@@ -3871,16 +3863,9 @@ mark {
     0 0 60px rgba(255, 79, 107, 0.12),
     0 24px 80px rgba(0,0,0,0.7);
 }
-.tw-overlay.tw-closing .tw-modal {
-  animation: twSlideDown .28s cubic-bezier(.4,0,.6,1) forwards;
-}
 @keyframes twSlideUp {
   from { opacity: 0; transform: translateY(22px) scale(.97); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);   }
-}
-@keyframes twSlideDown {
-  from { opacity: 1; transform: translateY(0)    scale(1);   }
-  to   { opacity: 0; transform: translateY(14px) scale(.96); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);   }
 }
 
 /* corner brackets */
@@ -3998,3 +3983,154 @@ mark {
 }
 .tw-btn:hover::before { opacity: 1; }
 .tw-btn:active { transform: translateY(0); }
+
+/* ============================================================
+   COMPRESS MODE — button + result cards
+   ============================================================ */
+
+/* ── Mode button variant (green/teal accent) ── */
+.mode-btn--compress {
+  border-color: rgba(57, 255, 160, 0.25) !important;
+}
+.mode-btn--compress:hover,
+.mode-btn--compress.selected {
+  border-color: var(--green) !important;
+  box-shadow: 0 0 18px rgba(57, 255, 160, 0.25) !important;
+}
+.mode-btn--compress .mode-icon {
+  filter: drop-shadow(0 0 6px rgba(57, 255, 160, 0.5));
+}
+
+/* ── Download All button ── */
+.cm-dl-all-btn {
+  background: linear-gradient(135deg, var(--green), #00c870) !important;
+  color: #000 !important;
+  font-weight: 700;
+}
+.cm-dl-all-btn:hover {
+  box-shadow: 0 0 20px rgba(57, 255, 160, 0.35), 0 6px 24px rgba(0,0,0,0.4) !important;
+}
+
+/* ── Summary card accent ── */
+.cm-summary-card {
+  border-color: rgba(57, 255, 160, 0.2) !important;
+  background: linear-gradient(135deg,
+    rgba(57, 255, 160, 0.04) 0%,
+    rgba(0, 229, 255, 0.03) 100%) !important;
+}
+
+/* ── Per-file compress card ── */
+.cm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.cm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+}
+
+/* Size comparison row */
+.cm-sizes {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.cm-size-orig {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-mid);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.cm-arrow {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+
+.cm-size-new {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.cm-size-new--reduced {
+  color: var(--green);
+}
+
+/* Reduction % badge */
+.cm-badge {
+  display: inline-block;
+  padding: 0.08em 0.55em;
+  border-radius: 5px;
+  font-family: var(--font-head);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.cm-badge--good {
+  background: rgba(57, 255, 160, 0.15);
+  border: 1px solid rgba(57, 255, 160, 0.3);
+  color: var(--green);
+}
+.cm-badge--neutral {
+  background: rgba(255, 201, 77, 0.1);
+  border: 1px solid rgba(255, 201, 77, 0.25);
+  color: var(--gold);
+}
+.cm-badge--error {
+  background: rgba(255, 79, 107, 0.12);
+  border: 1px solid rgba(255, 79, 107, 0.3);
+  color: var(--danger);
+}
+
+/* Output filename label */
+.cm-filename-out {
+  font-size: 0.72rem;
+  color: var(--text-mid);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cm-filename-out span {
+  color: var(--cyan);
+}
+
+/* Error message */
+.cm-error {
+  font-size: 0.74rem;
+  color: var(--danger);
+  font-family: var(--font-mono);
+}
+
+/* Individual download button */
+.cm-dl-btn {
+  align-self: flex-start;
+  font-size: 0.7rem !important;
+  padding: 0.4rem 1rem !important;
+  border-radius: var(--radius-sm) !important;
+  background: linear-gradient(135deg, rgba(57,255,160,0.18), rgba(0,229,255,0.12)) !important;
+  border: 1px solid rgba(57,255,160,0.3) !important;
+  color: var(--green) !important;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.cm-dl-btn:hover {
+  background: linear-gradient(135deg, rgba(57,255,160,0.28), rgba(0,229,255,0.2)) !important;
+  box-shadow: 0 0 14px rgba(57,255,160,0.25) !important;
+  transform: translateY(-1px);
+}
+.cm-dl-btn:active {
+  transform: translateY(0);
+}

@@ -68,10 +68,11 @@ const UIManager = (() => {
     });
 
     const labels = {
-      multiple:  'Multiple Keywords',
-      single:    'Single Keyword',
-      extractall:'Extract All',
-      tablemode: 'Table Mode',
+      multiple:     'Multiple Keywords',
+      single:       'Single Keyword',
+      extractall:   'Extract All',
+      tablemode:    'Table Mode',
+      compressmode: 'Compress PDF',
     };
 
     const display = document.getElementById('modeDisplay');
@@ -105,6 +106,10 @@ const UIManager = (() => {
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       hint.textContent = 'No keywords needed — all transaction rows will be extracted and displayed as cards.';
+    } else if (mode === 'compressmode') {
+      area.style.display = 'none';
+      document.getElementById('keywordChips').innerHTML = '';
+      hint.textContent = 'No keywords needed — click Run Extraction to compress your PDF files.';
     } else {
       area.style.display = 'flex';
       if (mode === 'single') {
@@ -1071,6 +1076,169 @@ const UIManager = (() => {
     return s.trim();
   }
 
+  // =============================================
+  // COMPRESS RESULTS RENDERER
+  // =============================================
+
+  /**
+   * renderCompressResults(results)
+   *
+   * results = Array<{
+   *   file, filename, originalSize, compressedSize,
+   *   blob, saved, savedPct, error?
+   * }>
+   */
+  function renderCompressResults(results) {
+    const container = document.getElementById('resultsContainer');
+    const list      = document.getElementById('resultsList');
+    const actions   = document.getElementById('resultsActions');
+
+    container.style.display = 'block';
+    list.innerHTML    = '';
+    actions.innerHTML = '';
+
+    if (!results || !results.length) {
+      list.innerHTML = `<div class="no-results">No files were compressed.</div>`;
+      return;
+    }
+
+    // ── Summary stats ─────────────────────────────────────────────────────
+    const totalOrig  = results.reduce((s, r) => s + r.originalSize,   0);
+    const totalComp  = results.reduce((s, r) => s + r.compressedSize, 0);
+    const totalSaved = Math.max(0, totalOrig - totalComp);
+    const totalPct   = totalOrig > 0 ? Math.round((totalSaved / totalOrig) * 100) : 0;
+
+    // ── Actions row ───────────────────────────────────────────────────────
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+
+    // "Download All" button — zips all blobs via JSZip
+    const dlAllBtn = document.createElement('button');
+    dlAllBtn.className   = 'btn-excel cm-dl-all-btn';
+    dlAllBtn.textContent = '⬇ Download All';
+    dlAllBtn.addEventListener('click', () => _downloadAllCompressed(results));
+    actionsRow.appendChild(dlAllBtn);
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+    actions.appendChild(makeCountBadge(results.length, 'file'));
+
+    // ── Summary card ──────────────────────────────────────────────────────
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'tm-summary-card cm-summary-card';
+    summaryCard.innerHTML = `
+      <div class="tm-summary-grid">
+        <div class="tm-stat">
+          <span class="tm-stat-val">${results.length}</span>
+          <span class="tm-stat-lbl">File${results.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="tm-stat">
+          <span class="tm-stat-val">${_fmtBytes(totalOrig)}</span>
+          <span class="tm-stat-lbl">Original Size</span>
+        </div>
+        <div class="tm-stat">
+          <span class="tm-stat-val">${_fmtBytes(totalComp)}</span>
+          <span class="tm-stat-lbl">Compressed Size</span>
+        </div>
+        <div class="tm-stat tm-stat--fee">
+          <span class="tm-stat-val">${_fmtBytes(totalSaved)}</span>
+          <span class="tm-stat-lbl">Saved (${totalPct}%)</span>
+        </div>
+      </div>
+    `;
+    list.appendChild(summaryCard);
+
+    // ── One card per file ─────────────────────────────────────────────────
+    for (const result of results) {
+      list.appendChild(_makeCompressCard(result));
+    }
+
+    capResultsHeight(list);
+  }
+
+  function _fmtBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  function _makeCompressCard(result) {
+    const card = document.createElement('div');
+    card.className = 'result-item cm-card';
+
+    const hasError  = !!result.error;
+    const pctBadge  = hasError
+      ? `<span class="cm-badge cm-badge--error">Error</span>`
+      : result.savedPct >= 5
+        ? `<span class="cm-badge cm-badge--good">−${result.savedPct}%</span>`
+        : `<span class="cm-badge cm-badge--neutral">~${result.savedPct}%</span>`;
+
+    card.innerHTML = `
+      <div class="result-meta">
+        <span class="page-badge">PDF</span>
+        <span class="result-filename" title="${escapeHtml(result.file.name)}">${escapeHtml(result.file.name)}</span>
+        <button class="result-remove-btn" title="Remove this result">✕</button>
+      </div>
+      <div class="cm-body">
+        <div class="cm-sizes">
+          <span class="cm-size-orig">${_fmtBytes(result.originalSize)}</span>
+          <span class="cm-arrow">→</span>
+          <span class="cm-size-new ${hasError ? '' : 'cm-size-new--reduced'}">${_fmtBytes(result.compressedSize)}</span>
+          ${pctBadge}
+        </div>
+        ${hasError
+          ? `<div class="cm-error">⚠ ${escapeHtml(result.error)}</div>`
+          : `<div class="cm-filename-out">Output: <span>${escapeHtml(result.filename)}</span></div>`
+        }
+      </div>
+      ${!hasError ? `<button class="cm-dl-btn btn btn-accent">⬇ Download</button>` : ''}
+    `;
+
+    if (!hasError) {
+      card.querySelector('.cm-dl-btn').addEventListener('click', () => {
+        _downloadBlob(result.blob, result.filename);
+      });
+    }
+
+    card.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(card));
+    return card;
+  }
+
+  function _downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+
+  async function _downloadAllCompressed(results) {
+    const valid = results.filter(r => r.blob && !r.error);
+    if (!valid.length) return;
+
+    if (valid.length === 1) {
+      _downloadBlob(valid[0].blob, valid[0].filename);
+      return;
+    }
+
+    // Use JSZip if available; otherwise download one-by-one
+    if (window.JSZip) {
+      const zip = new JSZip();
+      for (const r of valid) {
+        const buf = await r.blob.arrayBuffer();
+        zip.file(r.filename, buf);
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 1 } });
+      _downloadBlob(zipBlob, 'compressed_pdfs.zip');
+    } else {
+      // Fallback: trigger each download with a small delay
+      for (let i = 0; i < valid.length; i++) {
+        setTimeout(() => _downloadBlob(valid[i].blob, valid[i].filename), i * 300);
+      }
+    }
+  }
+
   return {
     renderFileList,
     setModeSelected,
@@ -1088,6 +1256,7 @@ const UIManager = (() => {
     renderSingleKeywordResults,
     renderExtractAll,
     renderTableResults,
+    renderCompressResults,
     escapeHtml,
   };
 })();

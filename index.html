@@ -9,40 +9,6 @@
     <link rel="apple-touch-icon" href="icon.png" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="media.css" />
-    <!-- Critical safety CSS: prevents layout explosion before external CSS loads (especially on file://) -->
-    <style>
-      /* Ensure body never shows raw unstyled content overflow */
-      body { overflow-x: hidden; }
-      /* Logo image hard cap — must never exceed these dimensions */
-      .logo-icon--img {
-        width: 42px !important;
-        height: 42px !important;
-        max-width: 42px !important;
-        max-height: 42px !important;
-        flex-shrink: 0 !important;
-        object-fit: contain;
-      }
-      /* Header must always be a flex row, never a block that stacks vertically */
-      .site-header {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        overflow: hidden;
-      }
-      /* Logo always inline-flex */
-      .logo {
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-      }
-      /* Star canvas pinned behind everything */
-      #starCanvas {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-      }
-    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -63,7 +29,7 @@
     <!-- ============ HEADER ============ -->
     <header class="site-header">
       <div class="logo">
-        <img class="logo-icon logo-icon--img" src="icon.png" alt="PDF Extract icon" style="width:42px;height:42px;max-width:42px;max-height:42px;flex-shrink:0;" />
+        <img class="logo-icon logo-icon--img" src="icon.png" alt="PDF Extract icon" />
         <span class="logo-text">PDF<strong>Extract</strong></span>
       </div>
       <p class="tagline">
@@ -162,6 +128,12 @@
             <span class="mode-icon">🗂️</span>
             <span class="mode-name">Table Mode</span>
             <span class="mode-desc">Designed for large tables — parses every row automatically and captures Tag, Zone, Entry, Exit &amp; Toll Fee without any keywords.</span>
+          </button>
+          <!-- ── NEW: Compress PDF ── -->
+          <button class="mode-btn mode-btn--compress" id="modeCompress" data-mode="compressmode">
+            <span class="mode-icon">🗜️</span>
+            <span class="mode-name">Compress PDF</span>
+            <span class="mode-desc">Reduce the file size of your PDFs. No keywords needed — just run and download the compressed files.</span>
           </button>
         </div>
 
@@ -688,6 +660,7 @@
     <script src="excel-exporter.js"></script>
     <script src="extract-all.js"></script>
     <script src="rename-handler.js"></script>
+    <script src="pdf-compressor.js"></script>
     <script src="ui-manager.js"></script>
     <script src="stars.js"></script>
     <script src="datetime-widget.js"></script>

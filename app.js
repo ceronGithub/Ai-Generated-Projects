@@ -344,7 +344,7 @@
       UIManager.setRunEnabled(false);
       return;
     }
-    if (state.mode === 'extractall' || state.mode === 'tablemode') {
+    if (state.mode === 'extractall' || state.mode === 'tablemode' || state.mode === 'compressmode') {
       UIManager.setRunEnabled(true);
       return;
     }
@@ -358,25 +358,16 @@
       const overlay    = document.getElementById('tableWarnOverlay');
       const btnOk      = document.getElementById('tableWarnOk');
       const btnProceed = document.getElementById('tableWarnProceed');
-
-      // Reset any leftover closing class and show
-      overlay.classList.remove('tw-closing');
       overlay.style.display = 'flex';
 
-      function closeModal(result) {
+      function cleanup(result) {
         btnOk.removeEventListener('click', onOk);
         btnProceed.removeEventListener('click', onProceed);
-        // Play closing animation, then hide and resolve
-        overlay.classList.add('tw-closing');
-        overlay.addEventListener('animationend', () => {
-          overlay.style.display = 'none';
-          overlay.classList.remove('tw-closing');
-          resolve(result);
-        }, { once: true });
+        overlay.style.display = 'none';
+        resolve(result);
       }
-
-      const onOk      = () => closeModal('ok');
-      const onProceed = () => closeModal('proceed');
+      const onOk      = () => cleanup('ok');
+      const onProceed = () => cleanup('proceed');
       btnOk.addEventListener('click', onOk);
       btnProceed.addEventListener('click', onProceed);
     });
@@ -390,13 +381,30 @@
     if (state.files.length === 0 || !state.mode) return;
 
     UIManager.setRunning(true);
-    UIManager.setProgress(0, 'Phase 1 · Pre-reading PDFs and marking text locations…');
+    UIManager.setProgress(0, state.mode === 'compressmode'
+      ? 'Preparing compression…'
+      : 'Phase 1 · Pre-reading PDFs and marking text locations…');
     document.getElementById('resultsContainer').style.display = 'none';
 
     // 🚀 Engage warp drive!
     if (window.StarField) window.StarField.startWarp();
 
     try {
+      // ── Compress mode: skip text extraction, work directly on files ──────
+      if (state.mode === 'compressmode') {
+        UIManager.setProgress(20, 'Compressing PDFs…');
+        await new Promise(r => setTimeout(r, 30));
+        const compResults = await PDFCompressor.compress(state.files, (done, total) => {
+          const pct = 20 + Math.round((done / total) * 75);
+          UIManager.setProgress(pct, `Compressing — ${done}/${total} file(s)…`);
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderCompressResults(compResults);
+
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        return;
+      }
+
       // ── Phase 1: Read all PDFs and mark every text item's location ──────
       // extractAll() now returns itemMap alongside each page's text, giving us
       // the character-level position of every PDF text token (the "marks").
@@ -433,68 +441,8 @@
           const choice = await showTableWarningModal();
 
           if (choice === 'ok') {
-            // ── Reset state ────────────────────────────────────────────────
-            state.mode        = null;
-            state.keywords    = [];
-            state.lastResults = null;
-            state.lastPdfData = null;
-
-            // ── Animate keyword chips wiping out ───────────────────────────
-            const chips = document.querySelectorAll('.keyword-chip');
-            chips.forEach((chip, i) => {
-              chip.style.animationDelay = `${i * 35}ms`;
-              chip.classList.add('chip-wiping');
-            });
-
-            // ── Animate results folding away (if visible) ──────────────────
-            const resultsContainer = document.getElementById('resultsContainer');
-            if (resultsContainer.style.display !== 'none') {
-              resultsContainer.classList.add('results-folding');
-            }
-
-            // ── Step 04 (results): fold → settle disabled ──────────────────
-            stepResults.classList.add('step-folding');
-            stepResults.addEventListener('animationend', () => {
-              stepResults.classList.remove('step-folding');
-              resultsContainer.classList.remove('results-folding');
-              resultsContainer.style.display = 'none';
-              document.getElementById('resultsList').innerHTML   = '';
-              document.getElementById('resultsActions').innerHTML = '';
-              UIManager.hideProgress();
-              UIManager.setRunEnabled(false);
-              stepResults.classList.add('disabled-card', 'step-settling');
-              stepResults.classList.remove('active');
-              stepResults.addEventListener('animationend', () => {
-                stepResults.classList.remove('step-settling');
-              }, { once: true });
-            }, { once: true });
-
-            // ── Step 03 (keywords): fold → settle disabled (80ms stagger) ──
-            setTimeout(() => {
-              stepKeywords.classList.add('step-folding');
-              stepKeywords.addEventListener('animationend', () => {
-                stepKeywords.classList.remove('step-folding');
-                keywordInput.value = '';
-                document.getElementById('keywordChips').innerHTML  = '';
-                document.getElementById('keywordHint').textContent = '';
-                document.getElementById('keywordInputArea').style.display = 'flex';
-                keywordInput.placeholder = 'Type a keyword and press Enter…';
-                stepKeywords.classList.add('disabled-card', 'step-settling');
-                stepKeywords.classList.remove('active');
-                stepKeywords.addEventListener('animationend', () => {
-                  stepKeywords.classList.remove('step-settling');
-                }, { once: true });
-              }, { once: true });
-            }, 80);
-
-            // ── Step 02 (mode): reset to button grid (160ms stagger) ────────
-            // Stays ACTIVE — user can immediately pick Table Mode
-            setTimeout(() => {
-              UIManager.setModeButtonsVisible(true);
-              document.getElementById('modeDisplay').style.display = 'none';
-              document.querySelector('.mode-buttons').style.display = 'grid';
-            }, 160);
-
+            // Reset back to mode selection cleanly
+            resetToEmpty();
             return;
           }
           // choice === 'proceed': continue but skip table regions in search
