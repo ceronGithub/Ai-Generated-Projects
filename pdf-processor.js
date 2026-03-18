@@ -38,15 +38,41 @@ const PDFProcessor = (() => {
       // single space and track exactly where in the joined string each item
       // starts and ends.  This gives us a "marked location map" of every
       // text fragment on the page.
+      //
+      // We also capture spatial coordinates (x, screenY, width, height) from
+      // each item's transform matrix so that TableEngine can perform spatial
+      // table detection across column boundaries.
       const itemMap = [];
       let cursor    = 0;
       const parts   = [];
+
+      // Get the page viewport for coordinate conversion
+      const viewport = page.getViewport({ scale: 1 });
 
       for (const item of content.items) {
         const s = item.str;
         if (!s) continue;                // skip empty items
         parts.push(s);
-        itemMap.push({ str: s, start: cursor, end: cursor + s.length });
+
+        // Extract x, y from the item's transform matrix [a,b,c,d,e,f]
+        // e = x position, f = y position (PDF coords, origin bottom-left)
+        // Convert to screen coords (origin top-left) using viewport height
+        const tx = item.transform;
+        const x       = tx ? tx[4] : 0;
+        const pdfY    = tx ? tx[5] : 0;
+        const screenY = viewport.height - pdfY;  // flip to top-origin
+        const width   = item.width  || 0;
+        const height  = item.height || 0;
+
+        itemMap.push({
+          str: s,
+          start:   cursor,
+          end:     cursor + s.length,
+          x,
+          screenY,
+          width,
+          height,
+        });
         cursor += s.length + 1;          // +1 for the joining space
       }
 
@@ -60,7 +86,7 @@ const PDFProcessor = (() => {
       // second-occurrence matches (offsets are always monotonically increasing
       // and relative order is preserved).
 
-      pages.push({ page: i, text, itemMap });
+      pages.push({ page: i, text, itemMap, pageWidth: viewport.width });
     }
 
     return pages;
