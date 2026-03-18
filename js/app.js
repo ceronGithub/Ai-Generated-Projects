@@ -33,7 +33,6 @@ function init() {
   renderAllMonths();
   setupModalListeners();
   setupBookingListeners();
-  initNewsTicker(); // 📰 start rules expiry ticker
 
   // Step 2 — connect Firebase in background, never blocks UI
   initFirebase().then(async () => {

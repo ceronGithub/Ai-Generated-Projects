@@ -112,6 +112,9 @@ function setDbStatus(state) {
     lbl.innerHTML   = 'Firebase Connected';
     _retryCount     = 0;
     if (_retryTimer) { clearTimeout(_retryTimer); _retryTimer = null; }
+    // Hide the offline banner in the config modal if it's open
+    const banner = document.getElementById('dbOfflineBanner');
+    if (banner) banner.style.display = 'none';
 
   } else if (state === 'offline') {
     pill?.classList.add('is-offline');
@@ -334,7 +337,7 @@ function openDbConfigModal() {
           onmouseover="this.style.background='#ffe0e6';this.style.color='#e04060'"
           onmouseout="this.style.background='#f5f5f8';this.style.color='#9996b0'">×</button>
       </div>
-      <p style="font-size:12px;color:#e04060;font-weight:700;background:#fff0f3;padding:8px 12px;border-radius:8px;margin-bottom:16px;">
+      <p id="dbOfflineBanner" style="font-size:12px;color:#e04060;font-weight:700;background:#fff0f3;padding:8px 12px;border-radius:8px;margin-bottom:16px;display:none;">
         ⚠️ Firebase is offline — update your database URL to reconnect.
       </p>
 
@@ -370,7 +373,7 @@ function openDbConfigModal() {
           DATABASE URL <span style="color:#ff6b8a">*</span>
         </label>
         <input id="dbUrlInput" type="text"
-          value="${typeof FB_DATABASE_URL !== 'undefined' ? FB_DATABASE_URL : ''}"
+          value=""
           placeholder="https://your-project-default-rtdb.firebaseio.com"
           style="width:100%;padding:11px 14px;border:1.5px solid rgba(0,0,0,0.10);
             border-radius:10px;font-size:13px;font-weight:600;color:#1a1a2e;
@@ -528,6 +531,10 @@ function openDbConfigModal() {
     modal.style.transform = 'translateY(0) scale(1)';
   });
 
+  // Show offline banner only when actually offline
+  const banner = document.getElementById('dbOfflineBanner');
+  if (banner) banner.style.display = _dbOnline ? 'none' : 'block';
+
   // Close on backdrop click
   overlay.onclick = e => { if (e.target === overlay) closeDbConfigModal(); };
 
@@ -556,9 +563,16 @@ function switchDbTab(tab) {
   });
   if (tab === 'url') {
     const el = document.getElementById('currentUrlDisplay');
-    if (el) el.textContent = FB_DATABASE_URL;
+    if (el) {
+      el.textContent = FB_DATABASE_URL || '—';
+      el.style.filter = 'blur(5px)';
+      el.style.userSelect = 'none';
+      el.style.cursor = 'default';
+      el.title = '';
+      el.onclick = null;
+    }
     const input = document.getElementById('dbUrlInput');
-    if (input && !input.value) input.value = FB_DATABASE_URL;
+    if (input) input.value = ''; // always empty for security
   }
   if (tab === 'rules') {
     const editor = document.getElementById('rulesEditor');
@@ -573,8 +587,14 @@ function clearSavedUrl() {
   const input  = document.getElementById('dbUrlInput');
   const el     = document.getElementById('currentUrlDisplay');
   const status = document.getElementById('dbUrlStatus');
-  if (input)  input.value    = FB_DATABASE_URL_DEFAULT;
-  if (el)     el.textContent = FB_DATABASE_URL_DEFAULT;
+  if (input) input.value = ''; // always empty for security
+  if (el) {
+    el.textContent = FB_DATABASE_URL_DEFAULT || '—';
+    el.style.filter = 'blur(5px)';
+    el.style.userSelect = 'none';
+    el.style.cursor = 'default';
+    el.onclick = null;
+  }
   if (status) status.innerHTML = '<span style="color:#3cb771;">✅ Cleared — using URL from firebase-config.js.</span>';
   setTimeout(() => { if (status) status.innerHTML = ''; }, 3000);
 }
@@ -687,7 +707,12 @@ async function saveDbConfig() {
       btn.textContent = '✅ Connected!';
       btn.style.background = '#3cb771';
 
+      // Hide the offline banner immediately — we're connected
+      const banner = document.getElementById('dbOfflineBanner');
+      if (banner) banner.style.display = 'none';
+
       setTimeout(async () => {
+        input.value = ''; // clear field after save
         closeDbConfigModal();
         await initFirebase();
         if (_dbOnline) {

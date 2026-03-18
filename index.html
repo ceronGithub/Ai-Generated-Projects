@@ -1,665 +1,1360 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2026 — Full Year Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="css/reset.css" />
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/calendar.css" />
+    <link rel="stylesheet" href="css/modal.css" />
+    <link rel="stylesheet" href="css/booking.css" />
+    <link rel="stylesheet" href="css/animations.css" />
+    <link rel="stylesheet" href="css/responsive.css" />
+  </head>
+  <body>
+    <!-- Animated canvas background -->
+    <canvas id="bgCanvas"></canvas>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2026 — Full Year Calendar</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap"
-    rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <link rel="stylesheet" href="css/reset.css">
-  <link rel="stylesheet" href="css/theme.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/calendar.css">
-  <link rel="stylesheet" href="css/modal.css">
-  <link rel="stylesheet" href="css/booking.css">
-  <link rel="stylesheet" href="css/animations.css">
-  <link rel="stylesheet" href="css/responsive.css">
-</head>
-
-<body>
-
-  <!-- Animated canvas background -->
-  <canvas id="bgCanvas"></canvas>
-
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="header-left">
-        <h1 class="header-year">2026</h1>
-        <span class="header-label">Full Year Calendar</span>
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="header-left">
+          <h1 class="header-year">2026</h1>
+          <span class="header-label">Full Year Calendar</span>
+        </div>
+        <div class="header-today-badge" id="todayBadge"></div>
+        <button
+          onclick="openAnalysis()"
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: linear-gradient(135deg, #7c6af4, #29b5e8);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 18px;
+            font-family: &quot;Nunito&quot;, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(124, 106, 244, 0.3);
+            transition: all 0.18s ease;
+          "
+          onmouseover="this.style.opacity = '0.88'"
+          onmouseout="this.style.opacity = '1'"
+        >
+          📊 Analysis
+        </button>
+        <div class="db-status is-connecting" id="dbStatus">
+          <span class="db-dot connecting" id="dbStatusDot"></span
+          ><span class="db-status-label" id="dbStatusLabel">Connecting…</span
+          ><button
+            onclick="openDbConfigModal()"
+            title="Firebase Settings"
+            style="
+              width: 22px;
+              height: 22px;
+              border-radius: 50%;
+              background: #f0eeff;
+              border: none;
+              cursor: pointer;
+              font-size: 12px;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              margin-left: 4px;
+              flex-shrink: 0;
+              transition: background 0.15s;
+            "
+            onmouseover="this.style.background = '#d0caff'"
+            onmouseout="this.style.background = '#f0eeff'"
+          >
+            ⚙️
+          </button>
+        </div>
+        <!-- Backup export button -->
+        <button
+          onclick="exportBackup()"
+          title="Download full db.json backup"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 50px;
+            padding: 7px 14px;
+            font-family: &quot;Nunito&quot;, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #555570;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.18s ease;
+          "
+          onmouseover="
+            this.style.background = '#f0fff4';
+            this.style.color = '#3cb771';
+            this.style.borderColor = '#b8f0ce';
+          "
+          onmouseout="
+            this.style.background = '#fff';
+            this.style.color = '#555570';
+            this.style.borderColor = 'rgba(0,0,0,0.08)';
+          "
+        >
+          💾 Backup
+        </button>
+        <!-- Import JSON button -->
+        <button
+          onclick="openImportModal()"
+          title="Import & preview a JSON booking file"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 50px;
+            padding: 7px 16px;
+            font-family: &quot;Nunito&quot;, sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #555570;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.18s ease;
+          "
+          onmouseover="
+            this.style.background = '#f3f0ff';
+            this.style.color = '#7c6af4';
+            this.style.borderColor = '#d0caff';
+          "
+          onmouseout="
+            this.style.background = '#fff';
+            this.style.color = '#555570';
+            this.style.borderColor = 'rgba(0,0,0,0.08)';
+          "
+        >
+          📂 Import JSON
+        </button>
+        <!-- Hidden file input for restore -->
+        <input
+          type="file"
+          id="dbRestoreInput"
+          accept=".json"
+          style="display: none"
+          onchange="
+            if (this.files[0]) restoreBackup(this.files[0]);
+            this.value = '';
+          "
+        />
       </div>
-      <div class="header-today-badge" id="todayBadge"></div>
-      <button onclick="openAnalysis()" style="
-        display:inline-flex;align-items:center;gap:7px;
-        background:linear-gradient(135deg,#7c6af4,#29b5e8);
-        color:#fff;border:none;border-radius:50px;
-        padding:8px 18px;font-family:'Nunito',sans-serif;
-        font-size:12px;font-weight:700;cursor:pointer;
-        box-shadow:0 4px 14px rgba(124,106,244,0.30);
-        transition:all 0.18s ease;" onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
-        📊 Analysis
-      </button>
-      <div class="db-status is-connecting" id="dbStatus"><span class="db-dot connecting" id="dbStatusDot"></span><span
-          class="db-status-label" id="dbStatusLabel">Connecting…</span><button onclick="openDbConfigModal()"
-          title="Firebase Settings"
-          style="width:22px;height:22px;border-radius:50%;background:#f0eeff;border:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;flex-shrink:0;transition:background 0.15s;"
-          onmouseover="this.style.background='#d0caff'" onmouseout="this.style.background='#f0eeff'">⚙️</button></div>
-      <!-- Backup export button -->
-      <button onclick="exportBackup()" title="Download full db.json backup" style="display:flex;align-items:center;gap:5px;background:#fff;border:1px solid rgba(0,0,0,0.08);
-               border-radius:50px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:12px;
-               font-weight:700;color:#555570;box-shadow:0 2px 8px rgba(0,0,0,0.06);
-               cursor:pointer;white-space:nowrap;transition:all 0.18s ease;"
-        onmouseover="this.style.background='#f0fff4';this.style.color='#3cb771';this.style.borderColor='#b8f0ce'"
-        onmouseout="this.style.background='#fff';this.style.color='#555570';this.style.borderColor='rgba(0,0,0,0.08)'">
-        💾 Backup
-      </button>
-      <!-- Import JSON button -->
-      <button onclick="openImportModal()" title="Import & preview a JSON booking file" style="display:flex;align-items:center;gap:6px;background:#fff;
-               border:1px solid rgba(0,0,0,0.08);border-radius:50px;
-               padding:7px 16px;font-family:'Nunito',sans-serif;font-size:12px;
-               font-weight:700;color:#555570;box-shadow:0 2px 8px rgba(0,0,0,0.06);
-               cursor:pointer;white-space:nowrap;transition:all 0.18s ease;"
-        onmouseover="this.style.background='#f3f0ff';this.style.color='#7c6af4';this.style.borderColor='#d0caff'"
-        onmouseout="this.style.background='#fff';this.style.color='#555570';this.style.borderColor='rgba(0,0,0,0.08)'">
-        📂 Import JSON
-      </button>
-      <!-- Hidden file input for restore -->
-      <input type="file" id="dbRestoreInput" accept=".json" style="display:none"
-        onchange="if(this.files[0]) restoreBackup(this.files[0]); this.value='';">
-    </div>
-  </header>
+    </header>
 
-  <!-- ══════════════════════════════════════════
+    <!-- ══════════════════════════════════════════
        IMPORT JSON MODAL
   ══════════════════════════════════════════ -->
-  <div id="importOverlay" style="
-    position:fixed;inset:0;z-index:4000;
-    background:rgba(15,15,35,0.52);
-    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    display:flex;align-items:center;justify-content:center;
-    padding:24px 20px;opacity:0;pointer-events:none;
-    transition:opacity 0.25s ease;box-sizing:border-box;">
-    <div id="importModal" style="
-      background:#fff;border-radius:24px;
-      box-shadow:0 32px 90px rgba(0,0,0,0.22),0 0 0 1px rgba(0,0,0,0.04);
-      width:820px;max-width:96vw;height:90vh;max-height:740px;min-height:400px;
-      display:flex;flex-direction:column;overflow:hidden;
-      transform:translateY(20px) scale(0.96);
-      transition:transform 0.30s cubic-bezier(0.34,1.56,0.64,1);">
+    <div
+      id="importOverlay"
+      style="
+        position: fixed;
+        inset: 0;
+        z-index: 4000;
+        background: rgba(15, 15, 35, 0.52);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 20px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+        box-sizing: border-box;
+      "
+    >
+      <div
+        id="importModal"
+        style="
+          background: #fff;
+          border-radius: 24px;
+          box-shadow:
+            0 32px 90px rgba(0, 0, 0, 0.22),
+            0 0 0 1px rgba(0, 0, 0, 0.04);
+          width: 820px;
+          max-width: 96vw;
+          height: 90vh;
+          max-height: 740px;
+          min-height: 400px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          transform: translateY(20px) scale(0.96);
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        "
+      >
+        <!-- Header -->
+        <div
+          id="importModalHeader"
+          style="
+            padding: 24px 32px 18px;
+            border-bottom: 1.5px solid rgba(0, 0, 0, 0.06);
+            background: linear-gradient(135deg, #f3f0ff 0%, #fff 100%);
+            flex-shrink: 0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+          "
+        >
+          <div>
+            <div
+              style="
+                font-family: &quot;Playfair Display&quot;, serif;
+                font-size: 22px;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 4px;
+              "
+            >
+              📂 Import JSON
+            </div>
+            <div
+              id="importSubtitle"
+              style="
+                font-size: 12px;
+                font-weight: 600;
+                color: rgba(0, 0, 0, 0.4);
+                letter-spacing: 0.3px;
+              "
+            >
+              Load a booking file or full db.json backup to preview and import
+            </div>
+          </div>
+          <button
+            onclick="closeImportModal()"
+            style="
+              width: 34px;
+              height: 34px;
+              border-radius: 50%;
+              background: rgba(0, 0, 0, 0.06);
+              border: none;
+              font-size: 18px;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+              transition: background 0.15s;
+              color: #555;
+            "
+            onmouseover="this.style.background = 'rgba(0,0,0,0.12)'"
+            onmouseout="this.style.background = 'rgba(0,0,0,0.06)'"
+          >
+            ×
+          </button>
+        </div>
 
-      <!-- Header -->
-      <div id="importModalHeader" style="
-        padding:24px 32px 18px;
-        border-bottom:1.5px solid rgba(0,0,0,0.06);
-        background:linear-gradient(135deg,#f3f0ff 0%,#fff 100%);
-        flex-shrink:0;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
-        <div>
+        <!-- Body -->
+        <div
+          id="importBody"
+          style="
+            flex: 1 1 0;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 24px 32px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          "
+        >
+          <!-- Drop zone (shown when no file loaded) -->
           <div
-            style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#1a1a2e;margin-bottom:4px;">
-            📂 Import JSON
+            id="importDropZone"
+            style="
+              border: 2.5px dashed #d0caff;
+              border-radius: 18px;
+              background: #f8f7ff;
+              padding: 48px 32px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              gap: 14px;
+              cursor: pointer;
+              transition: all 0.2s ease;
+            "
+            onclick="document.getElementById('importFileInput').click()"
+            ondragover="
+              event.preventDefault();
+              this.style.borderColor = '#7c6af4';
+              this.style.background = '#f0eeff';
+            "
+            ondragleave="
+              this.style.borderColor = '#d0caff';
+              this.style.background = '#f8f7ff';
+            "
+            ondrop="
+              event.preventDefault();
+              this.style.borderColor = '#d0caff';
+              this.style.background = '#f8f7ff';
+              handleImportDrop(event);
+            "
+          >
+            <div style="font-size: 44px; line-height: 1">📂</div>
+            <div style="font-size: 15px; font-weight: 700; color: #7c6af4">
+              Drop your JSON file here
+            </div>
+            <div style="font-size: 12px; color: #9996b0; font-weight: 600">
+              or click to browse
+            </div>
+            <div style="font-size: 11px; color: #b0b0c8; margin-top: 4px">
+              Supports: single booking .json · full db.json · booking array
+              .json
+            </div>
           </div>
-          <div id="importSubtitle" style="font-size:12px;font-weight:600;color:rgba(0,0,0,0.4);letter-spacing:0.3px;">
-            Load a booking file or full db.json backup to preview and import
+
+          <!-- Preview area (shown after file loaded) -->
+          <div
+            id="importPreview"
+            style="display: none; flex-direction: column; gap: 12px"
+          ></div>
+        </div>
+
+        <!-- Footer -->
+        <div
+          id="importFooter"
+          style="
+            padding: 16px 32px 20px;
+            border-top: 1.5px solid rgba(0, 0, 0, 0.06);
+            background: #fafafa;
+            flex-shrink: 0;
+            flex-grow: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+          "
+        >
+          <div
+            id="importFooterInfo"
+            style="font-size: 12px; font-weight: 600; color: #9996b0"
+          ></div>
+          <div style="display: flex; gap: 10px">
+            <button
+              onclick="closeImportModal()"
+              style="
+                padding: 10px 20px;
+                border-radius: 12px;
+                font-family: &quot;Nunito&quot;, sans-serif;
+                font-size: 13px;
+                font-weight: 700;
+                color: #9996b0;
+                background: #f0f0f5;
+                border: none;
+                cursor: pointer;
+              "
+            >
+              Cancel
+            </button>
+            <button
+              id="importLoadAnother"
+              onclick="document.getElementById('importFileInput').click()"
+              style="
+                display: none;
+                padding: 10px 20px;
+                border-radius: 12px;
+                font-family: &quot;Nunito&quot;, sans-serif;
+                font-size: 13px;
+                font-weight: 700;
+                color: #7c6af4;
+                background: #f0eeff;
+                border: 1.5px solid #d0caff;
+                cursor: pointer;
+              "
+            >
+              📂 Load Another
+            </button>
+            <button
+              id="importPushBtn"
+              onclick="pushImportToFirebase()"
+              style="
+                display: none;
+                padding: 10px 24px;
+                border-radius: 12px;
+                font-family: &quot;Nunito&quot;, sans-serif;
+                font-size: 13px;
+                font-weight: 700;
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                background: linear-gradient(135deg, #7c6af4, #29b5e8);
+                box-shadow: 0 4px 16px rgba(124, 106, 244, 0.3);
+              "
+            >
+              ☁️ Push to Firebase
+            </button>
           </div>
         </div>
-        <button onclick="closeImportModal()" style="
-          width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.06);
-          border:none;font-size:18px;cursor:pointer;display:flex;align-items:center;
-          justify-content:center;flex-shrink:0;transition:background 0.15s;color:#555;"
-          onmouseover="this.style.background='rgba(0,0,0,0.12)'"
-          onmouseout="this.style.background='rgba(0,0,0,0.06)'">×</button>
       </div>
-
-      <!-- Body -->
-      <div id="importBody" style="flex:1 1 0;min-height:0;overflow-y:auto;padding:24px 32px 16px;
-        display:flex;flex-direction:column;gap:16px;">
-
-        <!-- Drop zone (shown when no file loaded) -->
-        <div id="importDropZone" style="
-          border:2.5px dashed #d0caff;border-radius:18px;
-          background:#f8f7ff;padding:48px 32px;
-          display:flex;flex-direction:column;align-items:center;justify-content:center;
-          gap:14px;cursor:pointer;transition:all 0.2s ease;"
-          onclick="document.getElementById('importFileInput').click()"
-          ondragover="event.preventDefault();this.style.borderColor='#7c6af4';this.style.background='#f0eeff'"
-          ondragleave="this.style.borderColor='#d0caff';this.style.background='#f8f7ff'"
-          ondrop="event.preventDefault();this.style.borderColor='#d0caff';this.style.background='#f8f7ff';handleImportDrop(event)">
-          <div style="font-size:44px;line-height:1;">📂</div>
-          <div style="font-size:15px;font-weight:700;color:#7c6af4;">Drop your JSON file here</div>
-          <div style="font-size:12px;color:#9996b0;font-weight:600;">or click to browse</div>
-          <div style="font-size:11px;color:#b0b0c8;margin-top:4px;">
-            Supports: single booking .json · full db.json · booking array .json
-          </div>
-        </div>
-
-        <!-- Preview area (shown after file loaded) -->
-        <div id="importPreview" style="display:none;flex-direction:column;gap:12px;"></div>
-
-      </div>
-
-      <!-- Footer -->
-      <div id="importFooter" style="
-        padding:16px 32px 20px;border-top:1.5px solid rgba(0,0,0,0.06);
-        background:#fafafa;flex-shrink:0;flex-grow:0;
-        display:flex;align-items:center;justify-content:space-between;gap:12px;">
-        <div id="importFooterInfo" style="font-size:12px;font-weight:600;color:#9996b0;"></div>
-        <div style="display:flex;gap:10px;">
-          <button onclick="closeImportModal()" style="
-            padding:10px 20px;border-radius:12px;font-family:'Nunito',sans-serif;
-            font-size:13px;font-weight:700;color:#9996b0;background:#f0f0f5;border:none;cursor:pointer;">
-            Cancel
-          </button>
-          <button id="importLoadAnother" onclick="document.getElementById('importFileInput').click()" style="
-            display:none;padding:10px 20px;border-radius:12px;font-family:'Nunito',sans-serif;
-            font-size:13px;font-weight:700;color:#7c6af4;background:#f0eeff;
-            border:1.5px solid #d0caff;cursor:pointer;">
-            📂 Load Another
-          </button>
-          <button id="importPushBtn" onclick="pushImportToFirebase()" style="
-            display:none;padding:10px 24px;border-radius:12px;font-family:'Nunito',sans-serif;
-            font-size:13px;font-weight:700;color:#fff;border:none;cursor:pointer;
-            background:linear-gradient(135deg,#7c6af4,#29b5e8);
-            box-shadow:0 4px 16px rgba(124,106,244,0.30);">
-            ☁️ Push to Firebase
-          </button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Hidden file input for import -->
-  <input type="file" id="importFileInput" accept=".json" style="display:none"
-    onchange="if(this.files[0]) handleImportFile(this.files[0]); this.value='';">
-
-  <!-- ══════════════════════════════════════════
-       NEWS TICKER — rules expiry warning
-       Shown 1 day before Firebase rules expire
-  ══════════════════════════════════════════ -->
-  <!-- ══ NEWS TICKER — always visible, live rules countdown ══ -->
-  <div id="newsTicker" style="
-    position:relative;z-index:90;width:100%;overflow:hidden;
-    background:linear-gradient(90deg,#3cb771,#5ad98a,#3cb771,#1a9a52,#3cb771);
-    background-size:300% 100%;
-    animation:tickerBg 6s linear infinite;
-    border-bottom:2px solid rgba(255,255,255,0.20);
-    box-shadow:0 3px 14px rgba(0,0,0,0.14);">
-
-    <!-- Left label -->
-    <div id="newsLabel" style="
-      position:absolute;left:0;top:0;bottom:0;z-index:2;
-      display:flex;align-items:center;
-      background:rgba(0,0,0,0.20);
-      padding:0 18px;
-      font-family:'Nunito',sans-serif;font-size:11px;font-weight:900;
-      color:#fff;letter-spacing:1.2px;text-transform:uppercase;
-      white-space:nowrap;border-right:1.5px solid rgba(255,255,255,0.22);">
-      ✅ FIREBASE
     </div>
 
-    <!-- Scrolling track — padding-left pushes text off-screen right -->
-    <div id="newsTrack" style="
-      display:flex;align-items:center;
-      height:38px;padding-left:calc(100% + 120px);
-      white-space:nowrap;will-change:transform;">
-      <span id="newsText" style="
-        font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;
-        color:#fff;letter-spacing:0.4px;
-        text-shadow:0 1px 4px rgba(0,0,0,0.22);
-        padding-right:80px;">
-        Loading Firebase status…
-      </span>
-    </div>
+    <!-- Hidden file input for import -->
+    <input
+      type="file"
+      id="importFileInput"
+      accept=".json"
+      style="display: none"
+      onchange="
+        if (this.files[0]) handleImportFile(this.files[0]);
+        this.value = '';
+      "
+    />
 
-    <!-- Dismiss (snooze 1 hr) -->
-    <button onclick="dismissNewsTicker()" title="Snooze 1 hour" style="
-      position:absolute;right:0;top:0;bottom:0;z-index:2;
-      background:rgba(0,0,0,0.16);border:none;
-      border-left:1.5px solid rgba(255,255,255,0.20);
-      padding:0 15px;cursor:pointer;color:#fff;font-size:17px;
-      transition:background 0.15s;" onmouseover="this.style.background='rgba(0,0,0,0.30)'"
-      onmouseout="this.style.background='rgba(0,0,0,0.16)'">×</button>
-  </div>
+    <main class="year-grid" id="yearGrid"></main>
 
-  <main class="year-grid" id="yearGrid"></main>
-
-  <!-- ══════════════════════════════
+    <!-- ══════════════════════════════
        BOOKING FORM MODAL
   ══════════════════════════════ -->
-  <div class="bk-overlay" id="bookingOverlay">
-    <div class="bk-modal" id="bookingModal">
-
-      <div class="bk-modal-header">
-        <div class="bk-header-left">
-          <div class="bk-color-pill" id="bkColorPill"></div>
-          <div>
-            <span class="bk-header-label">New Booking</span>
-            <h2 class="bk-header-date" id="bkHeaderDate"></h2>
+    <div class="bk-overlay" id="bookingOverlay">
+      <div class="bk-modal" id="bookingModal">
+        <div class="bk-modal-header">
+          <div class="bk-header-left">
+            <div class="bk-color-pill" id="bkColorPill"></div>
+            <div>
+              <span class="bk-header-label">New Booking</span>
+              <h2 class="bk-header-date" id="bkHeaderDate"></h2>
+            </div>
+          </div>
+          <div class="bk-header-right">
+            <div class="bk-event-badge" id="bkEventBadge">
+              <span class="bk-event-icon" id="bkEventIcon"></span>
+              <span class="bk-event-label" id="bkEventLabel"></span>
+            </div>
+            <button class="bk-close" id="bookingClose">&times;</button>
           </div>
         </div>
-        <div class="bk-header-right">
-          <div class="bk-event-badge" id="bkEventBadge">
-            <span class="bk-event-icon" id="bkEventIcon"></span>
-            <span class="bk-event-label" id="bkEventLabel"></span>
+
+        <div class="bk-body">
+          <!-- Guest Section -->
+          <div class="bk-section">
+            <div class="bk-section-title">
+              <span class="bk-section-icon">👤</span> Guest Information
+            </div>
+            <div class="bk-grid-2">
+              <!-- Row 1: Name | Email -->
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Guest Name <span class="bk-req">*</span></label
+                >
+                <input
+                  class="bk-input"
+                  id="bkGuestName"
+                  type="text"
+                  placeholder="Full name"
+                />
+                <span class="bk-err" id="errGuestName"></span>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Guest Email <span class="bk-opt">(optional)</span></label
+                >
+                <input
+                  class="bk-input"
+                  id="bkGuestEmail"
+                  type="email"
+                  placeholder="email@example.com"
+                />
+                <span class="bk-err" id="errGuestEmail"></span>
+              </div>
+              <!-- Row 2: Phone | Pax -->
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Phone Number <span class="bk-req">*</span></label
+                >
+                <input
+                  class="bk-input"
+                  id="bkGuestPhone"
+                  type="tel"
+                  placeholder="+63 XXX XXX XXXX"
+                />
+                <span class="bk-err" id="errGuestPhone"></span>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Pax <span class="bk-req">*</span></label
+                >
+                <input
+                  class="bk-input bk-num"
+                  id="bkPax"
+                  type="number"
+                  min="1"
+                  placeholder="0"
+                />
+                <span class="bk-err" id="errPax"></span>
+              </div>
+              <!-- Row 3: Total Pax (auto) | Extra Pax -->
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Total Pax <span class="bk-opt">(auto)</span></label
+                >
+                <div class="bk-auto" id="bkTotalPax">—</div>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Extra Pax <span class="bk-opt">(optional)</span></label
+                >
+                <input
+                  class="bk-input bk-num"
+                  id="bkExtraPax"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+              <!-- Row 4: How much per head (full width) -->
+              <div class="bk-field bk-field-full">
+                <label class="bk-label"
+                  >How much per head
+                  <span class="bk-opt">(optional)</span></label
+                >
+                <div class="bk-peso-wrap">
+                  <span class="bk-peso-sign">₱</span>
+                  <input
+                    class="bk-input bk-peso-input bk-num"
+                    id="bkRatePerHead"
+                    type="number"
+                    min="0"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+              <!-- Row 5: Total Pets | How much per pet -->
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Total Pets <span class="bk-opt">(optional)</span></label
+                >
+                <input
+                  class="bk-input bk-num"
+                  id="bkPets"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >How much per pet
+                  <span class="bk-opt">(optional)</span></label
+                >
+                <div class="bk-peso-wrap">
+                  <span class="bk-peso-sign">₱</span>
+                  <input
+                    class="bk-input bk-peso-input bk-num"
+                    id="bkRatePerPet"
+                    type="number"
+                    min="0"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-          <button class="bk-close" id="bookingClose">&times;</button>
+
+          <!-- Payment Section -->
+          <div class="bk-section">
+            <div class="bk-section-title">
+              <span class="bk-section-icon">💳</span> Payment
+            </div>
+            <div class="bk-grid-2">
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Date of Payment <span class="bk-req">*</span></label
+                >
+                <input class="bk-input" id="bkPaymentDate" type="date" />
+                <span class="bk-err" id="errPaymentDate"></span>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label">Payment Mode</label>
+                <div class="bk-auto bk-mode">🏦 BDO Bank Transfer</div>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Total <span class="bk-req">*</span></label
+                >
+                <div class="bk-peso-wrap">
+                  <span class="bk-peso-sign">₱</span>
+                  <input
+                    class="bk-input bk-peso-input bk-num"
+                    id="bkTotal"
+                    type="number"
+                    min="0"
+                    placeholder="0.00"
+                  />
+                </div>
+                <span class="bk-err" id="errTotal"></span>
+              </div>
+              <div class="bk-field" id="bkAdditionalWrap" style="display: none">
+                <label class="bk-label"
+                  >Additional Charges <span class="bk-opt">(auto)</span></label
+                >
+                <div class="bk-auto bk-additional" id="bkAdditional">—</div>
+              </div>
+              <div
+                class="bk-field bk-field-full"
+                id="bkFinalTotalWrap"
+                style="display: none"
+              >
+                <label class="bk-label"
+                  >Final Total
+                  <span class="bk-opt">(auto-calculated)</span></label
+                >
+                <div class="bk-auto bk-final-total" id="bkFinalTotal">—</div>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Downpayment <span class="bk-req">*</span></label
+                >
+                <div class="bk-peso-wrap">
+                  <span class="bk-peso-sign">₱</span>
+                  <input
+                    class="bk-input bk-peso-input bk-num"
+                    id="bkDownpayment"
+                    type="number"
+                    min="0"
+                    placeholder="0.00"
+                  />
+                </div>
+                <span class="bk-err" id="errDownpayment"></span>
+              </div>
+              <div class="bk-field bk-field-full">
+                <label class="bk-label"
+                  >Balance <span class="bk-opt">(auto-generated)</span></label
+                >
+                <div class="bk-auto bk-balance" id="bkBalance">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking Section -->
+          <div class="bk-section">
+            <div class="bk-section-title">
+              <span class="bk-section-icon">🏡</span> Booking
+            </div>
+            <div class="bk-grid-2">
+              <div class="bk-field bk-field-full">
+                <label class="bk-label">Check-in Date</label>
+                <div class="bk-auto bk-date-display" id="bkCheckinDisplay">
+                  —
+                </div>
+              </div>
+              <div class="bk-field bk-field-full">
+                <label class="bk-label"
+                  >Tour Type <span class="bk-req">*</span></label
+                >
+                <div class="bk-tour-options">
+                  <button class="bk-tour-btn" data-type="Day Tour">
+                    🌤 Day Tour
+                  </button>
+                  <button class="bk-tour-btn" data-type="Night Tour">
+                    🌙 Night Tour
+                  </button>
+                  <button class="bk-tour-btn" data-type="Over-Night">
+                    🌕 Over-Night
+                  </button>
+                  <button class="bk-tour-btn" data-type="3D2N">
+                    🏕 3 Days 2 Nights
+                  </button>
+                </div>
+                <span class="bk-err" id="errTourType"></span>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Check-out Date <span class="bk-opt">(auto)</span></label
+                >
+                <div class="bk-auto bk-date-display" id="bkCheckoutDisplay">
+                  —
+                </div>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Check-in Time <span class="bk-req">*</span></label
+                >
+                <input class="bk-input" id="bkCheckinTime" type="time" />
+                <span class="bk-err" id="errCheckinTime"></span>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label"
+                  >Check-out Time <span class="bk-opt">(auto)</span></label
+                >
+                <div class="bk-auto" id="bkCheckoutTime">—</div>
+              </div>
+              <div class="bk-field">
+                <label class="bk-label">Duration</label>
+                <div class="bk-auto" id="bkDuration">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /bk-body -->
+
+        <div class="bk-footer">
+          <button class="bk-btn-cancel" id="bkBtnCancel">Cancel</button>
+          <button class="bk-btn-save" id="bkBtnSave">
+            <span>Confirm Booking</span>
+            <span class="bk-btn-arrow">→</span>
+          </button>
         </div>
       </div>
+      <!-- /bk-modal -->
+    </div>
+    <!-- /bk-overlay -->
 
-      <div class="bk-body">
-
-        <!-- Guest Section -->
-        <div class="bk-section">
-          <div class="bk-section-title">
-            <span class="bk-section-icon">👤</span> Guest Information
-          </div>
-          <div class="bk-grid-2">
-            <!-- Row 1: Name | Email -->
-            <div class="bk-field">
-              <label class="bk-label">Guest Name <span class="bk-req">*</span></label>
-              <input class="bk-input" id="bkGuestName" type="text" placeholder="Full name" />
-              <span class="bk-err" id="errGuestName"></span>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Guest Email <span class="bk-opt">(optional)</span></label>
-              <input class="bk-input" id="bkGuestEmail" type="email" placeholder="email@example.com" />
-              <span class="bk-err" id="errGuestEmail"></span>
-            </div>
-            <!-- Row 2: Phone | Pax -->
-            <div class="bk-field">
-              <label class="bk-label">Phone Number <span class="bk-req">*</span></label>
-              <input class="bk-input" id="bkGuestPhone" type="tel" placeholder="+63 XXX XXX XXXX" />
-              <span class="bk-err" id="errGuestPhone"></span>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Pax <span class="bk-req">*</span></label>
-              <input class="bk-input bk-num" id="bkPax" type="number" min="1" placeholder="0" />
-              <span class="bk-err" id="errPax"></span>
-            </div>
-            <!-- Row 3: Total Pax (auto) | Extra Pax -->
-            <div class="bk-field">
-              <label class="bk-label">Total Pax <span class="bk-opt">(auto)</span></label>
-              <div class="bk-auto" id="bkTotalPax">—</div>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Extra Pax <span class="bk-opt">(optional)</span></label>
-              <input class="bk-input bk-num" id="bkExtraPax" type="number" min="0" placeholder="0" />
-            </div>
-            <!-- Row 4: How much per head (full width) -->
-            <div class="bk-field bk-field-full">
-              <label class="bk-label">How much per head <span class="bk-opt">(optional)</span></label>
-              <div class="bk-peso-wrap">
-                <span class="bk-peso-sign">₱</span>
-                <input class="bk-input bk-peso-input bk-num" id="bkRatePerHead" type="number" min="0"
-                  placeholder="0.00" />
-              </div>
-            </div>
-            <!-- Row 5: Total Pets | How much per pet -->
-            <div class="bk-field">
-              <label class="bk-label">Total Pets <span class="bk-opt">(optional)</span></label>
-              <input class="bk-input bk-num" id="bkPets" type="number" min="0" placeholder="0" />
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">How much per pet <span class="bk-opt">(optional)</span></label>
-              <div class="bk-peso-wrap">
-                <span class="bk-peso-sign">₱</span>
-                <input class="bk-input bk-peso-input bk-num" id="bkRatePerPet" type="number" min="0"
-                  placeholder="0.00" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Payment Section -->
-        <div class="bk-section">
-          <div class="bk-section-title">
-            <span class="bk-section-icon">💳</span> Payment
-          </div>
-          <div class="bk-grid-2">
-            <div class="bk-field">
-              <label class="bk-label">Date of Payment <span class="bk-req">*</span></label>
-              <input class="bk-input" id="bkPaymentDate" type="date" />
-              <span class="bk-err" id="errPaymentDate"></span>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Payment Mode</label>
-              <div class="bk-auto bk-mode">🏦 BDO Bank Transfer</div>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Total <span class="bk-req">*</span></label>
-              <div class="bk-peso-wrap">
-                <span class="bk-peso-sign">₱</span>
-                <input class="bk-input bk-peso-input bk-num" id="bkTotal" type="number" min="0" placeholder="0.00" />
-              </div>
-              <span class="bk-err" id="errTotal"></span>
-            </div>
-            <div class="bk-field" id="bkAdditionalWrap" style="display:none;">
-              <label class="bk-label">Additional Charges <span class="bk-opt">(auto)</span></label>
-              <div class="bk-auto bk-additional" id="bkAdditional">—</div>
-            </div>
-            <div class="bk-field bk-field-full" id="bkFinalTotalWrap" style="display:none;">
-              <label class="bk-label">Final Total <span class="bk-opt">(auto-calculated)</span></label>
-              <div class="bk-auto bk-final-total" id="bkFinalTotal">—</div>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Downpayment <span class="bk-req">*</span></label>
-              <div class="bk-peso-wrap">
-                <span class="bk-peso-sign">₱</span>
-                <input class="bk-input bk-peso-input bk-num" id="bkDownpayment" type="number" min="0"
-                  placeholder="0.00" />
-              </div>
-              <span class="bk-err" id="errDownpayment"></span>
-            </div>
-            <div class="bk-field bk-field-full">
-              <label class="bk-label">Balance <span class="bk-opt">(auto-generated)</span></label>
-              <div class="bk-auto bk-balance" id="bkBalance">—</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Booking Section -->
-        <div class="bk-section">
-          <div class="bk-section-title">
-            <span class="bk-section-icon">🏡</span> Booking
-          </div>
-          <div class="bk-grid-2">
-            <div class="bk-field bk-field-full">
-              <label class="bk-label">Check-in Date</label>
-              <div class="bk-auto bk-date-display" id="bkCheckinDisplay">—</div>
-            </div>
-            <div class="bk-field bk-field-full">
-              <label class="bk-label">Tour Type <span class="bk-req">*</span></label>
-              <div class="bk-tour-options">
-                <button class="bk-tour-btn" data-type="Day Tour">🌤 Day Tour</button>
-                <button class="bk-tour-btn" data-type="Night Tour">🌙 Night Tour</button>
-                <button class="bk-tour-btn" data-type="Over-Night">🌕 Over-Night</button>
-                <button class="bk-tour-btn" data-type="3D2N">🏕 3 Days 2 Nights</button>
-              </div>
-              <span class="bk-err" id="errTourType"></span>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Check-out Date <span class="bk-opt">(auto)</span></label>
-              <div class="bk-auto bk-date-display" id="bkCheckoutDisplay">—</div>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Check-in Time <span class="bk-req">*</span></label>
-              <input class="bk-input" id="bkCheckinTime" type="time" />
-              <span class="bk-err" id="errCheckinTime"></span>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Check-out Time <span class="bk-opt">(auto)</span></label>
-              <div class="bk-auto" id="bkCheckoutTime">—</div>
-            </div>
-            <div class="bk-field">
-              <label class="bk-label">Duration</label>
-              <div class="bk-auto" id="bkDuration">—</div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /bk-body -->
-
-      <div class="bk-footer">
-        <button class="bk-btn-cancel" id="bkBtnCancel">Cancel</button>
-        <button class="bk-btn-save" id="bkBtnSave">
-          <span>Confirm Booking</span>
-          <span class="bk-btn-arrow">→</span>
-        </button>
-      </div>
-
-    </div><!-- /bk-modal -->
-  </div><!-- /bk-overlay -->
-
-  <!-- ══════════════════════════════
+    <!-- ══════════════════════════════
        BOOKINGS LIST MODAL
   ══════════════════════════════ -->
-  <div class="bk-list-overlay" id="bkListOverlay">
-    <div class="bk-list-modal">
-      <div class="bk-list-header">
-        <h3 class="bk-list-title" id="bkListTitle"></h3>
-        <button class="bk-close" id="bkListClose">&times;</button>
-      </div>
-      <div id="bkListBody"></div>
-      <div class="bk-list-footer">
-        <button class="bk-btn-save" id="bkListAddNew">+ New Booking</button>
+    <div class="bk-list-overlay" id="bkListOverlay">
+      <div class="bk-list-modal">
+        <div class="bk-list-header">
+          <h3 class="bk-list-title" id="bkListTitle"></h3>
+          <button class="bk-close" id="bkListClose">&times;</button>
+        </div>
+        <div id="bkListBody"></div>
+        <div class="bk-list-footer">
+          <button class="bk-btn-save" id="bkListAddNew">+ New Booking</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ══════════════════════════════
+    <!-- ══════════════════════════════
        VIEW BOOKING MODAL
   ══════════════════════════════ -->
-  <div class="bk-overlay" id="bkViewOverlay" style="z-index:3500;">
-    <div class="bk-modal" style="max-width:560px;">
-      <div class="bk-modal-header">
-        <div class="bk-color-pill" id="bkViewColorPill"></div>
-        <div style="flex:1;min-width:0;">
-          <div class="bk-header-label">Booking Details</div>
-          <div class="bk-header-date" id="bkViewTitle"></div>
+    <div class="bk-overlay" id="bkViewOverlay" style="z-index: 3500">
+      <div class="bk-modal" style="max-width: 560px">
+        <div class="bk-modal-header">
+          <div class="bk-color-pill" id="bkViewColorPill"></div>
+          <div style="flex: 1; min-width: 0">
+            <div class="bk-header-label">Booking Details</div>
+            <div class="bk-header-date" id="bkViewTitle"></div>
+          </div>
+          <button class="bk-close" id="bkViewClose">&times;</button>
         </div>
-        <button class="bk-close" id="bkViewClose">&times;</button>
+        <div class="bk-body" id="bkViewBody" style="padding: 0 24px 24px"></div>
       </div>
-      <div class="bk-body" id="bkViewBody" style="padding:0 24px 24px;"></div>
     </div>
-  </div>
 
-  <!-- Toast -->
-  <div class="bk-toast" id="bkToast"></div>
+    <!-- Toast -->
+    <div class="bk-toast" id="bkToast"></div>
 
-  <!-- JS — order matters: data → events → calendar → modal → booking → background → app -->
-  <!-- ══════════════════════════════
+    <!-- JS — order matters: data → events → calendar → modal → booking → background → app -->
+    <!-- ══════════════════════════════
        ANALYSIS MODAL
   ══════════════════════════════ -->
-  <div id="analysisOverlay" style="
-    position:fixed;inset:0;z-index:4000;
-    background:rgba(15,15,35,0.65);
-    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-    display:flex;align-items:center;justify-content:center;padding:20px;
-    visibility:hidden;opacity:0;pointer-events:none;
-    transition:opacity 0.28s ease,visibility 0.28s ease;">
-    <div id="analysisModal" style="
-      background:#fff;border-radius:24px;
-      box-shadow:0 32px 100px rgba(0,0,0,0.25);
-      width:720px;max-width:100%;max-height:88vh;height:88vh;
-      display:flex;flex-direction:column;overflow:hidden;
-      transform:translateY(30px) scale(0.96);
-      transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);">
-      <!-- Header -->
-      <div style="padding:24px 28px 0;flex-shrink:0;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span style="font-size:26px;">📊</span>
-            <div>
-              <h2 style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#1a1a2e;margin:0;">
-                Booking Analysis</h2>
-              <p style="font-size:11px;color:#9996b0;margin:2px 0 0;" id="analysisMeta">—</p>
+    <div
+      id="analysisOverlay"
+      style="
+        position: fixed;
+        inset: 0;
+        z-index: 4000;
+        background: rgba(15, 15, 35, 0.65);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.28s ease,
+          visibility 0.28s ease;
+      "
+    >
+      <div
+        id="analysisModal"
+        style="
+          background: #fff;
+          border-radius: 24px;
+          box-shadow: 0 32px 100px rgba(0, 0, 0, 0.25);
+          width: 720px;
+          max-width: 100%;
+          max-height: 88vh;
+          height: 88vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          transform: translateY(30px) scale(0.96);
+          transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        "
+      >
+        <!-- Header -->
+        <div style="padding: 24px 28px 0; flex-shrink: 0">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 20px;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span style="font-size: 26px">📊</span>
+              <div>
+                <h2
+                  style="
+                    font-family: &quot;Playfair Display&quot;, serif;
+                    font-size: 22px;
+                    font-weight: 700;
+                    color: #1a1a2e;
+                    margin: 0;
+                  "
+                >
+                  Booking Analysis
+                </h2>
+                <p
+                  style="font-size: 11px; color: #9996b0; margin: 2px 0 0"
+                  id="analysisMeta"
+                >
+                  —
+                </p>
+              </div>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+              "
+            >
+              <button
+                onclick="exportBookingAnalysisPDF()"
+                title="Export to PDF"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 5px;
+                  padding: 7px 14px;
+                  border-radius: 50px;
+                  border: none;
+                  cursor: pointer;
+                  background: linear-gradient(135deg, #7c6af4, #29b5e8);
+                  color: #fff;
+                  font-family: &quot;Nunito&quot;, sans-serif;
+                  font-size: 11px;
+                  font-weight: 700;
+                  box-shadow: 0 3px 10px rgba(124, 106, 244, 0.28);
+                  white-space: nowrap;
+                  transition: opacity 0.18s;
+                "
+                onmouseover="this.style.opacity = '0.85'"
+                onmouseout="this.style.opacity = '1'"
+              >
+                📄 Export PDF
+              </button>
+              <button
+                onclick="closeAnalysis()"
+                style="
+                  width: 36px;
+                  height: 36px;
+                  border-radius: 50%;
+                  background: #f5f5f8;
+                  font-size: 20px;
+                  color: #9996b0;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  border: none;
+                  cursor: pointer;
+                  transition: all 0.15s;
+                "
+                onmouseover="
+                  this.style.background = '#ffe0e6';
+                  this.style.color = '#e04060';
+                "
+                onmouseout="
+                  this.style.background = '#f5f5f8';
+                  this.style.color = '#9996b0';
+                "
+              >
+                ×
+              </button>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-            <button onclick="exportBookingAnalysisPDF()" title="Export to PDF" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;
-                     border-radius:50px;border:none;cursor:pointer;
-                     background:linear-gradient(135deg,#7c6af4,#29b5e8);
-                     color:#fff;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;
-                     box-shadow:0 3px 10px rgba(124,106,244,0.28);white-space:nowrap;
-                     transition:opacity 0.18s;" onmouseover="this.style.opacity='0.85'"
-              onmouseout="this.style.opacity='1'">📄 Export PDF</button>
-            <button onclick="closeAnalysis()" style="
-              width:36px;height:36px;border-radius:50%;background:#f5f5f8;
-              font-size:20px;color:#9996b0;display:flex;align-items:center;justify-content:center;
-              border:none;cursor:pointer;transition:all 0.15s;"
-              onmouseover="this.style.background='#ffe0e6';this.style.color='#e04060'"
-              onmouseout="this.style.background='#f5f5f8';this.style.color='#9996b0'">×</button>
+          <!-- Tabs -->
+          <div
+            class="ana-tab-bar"
+            style="
+              display: flex;
+              gap: 0;
+              border-bottom: 2px solid #f0eeff;
+              overflow-x: auto;
+              -webkit-overflow-scrolling: touch;
+              scrollbar-width: none;
+              flex-shrink: 0;
+            "
+          >
+            <button
+              id="aTab_overview"
+              onclick="switchAnalysisTab('overview')"
+              style="
+                padding: 10px 16px;
+                font-size: 12px;
+                font-weight: 700;
+                border: none;
+                cursor: pointer;
+                background: none;
+                color: #7c6af4;
+                border-bottom: 2px solid #7c6af4;
+                margin-bottom: -2px;
+                white-space: nowrap;
+                flex-shrink: 0;
+              "
+            >
+              📋 Overview
+            </button>
+            <button
+              id="aTab_monthly"
+              onclick="switchAnalysisTab('monthly')"
+              style="
+                padding: 10px 16px;
+                font-size: 12px;
+                font-weight: 700;
+                border: none;
+                cursor: pointer;
+                background: none;
+                color: #9996b0;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -2px;
+                white-space: nowrap;
+                flex-shrink: 0;
+              "
+            >
+              📅 Monthly
+            </button>
+            <button
+              id="aTab_guests"
+              onclick="switchAnalysisTab('guests')"
+              style="
+                padding: 10px 16px;
+                font-size: 12px;
+                font-weight: 700;
+                border: none;
+                cursor: pointer;
+                background: none;
+                color: #9996b0;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -2px;
+                white-space: nowrap;
+                flex-shrink: 0;
+              "
+            >
+              👥 Guests
+            </button>
+            <button
+              id="aTab_revenue"
+              onclick="switchAnalysisTab('revenue')"
+              style="
+                padding: 10px 16px;
+                font-size: 12px;
+                font-weight: 700;
+                border: none;
+                cursor: pointer;
+                background: none;
+                color: #9996b0;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -2px;
+                white-space: nowrap;
+                flex-shrink: 0;
+              "
+            >
+              💰 Revenue
+            </button>
           </div>
         </div>
-        <!-- Tabs -->
-        <div class="ana-tab-bar"
-          style="display:flex;gap:0;border-bottom:2px solid #f0eeff;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0;">
-          <button id="aTab_overview" onclick="switchAnalysisTab('overview')"
-            style="padding:10px 16px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:none;color:#7c6af4;border-bottom:2px solid #7c6af4;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">📋
-            Overview</button>
-          <button id="aTab_monthly" onclick="switchAnalysisTab('monthly')"
-            style="padding:10px 16px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:none;color:#9996b0;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">📅
-            Monthly</button>
-          <button id="aTab_guests" onclick="switchAnalysisTab('guests')"
-            style="padding:10px 16px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:none;color:#9996b0;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">👥
-            Guests</button>
-          <button id="aTab_revenue" onclick="switchAnalysisTab('revenue')"
-            style="padding:10px 16px;font-size:12px;font-weight:700;border:none;cursor:pointer;background:none;color:#9996b0;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;">💰
-            Revenue</button>
-        </div>
+        <!-- Body: flex:1 + min-height:0 makes overflow-y:auto actually scroll -->
+        <div
+          class="an-body"
+          id="analysisBody"
+          style="
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 20px 28px 32px;
+          "
+        ></div>
       </div>
-      <!-- Body: flex:1 + min-height:0 makes overflow-y:auto actually scroll -->
-      <div class="an-body" id="analysisBody" style="flex:1;min-height:0;overflow-y:auto;padding:20px 28px 32px;"></div>
     </div>
-  </div>
 
-  <!-- ══════════════════════════════
+    <!-- ══════════════════════════════
        MONTH ANALYSIS MODAL
   ══════════════════════════════ -->
-  <div id="monthAnalysisOverlay" style="
-    position:fixed;inset:0;z-index:4500;
-    background:rgba(15,15,35,0.65);
-    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-    display:flex;align-items:center;justify-content:center;padding:20px;
-    visibility:hidden;opacity:0;pointer-events:none;
-    transition:opacity 0.28s ease,visibility 0.28s ease;">
-    <div id="monthAnalysisModal" style="
-      background:#fff;border-radius:24px;
-      box-shadow:0 32px 100px rgba(0,0,0,0.25);
-      width:640px;max-width:100%;max-height:88vh;height:88vh;
-      display:flex;flex-direction:column;overflow:hidden;
-      transform:translateY(30px) scale(0.96);
-      transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);">
-      <div style="padding:22px 26px 0;flex-shrink:0;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div id="maColorPill" style="width:5px;height:36px;border-radius:99px;background:#7c6af4;flex-shrink:0;">
+    <div
+      id="monthAnalysisOverlay"
+      style="
+        position: fixed;
+        inset: 0;
+        z-index: 4500;
+        background: rgba(15, 15, 35, 0.65);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.28s ease,
+          visibility 0.28s ease;
+      "
+    >
+      <div
+        id="monthAnalysisModal"
+        style="
+          background: #fff;
+          border-radius: 24px;
+          box-shadow: 0 32px 100px rgba(0, 0, 0, 0.25);
+          width: 640px;
+          max-width: 100%;
+          max-height: 88vh;
+          height: 88vh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          transform: translateY(30px) scale(0.96);
+          transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        "
+      >
+        <div style="padding: 22px 26px 0; flex-shrink: 0">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 16px;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 12px">
+              <div
+                id="maColorPill"
+                style="
+                  width: 5px;
+                  height: 36px;
+                  border-radius: 99px;
+                  background: #7c6af4;
+                  flex-shrink: 0;
+                "
+              ></div>
+              <div>
+                <p
+                  style="
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #9996b0;
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    margin: 0;
+                  "
+                >
+                  Month Analysis
+                </p>
+                <h2
+                  id="maTitle"
+                  style="
+                    font-family: &quot;Playfair Display&quot;, serif;
+                    font-size: 22px;
+                    font-weight: 700;
+                    color: #1a1a2e;
+                    margin: 0;
+                  "
+                ></h2>
+              </div>
             </div>
-            <div>
-              <p
-                style="font-size:11px;font-weight:700;color:#9996b0;letter-spacing:1px;text-transform:uppercase;margin:0;">
-                Month Analysis</p>
-              <h2 id="maTitle"
-                style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#1a1a2e;margin:0;">
-              </h2>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-shrink: 0;
+              "
+            >
+              <button
+                id="maExportPdfBtn"
+                onclick="_triggerMonthPdfExport()"
+                title="Export to PDF"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 5px;
+                  padding: 7px 14px;
+                  border-radius: 50px;
+                  border: none;
+                  cursor: pointer;
+                  background: linear-gradient(135deg, #7c6af4, #29b5e8);
+                  color: #fff;
+                  font-family: &quot;Nunito&quot;, sans-serif;
+                  font-size: 11px;
+                  font-weight: 700;
+                  box-shadow: 0 3px 10px rgba(124, 106, 244, 0.28);
+                  white-space: nowrap;
+                  transition: opacity 0.18s;
+                "
+                onmouseover="this.style.opacity = '0.85'"
+                onmouseout="this.style.opacity = '1'"
+              >
+                📄 Export PDF
+              </button>
+              <button
+                onclick="closeMonthAnalysis()"
+                style="
+                  width: 34px;
+                  height: 34px;
+                  border-radius: 50%;
+                  background: #f5f5f8;
+                  font-size: 20px;
+                  color: #9996b0;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  border: none;
+                  cursor: pointer;
+                  transition: all 0.15s;
+                "
+                onmouseover="
+                  this.style.background = '#ffe0e6';
+                  this.style.color = '#e04060';
+                "
+                onmouseout="
+                  this.style.background = '#f5f5f8';
+                  this.style.color = '#9996b0';
+                "
+              >
+                ×
+              </button>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-            <button id="maExportPdfBtn" onclick="_triggerMonthPdfExport()" title="Export to PDF" style="display:inline-flex;align-items:center;gap:5px;padding:7px 14px;
-                     border-radius:50px;border:none;cursor:pointer;
-                     background:linear-gradient(135deg,#7c6af4,#29b5e8);
-                     color:#fff;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;
-                     box-shadow:0 3px 10px rgba(124,106,244,0.28);white-space:nowrap;
-                     transition:opacity 0.18s;" onmouseover="this.style.opacity='0.85'"
-              onmouseout="this.style.opacity='1'">📄 Export PDF</button>
-            <button onclick="closeMonthAnalysis()" style="
-              width:34px;height:34px;border-radius:50%;background:#f5f5f8;
-              font-size:20px;color:#9996b0;display:flex;align-items:center;justify-content:center;
-              border:none;cursor:pointer;transition:all 0.15s;"
-              onmouseover="this.style.background='#ffe0e6';this.style.color='#e04060'"
-              onmouseout="this.style.background='#f5f5f8';this.style.color='#9996b0'">×</button>
+        </div>
+        <div
+          id="monthAnalysisBody"
+          style="
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 16px 26px 28px;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+       SITE FOOTER
+  ══════════════════════════════ -->
+    <footer
+      style="
+        position: relative;
+        width: 100%;
+        padding: 44px 40px 36px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(245, 243, 255, 0.95) 40%,
+          rgba(240, 238, 255, 1) 100%
+        );
+        border-top: 1.5px solid rgba(124, 106, 244, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        overflow: hidden;
+      "
+    >
+      <!-- Decorative radial glow -->
+      <div
+        style="
+          position: absolute;
+          top: -80px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 400px;
+          height: 160px;
+          background: radial-gradient(
+            ellipse at center,
+            rgba(124, 106, 244, 0.09) 0%,
+            transparent 70%
+          );
+          pointer-events: none;
+        "
+      ></div>
+
+      <!-- Brand row -->
+      <div style="display: flex; align-items: center; gap: 13px; z-index: 1">
+        <div
+          style="
+            width: 42px;
+            height: 42px;
+            border-radius: 13px;
+            background: linear-gradient(135deg, #7c6af4, #29b5e8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 6px 18px rgba(124, 106, 244, 0.28);
+          "
+        >
+          📅
+        </div>
+        <div>
+          <div
+            style="
+              font-family: &quot;Playfair Display&quot;, serif;
+              font-size: 17px;
+              font-weight: 700;
+              color: #1a1a2e;
+              letter-spacing: -0.3px;
+              line-height: 1.15;
+            "
+          >
+            2026 Full Year Calendar
+          </div>
+          <div
+            style="
+              font-family: &quot;Nunito&quot;, sans-serif;
+              font-size: 10px;
+              font-weight: 700;
+              color: #9996b0;
+              letter-spacing: 1.4px;
+              text-transform: uppercase;
+              margin-top: 1px;
+            "
+          >
+            Booking Management System
           </div>
         </div>
       </div>
-      <div id="monthAnalysisBody" style="flex:1;min-height:0;overflow-y:auto;padding:16px 26px 28px;"></div>
-    </div>
-  </div>
 
-  <!-- ══════════════════════════════
-       SITE FOOTER
-  ══════════════════════════════ -->
-  <footer style="
-    position:relative;
-    width:100%;
-    padding:44px 40px 36px;
-    background:linear-gradient(180deg,rgba(255,255,255,0) 0%,rgba(245,243,255,0.95) 40%,rgba(240,238,255,1) 100%);
-    border-top:1.5px solid rgba(124,106,244,0.10);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:18px;
-    overflow:hidden;">
-
-    <!-- Decorative radial glow -->
-    <div style="
-      position:absolute;top:-80px;left:50%;transform:translateX(-50%);
-      width:400px;height:160px;
-      background:radial-gradient(ellipse at center,rgba(124,106,244,0.09) 0%,transparent 70%);
-      pointer-events:none;"></div>
-
-    <!-- Brand row -->
-    <div style="display:flex;align-items:center;gap:13px;z-index:1;">
-      <div style="
-        width:42px;height:42px;border-radius:13px;
-        background:linear-gradient(135deg,#7c6af4,#29b5e8);
-        display:flex;align-items:center;justify-content:center;
-        font-size:20px;
-        box-shadow:0 6px 18px rgba(124,106,244,0.28);">📅</div>
-      <div>
-        <div
-          style="font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:#1a1a2e;letter-spacing:-0.3px;line-height:1.15;">
-          2026 Full Year Calendar</div>
-        <div
-          style="font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;color:#9996b0;letter-spacing:1.4px;text-transform:uppercase;margin-top:1px;">
-          Booking Management System</div>
-      </div>
-    </div>
-
-    <!-- Soft divider -->
-    <div
-      style="width:100%;max-width:520px;height:1px;background:linear-gradient(90deg,transparent,rgba(124,106,244,0.22),transparent);z-index:1;">
-    </div>
-
-    <!-- Creator badge -->
-    <div style="display:flex;flex-direction:column;align-items:center;gap:7px;z-index:1;">
+      <!-- Soft divider -->
       <div
-        style="font-family:'Nunito',sans-serif;font-size:10.5px;font-weight:700;color:#b8b5d0;letter-spacing:1.2px;text-transform:uppercase;">
-        Created by</div>
-      <div style="
-        display:inline-flex;align-items:center;gap:10px;
-        background:#ffffff;
-        border:1.5px solid rgba(124,106,244,0.16);
-        border-radius:50px;
-        padding:9px 22px 9px 12px;
-        box-shadow:0 6px 24px rgba(124,106,244,0.10),0 1px 3px rgba(0,0,0,0.04);">
-        <div style="
-          width:30px;height:30px;border-radius:50%;flex-shrink:0;
-          background:linear-gradient(135deg,#7c6af4,#29b5e8);
-          display:flex;align-items:center;justify-content:center;
-          font-size:14px;
-          box-shadow:0 2px 8px rgba(124,106,244,0.30);">✨</div>
-        <span style="
-          font-family:'Playfair Display',serif;
-          font-size:16px;font-weight:700;
-          color:#1a1a2e;letter-spacing:-0.2px;">Ceron Matthew Calsena</span>
+        style="
+          width: 100%;
+          max-width: 520px;
+          height: 1px;
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(124, 106, 244, 0.22),
+            transparent
+          );
+          z-index: 1;
+        "
+      ></div>
+
+      <!-- Creator badge -->
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 7px;
+          z-index: 1;
+        "
+      >
+        <div
+          style="
+            font-family: &quot;Nunito&quot;, sans-serif;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #b8b5d0;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+          "
+        >
+          Created by
+        </div>
+        <div
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            border: 1.5px solid rgba(124, 106, 244, 0.16);
+            border-radius: 50px;
+            padding: 9px 22px 9px 12px;
+            box-shadow:
+              0 6px 24px rgba(124, 106, 244, 0.1),
+              0 1px 3px rgba(0, 0, 0, 0.04);
+          "
+        >
+          <div
+            style="
+              width: 30px;
+              height: 30px;
+              border-radius: 50%;
+              flex-shrink: 0;
+              background: linear-gradient(135deg, #7c6af4, #29b5e8);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 14px;
+              box-shadow: 0 2px 8px rgba(124, 106, 244, 0.3);
+            "
+          >
+            ✨
+          </div>
+          <span
+            style="
+              font-family: &quot;Playfair Display&quot;, serif;
+              font-size: 16px;
+              font-weight: 700;
+              color: #1a1a2e;
+              letter-spacing: -0.2px;
+            "
+            >Ceron Matthew Calsena</span
+          >
+        </div>
       </div>
-    </div>
 
-    <!-- Copyright -->
-    <div
-      style="font-family:'Nunito',sans-serif;font-size:10px;color:#c4c1d8;font-weight:600;letter-spacing:0.6px;z-index:1;">
-      © 2026 · All rights reserved
-    </div>
+      <!-- Copyright -->
+      <div
+        style="
+          font-family: &quot;Nunito&quot;, sans-serif;
+          font-size: 10px;
+          color: #c4c1d8;
+          font-weight: 600;
+          letter-spacing: 0.6px;
+          z-index: 1;
+        "
+      >
+        © 2026 · All rights reserved
+      </div>
+    </footer>
 
-  </footer>
-
-  <script src="js/data.js"></script>
-  <script src="js/events.js"></script>
-  <script src="js/calendar.js"></script>
-  <script src="js/modal.js"></script>
-  <script src="js/firebase-config.js"></script>
-  <script src="js/firebase.js"></script>
-  <script src="js/backup.js"></script>
-  <script src="js/importjson.js"></script>
-  <script src="js/booking.js"></script>
-  <script src="js/analysis.js"></script>
-  <script src="js/background.js"></script>
-  <script src="js/news.js"></script>
-  <script src="js/pdf-export.js"></script>
-  <script src="js/app.js"></script>
-</body>
-
+    <script src="js/data.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/backup.js"></script>
+    <script src="js/importjson.js"></script>
+    <script src="js/booking.js"></script>
+    <script src="js/analysis.js"></script>
+    <script src="js/background.js"></script>
+    <script src="js/news.js"></script>
+    <script src="js/pdf-export.js"></script>
+    <script src="js/app.js"></script>
+  </body>
 </html>
