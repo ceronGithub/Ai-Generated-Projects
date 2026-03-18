@@ -358,16 +358,25 @@
       const overlay    = document.getElementById('tableWarnOverlay');
       const btnOk      = document.getElementById('tableWarnOk');
       const btnProceed = document.getElementById('tableWarnProceed');
+
+      // Reset any leftover closing class and show
+      overlay.classList.remove('tw-closing');
       overlay.style.display = 'flex';
 
-      function cleanup(result) {
+      function closeModal(result) {
         btnOk.removeEventListener('click', onOk);
         btnProceed.removeEventListener('click', onProceed);
-        overlay.style.display = 'none';
-        resolve(result);
+        // Play closing animation, then hide and resolve
+        overlay.classList.add('tw-closing');
+        overlay.addEventListener('animationend', () => {
+          overlay.style.display = 'none';
+          overlay.classList.remove('tw-closing');
+          resolve(result);
+        }, { once: true });
       }
-      const onOk      = () => cleanup('ok');
-      const onProceed = () => cleanup('proceed');
+
+      const onOk      = () => closeModal('ok');
+      const onProceed = () => closeModal('proceed');
       btnOk.addEventListener('click', onOk);
       btnProceed.addEventListener('click', onProceed);
     });
@@ -424,8 +433,68 @@
           const choice = await showTableWarningModal();
 
           if (choice === 'ok') {
-            // Reset back to mode selection cleanly
-            resetToEmpty();
+            // ── Reset state ────────────────────────────────────────────────
+            state.mode        = null;
+            state.keywords    = [];
+            state.lastResults = null;
+            state.lastPdfData = null;
+
+            // ── Animate keyword chips wiping out ───────────────────────────
+            const chips = document.querySelectorAll('.keyword-chip');
+            chips.forEach((chip, i) => {
+              chip.style.animationDelay = `${i * 35}ms`;
+              chip.classList.add('chip-wiping');
+            });
+
+            // ── Animate results folding away (if visible) ──────────────────
+            const resultsContainer = document.getElementById('resultsContainer');
+            if (resultsContainer.style.display !== 'none') {
+              resultsContainer.classList.add('results-folding');
+            }
+
+            // ── Step 04 (results): fold → settle disabled ──────────────────
+            stepResults.classList.add('step-folding');
+            stepResults.addEventListener('animationend', () => {
+              stepResults.classList.remove('step-folding');
+              resultsContainer.classList.remove('results-folding');
+              resultsContainer.style.display = 'none';
+              document.getElementById('resultsList').innerHTML   = '';
+              document.getElementById('resultsActions').innerHTML = '';
+              UIManager.hideProgress();
+              UIManager.setRunEnabled(false);
+              stepResults.classList.add('disabled-card', 'step-settling');
+              stepResults.classList.remove('active');
+              stepResults.addEventListener('animationend', () => {
+                stepResults.classList.remove('step-settling');
+              }, { once: true });
+            }, { once: true });
+
+            // ── Step 03 (keywords): fold → settle disabled (80ms stagger) ──
+            setTimeout(() => {
+              stepKeywords.classList.add('step-folding');
+              stepKeywords.addEventListener('animationend', () => {
+                stepKeywords.classList.remove('step-folding');
+                keywordInput.value = '';
+                document.getElementById('keywordChips').innerHTML  = '';
+                document.getElementById('keywordHint').textContent = '';
+                document.getElementById('keywordInputArea').style.display = 'flex';
+                keywordInput.placeholder = 'Type a keyword and press Enter…';
+                stepKeywords.classList.add('disabled-card', 'step-settling');
+                stepKeywords.classList.remove('active');
+                stepKeywords.addEventListener('animationend', () => {
+                  stepKeywords.classList.remove('step-settling');
+                }, { once: true });
+              }, { once: true });
+            }, 80);
+
+            // ── Step 02 (mode): reset to button grid (160ms stagger) ────────
+            // Stays ACTIVE — user can immediately pick Table Mode
+            setTimeout(() => {
+              UIManager.setModeButtonsVisible(true);
+              document.getElementById('modeDisplay').style.display = 'none';
+              document.querySelector('.mode-buttons').style.display = 'grid';
+            }, 160);
+
             return;
           }
           // choice === 'proceed': continue but skip table regions in search
