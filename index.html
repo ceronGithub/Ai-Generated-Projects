@@ -373,6 +373,7 @@
     >
       <div class="hlp-backdrop" id="helpBackdrop"></div>
       <div class="hlp-panel">
+
         <!-- Header -->
         <div class="hlp-header">
           <div class="hlp-title-row">
@@ -384,21 +385,12 @@
 
         <!-- Tab Nav -->
         <div class="hlp-tabs" role="tablist">
-          <button class="hlp-tab hlp-tab--active" data-tab="overview" role="tab">
-            <span class="hlp-tab-icon">🏠</span> Overview
-          </button>
-          <button class="hlp-tab" data-tab="modes" role="tab">
-            <span class="hlp-tab-icon">⚙️</span> Modes
-          </button>
-          <button class="hlp-tab" data-tab="keywords" role="tab">
-            <span class="hlp-tab-icon">🔑</span> Keywords
-          </button>
-          <button class="hlp-tab" data-tab="export" role="tab">
-            <span class="hlp-tab-icon">📥</span> Export
-          </button>
-          <button class="hlp-tab" data-tab="tips" role="tab">
-            <span class="hlp-tab-icon">💡</span> Tips &amp; Tricks
-          </button>
+          <button class="hlp-tab hlp-tab--active" data-tab="overview" role="tab"><span class="hlp-tab-icon">🏠</span> Overview</button>
+          <button class="hlp-tab" data-tab="modes" role="tab"><span class="hlp-tab-icon">⚙️</span> Modes</button>
+          <button class="hlp-tab" data-tab="tools" role="tab"><span class="hlp-tab-icon">🛠️</span> PDF Tools</button>
+          <button class="hlp-tab" data-tab="keywords" role="tab"><span class="hlp-tab-icon">🔑</span> Keywords</button>
+          <button class="hlp-tab" data-tab="export" role="tab"><span class="hlp-tab-icon">📥</span> Export</button>
+          <button class="hlp-tab" data-tab="tips" role="tab"><span class="hlp-tab-icon">💡</span> Tips</button>
         </div>
 
         <!-- Tab Content -->
@@ -408,9 +400,9 @@
           <div class="hlp-pane hlp-pane--active" data-pane="overview">
             <div class="hlp-intro">
               <p>
-                PDFExtract lets you search for specific keywords inside one or
-                many PDF files and pull out the exact values next to those
-                keywords — no manual reading required.
+                PDFExtract is an all-in-one PDF toolkit that runs entirely in your browser.
+                No uploads, no servers — your files never leave your device.
+                Choose from <strong>13 modes</strong> covering extraction, conversion, and PDF manipulation.
               </p>
             </div>
             <div class="hlp-steps">
@@ -418,54 +410,35 @@
                 <div class="hlp-step-num">01</div>
                 <div class="hlp-step-body">
                   <h3>📄 Upload PDFs</h3>
-                  <p>
-                    Drag and drop your PDF files into the upload zone, or click
-                    <em>Browse Files</em>. You can upload multiple files at once.
-                  </p>
+                  <p>Drag and drop your PDF files into the upload zone, or click <em>Browse Files</em>. You can upload up to 2,000 files at once.</p>
                 </div>
               </div>
               <div class="hlp-step">
                 <div class="hlp-step-num">02</div>
                 <div class="hlp-step-body">
                   <h3>⚙️ Choose a Mode</h3>
-                  <p>
-                    Select <em>Multiple Keywords</em>, <em>Single Keyword</em>,
-                    <em>Extract All</em>, or <em>Table Mode</em> depending on what
-                    you need. See the <strong>Modes</strong> tab for details.
-                  </p>
+                  <p>Select any of the 13 extraction or PDF tool modes. Extraction modes need keywords; tool modes (Compress, Split, Merge, Convert, Enhance, Lock) run automatically.</p>
                 </div>
               </div>
               <div class="hlp-step">
                 <div class="hlp-step-num">03</div>
                 <div class="hlp-step-body">
-                  <h3>🔑 Enter Keywords</h3>
-                  <p>
-                    Type the label that appears in your PDF (e.g.
-                    <code>Account Name</code>, <code>Date</code>,
-                    <code>Total</code>). See the <strong>Keywords</strong> tab
-                    for special keywords. Not needed for Extract All or Table Mode.
-                  </p>
+                  <h3>🔑 Configure (if needed)</h3>
+                  <p>For keyword modes — type your labels and press Enter. For Split PDF, set page ranges in Step 03.1. For Merge PDF, reorder files in Step 03.1. For Lock PDF, set passwords per file in Step 04.</p>
                 </div>
               </div>
               <div class="hlp-step">
                 <div class="hlp-step-num">04</div>
                 <div class="hlp-step-body">
                   <h3>▶ Run &amp; Review</h3>
-                  <p>
-                    Click <em>Run Extraction</em>. Results appear as cards
-                    below. Click the <em>View</em> button on any card to jump
-                    directly to that page in the PDF.
-                  </p>
+                  <p>Click <em>Run Extraction</em>. A per-file progress list shows which file is being processed. Results appear as cards — remove unwanted ones with ✕ before exporting.</p>
                 </div>
               </div>
               <div class="hlp-step">
                 <div class="hlp-step-num">05</div>
                 <div class="hlp-step-body">
-                  <h3>📥 Export to Excel</h3>
-                  <p>
-                    Click <em>Download to Excel</em> to save all results as a
-                    spreadsheet. Choose Rows or Columns layout before exporting.
-                  </p>
+                  <h3>📥 Export or Download</h3>
+                  <p>Download individual files or use <em>Download All</em> to get a ZIP. Keyword results can also be exported to Excel in Rows or Columns layout.</p>
                 </div>
               </div>
             </div>
@@ -473,55 +446,111 @@
 
           <!-- ── MODES ── -->
           <div class="hlp-pane" data-pane="modes">
+            <p class="hlp-pane-intro">PDFExtract has <strong>7 extraction modes</strong> for reading and searching PDF text.</p>
             <div class="hlp-mode-grid">
 
               <div class="hlp-mode-card hlp-mode-card--cyan">
                 <div class="hlp-mode-icon">🔑</div>
                 <h3>Multiple Keywords</h3>
-                <p>
-                  Finds values next to specific labels — great for invoices &amp;
-                  forms where you need many fields at once. Each keyword produces
-                  its own result card per file. <strong>Not suited for large
-                  tables or transaction rows</strong> — use Table Mode instead
-                  when your data is structured in rows.
-                </p>
+                <p>Search for many labels at once. Each keyword produces its own result card per file. Supports <strong>negative keywords</strong> (prefix <code>!</code>) to exclude results. Great for invoices and forms.</p>
                 <div class="hlp-tag">Best for: invoices &amp; forms</div>
               </div>
 
               <div class="hlp-mode-card hlp-mode-card--violet">
                 <div class="hlp-mode-icon">🔍</div>
                 <h3>Single Keyword</h3>
-                <p>
-                  Focus on one keyword across all PDFs. Results are grouped per
-                  file and you can rename each PDF using the captured value. Use
-                  this when you need to find every occurrence of one specific
-                  field across many documents.
-                </p>
+                <p>Focus on one keyword across all PDFs. Captured values can be used to <strong>batch-rename</strong> your PDF files automatically. Results are grouped per file.</p>
                 <div class="hlp-tag">Best for: bulk scanning &amp; renaming</div>
               </div>
 
               <div class="hlp-mode-card hlp-mode-card--gold">
                 <div class="hlp-mode-icon">📋</div>
                 <h3>Extract All</h3>
-                <p>
-                  Automatically detects and extracts all label–value pairs from
-                  every page of every PDF — no keyword input needed. Ideal for
-                  exploring an unfamiliar document or doing a full data dump.
-                </p>
+                <p>Automatically detects and extracts all label–value pairs from every page — no keywords needed. Detects Transaction History Reports and Sales Invoices and gives them specialised output.</p>
                 <div class="hlp-tag">Best for: auto-detect &amp; exploration</div>
               </div>
 
               <div class="hlp-mode-card hlp-mode-card--table">
                 <div class="hlp-mode-icon">🗂️</div>
                 <h3>Table Mode</h3>
-                <p>
-                  Designed for large tables — parses every row automatically and
-                  captures Tag, Zone, Entry, Exit &amp; Toll Fee without any
-                  keywords. Purpose-built for SMC Skyway Transaction History
-                  Reports spanning many pages. Results are shown as individual
-                  transaction cards and can be exported to Excel.
-                </p>
-                <div class="hlp-tag">Best for: large transaction tables</div>
+                <p>Purpose-built for <strong>SMC Skyway Transaction History Reports</strong>. Parses every transaction row — Tag, Plate, Ref No., Date, Zone, Entry, Exit, Toll Fee — and exports to Excel.</p>
+                <div class="hlp-tag">Best for: SMC Skyway reports</div>
+              </div>
+
+            </div>
+
+            <p class="hlp-pane-intro" style="margin-top:1.25rem">
+              💡 <strong>OCR mode</strong> — in the Keywords section, toggle <em>OCR: ON</em> to automatically scan
+              image-only or scanned PDF pages using Tesseract.js. Works with all keyword extraction modes.
+            </p>
+          </div>
+
+          <!-- ── PDF TOOLS ── -->
+          <div class="hlp-pane" data-pane="tools">
+            <p class="hlp-pane-intro">PDFExtract has <strong>9 PDF tool modes</strong> that process your files without needing any keywords.</p>
+            <div class="hlp-mode-grid" style="grid-template-columns:repeat(2,1fr)">
+
+              <div class="hlp-mode-card" style="border-color:rgba(57,255,160,.25);background:linear-gradient(135deg,rgba(57,255,160,.05),transparent)">
+                <div class="hlp-mode-icon">🗜️</div>
+                <h3 style="color:var(--green)">Compress PDF</h3>
+                <p>Re-renders each page at reduced quality to shrink the file size. Download individually or all at once as a ZIP.</p>
+                <div class="hlp-tag" style="background:rgba(57,255,160,.1);border-color:rgba(57,255,160,.25);color:var(--green)">Reduces file size</div>
+              </div>
+
+              <div class="hlp-mode-card" style="border-color:rgba(0,229,255,.2);background:linear-gradient(135deg,rgba(0,229,255,.04),transparent)">
+                <div class="hlp-mode-icon">✨</div>
+                <h3 style="color:var(--cyan)">Enhance PDF</h3>
+                <p>Re-renders at 2.5× scale and 96% JPEG quality — noticeably sharper and clearer output, larger file size.</p>
+                <div class="hlp-tag" style="background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.25);color:var(--cyan)">Improves clarity</div>
+              </div>
+
+              <div class="hlp-mode-card" style="border-color:rgba(255,107,157,.25);background:linear-gradient(135deg,rgba(255,107,157,.04),transparent)">
+                <div class="hlp-mode-icon">✂️</div>
+                <h3 style="color:var(--rose)">Split PDF</h3>
+                <p>Split one PDF into multiple files. Choose <strong>Every N Pages</strong> for equal parts, or <strong>Custom Ranges</strong> (e.g. <code>1-3, 4-7, 8</code>). Live preview shows output before you run.</p>
+                <div class="hlp-tag" style="background:rgba(255,107,157,.1);border-color:rgba(255,107,157,.25);color:var(--rose)">Divides pages</div>
+              </div>
+
+              <div class="hlp-mode-card" style="border-color:rgba(0,229,255,.2);background:linear-gradient(135deg,rgba(0,229,255,.03),transparent)">
+                <div class="hlp-mode-icon">🔗</div>
+                <h3 style="color:var(--cyan)">Merge PDF</h3>
+                <p>Combine multiple PDFs into one. Drag the ⠿ handle or use ↑↓ buttons in Step 03.1 to set the page order before merging.</p>
+                <div class="hlp-tag" style="background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.2);color:var(--cyan)">Combines files</div>
+              </div>
+
+              <div class="hlp-mode-card" style="border-color:rgba(255,79,107,.25);background:linear-gradient(135deg,rgba(255,79,107,.04),transparent)">
+                <div class="hlp-mode-icon">🔒</div>
+                <h3 style="color:var(--danger)">Lock PDF</h3>
+                <p>Password-protect your PDFs with RC4-128 encryption. Enter a password (min 8 chars, mixed alphanumeric) per file in Step 04 before downloading.</p>
+                <div class="hlp-tag" style="background:rgba(255,79,107,.1);border-color:rgba(255,79,107,.25);color:var(--danger)">Adds password</div>
+              </div>
+
+              <div class="hlp-mode-card" style="border-color:rgba(57,255,160,.2);background:linear-gradient(135deg,rgba(57,255,160,.04),transparent)">
+                <div class="hlp-mode-icon">📊</div>
+                <h3 style="color:var(--green)">Convert to Excel</h3>
+                <p>Extracts all text from each PDF page and organises it into rows and columns in an <code>.xlsx</code> spreadsheet. One sheet per page.</p>
+                <div class="hlp-tag" style="background:rgba(57,255,160,.1);border-color:rgba(57,255,160,.2);color:var(--green)">Outputs .xlsx</div>
+              </div>
+
+              <div class="hlp-mode-card" style="border-color:rgba(43,108,176,.35);background:linear-gradient(135deg,rgba(43,108,176,.05),transparent)">
+                <div class="hlp-mode-icon">📝</div>
+                <h3 style="color:#5ba3f5">Convert to Word</h3>
+                <p>Exports all PDF text into a <code>.docx</code> Word document. Each page is separated by a page break for clean editing.</p>
+                <div class="hlp-tag" style="background:rgba(43,108,176,.12);border-color:rgba(43,108,176,.3);color:#5ba3f5">Outputs .docx</div>
+              </div>
+
+              <div class="hlp-mode-card" style="border-color:rgba(255,201,77,.25);background:linear-gradient(135deg,rgba(255,201,77,.05),transparent)">
+                <div class="hlp-mode-icon">📽️</div>
+                <h3 style="color:var(--gold)">Convert to PPT</h3>
+                <p>Renders each PDF page as a full-slide image in a <code>.pptx</code> PowerPoint file. One slide per page at 144 dpi.</p>
+                <div class="hlp-tag" style="background:rgba(255,201,77,.1);border-color:rgba(255,201,77,.25);color:var(--gold)">Outputs .pptx</div>
+              </div>
+
+              <div class="hlp-mode-card" style="border-color:rgba(159,111,255,.25);background:linear-gradient(135deg,rgba(159,111,255,.05),transparent)">
+                <div class="hlp-mode-icon">🖼️</div>
+                <h3 style="color:var(--violet)">Convert to JPG</h3>
+                <p>Renders each page as a high-resolution JPG image at 192 dpi. Multiple pages are bundled into a ZIP automatically.</p>
+                <div class="hlp-tag" style="background:rgba(159,111,255,.1);border-color:rgba(159,111,255,.25);color:var(--violet)">Outputs .jpg / .zip</div>
               </div>
 
             </div>
@@ -530,8 +559,7 @@
           <!-- ── KEYWORDS ── -->
           <div class="hlp-pane" data-pane="keywords">
             <p class="hlp-pane-intro">
-              Keywords match the labels printed in your PDF. You can type them
-              with or without a colon. A few keywords have special smart behaviour:
+              Keywords match the labels printed in your PDF. Type them with or without a colon. Several keywords have special smart behaviour:
             </p>
             <div class="hlp-kw-table">
               <div class="hlp-kw-row hlp-kw-row--header">
@@ -569,76 +597,62 @@
                 <span>Tax ID number after "TIN"</span>
                 <span class="hlp-ex">006-977-514-000</span>
               </div>
+              <div class="hlp-kw-row">
+                <code>🚫 !keyword</code>
+                <span>Negative keyword — <strong>excludes</strong> results that contain this word</span>
+                <span class="hlp-ex">!VAT filters out VAT rows</span>
+              </div>
             </div>
             <div class="hlp-note">
               <span class="hlp-note-icon">💡</span>
-              <p>
-                You can enter keywords in any case — <code>date</code>,
-                <code>Date</code>, and <code>DATE</code> all work the same way.
-              </p>
+              <p>Keywords are case-insensitive — <code>date</code>, <code>Date</code>, and <code>DATE</code> all work the same way.</p>
+            </div>
+            <div class="hlp-note">
+              <span class="hlp-note-icon">🔬</span>
+              <p><strong>OCR toggle</strong> — enable OCR in Step 03 to scan image-only pages using Tesseract.js. Requires an internet connection to load the OCR library on first use.</p>
             </div>
             <div class="hlp-note">
               <span class="hlp-note-icon">💡</span>
-              <p>
-                If a keyword has multiple values on the same page, a
-                <em>picker card</em> appears so you can choose which value to
-                keep before exporting.
-              </p>
+              <p>If a keyword has multiple values on the same page, a <em>picker card</em> appears so you can choose which value to keep before exporting.</p>
             </div>
           </div>
 
           <!-- ── EXPORT ── -->
           <div class="hlp-pane" data-pane="export">
             <p class="hlp-pane-intro">
-              After running an extraction, click <em>Download to Excel</em> to
-              save your results as an <code>.xlsx</code> file.
+              After running an extraction, use the action buttons to download or export your results.
             </p>
             <div class="hlp-export-grid">
               <div class="hlp-export-card">
                 <h3>📋 Rows Layout</h3>
-                <p>
-                  Each result is its own row. Best for reviewing individual hits
-                  or comparing many files side-by-side (e.g. batch of invoices).
-                </p>
+                <p>Each result is its own row. Best for reviewing individual hits or comparing many files side-by-side.</p>
                 <div class="hlp-layout-preview hlp-layout-preview--rows">
-                  <div class="hlp-lp-head">
-                    <span>File</span><span>Date</span><span>Total</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>invoice1.pdf</span><span>02/01</span><span>45.00</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>invoice2.pdf</span><span>02/03</span><span>99.00</span>
-                  </div>
+                  <div class="hlp-lp-head"><span>File</span><span>Date</span><span>Total</span></div>
+                  <div class="hlp-lp-row"><span>invoice1.pdf</span><span>02/01</span><span>45.00</span></div>
+                  <div class="hlp-lp-row"><span>invoice2.pdf</span><span>02/03</span><span>99.00</span></div>
                 </div>
               </div>
               <div class="hlp-export-card">
                 <h3>📊 Columns Layout</h3>
-                <p>
-                  Each keyword becomes its own column. Results stack vertically
-                  per keyword. Best for single-document deep extraction or
-                  grouping by Tag Number in Table Mode.
-                </p>
+                <p>Each keyword becomes its own column. Best for deep extraction on a single document or grouping by Tag Number.</p>
                 <div class="hlp-layout-preview hlp-layout-preview--cols">
-                  <div class="hlp-lp-head">
-                    <span>Keyword</span><span>Value</span><span>Page</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>Date</span><span>02/01</span><span>1</span>
-                  </div>
-                  <div class="hlp-lp-row">
-                    <span>Total</span><span>45.00</span><span>1</span>
-                  </div>
+                  <div class="hlp-lp-head"><span>Keyword</span><span>Value</span><span>Page</span></div>
+                  <div class="hlp-lp-row"><span>Date</span><span>02/01</span><span>1</span></div>
+                  <div class="hlp-lp-row"><span>Total</span><span>45.00</span><span>1</span></div>
                 </div>
               </div>
             </div>
             <div class="hlp-note">
-              <span class="hlp-note-icon">⚠️</span>
-              <p>
-                You can rename PDF files before exporting — click the pencil
-                icon next to any filename in the results to set a custom display
-                name in the Excel output.
-              </p>
+              <span class="hlp-note-icon">⬇️</span>
+              <p><strong>Download All</strong> — available in Compress, Split, Merge, Convert, and Enhance modes. Downloads a ZIP containing all generated files.</p>
+            </div>
+            <div class="hlp-note">
+              <span class="hlp-note-icon">✏️</span>
+              <p><strong>Rename PDFs</strong> — in Single Keyword mode, click <em>✏ Rename PDF</em> to batch-rename all files using their captured values and download as a ZIP.</p>
+            </div>
+            <div class="hlp-note">
+              <span class="hlp-note-icon">🔒</span>
+              <p><strong>Lock PDF</strong> — enter a password (minimum 8 characters, must contain letters and numbers) per file, then click <em>🔒 Lock &amp; Download</em>.</p>
             </div>
           </div>
 
@@ -649,78 +663,63 @@
                 <span class="hlp-tip-icon">🔍</span>
                 <div>
                   <h3>View PDF pages inline</h3>
-                  <p>
-                    Every result card has a <em>View</em> button. Click it to
-                    open the PDF at the exact page where the value was found —
-                    no need to leave the app.
-                  </p>
+                  <p>Result cards in Split PDF mode have a <em>View</em> button — click it to preview the generated file directly in the built-in PDF viewer without downloading.</p>
                 </div>
               </div>
               <div class="hlp-tip">
-                <span class="hlp-tip-icon">🗑️</span>
+                <span class="hlp-tip-icon">🚫</span>
                 <div>
-                  <h3>Remove individual results</h3>
-                  <p>
-                    Don't need a particular result card? Click the <em>✕</em> on
-                    any card to remove it before exporting. Only the remaining
-                    cards go into the Excel file.
-                  </p>
+                  <h3>Negative keywords</h3>
+                  <p>Prefix any keyword with <code>!</code> to exclude results containing that word. Example: add <code>Total</code> and <code>!VAT</code> to capture totals but skip any VAT rows.</p>
                 </div>
               </div>
               <div class="hlp-tip">
-                <span class="hlp-tip-icon">✏️</span>
+                <span class="hlp-tip-icon">🔬</span>
                 <div>
-                  <h3>Edit extracted values inline</h3>
-                  <p>
-                    Click directly on an extracted value in a result card to edit
-                    it before exporting. Useful for correcting OCR artefacts or
-                    reformatting data.
-                  </p>
+                  <h3>OCR for scanned PDFs</h3>
+                  <p>If your PDF is a scan or image-only document, toggle <em>OCR: ON</em> in Step 03. Tesseract.js will automatically detect pages with no selectable text and run OCR on them.</p>
                 </div>
               </div>
               <div class="hlp-tip">
-                <span class="hlp-tip-icon">📅</span>
+                <span class="hlp-tip-icon">🕐</span>
                 <div>
-                  <h3>Date vs Time keywords</h3>
-                  <p>
-                    Use <code>Date</code> to get only the calendar date (e.g.
-                    <em>02/01/2026</em>) and <code>Time</code> to get only the
-                    clock value (e.g. <em>16:41:37</em>). They are independent
-                    and can both be added to the same extraction.
-                  </p>
+                  <h3>Session restore</h3>
+                  <p>Your last mode and keywords are saved automatically. On your next visit, a banner appears offering to restore your previous session with one click.</p>
                 </div>
               </div>
               <div class="hlp-tip">
-                <span class="hlp-tip-icon">🗂️</span>
+                <span class="hlp-tip-icon">🔗</span>
                 <div>
-                  <h3>Use Table Mode for large reports</h3>
-                  <p>
-                    When your PDF contains rows of transaction data — like an
-                    SMC Skyway toll report — skip keywords entirely and use
-                    Table Mode. It reads every row automatically and gives you
-                    clean, structured cards ready to export.
-                  </p>
+                  <h3>Reorder before merging</h3>
+                  <p>In Merge PDF mode, a Step 03.1 panel shows all uploaded files. Drag the ⠿ handle or use ↑↓ arrows to set the exact order before merging.</p>
+                </div>
+              </div>
+              <div class="hlp-tip">
+                <span class="hlp-tip-icon">✂️</span>
+                <div>
+                  <h3>Live split preview</h3>
+                  <p>In Split PDF mode, as you type a page count or range, a live preview updates instantly — e.g. <em>"23 pages → 5 files of up to 5 pages each"</em> — before you run.</p>
                 </div>
               </div>
               <div class="hlp-tip">
                 <span class="hlp-tip-icon">📁</span>
                 <div>
-                  <h3>Batch multiple PDFs</h3>
-                  <p>
-                    Upload many PDF files at once and run a single extraction.
-                    Every file is processed in one pass and all results are
-                    combined in the Excel export, labelled by filename.
-                  </p>
+                  <h3>Batch up to 2,000 files</h3>
+                  <p>Upload many PDF files at once and run a single extraction. A per-file progress list in Step 04 shows exactly which file is being processed in real time.</p>
                 </div>
               </div>
               <div class="hlp-tip">
                 <span class="hlp-tip-icon">↺</span>
                 <div>
-                  <h3>Change mode mid-session</h3>
-                  <p>
-                    Click <em>↺ Change Mode</em> at any time to switch between
-                    modes without re-uploading your files.
-                  </p>
+                  <h3>Change mode anytime</h3>
+                  <p>Click <em>↺ Change Mode</em> at any time to switch modes without re-uploading. Steps 03 and 04 animate away cleanly and reset for the new mode.</p>
+                </div>
+              </div>
+              <div class="hlp-tip">
+                <span class="hlp-tip-icon">🗂️</span>
+                <div>
+                  <h3>Table Mode for SMC reports</h3>
+                  <p>When your PDF is an SMC Skyway Transaction History Report, skip keywords entirely. Table Mode reads every row automatically and exports all fields to Excel.</p>
                 </div>
               </div>
             </div>

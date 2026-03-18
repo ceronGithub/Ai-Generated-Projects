@@ -1,5 +1,7 @@
 /* =============================================
    help.js — Help modal controller
+   v2 — supports 6 tabs: overview, modes, tools,
+        keywords, export, tips
    ============================================= */
 (function () {
   'use strict';
@@ -17,11 +19,9 @@
   // ── Open ──────────────────────────────────────────────────────────────
   function openHelp() {
     overlay.style.display = 'flex';
-    // Force reflow so CSS transition fires
-    void overlay.offsetWidth;
+    void overlay.offsetWidth; // force reflow for CSS transition
     overlay.classList.add('hlp-open');
     closing = false;
-    // Restore first tab
     switchTab('overview');
     document.addEventListener('keydown', onKey);
   }
@@ -34,8 +34,7 @@
     overlay.classList.add('hlp-closing');
     document.removeEventListener('keydown', onKey);
     overlay.addEventListener('transitionend', onClosed, { once: true });
-    // Fallback in case transitionend doesn't fire
-    setTimeout(onClosed, 380);
+    setTimeout(onClosed, 380); // fallback
   }
 
   function onClosed() {
@@ -51,23 +50,15 @@
 
   // ── Tab switching ─────────────────────────────────────────────────────
   function switchTab(tabId) {
-    tabs.forEach(t => {
-      t.classList.toggle('hlp-tab--active', t.dataset.tab === tabId);
-    });
-    panes.forEach(p => {
-      p.classList.toggle('hlp-pane--active', p.dataset.pane === tabId);
-    });
+    tabs.forEach(t => t.classList.toggle('hlp-tab--active', t.dataset.tab === tabId));
+    panes.forEach(p => p.classList.toggle('hlp-pane--active', p.dataset.pane === tabId));
   }
 
   // ── Event wiring ──────────────────────────────────────────────────────
   openBtn.addEventListener('click', openHelp);
   closeBtn.addEventListener('click', closeHelp);
   doneBtn.addEventListener('click', closeHelp);
-
   backdrop.addEventListener('click', closeHelp);
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
-  });
+  tabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
 
 }());
