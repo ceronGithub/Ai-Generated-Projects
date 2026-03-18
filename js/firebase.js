@@ -261,7 +261,7 @@ async function initFirebase() {
           : 'Rules expired — ';
         lbl.innerHTML = retryMsg +
           '<button onclick="manualRetry()" style="font:700 10px/1 inherit;background:#e0b000;color:#fff;border:none;border-radius:20px;padding:2px 8px;cursor:pointer;margin-right:3px;">RETRY</button>' +
-          '<button onclick="openDbConfigModal();setTimeout(function(){switchDbTab(\'rules\');},250)" style="font:700 10px/1 inherit;background:#e04060;color:#fff;border:none;border-radius:20px;padding:2px 8px;cursor:pointer;">FIX RULES</button>';
+          '<button onclick="openDbConfigModal()" style="font:700 10px/1 inherit;background:#e04060;color:#fff;border:none;border-radius:20px;padding:2px 8px;cursor:pointer;">⚙️ FIX</button>';
       }
 
       if (attempt <= 3) {
@@ -271,10 +271,7 @@ async function initFirebase() {
       } else {
         // 3 retries exhausted — open config modal on Rules tab automatically
         console.warn('⚠️ Rules still blocked after 3 retries — opening Fix Rules modal');
-        setTimeout(function() {
-          openDbConfigModal();
-          setTimeout(function() { switchDbTab('rules'); }, 300);
-        }, 800);
+        setTimeout(function() { openDbConfigModal(); }, 800);
       }
 
     } else {

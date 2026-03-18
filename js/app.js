@@ -60,23 +60,12 @@ function renderTodayBadge() {
   _clockInterval = setInterval(tick, 1000);
 }
 
-// Wrap refreshMonth so booking indicators re-apply after a card rebuild
+// Wrap refreshMonth so full booking indicators re-apply after a card rebuild
 const _origRefreshMonth = refreshMonth;
 function refreshMonth(month) {
   _origRefreshMonth(month);
-  const grid = document.getElementById('yearGrid');
-  if (!grid) return;
-  const card = grid.querySelectorAll('.month-card')[month];
-  if (!card) return;
-  card.querySelectorAll('.day-cell:not(.other-month)').forEach(cell => {
-    const numEl = cell.querySelector('.day-num');
-    if (!numEl) return;
-    const day = parseInt(numEl.textContent);
-    const key = toKey(AppState.year, month, day);
-    if (Bookings[key] && Bookings[key].length > 0) {
-      cell.classList.add('has-booking');
-    }
-  });
+  // Re-apply full indicators (colors, stayover, checkout) not just has-booking dot
+  if (typeof applyBookingIndicators === 'function') applyBookingIndicators();
 }
 
 function init() {
