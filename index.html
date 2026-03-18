@@ -40,6 +40,18 @@
   </style>
 </head>
 <body>
+  <!-- LOADER FIX: hides loader after 1s no matter what -->
+  <script>
+    window.addEventListener("load", function() {
+      var l = document.getElementById("page-loader");
+      if (l) { l.style.opacity = "0"; l.style.transition = "opacity 0.4s"; setTimeout(function(){ l.style.display = "none"; }, 500); }
+    });
+    // Fallback: force hide after 2s even if load event is delayed
+    setTimeout(function() {
+      var l = document.getElementById("page-loader");
+      if (l) { l.style.opacity = "0"; l.style.transition = "opacity 0.4s"; setTimeout(function(){ l.style.display = "none"; }, 500); }
+    }, 2000);
+  </script>
   <div id="page-loader" class="page-loader"><div style="text-align:center"><p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH</p><div class="spinner" style="margin:16px auto"></div></div></div>
   <div id="toast-container"></div>
 
@@ -227,9 +239,13 @@
           </ul>
         </div>
       </div>
-      <div class="footer-bottom">
+      <div class="footer-bottom" style="flex-wrap:wrap;gap:8px">
         <span>© 2025 Streetwise PH. All rights reserved.</span>
-        <span>Cash on Delivery · Philippines</span>
+        <span style="color:var(--border-light)">|</span>
+        <span>Owner: <span style="color:var(--accent)">Miguel</span></span>
+        <span style="color:var(--border-light)">|</span>
+        <span>Created by: <span style="color:var(--accent)">Ceron Matthew Calsena</span></span>
+        <span style="margin-left:auto">Cash on Delivery · Philippines</span>
       </div>
     </div>
   </footer>

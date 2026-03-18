@@ -1,5 +1,5 @@
 // ============================================================
-// STREETWISE PH — pages/main.js  (ZERO external imports)
+// STREETWISE PH — js/main.js  (loaded by index.html)
 // ============================================================
 
 // ── Globals ────────────────────────────────────────────────
@@ -11,8 +11,8 @@ window.showToast = function(msg, type, ms) {
   t.className = "toast " + type; t.textContent = msg;
   c.appendChild(t);
   setTimeout(function() {
-    t.style.opacity = "0"; t.style.transform = "translateX(100%)"; t.style.transition = "all .3s";
-    setTimeout(function() { t.remove(); }, 300);
+    t.style.opacity = "0"; t.style.transform = "translateX(100%)";
+    t.style.transition = "all .3s"; setTimeout(function() { t.remove(); }, 300);
   }, ms);
 };
 
@@ -22,7 +22,7 @@ window.formatPrice = function(n) {
 
 window.formatDate = function(ts) {
   if (!ts) return "—";
-  var d = ts && ts.toDate ? ts.toDate() : new Date(ts);
+  var d = (ts && ts.toDate) ? ts.toDate() : new Date(ts);
   return d.toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
 };
 
@@ -47,120 +47,79 @@ window.updateCartBadge = function() {
   } catch(e) {}
 };
 
+window.updateNavAuth = function(profile) {
+  var loginBtn  = document.getElementById("nav-login-btn");
+  var userEl    = document.getElementById("nav-user");
+  var ownerLink = document.getElementById("nav-owner-link");
+  if (!loginBtn) return;
+  if (profile) {
+    loginBtn.classList.add("hidden");
+    if (userEl) {
+      userEl.classList.remove("hidden");
+      var av = userEl.querySelector(".nav-user-avatar");
+      var nm = userEl.querySelector(".nav-user-name");
+      if (av) av.textContent = ((profile.fullName || profile.email || "U")[0]).toUpperCase();
+      if (nm) nm.textContent  = profile.fullName || profile.email || "";
+    }
+    if (ownerLink && profile.role === "owner") ownerLink.classList.remove("hidden");
+  } else {
+    loginBtn.classList.remove("hidden");
+    if (userEl)    userEl.classList.add("hidden");
+    if (ownerLink) ownerLink.classList.add("hidden");
+  }
+};
+
+window.hideLoader = function() {
+  var l = document.getElementById("page-loader");
+  if (l) { l.style.opacity = "0"; l.style.transition = "opacity .4s"; setTimeout(function() { l.style.display = "none"; }, 500); }
+};
+
 window.addEventListener("cartUpdated", window.updateCartBadge);
 
 // ── Navbar ─────────────────────────────────────────────────
-function initNavbar() {
+document.addEventListener("DOMContentLoaded", function() {
+  // Navbar scroll
   var nav = document.querySelector(".navbar");
   if (nav) window.addEventListener("scroll", function() { nav.classList.toggle("scrolled", window.scrollY > 40); });
 
-  var hamburger  = document.getElementById("nav-hamburger");
-  var mobileMenu = document.getElementById("mobile-menu");
-  if (hamburger && mobileMenu) {
-    hamburger.addEventListener("click", function() {
-      mobileMenu.classList.toggle("open");
-      document.body.style.overflow = mobileMenu.classList.contains("open") ? "hidden" : "";
+  // Hamburger
+  var hb = document.getElementById("nav-hamburger");
+  var mm = document.getElementById("mobile-menu");
+  if (hb && mm) {
+    hb.addEventListener("click", function() {
+      mm.classList.toggle("open");
+      document.body.style.overflow = mm.classList.contains("open") ? "hidden" : "";
     });
   }
 
+  // Active nav link
   var page = window.location.pathname.split("/").pop() || "index.html";
-  var links = document.querySelectorAll(".nav-link");
-  for (var i = 0; i < links.length; i++) {
-    if (links[i].getAttribute("href") === page) links[i].classList.add("active");
-  }
+  document.querySelectorAll(".nav-link").forEach(function(l) {
+    if (l.getAttribute("href") === page) l.classList.add("active");
+  });
 
-  var closes = document.querySelectorAll(".modal-close");
-  for (var j = 0; j < closes.length; j++) {
-    closes[j].addEventListener("click", function() {
-      var overlay = this.closest(".modal-overlay");
-      if (overlay) { overlay.classList.remove("active"); document.body.style.overflow = ""; }
+  // Modal close buttons
+  document.querySelectorAll(".modal-close").forEach(function(b) {
+    b.addEventListener("click", function() {
+      var o = b.closest(".modal-overlay");
+      if (o) { o.classList.remove("active"); document.body.style.overflow = ""; }
     });
-  }
-
+  });
   document.addEventListener("click", function(e) {
     if (e.target.classList.contains("modal-overlay")) {
-      e.target.classList.remove("active");
-      document.body.style.overflow = "";
+      e.target.classList.remove("active"); document.body.style.overflow = "";
     }
   });
 
+  // Logout
   var logoutBtn = document.getElementById("nav-logout");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", function() {
-      import("../firebase/auth.js").then(function(m) {
-        m.logoutUser().catch(function() {});
-      }).catch(function() {});
       window.showToast("Logged out.", "info");
       setTimeout(function() { window.location.href = "index.html"; }, 600);
     });
   }
-}
 
-// ── Auth state ─────────────────────────────────────────────
-function initAuth() {
-  import("../firebase/auth.js").then(function(m) {
-    m.onAuthChange(function(user) {
-      var loginBtn  = document.getElementById("nav-login-btn");
-      var userEl    = document.getElementById("nav-user");
-      var ownerLink = document.getElementById("nav-owner-link");
-      if (user) {
-        m.getCurrentProfile(user.uid).then(function(p) {
-          if (loginBtn) loginBtn.classList.add("hidden");
-          if (userEl) {
-            userEl.classList.remove("hidden");
-            var av = userEl.querySelector(".nav-user-avatar");
-            var nm = userEl.querySelector(".nav-user-name");
-            if (av) av.textContent = ((p && p.fullName) || user.email || "U")[0].toUpperCase();
-            if (nm) nm.textContent = (p && p.fullName) || user.email || "";
-          }
-          if (ownerLink && p && p.role === "owner") ownerLink.classList.remove("hidden");
-        }).catch(function() {});
-      } else {
-        if (loginBtn) loginBtn.classList.remove("hidden");
-        if (userEl) userEl.classList.add("hidden");
-        if (ownerLink) ownerLink.classList.add("hidden");
-      }
-    });
-  }).catch(function(err) {
-    console.warn("Firebase auth not available:", err.message);
-  });
-}
-
-// ── Login form ─────────────────────────────────────────────
-function initLoginForm() {
-  var form = document.getElementById("signin-form");
-  if (!form) return;
-  form.addEventListener("submit", function(e) {
-    e.preventDefault();
-    var btn = form.querySelector("button[type=submit]");
-    if (btn) { btn.disabled = true; btn.textContent = "Signing in..."; }
-    var email    = (document.getElementById("si-email") || {}).value || "";
-    var password = (document.getElementById("si-password") || {}).value || "";
-    import("../firebase/auth.js").then(function(m) {
-      return m.loginUser(email, password);
-    }).then(function(result) {
-      window.showToast("Welcome back!", "success");
-      window.closeModal("login-modal");
-      setTimeout(function() {
-        var role = result && result.profile && result.profile.role;
-        window.location.href = role === "owner" ? "dashboard.html" : "index.html";
-      }, 600);
-    }).catch(function() {
-      window.showToast("Invalid email or password.", "error");
-      if (btn) { btn.disabled = false; btn.textContent = "Sign In"; }
-    });
-  });
-}
-
-// ── Init ───────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", function() {
-  initNavbar();
-  initAuth();
-  initLoginForm();
   window.updateCartBadge();
-  // Hide loader
-  setTimeout(function() {
-    var l = document.getElementById("page-loader");
-    if (l) { l.style.opacity = "0"; l.style.transition = "opacity .4s"; setTimeout(function() { l.style.display = "none"; }, 500); }
-  }, 800);
+  setTimeout(window.hideLoader, 500);
 });
