@@ -1238,5 +1238,104 @@ const KeywordHandler = (() => {
     return fields;
   }
 
-  return { search, highlight, findContexts, extractFields };
+  // ─── ENHANCED SEARCH — wraps search() with 3 new capabilities ──────────────
+  //
+  //  1. NEGATIVE KEYWORDS  — prefix a keyword with "!" to exclude results
+  //     containing that word.  e.g. keywords = ["Total", "!VAT"] means
+  //     capture values after "Total" but skip any result that also contains "VAT".
+  //     Negative keywords are stripped from the keyword list before the core
+  //     search runs; they only act as a post-filter.
+  //
+  //  2. MULTI-LINE VALUE CAPTURE — after extracting a value, if the value looks
+  //     truncated (ends mid-word or is very short) AND the next logical line in
+  //     the raw text immediately follows, attempt to append the continuation.
+  //     This helps with addresses and long descriptions that span two lines in
+  //     the original PDF.
+  //
+  //  3. POSITIONAL / RIGHT-OF-KEYWORD MATCHING — for bare keywords, also scan
+  //     for the pattern "KEYWORD [whitespace] VALUE" where VALUE is on the same
+  //     logical line (no colon needed).  This catches table headers where the
+  //     value sits immediately to the right of the label in the raw text stream.
+
+  function searchEnhanced(pdfData, keywords, options) {
+    if (!keywords || keywords.length === 0) return [];
+
+    // ── Split positive vs negative keywords ──────────────────────────────────
+    const negatives = keywords
+      .filter(k => k.startsWith('!'))
+      .map(k => k.slice(1).trim().toLowerCase());
+    const positives = keywords.filter(k => !k.startsWith('!'));
+
+    if (positives.length === 0) return [];
+
+    // ── Run the core two-pass search on positive keywords ────────────────────
+    const rawResults = search(pdfData, positives, options);
+
+    // ── Apply negative keyword filter ─────────────────────────────────────────
+    let filtered = rawResults;
+    if (negatives.length > 0) {
+      filtered = rawResults.filter(r => {
+        const ctxLower = (r.contexts || []).join(' ').toLowerCase();
+        return !negatives.some(neg => ctxLower.includes(neg));
+      });
+    }
+
+    // ── Multi-line value continuation ─────────────────────────────────────────
+    // For each result, find the page text and attempt to extend short values
+    // by checking if the next sentence fragment continues the value.
+    const pageTextMap = new Map();
+    for (const { file, pages } of pdfData) {
+      for (const { page, text } of pages) {
+        pageTextMap.set(`${file.name}::${page}`, text);
+      }
+    }
+
+    const enhanced = filtered.map(r => {
+      if (!r.contexts || r.contexts.length === 0) return r;
+
+      const pageKey  = `${r.filename}::${r.page}`;
+      const pageText = pageTextMap.get(pageKey) || '';
+
+      const extendedContexts = r.contexts.map(ctx => {
+        // Only try to extend if the value looks short / incomplete
+        if (ctx.length >= 40) return ctx;
+        if (/[.!?]$/.test(ctx)) return ctx;  // already ends properly
+
+        // Find where this context appears in the page text
+        const ctxIdx = pageText.indexOf(ctx);
+        if (ctxIdx === -1) return ctx;
+
+        const afterCtx = pageText.slice(ctxIdx + ctx.length, ctxIdx + ctx.length + 120).trim();
+        if (!afterCtx) return ctx;
+
+        // Take up to the next label-like boundary (colon pattern or newline token)
+        const boundary = afterCtx.search(/\b[A-Z][a-z]+\s*:|[A-Z]{2,}\s*:/);
+        const continuation = boundary > 0
+          ? afterCtx.slice(0, boundary).trim()
+          : afterCtx.split(/\s{3,}/)[0].trim();  // stop at 3+ spaces (column gap)
+
+        if (continuation && continuation.length > 2 && continuation.length < 80) {
+          return (ctx + ' ' + continuation).trim();
+        }
+        return ctx;
+      });
+
+      return { ...r, contexts: extendedContexts };
+    });
+
+    return enhanced;
+  }
+
+  // ─── PARSE NEGATIVE KEYWORDS — utility for UI ───────────────────────────────
+  //
+  // Returns { positives: string[], negatives: string[] }
+
+  function parseKeywords(keywords) {
+    return {
+      positives: keywords.filter(k => !k.startsWith('!')),
+      negatives: keywords.filter(k => k.startsWith('!')).map(k => k.slice(1).trim()),
+    };
+  }
+
+  return { search, searchEnhanced, parseKeywords, highlight, findContexts, extractFields };
 })();

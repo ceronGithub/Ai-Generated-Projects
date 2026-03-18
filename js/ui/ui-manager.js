@@ -80,6 +80,7 @@ const UIManager = (() => {
       tojpg:        'Convert to JPG',
       enhancemode:  'Enhance PDF',
       lockmode:     'Lock PDF',
+      mergemode:    'Merge PDF',
     };
 
     const display = document.getElementById('modeDisplay');
@@ -128,7 +129,7 @@ const UIManager = (() => {
       document.getElementById('keywordChips').innerHTML = '';
       hint.textContent = 'Configure your split settings in Step 03.1 below.';
       if (splitPanel) splitPanel.style.display = 'none';
-    } else if (['toexcel','toword','toppt','tojpg','enhancemode','lockmode'].includes(mode)) {
+    } else if (['toexcel','toword','toppt','tojpg','enhancemode','lockmode','mergemode'].includes(mode)) {
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       const modeHints = {
@@ -138,6 +139,7 @@ const UIManager = (() => {
         tojpg:       'No keywords needed — each PDF page will be rendered as a JPG.',
         enhancemode: 'No keywords needed — your PDF will be re-rendered at higher quality.',
         lockmode:    'No keywords needed — you will set passwords in the results panel.',
+        mergemode:   'No keywords needed — set the merge order in Step 03.1 below.',
       };
       hint.textContent = modeHints[mode] || '';
       if (splitPanel) splitPanel.style.display = 'none';
@@ -1720,6 +1722,112 @@ const UIManager = (() => {
     return card;
   }
 
+  // =============================================
+  // PER-FILE PROGRESS STATUS
+  // =============================================
+
+  // Shows a mini status list alongside the progress bar
+  // so users can see which file is currently processing.
+
+  function setPerFileStatus(files, doneIdx, status, order) {
+    const wrap = document.getElementById('perFileStatusWrap');
+    if (!wrap) return;
+    wrap.style.display = 'block';
+
+    const fileList = order
+      ? order.map(i => files[i]).filter(Boolean)
+      : files;
+
+    if (!wrap._rows || wrap._rows.length !== fileList.length) {
+      // Build rows
+      wrap.innerHTML = '';
+      wrap._rows = fileList.map((f, i) => {
+        const row = document.createElement('div');
+        row.className = 'pfs-row';
+        row.innerHTML = `<span class="pfs-icon">⟳</span><span class="pfs-name">${escapeHtml(f.name)}</span>`;
+        wrap.appendChild(row);
+        return row;
+      });
+    }
+
+    wrap._rows.forEach((row, i) => {
+      const icon = row.querySelector('.pfs-icon');
+      if (i < doneIdx) { icon.textContent = '✓'; row.className = 'pfs-row pfs-row--done'; }
+      else if (i === doneIdx) {
+        icon.textContent = status === 'done' ? '✓' : '⟳';
+        row.className = `pfs-row ${status === 'done' ? 'pfs-row--done' : 'pfs-row--active'}`;
+      }
+    });
+  }
+
+  function clearPerFileStatus() {
+    const wrap = document.getElementById('perFileStatusWrap');
+    if (wrap) { wrap.style.display = 'none'; wrap.innerHTML = ''; wrap._rows = null; }
+  }
+
+  // =============================================
+  // MERGE RESULT RENDERER
+  // =============================================
+
+  function renderMergeResult(result, files, order) {
+    const container = document.getElementById('resultsContainer');
+    const list      = document.getElementById('resultsList');
+    const actions   = document.getElementById('resultsActions');
+    container.style.display = 'block';
+    list.innerHTML    = '';
+    actions.innerHTML = '';
+
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+    const dlBtn = document.createElement('button');
+    dlBtn.className   = 'btn-excel merge-dl-btn';
+    dlBtn.textContent = '⬇ Download Merged PDF';
+    dlBtn.addEventListener('click', () => _downloadBlob(result.blob, result.filename));
+    actionsRow.appendChild(dlBtn);
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'tm-summary-card merge-summary-card';
+    const orderedFiles = (order || files.map((_,i)=>i)).map(i => files[i]).filter(Boolean);
+    summaryCard.innerHTML = `
+      <div class="tm-summary-grid">
+        <div class="tm-stat"><span class="tm-stat-val">${orderedFiles.length}</span><span class="tm-stat-lbl">Files Merged</span></div>
+        <div class="tm-stat"><span class="tm-stat-val">${result.totalPages}</span><span class="tm-stat-lbl">Total Pages</span></div>
+        <div class="tm-stat tm-stat--fee"><span class="tm-stat-val">${_fmtBytes(result.blob.size)}</span><span class="tm-stat-lbl">Output Size</span></div>
+      </div>
+    `;
+    list.appendChild(summaryCard);
+
+    // Show merge order
+    orderedFiles.forEach((file, i) => {
+      const card = document.createElement('div');
+      card.className = 'result-item merge-file-card';
+      card.innerHTML = `
+        <div class="result-meta">
+          <span class="page-badge">#${i+1}</span>
+          <span class="result-filename" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+          <span class="merge-file-size">${formatBytes(file.size)}</span>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+
+    // Output download card
+    const outCard = document.createElement('div');
+    outCard.className = 'result-item merge-out-card';
+    outCard.innerHTML = `
+      <div class="result-meta">
+        <span class="page-badge merge-out-badge">OUT</span>
+        <span class="result-filename">${escapeHtml(result.filename)}</span>
+      </div>
+      <button class="cm-dl-btn btn btn-accent merge-dl-card-btn">⬇ Download</button>
+    `;
+    outCard.querySelector('.merge-dl-card-btn').addEventListener('click', () => _downloadBlob(result.blob, result.filename));
+    list.appendChild(outCard);
+    capResultsHeight(list);
+  }
+
   return {
     renderFileList,
     setModeSelected,
@@ -1742,6 +1850,9 @@ const UIManager = (() => {
     renderConversionResults,
     renderEnhanceResults,
     renderLockResults,
+    renderMergeResult,
+    setPerFileStatus,
+    clearPerFileStatus,
     escapeHtml,
   };
 })();

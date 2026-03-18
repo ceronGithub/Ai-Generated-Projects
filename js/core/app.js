@@ -1,0 +1,747 @@
+// =============================================
+// app.js — Main application logic / state
+// v2 — adds: OCR, Merge, Session, per-file
+//      progress, negative keywords, rename queue
+// =============================================
+
+(() => {
+
+  // ===== STATE =====
+  const state = {
+    files:       [],      // File objects
+    mode:        null,
+    keywords:    [],
+    lastResults: null,
+    lastPdfData: null,
+    ocrEnabled:  false,   // OCR fallback toggle
+    mergeOrder:  [],      // file indices for merge mode
+  };
+
+  // ===== DOM REFS =====
+  const dropZone      = document.getElementById('dropZone');
+  const fileInput     = document.getElementById('fileInput');
+  const deleteAllBtn  = document.getElementById('deleteAllBtn');
+  const modeBtns      = document.querySelectorAll('.mode-btn');
+  const changeModeBtn = document.getElementById('changeModeBtn');
+  const keywordInput  = document.getElementById('keywordInput');
+  const addKeywordBtn = document.getElementById('addKeywordBtn');
+  const runBtn        = document.getElementById('runBtn');
+  const stepKeywords  = document.getElementById('step-keywords');
+  const stepResults   = document.getElementById('step-results');
+
+  // ===== FILE HANDLING =====
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over'); addFiles([...e.dataTransfer.files]);
+  });
+  dropZone.addEventListener('click', e => {
+    if (e.target === dropZone || e.target.classList.contains('drop-icon') ||
+        e.target.classList.contains('drop-title') || e.target.classList.contains('drop-sub'))
+      fileInput.click();
+  });
+  fileInput.addEventListener('change', () => { addFiles([...fileInput.files]); fileInput.value = ''; });
+
+  // ===== RESET =====
+
+  function resetToEmpty() {
+    state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null;
+    state.mergeOrder = [];
+    UIManager.deactivateStep('step-mode');
+    UIManager.deactivateStep('step-keywords');
+    UIManager.deactivateStep('step-results');
+    UIManager.setModeButtonsVisible(true);
+    document.getElementById('modeDisplay').style.display = 'none';
+    keywordInput.value = '';
+    document.getElementById('keywordChips').innerHTML = '';
+    document.getElementById('keywordHint').textContent = '';
+    document.getElementById('keywordInputArea').style.display = 'flex';
+    const rc = document.getElementById('resultsContainer');
+    rc.style.display = 'none';
+    document.getElementById('resultsList').innerHTML = '';
+    document.getElementById('resultsActions').innerHTML = '';
+    UIManager.hideProgress(); UIManager.setRunEnabled(false);
+    // Hide step-split
+    const ss = document.getElementById('step-split');
+    if (ss) { ss.style.display = 'none'; ss.classList.add('disabled-card'); ss.classList.remove('active'); }
+    // Hide merge order panel
+    const mp = document.getElementById('mergeOrderPanel');
+    if (mp) mp.style.display = 'none';
+  }
+
+  deleteAllBtn.addEventListener('click', () => { state.files = []; refreshFileList(); resetToEmpty(); });
+
+  const MAX_FILES = 2000;
+
+  function addFiles(incoming) {
+    const pdfs      = incoming.filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+    const existing  = new Set(state.files.map(f => f.name + f.size));
+    const newFiles  = pdfs.filter(f => !existing.has(f.name + f.size));
+    const available = MAX_FILES - state.files.length;
+
+    if (available <= 0) { showUploadNote(`⛔ Limit reached — max ${MAX_FILES.toLocaleString()} files.`, 'error'); return; }
+    const accepted = newFiles.slice(0, available);
+    const rejected = newFiles.length - accepted.length;
+    state.files.push(...accepted);
+    refreshFileList();
+
+    if (rejected > 0) showUploadNote(`⚠ ${rejected} file(s) skipped — limit reached.`, 'warn');
+    else if (accepted.length > 0) showUploadNote(`✓ ${accepted.length} file(s) added.`, 'ok');
+
+    if (state.files.length > 0) {
+      UIManager.activateStep('step-mode');
+      if (state.mode === 'splitmode') updateSplitPreview();
+      if (state.mode === 'mergemode') renderMergeOrder();
+    }
+    if (window.SessionStore) SessionStore.saveFileNames(state.files);
+  }
+
+  function showUploadNote(msg, type) {
+    const el = document.getElementById('uploadNote');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = { ok: 'var(--green)', warn: 'var(--gold)', error: 'var(--danger)' }[type] || '';
+    el.style.opacity = '1';
+    clearTimeout(el._noteTimer);
+    el._noteTimer = setTimeout(() => {
+      el.textContent = '⚠ Max upload is 2,000 PDF files per batch.';
+      el.style.color = ''; el.style.opacity = '';
+    }, 4000);
+  }
+
+  function removeFile(idx) {
+    state.files.splice(idx, 1);
+    // Fix merge order after removal
+    state.mergeOrder = state.mergeOrder
+      .filter(i => i !== idx)
+      .map(i => i > idx ? i - 1 : i);
+    refreshFileList();
+    if (state.files.length === 0) resetToEmpty();
+    else if (state.mode === 'mergemode') renderMergeOrder();
+  }
+
+  function refreshFileList() { UIManager.renderFileList(state.files, removeFile); updateRunBtn(); }
+
+  // ===== MODE SELECTION =====
+
+  modeBtns.forEach(btn => btn.addEventListener('click', () => selectMode(btn.dataset.mode)));
+
+  changeModeBtn.addEventListener('click', () => {
+    state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null; state.mergeOrder = [];
+
+    const chips = document.querySelectorAll('.keyword-chip');
+    chips.forEach((chip, i) => { chip.style.animationDelay = `${i * 35}ms`; chip.classList.add('chip-wiping'); });
+
+    const resultsContainer = document.getElementById('resultsContainer');
+    if (resultsContainer.style.display !== 'none') resultsContainer.classList.add('results-folding');
+
+    // Fold step-split if visible
+    const stepSplit = document.getElementById('step-split');
+    if (stepSplit && stepSplit.style.display !== 'none') {
+      setTimeout(() => {
+        stepSplit.classList.add('step-folding');
+        stepSplit.addEventListener('animationend', () => {
+          stepSplit.classList.remove('step-folding');
+          stepSplit.style.display = 'none';
+          stepSplit.classList.add('disabled-card'); stepSplit.classList.remove('active');
+        }, { once: true });
+      }, 50);
+    }
+    // Hide merge panel
+    const mp = document.getElementById('mergeOrderPanel');
+    if (mp) mp.style.display = 'none';
+
+    stepResults.classList.add('step-folding');
+    stepResults.addEventListener('animationend', () => {
+      stepResults.classList.remove('step-folding');
+      resultsContainer.classList.remove('results-folding');
+      resultsContainer.style.display = 'none';
+      document.getElementById('resultsList').innerHTML = '';
+      document.getElementById('resultsActions').innerHTML = '';
+      UIManager.hideProgress(); UIManager.setRunEnabled(false);
+      stepResults.classList.add('disabled-card', 'step-settling'); stepResults.classList.remove('active');
+      stepResults.addEventListener('animationend', () => stepResults.classList.remove('step-settling'), { once: true });
+    }, { once: true });
+
+    setTimeout(() => {
+      stepKeywords.classList.add('step-folding');
+      stepKeywords.addEventListener('animationend', () => {
+        stepKeywords.classList.remove('step-folding');
+        keywordInput.value = '';
+        document.getElementById('keywordChips').innerHTML = '';
+        document.getElementById('keywordHint').textContent = '';
+        document.getElementById('keywordInputArea').style.display = 'flex';
+        keywordInput.placeholder = 'Type a keyword and press Enter…';
+        stepKeywords.classList.add('disabled-card', 'step-settling'); stepKeywords.classList.remove('active');
+        stepKeywords.addEventListener('animationend', () => stepKeywords.classList.remove('step-settling'), { once: true });
+      }, { once: true });
+    }, 120);
+
+    setTimeout(() => {
+      UIManager.setModeButtonsVisible(true);
+      document.getElementById('modeDisplay').style.display = 'none';
+      document.querySelector('.mode-buttons').style.display = 'grid';
+    }, 480);
+    if (window.SessionStore) SessionStore.saveMode(null);
+  });
+
+  function selectMode(mode) {
+    state.mode = mode; state.keywords = []; state.mergeOrder = state.files.map((_, i) => i);
+    UIManager.setModeSelected(mode);
+    UIManager.setModeButtonsVisible(false);
+    document.getElementById('modeDisplay').style.display = 'flex';
+    document.querySelector('.mode-buttons').style.display = 'none';
+
+    const stepSplit = document.getElementById('step-split');
+    if (mode === 'splitmode') {
+      if (stepSplit) {
+        stepSplit.style.display = 'block';
+        stepSplit.classList.remove('disabled-card');
+        stepSplit.classList.add('active', 'step-split-entering');
+        stepSplit.addEventListener('animationend', () => stepSplit.classList.remove('step-split-entering'), { once: true });
+      }
+    } else {
+      if (stepSplit) { stepSplit.style.display = 'none'; stepSplit.classList.add('disabled-card'); stepSplit.classList.remove('active'); }
+    }
+
+    // Show/hide merge order panel
+    const mp = document.getElementById('mergeOrderPanel');
+    if (mode === 'mergemode') {
+      if (mp) { mp.style.display = 'block'; renderMergeOrder(); }
+    } else {
+      if (mp) mp.style.display = 'none';
+    }
+
+    UIManager.activateStep('step-keywords');
+    UIManager.activateStep('step-results');
+    UIManager.setKeywordSectionMode(mode);
+    UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, mode);
+    document.getElementById('resultsContainer').style.display = 'none';
+    UIManager.hideProgress();
+    updateRunBtn();
+
+    if (mode === 'splitmode' && state.files.length > 0) setTimeout(updateSplitPreview, 100);
+    if (window.SessionStore) SessionStore.saveMode(mode);
+  }
+
+  // ===== KEYWORDS =====
+
+  function smartCapKeyword(raw) {
+    const clean = raw.replace(/[''‛'']/g, '');
+    const letters = clean.replace(/[^a-zA-Z]/g, '');
+    if (!letters) return clean;
+    if (letters === letters.toUpperCase() && letters !== letters.toLowerCase()) return clean;
+    return clean.split(' ').map(word => {
+      if (!word) return word;
+      let result = ''; let foundFirst = false;
+      for (const ch of word) {
+        if (/[a-zA-Z]/.test(ch) && !foundFirst) { result += ch.toUpperCase(); foundFirst = true; }
+        else if (/[a-zA-Z]/.test(ch)) result += ch.toLowerCase();
+        else result += ch;
+      }
+      return result;
+    }).join(' ');
+  }
+
+  function addKeyword() {
+    const raw = keywordInput.value.trim();
+    if (!raw) return;
+    const val = raw.startsWith('!') ? '!' + smartCapKeyword(raw.slice(1)) : smartCapKeyword(raw);
+    if (state.mode === 'single') state.keywords = [val];
+    else if (!state.keywords.includes(val)) state.keywords.push(val);
+    keywordInput.value = '';
+    UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, state.mode);
+    updateRunBtn();
+    if (window.SessionStore) SessionStore.saveKeywords(state.keywords);
+  }
+
+  function removeKeyword(idx) {
+    state.keywords.splice(idx, 1);
+    UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, state.mode);
+    updateRunBtn();
+    if (window.SessionStore) SessionStore.saveKeywords(state.keywords);
+  }
+
+  function editKeyword(idx) {
+    const current = state.keywords[idx];
+    const newVal = prompt('Edit keyword:', current);
+    if (newVal !== null && newVal.trim()) {
+      state.keywords[idx] = newVal.trim();
+      UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, state.mode);
+      updateRunBtn();
+      if (window.SessionStore) SessionStore.saveKeywords(state.keywords);
+    }
+  }
+
+  addKeywordBtn.addEventListener('click', addKeyword);
+  keywordInput.addEventListener('keydown', e => { if (e.key === 'Enter') addKeyword(); });
+
+  // ===== RUN BUTTON =====
+
+  function updateRunBtn() {
+    if (!state.mode || state.files.length === 0) { UIManager.setRunEnabled(false); return; }
+    const noKwModes = ['extractall','tablemode','compressmode','splitmode','toexcel','toword',
+                       'toppt','tojpg','enhancemode','lockmode','mergemode'];
+    if (noKwModes.includes(state.mode)) {
+      UIManager.setRunEnabled(state.mode === 'mergemode' ? state.files.length >= 2 : true);
+      return;
+    }
+    UIManager.setRunEnabled(state.keywords.length > 0);
+  }
+
+  // ===== TABLE WARNING MODAL =====
+
+  function showTableWarningModal() {
+    return new Promise(resolve => {
+      const overlay  = document.getElementById('tableWarnOverlay');
+      const btnOk    = document.getElementById('tableWarnOk');
+      const btnProceed = document.getElementById('tableWarnProceed');
+      overlay.classList.remove('tw-closing');
+      overlay.style.display = 'flex';
+      function closeModal(result) {
+        btnOk.removeEventListener('click', onOk);
+        btnProceed.removeEventListener('click', onProceed);
+        overlay.classList.add('tw-closing');
+        overlay.addEventListener('animationend', () => {
+          overlay.style.display = 'none'; overlay.classList.remove('tw-closing'); resolve(result);
+        }, { once: true });
+      }
+      const onOk = () => closeModal('ok');
+      const onProceed = () => closeModal('proceed');
+      btnOk.addEventListener('click', onOk);
+      btnProceed.addEventListener('click', onProceed);
+    });
+  }
+
+  // ===== MERGE ORDER PANEL =====
+
+  function renderMergeOrder() {
+    const panel = document.getElementById('mergeOrderList');
+    if (!panel) return;
+    if (state.mergeOrder.length === 0) state.mergeOrder = state.files.map((_, i) => i);
+    panel.innerHTML = '';
+    state.mergeOrder.forEach((fileIdx, orderPos) => {
+      const file = state.files[fileIdx];
+      if (!file) return;
+      const row = document.createElement('div');
+      row.className = 'merge-row';
+      row.draggable = true;
+      row.dataset.pos = orderPos;
+      row.innerHTML = `
+        <span class="merge-drag-handle">⠿</span>
+        <span class="merge-order-num">${orderPos + 1}</span>
+        <span class="merge-filename" title="${file.name}">${file.name}</span>
+        <button class="merge-up-btn" title="Move up" ${orderPos === 0 ? 'disabled' : ''}>↑</button>
+        <button class="merge-dn-btn" title="Move down" ${orderPos === state.mergeOrder.length - 1 ? 'disabled' : ''}>↓</button>
+      `;
+      row.querySelector('.merge-up-btn').addEventListener('click', () => {
+        if (orderPos > 0) { [state.mergeOrder[orderPos], state.mergeOrder[orderPos-1]] = [state.mergeOrder[orderPos-1], state.mergeOrder[orderPos]]; renderMergeOrder(); }
+      });
+      row.querySelector('.merge-dn-btn').addEventListener('click', () => {
+        if (orderPos < state.mergeOrder.length - 1) { [state.mergeOrder[orderPos], state.mergeOrder[orderPos+1]] = [state.mergeOrder[orderPos+1], state.mergeOrder[orderPos]]; renderMergeOrder(); }
+      });
+      // Drag-to-reorder
+      row.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', orderPos); row.classList.add('merge-row--dragging'); });
+      row.addEventListener('dragend', () => row.classList.remove('merge-row--dragging'));
+      row.addEventListener('dragover', e => { e.preventDefault(); row.classList.add('merge-row--over'); });
+      row.addEventListener('dragleave', () => row.classList.remove('merge-row--over'));
+      row.addEventListener('drop', e => {
+        e.preventDefault(); row.classList.remove('merge-row--over');
+        const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        const to   = orderPos;
+        if (from !== to) {
+          const moved = state.mergeOrder.splice(from, 1)[0];
+          state.mergeOrder.splice(to, 0, moved);
+          renderMergeOrder();
+        }
+      });
+      panel.appendChild(row);
+    });
+  }
+
+  // ===== RUN EXTRACTION =====
+
+  runBtn.addEventListener('click', runExtraction);
+
+  async function runExtraction() {
+    if (state.files.length === 0 || !state.mode) return;
+
+    const labels = {
+      compressmode:'Preparing compression…', splitmode:'Preparing split…',
+      toexcel:'Preparing Excel conversion…', toword:'Preparing Word conversion…',
+      toppt:'Preparing PowerPoint conversion…', tojpg:'Preparing JPG conversion…',
+      enhancemode:'Preparing enhancement…', lockmode:'Preparing PDF lock…',
+      mergemode:'Preparing merge…',
+    };
+    UIManager.setRunning(true);
+    UIManager.setProgress(0, labels[state.mode] || 'Phase 1 · Pre-reading PDFs…');
+    document.getElementById('resultsContainer').style.display = 'none';
+    UIManager.clearPerFileStatus();
+    if (window.StarField) window.StarField.startWarp();
+
+    try {
+
+      // ── Compress ─────────────────────────────────────────────────────────
+      if (state.mode === 'compressmode') {
+        UIManager.setProgress(20, 'Compressing PDFs…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFCompressor.compress(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done/total)*75), `Compressing — ${done}/${total}…`);
+          UIManager.setPerFileStatus(state.files, done - 1, 'done');
+        });
+        UIManager.setProgress(100, 'Done!'); UIManager.renderCompressResults(res);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Split ─────────────────────────────────────────────────────────────
+      if (state.mode === 'splitmode') {
+        const file = state.files[0];
+        if (!file) throw new Error('Upload a PDF first.');
+        const tab = document.querySelector('.scp-tab--active');
+        const config = {
+          mode:   tab ? tab.dataset.scp : 'every',
+          every:  parseInt(document.getElementById('scpEveryN')?.value || '1', 10),
+          ranges: document.getElementById('scpRangeInput')?.value || '',
+        };
+        UIManager.setProgress(15, 'Reading PDF pages…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFSplitter.split(file, config, (done, total) => {
+          UIManager.setProgress(15 + Math.round((done/total)*80), `Splitting — page ${done}/${total}…`);
+        });
+        UIManager.setProgress(100, 'Done!'); UIManager.renderSplitResults(res, file);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Merge ─────────────────────────────────────────────────────────────
+      if (state.mode === 'mergemode') {
+        if (state.files.length < 2) throw new Error('Upload at least 2 PDFs to merge.');
+        UIManager.setProgress(10, 'Merging PDFs…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFMerge.merge(state.files, state.mergeOrder, (rendered, total, fname, fi, ft) => {
+          UIManager.setProgress(10 + Math.round((rendered/total)*85), `Merging file ${fi}/${ft}: ${fname}…`);
+          UIManager.setPerFileStatus(state.files, fi - 1, 'processing', state.mergeOrder);
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderMergeResult(res, state.files, state.mergeOrder);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Convert to Excel ──────────────────────────────────────────────────
+      if (state.mode === 'toexcel') {
+        UIManager.setProgress(20, 'Converting to Excel…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFToExcel.convert(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done/total)*75), `Converting — ${done}/${total}…`);
+          UIManager.setPerFileStatus(state.files, done - 1, 'done');
+        });
+        UIManager.setProgress(100, 'Done!'); UIManager.renderConversionResults(res, 'toexcel');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Convert to Word ───────────────────────────────────────────────────
+      if (state.mode === 'toword') {
+        UIManager.setProgress(20, 'Converting to Word…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFToWord.convert(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done/total)*75), `Converting — ${done}/${total}…`);
+          UIManager.setPerFileStatus(state.files, done - 1, 'done');
+        });
+        UIManager.setProgress(100, 'Done!'); UIManager.renderConversionResults(res, 'toword');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Convert to PPT ────────────────────────────────────────────────────
+      if (state.mode === 'toppt') {
+        UIManager.setProgress(15, 'Rendering pages…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFToPPT.convert(state.files, (done, total) => {
+          UIManager.setProgress(15 + Math.round((done/total)*80), `Converting — ${done}/${total}…`);
+        });
+        UIManager.setProgress(100, 'Done!'); UIManager.renderConversionResults(res, 'toppt');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Convert to JPG ────────────────────────────────────────────────────
+      if (state.mode === 'tojpg') {
+        UIManager.setProgress(15, 'Rendering pages to images…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFToJPG.convert(state.files, (done, total) => {
+          UIManager.setProgress(15 + Math.round((done/total)*80), `Rendering — ${done}/${total}…`);
+        });
+        UIManager.setProgress(100, 'Done!'); UIManager.renderConversionResults(res, 'tojpg');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Enhance ───────────────────────────────────────────────────────────
+      if (state.mode === 'enhancemode') {
+        UIManager.setProgress(20, 'Enhancing PDFs…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFEnhancer.enhance(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done/total)*75), `Enhancing — ${done}/${total}…`);
+          UIManager.setPerFileStatus(state.files, done - 1, 'done');
+        });
+        UIManager.setProgress(100, 'Done!'); UIManager.renderEnhanceResults(res);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Lock ──────────────────────────────────────────────────────────────
+      if (state.mode === 'lockmode') {
+        UIManager.setProgress(20, 'Preparing lock…');
+        await new Promise(r => setTimeout(r, 30));
+        const lockResults = state.files.map(file => ({
+          file, filename: file.name.replace(/\.pdf$/i,'') + '_locked.pdf', blob: null, pending: true
+        }));
+        UIManager.setProgress(100, 'Done! Set passwords below.');
+        UIManager.renderLockResults(lockResults);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Phase 1: PDF text extraction ─────────────────────────────────────
+      const pdfData = await PDFProcessor.extractAll(state.files, (done, total) => {
+        const maxPct = state.ocrEnabled ? 35 : 45;
+        UIManager.setProgress(Math.round((done/total)*maxPct), `Phase 1 · Reading — ${done}/${total} file(s)…`);
+        UIManager.setPerFileStatus(state.files, done - 1, 'done');
+      });
+      state.lastPdfData = pdfData;
+
+      // ── Phase 1.5: OCR fallback ───────────────────────────────────────────
+      if (state.ocrEnabled && window.PDFOcr) {
+        UIManager.setProgress(45, 'Phase 1.5 · OCR scanning image pages…');
+        await new Promise(r => setTimeout(r, 30));
+        try {
+          await PDFOcr.loadTesseract();
+          if (PDFOcr.isAvailable()) {
+            let ocrDone = 0;
+            const totalPgs = pdfData.reduce((s, d) => s + d.pages.length, 0);
+            for (const entry of pdfData) {
+              const enhanced = await PDFOcr.ocrFile(entry.file, entry.pages, (done) => {
+                ocrDone++;
+                UIManager.setProgress(45 + Math.round((ocrDone/totalPgs)*20), `OCR — page ${ocrDone}/${totalPgs}…`);
+              });
+              const n = enhanced.filter(p => p.ocrApplied).length;
+              if (n > 0) entry.pages = enhanced;
+            }
+          }
+        } catch(e) { console.warn('[OCR] Failed:', e); }
+      }
+
+      // ── Extract All ───────────────────────────────────────────────────────
+      if (state.mode === 'extractall') {
+        UIManager.setProgress(100, 'Done!');
+        const enriched = window.ExtractAll ? ExtractAll.process(pdfData) : pdfData;
+        UIManager.renderExtractAll(enriched);
+
+      // ── Table Mode ────────────────────────────────────────────────────────
+      } else if (state.mode === 'tablemode') {
+        UIManager.setProgress(70, 'Parsing transaction rows…');
+        await new Promise(r => setTimeout(r, 30));
+        const rows = TableParser.parse(pdfData);
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderTableResults(rows, state.files);
+
+      // ── Keyword search ────────────────────────────────────────────────────
+      } else if (state.mode === 'multiple' || state.mode === 'single') {
+        const hasTable = TableParser.detectTable(pdfData);
+        if (hasTable) {
+          if (window.StarField) window.StarField.stopWarp();
+          UIManager.setRunning(false); UIManager.hideProgress();
+          const choice = await showTableWarningModal();
+          if (choice === 'ok') {
+            // Animated reset
+            state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null;
+            const chips = document.querySelectorAll('.keyword-chip');
+            chips.forEach((chip, i) => { chip.style.animationDelay = `${i*35}ms`; chip.classList.add('chip-wiping'); });
+            const rc = document.getElementById('resultsContainer');
+            if (rc.style.display !== 'none') rc.classList.add('results-folding');
+            stepResults.classList.add('step-folding');
+            stepResults.addEventListener('animationend', () => {
+              stepResults.classList.remove('step-folding');
+              rc.classList.remove('results-folding'); rc.style.display = 'none';
+              document.getElementById('resultsList').innerHTML = '';
+              document.getElementById('resultsActions').innerHTML = '';
+              UIManager.hideProgress(); UIManager.setRunEnabled(false);
+              stepResults.classList.add('disabled-card','step-settling'); stepResults.classList.remove('active');
+              stepResults.addEventListener('animationend', () => stepResults.classList.remove('step-settling'), { once: true });
+            }, { once: true });
+            setTimeout(() => {
+              stepKeywords.classList.add('step-folding');
+              stepKeywords.addEventListener('animationend', () => {
+                stepKeywords.classList.remove('step-folding');
+                keywordInput.value = ''; document.getElementById('keywordChips').innerHTML = '';
+                document.getElementById('keywordHint').textContent = '';
+                document.getElementById('keywordInputArea').style.display = 'flex';
+                stepKeywords.classList.add('disabled-card','step-settling'); stepKeywords.classList.remove('active');
+                stepKeywords.addEventListener('animationend', () => stepKeywords.classList.remove('step-settling'), { once: true });
+              }, { once: true });
+            }, 120);
+            setTimeout(() => {
+              UIManager.setModeButtonsVisible(true);
+              document.getElementById('modeDisplay').style.display = 'none';
+              document.querySelector('.mode-buttons').style.display = 'grid';
+            }, 480);
+            return;
+          }
+          if (window.StarField) window.StarField.startWarp();
+          UIManager.setRunning(true);
+        }
+
+        const skipTables = hasTable;
+        // Use enhanced search (supports negative keywords + multi-line continuation)
+        const searchFn = (window.KeywordHandler?.searchEnhanced)
+          ? KeywordHandler.searchEnhanced.bind(KeywordHandler)
+          : KeywordHandler.search.bind(KeywordHandler);
+
+        if (state.mode === 'multiple') {
+          UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting positions…');
+          await new Promise(r => setTimeout(r, 30));
+          UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing values…');
+          await new Promise(r => setTimeout(r, 30));
+          const results = searchFn(pdfData, state.keywords, { skipTables });
+          state.lastResults = results;
+          UIManager.setProgress(100, 'Done!');
+          UIManager.renderKeywordResults(results, state.keywords, state.files);
+          if (window.SessionStore) SessionStore.saveResultsMeta(results, 'multiple');
+        } else {
+          UIManager.setProgress(50, 'Phase 2 · Pass 1 — scouting position…');
+          await new Promise(r => setTimeout(r, 30));
+          UIManager.setProgress(70, 'Phase 2 · Pass 2 — capturing value…');
+          await new Promise(r => setTimeout(r, 30));
+          const results = searchFn(pdfData, state.keywords, { skipTables });
+          state.lastResults = results;
+          const renameMap = RenameHandler.buildRenameMap(results);
+          UIManager.setProgress(100, 'Done!');
+          UIManager.renderSingleKeywordResults(results, state.keywords[0], state.files, renameMap);
+          if (window.SessionStore) SessionStore.saveResultsMeta(results, 'single');
+        }
+      }
+
+      setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('resultsContainer').style.display = 'block';
+      document.getElementById('resultsList').innerHTML =
+        `<div class="no-results" style="color:var(--danger);">Error: ${err.message}</div>`;
+    } finally {
+      if (window.StarField) window.StarField.stopWarp();
+      UIManager.setRunning(false);
+      setTimeout(() => UIManager.hideProgress(), 1500);
+    }
+  }
+
+  // ===== SPLIT CONFIG PANEL =====
+
+  (function initSplitPanel() {
+    document.querySelectorAll('.scp-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.scp-tab').forEach(t => t.classList.remove('scp-tab--active'));
+        document.querySelectorAll('.scp-pane').forEach(p => p.classList.remove('scp-pane--active'));
+        tab.classList.add('scp-tab--active');
+        const target = document.getElementById('scp' + tab.dataset.scp.charAt(0).toUpperCase() + tab.dataset.scp.slice(1));
+        if (target) target.classList.add('scp-pane--active');
+        updateSplitPreview();
+      });
+    });
+    const everyInput = document.getElementById('scpEveryN');
+    const rangeInput = document.getElementById('scpRangeInput');
+    if (everyInput) everyInput.addEventListener('input', updateSplitPreview);
+    if (rangeInput) rangeInput.addEventListener('input', updateSplitPreview);
+
+    const overlay  = document.getElementById('splitInstrOverlay');
+    const openBtn  = document.getElementById('splitInstructionBtn');
+    const closeBtn = document.getElementById('splitInstrClose');
+    const doneBtn  = document.getElementById('splitInstrDone');
+    const backdrop = document.getElementById('splitInstrBackdrop');
+
+    function openM()  { overlay.classList.remove('si-closing'); overlay.style.display = 'flex'; }
+    function closeM() {
+      overlay.classList.add('si-closing');
+      overlay.addEventListener('animationend', () => { overlay.style.display = 'none'; overlay.classList.remove('si-closing'); }, { once: true });
+    }
+    if (openBtn)  openBtn.addEventListener('click', openM);
+    if (closeBtn) closeBtn.addEventListener('click', closeM);
+    if (doneBtn)  doneBtn.addEventListener('click', closeM);
+    if (backdrop) backdrop.addEventListener('click', closeM);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay?.style.display !== 'none') closeM(); });
+  })();
+
+  function updateSplitPreview() {
+    if (!state.files.length) return;
+    PDFSplitter.pageCount(state.files[0]).then(total => {
+      const everyInput   = document.getElementById('scpEveryN');
+      const everyPreview = document.getElementById('scpEveryPreview');
+      if (everyInput && everyPreview) {
+        const n = Math.max(1, parseInt(everyInput.value, 10) || 1);
+        const groups = PDFSplitter.everyNPages(n, total);
+        everyPreview.textContent = `${total} pages → ${groups.length} file(s) of up to ${n} page(s) each`;
+      }
+      const rangeInput   = document.getElementById('scpRangeInput');
+      const rangePreview = document.getElementById('scpRangePreview');
+      if (rangeInput && rangePreview) {
+        const str = rangeInput.value.trim();
+        if (!str) { rangePreview.textContent = '— enter ranges above'; return; }
+        const groups = PDFSplitter.parseRanges(str, total);
+        if (!groups.length) { rangePreview.textContent = '⚠ No valid ranges'; rangePreview.style.color = 'var(--danger)'; }
+        else { rangePreview.style.color = ''; rangePreview.textContent = `${groups.length} file(s): ` + groups.map(g => g.length===1?`p${g[0]}`:`p${g[0]}-${g[g.length-1]}`).join(', '); }
+      }
+    }).catch(() => {});
+  }
+
+  // ===== OCR TOGGLE =====
+
+  (function initOcrToggle() {
+    const toggle = document.getElementById('ocrToggle');
+    if (!toggle) return;
+    toggle.addEventListener('change', () => {
+      state.ocrEnabled = toggle.checked;
+      const label = document.getElementById('ocrToggleLabel');
+      if (label) label.textContent = state.ocrEnabled ? 'OCR: ON' : 'OCR: OFF';
+    });
+  })();
+
+  // ===== SESSION RESTORE =====
+
+  (function restoreSession() {
+    if (!window.SessionStore) return;
+    const savedMode = SessionStore.loadMode();
+    const savedKws  = SessionStore.loadKeywords();
+    const age       = SessionStore.getSessionAge();
+
+    if (!savedMode && (!savedKws || !savedKws.length)) return;
+
+    // Show a non-intrusive session banner
+    const banner = document.getElementById('sessionBanner');
+    if (banner && age) {
+      const noKwModes = ['extractall','tablemode','compressmode','splitmode','toexcel',
+                         'toword','toppt','tojpg','enhancemode','lockmode','mergemode'];
+      const kwInfo = savedKws?.length && !noKwModes.includes(savedMode)
+        ? ` · ${savedKws.length} keyword(s)`
+        : '';
+      banner.querySelector('.sb-text').textContent =
+        `Last session (${age})${savedMode ? ': ' + savedMode : ''}${kwInfo}`;
+      banner.style.display = 'flex';
+      banner.querySelector('.sb-restore').addEventListener('click', () => {
+        banner.style.display = 'none';
+        if (savedMode && state.files.length > 0) {
+          selectMode(savedMode);
+          if (savedKws?.length && !noKwModes.includes(savedMode)) {
+            state.keywords = savedKws;
+            UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, savedMode);
+            updateRunBtn();
+          }
+        }
+      });
+      banner.querySelector('.sb-dismiss').addEventListener('click', () => {
+        banner.style.display = 'none';
+        SessionStore.clear();
+      });
+    }
+  })();
+
+  // ===== INIT =====
+  document.getElementById('step-mode').classList.add('disabled-card');
+  stepKeywords.classList.add('disabled-card');
+  stepResults.classList.add('disabled-card');
+
+})();
