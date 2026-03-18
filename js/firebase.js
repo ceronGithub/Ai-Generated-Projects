@@ -341,27 +341,7 @@ function openDbConfigModal() {
         ⚠️ Firebase is offline — update your database URL to reconnect.
       </p>
 
-      <!-- Tabs -->
-      <div style="display:flex;gap:0;border-bottom:2px solid #f0eeff;margin-bottom:0;">
-        <button id="dbTab_url" onclick="switchDbTab('url')" style="
-          padding:10px 20px;font-size:12px;font-weight:700;letter-spacing:0.5px;
-          border:none;cursor:pointer;background:none;color:#7c6af4;
-          border-bottom:2px solid #7c6af4;margin-bottom:-2px;transition:all 0.15s;">
-          🔗 Database URL
-        </button>
-        <button id="dbTab_rules" onclick="switchDbTab('rules')" style="
-          padding:10px 20px;font-size:12px;font-weight:700;letter-spacing:0.5px;
-          border:none;cursor:pointer;background:none;color:#9996b0;
-          border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;">
-          🔒 Rules
-        </button>
-        <button id="dbTab_help" onclick="switchDbTab('help')" style="
-          padding:10px 20px;font-size:12px;font-weight:700;letter-spacing:0.5px;
-          border:none;cursor:pointer;background:none;color:#9996b0;
-          border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;">
-          ❓ Help
-        </button>
-      </div>
+      <!-- No tabs — URL only -->
     </div>
 
     <!-- Body (scrollable) -->
@@ -392,113 +372,6 @@ function openDbConfigModal() {
         <div id="dbUrlStatus" style="margin-top:10px;min-height:20px;font-size:12px;font-weight:700;"></div>
       </div>
 
-      <!-- TAB: Rules -->
-      <div id="dbPane_rules" style="display:none;">
-
-        <!-- ── How it works notice ── -->
-        <div style="background:#f0f8ff;border:1.5px solid #b0e4f8;border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start;">
-          <span style="font-size:18px;flex-shrink:0;">ℹ️</span>
-          <div style="font-size:11px;color:#1a6080;line-height:1.7;">
-            <b>How rules work:</b> Rules control who can read/write your database.<br>
-            <b>You cannot apply rules from this app</b> — rules must be set directly in Firebase Console.<br>
-            Use the editor below to <b>compose your rules</b>, then <b>copy → paste → publish</b> in Firebase.
-          </div>
-        </div>
-
-        <!-- ── Quick template buttons ── -->
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <button onclick="insertRulesTemplate('open')" style="flex:1;padding:8px 4px;background:#f0fff4;color:#2a9a5a;border:1.5px solid #b8f0ce;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;"
-            onmouseover="this.style.background='#2a9a5a';this.style.color='#fff'"
-            onmouseout="this.style.background='#f0fff4';this.style.color='#2a9a5a'">✅ Open Access</button>
-          <button onclick="insertRulesTemplate('timed')" style="flex:1;padding:8px 4px;background:#fffbe0;color:#9a7800;border:1.5px solid #ffe066;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;"
-            onmouseover="this.style.background='#9a7800';this.style.color='#fff'"
-            onmouseout="this.style.background='#fffbe0';this.style.color='#9a7800'">⏰ Time-Limited</button>
-          <button onclick="insertRulesTemplate('locked')" style="flex:1;padding:8px 4px;background:#fff0f3;color:#e04060;border:1.5px solid #ffd6df;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;"
-            onmouseover="this.style.background='#e04060';this.style.color='#fff'"
-            onmouseout="this.style.background='#fff0f3';this.style.color='#e04060'">🔒 Lock Down</button>
-        </div>
-
-        <!-- ── Rules editor ── -->
-        <div style="position:relative;">
-          <textarea id="rulesEditor" spellcheck="false" style="
-            width:100%;height:155px;background:#1a1a2e;color:#aef;
-            border:2px solid #2e2e4e;border-radius:12px;
-            padding:14px 48px 14px 16px;font-size:12px;
-            font-family:'Courier New',monospace;line-height:1.7;
-            resize:none;outline:none;box-sizing:border-box;
-            transition:border-color 0.18s ease;"
-            onfocus="this.style.borderColor='#7c6af4'"
-            onblur="this.style.borderColor='#2e2e4e'"
-            oninput="validateRulesEditor()"
-          >{
-  "rules": {
-    ".read": "now < 1775232000000",
-    ".write": "now < 1775232000000"
-  }
-}</textarea>
-          <!-- Copy button inside editor -->
-          <button onclick="copyCurrentRules()" id="btnCopyCurrent" title="Copy rules" style="
-            position:absolute;top:10px;right:10px;
-            width:28px;height:28px;border-radius:6px;
-            background:rgba(124,106,244,0.85);color:#fff;
-            border:none;cursor:pointer;font-size:13px;
-            display:flex;align-items:center;justify-content:center;
-            transition:background 0.15s;"
-            onmouseover="this.style.background='#7c6af4'"
-            onmouseout="this.style.background='rgba(124,106,244,0.85)'">📋</button>
-        </div>
-
-        <!-- Status + action row -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;min-height:22px;">
-          <div id="rulesEditorStatus" style="font-size:11px;font-weight:700;"></div>
-          <button onclick="resetToSafeRules()" style="
-            padding:4px 12px;background:transparent;color:#9996b0;
-            border:1.5px solid #e0e0ee;border-radius:7px;
-            font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;"
-            onmouseover="this.style.background='#f5f5f8'"
-            onmouseout="this.style.background='transparent'">↺ Reset</button>
-        </div>
-
-        <!-- ── Step-by-step apply instructions ── -->
-        <div style="margin-top:14px;background:#fafafa;border:1.5px solid #ededf5;border-radius:12px;padding:14px 16px;">
-          <p style="font-size:12px;font-weight:800;color:#1a1a2e;margin:0 0 10px;">How to apply these rules:</p>
-          ${[
-            ['1','Click <b>📋 Copy</b> button above to copy the rules.'],
-            ['2','Go to <a href="https://console.firebase.google.com/project/victoriashaven-93136/database/victoriashaven-93136-default-rtdb/rules" target="_blank" style="color:#7c6af4;font-weight:700;">Firebase Console → Rules tab ↗</a>'],
-            ['3','Select all existing text in the rules editor and <b>paste</b> your copied rules.'],
-            ['4','Click the <b>Publish</b> button.'],
-          ].map(([n,t])=>`
-          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">
-            <span style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#7c6af4,#29b5e8);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">${n}</span>
-            <span style="font-size:11px;color:#555570;line-height:1.6;">${t}</span>
-          </div>`).join('')}
-        </div>
-
-      </div>
-
-      <!-- TAB: Help -->
-      <div id="dbPane_help" style="display:none;">
-        <p style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:16px;">Step-by-step: Get your Firebase Database URL</p>
-        ${[
-          ['1', '🌐', 'Go to Firebase Console', 'Open <a href="https://console.firebase.google.com" target="_blank" style="color:#7c6af4;font-weight:700;">console.firebase.google.com</a> and sign in with your Google account.'],
-          ['2', '📁', 'Open your project', 'Click on <b>Victorias-Haven-Book-Record</b> from your project list.'],
-          ['3', '🗄️', 'Click Realtime Database', 'In the left sidebar under <b>Build</b>, click <b>Realtime Database</b>.'],
-          ['4', '➕', 'Create database (if needed)', 'If not created yet, click <b>"Create database"</b> → choose region <b>asia-southeast1</b> → select <b>"Start in test mode"</b> → click <b>Enable</b>.'],
-          ['5', '🔗', 'Copy the database URL', 'At the top of the Data tab you will see a URL like:<br><code style="background:#f0eeff;padding:2px 6px;border-radius:4px;color:#7c6af4;font-size:11px;">https://your-project-rtdb.asia-southeast1.firebasedatabase.app</code><br>Copy that URL.'],
-          ['6', '📋', 'Paste URL above', 'Come back here, click the <b>🔗 Database URL</b> tab, paste the URL and click <b>Save & Reconnect</b>.'],
-          ['7', '🔒', 'Set Rules', 'Go to the <b>Rules</b> tab in Firebase Console, paste the rules shown in the <b>🔒 Rules</b> tab here, then click <b>Publish</b>.'],
-        ].map(([num, icon, title, desc]) => `
-        <div style="display:flex;gap:14px;margin-bottom:16px;align-items:flex-start;">
-          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c6af4,#29b5e8);
-            color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">
-            ${num}
-          </div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:3px;">${icon} ${title}</div>
-            <div style="font-size:12px;color:#555570;line-height:1.6;">${desc}</div>
-          </div>
-        </div>`).join('')}
-      </div>
 
     </div>
 
@@ -552,33 +425,18 @@ function closeDbConfigModal() {
 }
 
 function switchDbTab(tab) {
-  ['url','rules','help'].forEach(t => {
-    const pane = document.getElementById('dbPane_' + t);
-    const btn  = document.getElementById('dbTab_'  + t);
-    if (!pane || !btn) return;
-    const active = t === tab;
-    pane.style.display    = active ? '' : 'none';
-    btn.style.color       = active ? '#7c6af4' : '#9996b0';
-    btn.style.borderBottom = active ? '2px solid #7c6af4' : '2px solid transparent';
-  });
-  if (tab === 'url') {
-    const el = document.getElementById('currentUrlDisplay');
-    if (el) {
-      el.textContent = FB_DATABASE_URL || '—';
-      el.style.filter = 'blur(5px)';
-      el.style.userSelect = 'none';
-      el.style.cursor = 'default';
-      el.title = '';
-      el.onclick = null;
-    }
-    const input = document.getElementById('dbUrlInput');
-    if (input) input.value = ''; // always empty for security
+  // Only URL tab remains
+  const el = document.getElementById('currentUrlDisplay');
+  if (el) {
+    el.textContent = FB_DATABASE_URL || '—';
+    el.style.filter = 'blur(5px)';
+    el.style.userSelect = 'none';
+    el.style.cursor = 'default';
+    el.title = '';
+    el.onclick = null;
   }
-  if (tab === 'rules') {
-    const editor = document.getElementById('rulesEditor');
-    const saved  = localStorage.getItem('fb_rules_backup');
-    if (editor && saved) { editor.value = saved; validateRulesEditor(); }
-  }
+  const input = document.getElementById('dbUrlInput');
+  if (input) input.value = ''; // always empty for security
 }
 
 function clearSavedUrl() {
@@ -656,7 +514,6 @@ function useRecommendedRules() {
   document.getElementById('rulesEditorStatus').innerHTML =
     '<span style="color:#29b5e8;">↑ Recommended rules loaded — click Apply to save.</span>';
   // Scroll to top of pane so user sees the editor
-  document.getElementById('dbPane_rules').scrollTop = 0;
 }
 
 function applyRulesToFirebase() {
