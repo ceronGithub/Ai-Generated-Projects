@@ -109,6 +109,26 @@
   background: linear-gradient(135deg, var(--an-tint, #f3f0ff) 0%, #fff 100%);
 }
 .an-modal-header-left {}
+.an-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+.an-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.an-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 .an-title {
   font-family: 'Playfair Display', serif;
   font-size: 22px;

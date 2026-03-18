@@ -804,26 +804,17 @@
       >
         <!-- Header -->
         <div style="padding: 24px 28px 0; flex-shrink: 0">
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              margin-bottom: 20px;
-            "
-          >
-            <div style="display: flex; align-items: center; gap: 12px">
+          <div class="an-header-row">
+            <div class="an-header-left">
               <span style="font-size: 26px">📊</span>
               <div>
-                <h2
-                  style="
+                <h2 class="an-title" style="
                     font-family: &quot;Playfair Display&quot;, serif;
                     font-size: 22px;
                     font-weight: 700;
                     color: #1a1a2e;
                     margin: 0;
-                  "
-                >
+                  ">
                   Booking Analysis
                 </h2>
                 <p
@@ -834,14 +825,7 @@
                 </p>
               </div>
             </div>
-            <div
-              style="
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                flex-shrink: 0;
-              "
-            >
+            <div class="an-header-right">
               <button
                 onclick="exportBookingAnalysisPDF()"
                 title="Export to PDF"
@@ -1351,11 +1335,11 @@
     <script src="js/modal.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/firebase.js"></script>
+    <script src="js/background.js"></script>
     <script src="js/backup.js"></script>
     <script src="js/importjson.js"></script>
     <script src="js/booking.js"></script>
     <script src="js/analysis.js"></script>
-    <script src="js/background.js"></script>
     <script src="js/news.js"></script>
     <script src="js/pdf-export.js"></script>
     <script src="js/app.js"></script>

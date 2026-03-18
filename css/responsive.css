@@ -208,6 +208,39 @@
   .an-section         { padding: 14px 14px 16px; }
   /* Chart heights */
   .an-chart-wrap      { height: 120px; }
+
+  /* ── Analysis modal header: fix overlap on mobile ── */
+  .an-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px !important;
+  }
+  .an-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .an-header-left .an-title {
+    font-size: 18px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .an-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .an-header-right button:first-child {
+    font-size: 10px !important;
+    padding: 6px 10px !important;
+  }
   .an-chart-wrap--tall { height: 140px; }
   /* Tour row stays horizontal */
   .an-tour-row        { flex-direction: row; }
