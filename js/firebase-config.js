@@ -16,7 +16,7 @@
 const FIREBASE_CONFIG = {
 
   // 🔴 Paste your Firebase Realtime Database URL here
-  databaseURL: 'https://victoriashaven-93136-default-rtdb.asia-southeast1.firebasedatabase.app',
+  databaseURL: 'https://official-victorias-haven-book-default-rtdb.asia-southeast1.firebasedatabase.app',
 
   // 📁 Root node where bookings are stored (do not change unless you know what you're doing)
   bookingsPath: '/bookings',

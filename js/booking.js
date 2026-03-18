@@ -1,6 +1,22 @@
 // booking.js — booking form logic
-// NOTE: Bookings, BOOKING_KEY, loadBookingsLocal, saveBookingsLocal
-// are declared in background.js which loads first.
+
+const BOOKING_KEY = 'cal2026_bookings_v1';
+
+/* ══════════════════════════════════════
+   LOCAL STORAGE
+══════════════════════════════════════ */
+function loadBookingsLocal() {
+  try {
+    const raw = localStorage.getItem(BOOKING_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+function saveBookingsLocal(data) {
+  try { localStorage.setItem(BOOKING_KEY, JSON.stringify(data)); }
+  catch(e) { console.warn('localStorage error:', e); }
+}
+
+const Bookings = loadBookingsLocal();
 
 /* ══════════════════════════════════════
    FORM STATE
@@ -209,6 +225,7 @@ function applyCheckoutConstraint(constraint) {
     `Check-in must be <b>${constraint.time12} or later</b>. ` +
     `Day Tour unavailable (guests still checking out).</span>`;
 
+  // Insert before the custom time picker
   const ciField = document.getElementById('bkCustomTimePicker');
   if (ciField && ciField.parentNode) {
     ciField.parentNode.insertBefore(banner, ciField);
@@ -541,6 +558,7 @@ function resetBookingForm() {
   if (banner) banner.remove();
   const constraintBanner = document.getElementById('bkConstraintBanner');
   if (constraintBanner) constraintBanner.remove();
+  // Reset custom picker to unrestricted state
   renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 8, defaultM: 0 });
   const hint = document.getElementById('bkCheckinTimeHint');
   if (hint) hint.remove();
@@ -633,11 +651,12 @@ function calcCheckout() {
 /* ══════════════════════════════════════
    TOUR TYPE BUTTONS
 ══════════════════════════════════════ */
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
    CUSTOM CHECK-IN TIME PICKER
-   Controls hour/minute dropdowns so AM or PM can
-   be physically removed — not just min/max clamped.
-═══════════════════════════════════════════════ */
+   Replaces native <input type="time"> so we can physically
+   remove AM or PM options rather than relying on min/max.
+═══════════════════════════════════════════════════════════ */
+
 function renderCustomTimePicker(options) {
   const wrap   = document.getElementById('bkCustomTimePicker');
   const hidden = document.getElementById('bkCheckinTime');
@@ -646,6 +665,7 @@ function renderCustomTimePicker(options) {
   const { minH = 0, maxH = 23, allowAM = true, allowPM = true,
           defaultH = null, defaultM = 0 } = options;
 
+  // Restore previous value if still in range
   let curH = defaultH !== null ? defaultH : minH;
   let curM = defaultM;
   if (hidden.value) {
@@ -655,6 +675,7 @@ function renderCustomTimePicker(options) {
   if (curH < minH) curH = minH;
   if (curH > maxH) curH = maxH;
 
+  // Build 24-hr hour list filtered by AM/PM allowance
   const hourOptions = [];
   for (let h = minH; h <= maxH; h++) {
     if (h < 12 && !allowAM) continue;
@@ -663,10 +684,11 @@ function renderCustomTimePicker(options) {
   }
   if (!hourOptions.includes(curH)) curH = hourOptions[0] || minH;
 
-  const minuteOptions = [0,5,10,15,20,25,30,35,40,45,50,55];
-  const fmt12 = h => { const d = h===0?12:h>12?h-12:h; return String(d).padStart(2,'0'); };
-  const fmtM  = m => String(m).padStart(2,'0');
-  const ampm  = h => h < 12 ? 'AM' : 'PM';
+  const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+  function fmt12(h)  { const d = h === 0 ? 12 : h > 12 ? h - 12 : h; return String(d).padStart(2,'0'); }
+  function fmtM(m)   { return String(m).padStart(2,'0'); }
+  function ampm(h)   { return h < 12 ? 'AM' : 'PM'; }
 
   function syncHidden() {
     hidden.value = String(curH).padStart(2,'0') + ':' + fmtM(curM);
@@ -676,17 +698,23 @@ function renderCustomTimePicker(options) {
   wrap.innerHTML = '';
   wrap.style.cssText = 'display:flex;gap:6px;align-items:center;';
 
-  const selStyle = 'flex:1;padding:9px 10px;border-radius:10px;border:1.5px solid #d0caff;background:#faf9ff;' +
-    'font-family:\'Nunito\',sans-serif;font-size:14px;font-weight:700;color:#1a1a2e;cursor:pointer;outline:none;' +
-    'appearance:none;-webkit-appearance:none;' +
-    'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%237c6af4\'/%3E%3C/svg%3E");' +
-    'background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;';
+  const selStyle = [
+    'flex:1;padding:9px 10px;border-radius:10px;',
+    'border:1.5px solid #d0caff;background:#faf9ff;',
+    'font-family:\'Nunito\',sans-serif;font-size:14px;font-weight:700;',
+    'color:#1a1a2e;cursor:pointer;outline:none;',
+    'appearance:none;-webkit-appearance:none;',
+    'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%237c6af4\'/%3E%3C/svg%3E");',
+    'background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;',
+  ].join('');
 
+  // Hour select
   const hourSel = document.createElement('select');
   hourSel.style.cssText = selStyle;
   hourOptions.forEach(h => {
     const opt = document.createElement('option');
-    opt.value = h; opt.textContent = fmt12(h);
+    opt.value = h;
+    opt.textContent = fmt12(h);
     if (h === curH) opt.selected = true;
     hourSel.appendChild(opt);
   });
@@ -696,25 +724,33 @@ function renderCustomTimePicker(options) {
     syncHidden();
   });
 
+  // Colon
   const colon = document.createElement('span');
   colon.textContent = ':';
   colon.style.cssText = 'font-size:18px;font-weight:800;color:#7c6af4;flex-shrink:0;';
 
+  // Minute select
   const minSel = document.createElement('select');
   minSel.style.cssText = selStyle;
   minuteOptions.forEach(m => {
     const opt = document.createElement('option');
-    opt.value = m; opt.textContent = fmtM(m);
+    opt.value = m;
+    opt.textContent = fmtM(m);
     if (m === curM) opt.selected = true;
     minSel.appendChild(opt);
   });
-  minSel.addEventListener('change', () => { curM = parseInt(minSel.value); syncHidden(); });
+  minSel.addEventListener('change', () => {
+    curM = parseInt(minSel.value);
+    syncHidden();
+  });
 
-  const isPMonly = !allowAM && allowPM;
-  const isAMonly =  allowAM && !allowPM;
+  // AM/PM badge (display-only — enforced by hour range)
   const ampmBadge = document.createElement('div');
+  const isPMonly  = !allowAM && allowPM;
+  const isAMonly  = allowAM && !allowPM;
   ampmBadge.style.cssText =
-    'padding:9px 13px;border-radius:10px;font-size:13px;font-weight:800;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0;' +
+    'padding:9px 13px;border-radius:10px;font-size:13px;font-weight:800;' +
+    'letter-spacing:0.5px;white-space:nowrap;flex-shrink:0;' +
     (isPMonly ? 'background:#eef6ff;color:#1565c0;border:1.5px solid #90caf9;'
               : isAMonly ? 'background:#fff8e1;color:#e65100;border:1.5px solid #ffcc80;'
               : 'background:#f0eeff;color:#7c6af4;border:1.5px solid #d0caff;');
@@ -734,10 +770,12 @@ function applyTourTimeConstraints(tourType) {
 
   // Checkout on this date: ALL tours PM-only — AM physically absent
   if (_checkinConstraint) {
-    const minH = _checkinConstraint.mins >= 12*60 ? Math.floor(_checkinConstraint.mins/60) : 12;
-    const minM = _checkinConstraint.mins >= 12*60 ? _checkinConstraint.mins % 60 : 0;
+    const minH = _checkinConstraint.mins >= 12 * 60
+      ? Math.floor(_checkinConstraint.mins / 60) : 12;
+    const minM = _checkinConstraint.mins >= 12 * 60
+      ? _checkinConstraint.mins % 60 : 0;
     renderCustomTimePicker({ minH, maxH: 22, allowAM: false, allowPM: true, defaultH: minH, defaultM: minM });
-    const label = _checkinConstraint.mins >= 12*60 ? _checkinConstraint.time12 : '12:00 PM';
+    const label = _checkinConstraint.mins >= 12 * 60 ? _checkinConstraint.time12 : '12:00 PM';
     _insertTimeHint('⚠️ Checkout day — PM only (' + label + ' – 10:00 PM)');
     calcCheckout();
     return;
@@ -759,7 +797,7 @@ function applyTourTimeConstraints(tourType) {
     return;
   }
 
-  // Over-Night / 3D2N: unrestricted, auto-set 8:00
+  // Over-Night / 3D2N: unrestricted
   renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 8, defaultM: 0 });
 }
 
