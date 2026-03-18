@@ -1419,6 +1419,28 @@ mark {
   color: var(--text-dim);
   letter-spacing: 0.1em;
   border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.6rem;
+}
+
+.footer-divider {
+  color: var(--text-dim);
+  opacity: 0.4;
+}
+
+.footer-author {
+  color: var(--cyan);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.35);
+}
+
+.footer-powered {
+  color: var(--violet);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 10px rgba(159, 111, 255, 0.35);
 }
 
 /* === ANIMATIONS === */
