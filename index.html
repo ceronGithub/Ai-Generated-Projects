@@ -135,6 +135,12 @@
             <span class="mode-name">Compress PDF</span>
             <span class="mode-desc">Reduce the file size of your PDFs. No keywords needed — just run and download the compressed files.</span>
           </button>
+          <!-- ── NEW: Split PDF ── -->
+          <button class="mode-btn mode-btn--split" id="modeSplit" data-mode="splitmode">
+            <span class="mode-icon">✂️</span>
+            <span class="mode-name">Split PDF</span>
+            <span class="mode-desc">Split one large PDF into multiple files — by page count or custom page ranges.</span>
+          </button>
         </div>
 
         <div class="mode-display" id="modeDisplay" style="display: none">
@@ -162,6 +168,88 @@
           <p class="keyword-hint" id="keywordHint"></p>
         </div>
       </section>
+
+      <!-- STEP 3.1: Split PDF Config (only shown in splitmode) -->
+      <section class="card disabled-card" id="step-split" style="display:none">
+        <div class="card-glow-top card-glow-top--rose"></div>
+        <div class="step-label step-label--split">
+          <span class="step-num-split">03.1</span>
+          Split Configuration
+          <button class="scp-instruction-btn" id="splitInstructionBtn" title="How to use Split PDF">
+            <span class="scp-instr-icon">?</span> Instructions
+          </button>
+        </div>
+
+        <div class="scp-tabs" id="scpTabs">
+          <button class="scp-tab scp-tab--active" data-scp="every">✦ Every N Pages</button>
+          <button class="scp-tab" data-scp="ranges">✦ Custom Ranges</button>
+        </div>
+
+        <!-- Every N pages -->
+        <div class="scp-pane scp-pane--active" id="scpEvery">
+          <p class="scp-desc">Split the PDF into equal-sized parts.</p>
+          <div class="scp-row">
+            <label class="scp-label" for="scpEveryN">Pages per file</label>
+            <input type="number" id="scpEveryN" class="scp-input" min="1" value="1" />
+          </div>
+          <p class="scp-preview" id="scpEveryPreview">— upload a file to see preview</p>
+        </div>
+
+        <!-- Custom ranges -->
+        <div class="scp-pane" id="scpRanges">
+          <p class="scp-desc">
+            Enter page ranges separated by commas.<br>
+            <span class="scp-example">e.g. <code>1-3, 4-7, 8, 9-10</code></span>
+          </p>
+          <textarea id="scpRangeInput" class="scp-textarea" placeholder="1-3, 4-7, 8, 9-10"></textarea>
+          <p class="scp-preview" id="scpRangePreview">— enter ranges above</p>
+        </div>
+      </section>
+
+      <!-- SPLIT INSTRUCTION MODAL -->
+      <div id="splitInstrOverlay" class="si-overlay" style="display:none" role="dialog" aria-modal="true">
+        <div class="si-backdrop" id="splitInstrBackdrop"></div>
+        <div class="si-panel">
+          <div class="si-header">
+            <span class="si-title">✂️ How to Use Split PDF</span>
+            <button class="si-close" id="splitInstrClose" title="Close">✕</button>
+          </div>
+          <div class="si-body">
+            <div class="si-step">
+              <div class="si-step-num">01</div>
+              <div>
+                <h4>Upload your PDF</h4>
+                <p>Go to Step 01 and upload the large PDF file you want to split. Only the first uploaded file will be used.</p>
+              </div>
+            </div>
+            <div class="si-step">
+              <div class="si-step-num">02</div>
+              <div>
+                <h4>Select Split PDF mode</h4>
+                <p>In Step 02, click the <strong>✂️ Split PDF</strong> button. Step 03.1 will appear automatically.</p>
+              </div>
+            </div>
+            <div class="si-step">
+              <div class="si-step-num">03</div>
+              <div>
+                <h4>Choose a split method</h4>
+                <p><strong>Every N Pages</strong> — enter a number and the PDF will be divided into equal parts. For example, entering <code>5</code> on a 23-page PDF produces 5 files.</p>
+                <p style="margin-top:.5rem"><strong>Custom Ranges</strong> — type specific ranges like <code>1-3, 4-7, 8, 9-10</code>. Each segment becomes its own PDF file. A live preview shows what will be generated.</p>
+              </div>
+            </div>
+            <div class="si-step">
+              <div class="si-step-num">04</div>
+              <div>
+                <h4>Run &amp; Download</h4>
+                <p>Click <strong>▶ Run Extraction</strong>. Each split part will appear as a result card. Download files individually or use <strong>⬇ Download All</strong> to get a ZIP.</p>
+              </div>
+            </div>
+          </div>
+          <div class="si-footer">
+            <button class="btn btn-accent si-got-it" id="splitInstrDone">Got it ✦</button>
+          </div>
+        </div>
+      </div>
 
       <!-- STEP 4: Run & Results -->
       <section class="card disabled-card" id="step-results">
@@ -665,6 +753,7 @@
     <script src="extract-all.js"></script>
     <script src="rename-handler.js"></script>
     <script src="pdf-compressor.js"></script>
+    <script src="pdf-splitter.js"></script>
     <script src="ui-manager.js"></script>
     <script src="stars.js"></script>
     <script src="datetime-widget.js"></script>

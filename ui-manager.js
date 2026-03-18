@@ -73,6 +73,7 @@ const UIManager = (() => {
       extractall:   'Extract All',
       tablemode:    'Table Mode',
       compressmode: 'Compress PDF',
+      splitmode:    'Split PDF',
     };
 
     const display = document.getElementById('modeDisplay');
@@ -97,21 +98,34 @@ const UIManager = (() => {
     const input = document.getElementById('keywordInput');
     const area  = document.getElementById('keywordInputArea');
 
+    // Always hide split panel unless entering splitmode
+    const splitPanel = document.getElementById('splitConfigPanel');
+
     if (mode === 'extractall') {
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       hint.textContent = 'No keywords needed — all text will be extracted.';
+      if (splitPanel) splitPanel.style.display = 'none';
     } else if (mode === 'tablemode') {
       // Table mode needs no keywords either
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       hint.textContent = 'No keywords needed — all transaction rows will be extracted and displayed as cards.';
+      if (splitPanel) splitPanel.style.display = 'none';
     } else if (mode === 'compressmode') {
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       hint.textContent = 'No keywords needed — click Run Extraction to compress your PDF files.';
+      if (splitPanel) splitPanel.style.display = 'none';
+    } else if (mode === 'splitmode') {
+      // Split mode: hide keyword input — config is in the dedicated step-split card
+      area.style.display = 'none';
+      document.getElementById('keywordChips').innerHTML = '';
+      hint.textContent = 'Configure your split settings in Step 03.1 below.';
+      if (splitPanel) splitPanel.style.display = 'none';
     } else {
       area.style.display = 'flex';
+      if (splitPanel) splitPanel.style.display = 'none';
       if (mode === 'single') {
         input.placeholder = 'Enter a single keyword';
         hint.textContent  = 'Only one keyword allowed in Single Keyword mode.';
@@ -1239,6 +1253,135 @@ const UIManager = (() => {
     }
   }
 
+  // =============================================
+  // SPLIT RESULTS RENDERER
+  // =============================================
+
+  function renderSplitResults(results, sourceFile) {
+    const container = document.getElementById('resultsContainer');
+    const list      = document.getElementById('resultsList');
+    const actions   = document.getElementById('resultsActions');
+
+    container.style.display = 'block';
+    list.innerHTML    = '';
+    actions.innerHTML = '';
+
+    if (!results || !results.length) {
+      list.innerHTML = `<div class="no-results">No split parts were generated.</div>`;
+      return;
+    }
+
+    const totalPages = results.reduce((s, r) => s + r.pageCount, 0);
+
+    // ── Actions row ───────────────────────────────────────────────────────
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+
+    const dlAllBtn = document.createElement('button');
+    dlAllBtn.className   = 'btn-excel cm-dl-all-btn sp-dl-all-btn';
+    dlAllBtn.textContent = '⬇ Download All';
+    dlAllBtn.addEventListener('click', () => _downloadAllSplit(results));
+    actionsRow.appendChild(dlAllBtn);
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+    actions.appendChild(makeCountBadge(results.length, 'part'));
+
+    // ── Summary card ──────────────────────────────────────────────────────
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'tm-summary-card sp-summary-card';
+    summaryCard.innerHTML = `
+      <div class="tm-summary-grid">
+        <div class="tm-stat">
+          <span class="tm-stat-val">${escapeHtml(sourceFile ? sourceFile.name : '—')}</span>
+          <span class="tm-stat-lbl">Source File</span>
+        </div>
+        <div class="tm-stat">
+          <span class="tm-stat-val">${totalPages}</span>
+          <span class="tm-stat-lbl">Total Pages</span>
+        </div>
+        <div class="tm-stat tm-stat--fee">
+          <span class="tm-stat-val">${results.length}</span>
+          <span class="tm-stat-lbl">Output Files</span>
+        </div>
+      </div>
+    `;
+    list.appendChild(summaryCard);
+
+    // ── One card per split part ───────────────────────────────────────────
+    for (let i = 0; i < results.length; i++) {
+      list.appendChild(_makeSplitCard(results[i], i + 1, results.length));
+    }
+
+    capResultsHeight(list);
+  }
+
+  function _makeSplitCard(result, partNum, totalParts) {
+    const card = document.createElement('div');
+    card.className = 'result-item sp-card';
+
+    const pageLabel = result.pageNums.length === 1
+      ? `Page ${result.pageNums[0]}`
+      : `Pages ${result.pageNums[0]}–${result.pageNums[result.pageNums.length - 1]}`;
+
+    card.innerHTML = `
+      <div class="result-meta">
+        <span class="page-badge">Part ${partNum}/${totalParts}</span>
+        <span class="result-filename" title="${escapeHtml(result.filename)}">${escapeHtml(result.filename)}</span>
+        <button class="result-view-btn sp-view-btn" title="Preview this PDF">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <ellipse cx="6.5" cy="6.5" rx="6" ry="4" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="6.5" cy="6.5" r="1.8" fill="currentColor"/>
+          </svg>
+          <span class="result-view-label">View</span>
+        </button>
+        <button class="result-remove-btn" title="Remove this result">✕</button>
+      </div>
+      <div class="sp-body">
+        <div class="sp-info-row">
+          <span class="sp-pages-badge">✦ ${pageLabel}</span>
+          <span class="sp-page-count">${result.pageCount} page${result.pageCount !== 1 ? 's' : ''}</span>
+          <span class="sp-size">${_fmtBytes(result.blob ? result.blob.size : 0)}</span>
+        </div>
+      </div>
+      <button class="cm-dl-btn btn btn-accent sp-dl-btn">⬇ Download</button>
+    `;
+
+    // ── View button: convert blob → File, open in PDFViewer ──────────────
+    card.querySelector('.sp-view-btn').addEventListener('click', () => {
+      if (!result.blob) return;
+      if (window.PDFViewer) {
+        // Wrap the Blob as a File so PDFViewer.open() can call .arrayBuffer()
+        const viewFile = new File([result.blob], result.filename, { type: 'application/pdf' });
+        PDFViewer.open(viewFile, 1);
+      }
+    });
+
+    card.querySelector('.sp-dl-btn').addEventListener('click', () => {
+      _downloadBlob(result.blob, result.filename);
+    });
+    card.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(card));
+    return card;
+  }
+
+  async function _downloadAllSplit(results) {
+    const valid = results.filter(r => r.blob);
+    if (!valid.length) return;
+    if (valid.length === 1) { _downloadBlob(valid[0].blob, valid[0].filename); return; }
+    if (window.JSZip) {
+      const zip = new JSZip();
+      for (const r of valid) {
+        const buf = await r.blob.arrayBuffer();
+        zip.file(r.filename, buf);
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 1 } });
+      _downloadBlob(zipBlob, 'split_pdfs.zip');
+    } else {
+      for (let i = 0; i < valid.length; i++) {
+        setTimeout(() => _downloadBlob(valid[i].blob, valid[i].filename), i * 350);
+      }
+    }
+  }
+
   return {
     renderFileList,
     setModeSelected,
@@ -1257,6 +1400,7 @@ const UIManager = (() => {
     renderExtractAll,
     renderTableResults,
     renderCompressResults,
+    renderSplitResults,
     escapeHtml,
   };
 })();

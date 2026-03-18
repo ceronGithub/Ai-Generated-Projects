@@ -116,6 +116,7 @@
 
     if (state.files.length > 0) {
       UIManager.activateStep('step-mode');
+      if (state.mode === 'splitmode') updateSplitPreview();
     }
   }
 
@@ -189,8 +190,6 @@
     stepResults.classList.add('step-folding');
     stepResults.addEventListener('animationend', () => {
       stepResults.classList.remove('step-folding');
-
-      // Hard reset results
       resultsContainer.classList.remove('results-folding');
       resultsContainer.style.display = 'none';
       document.getElementById('resultsList').innerHTML = '';
@@ -199,19 +198,30 @@
       UIManager.setRunEnabled(false);
       stepResults.classList.add('disabled-card', 'step-settling');
       stepResults.classList.remove('active');
-
       stepResults.addEventListener('animationend', () => {
         stepResults.classList.remove('step-settling');
       }, { once: true });
     }, { once: true });
+
+    // ── Step-split (03.1): fold away if visible ───
+    const stepSplit = document.getElementById('step-split');
+    if (stepSplit && stepSplit.style.display !== 'none') {
+      setTimeout(() => {
+        stepSplit.classList.add('step-folding');
+        stepSplit.addEventListener('animationend', () => {
+          stepSplit.classList.remove('step-folding');
+          stepSplit.style.display = 'none';
+          stepSplit.classList.add('disabled-card');
+          stepSplit.classList.remove('active');
+        }, { once: true });
+      }, 50);
+    }
 
     // ── Step-keywords: fold away with slight delay then settle ──
     setTimeout(() => {
       stepKeywords.classList.add('step-folding');
       stepKeywords.addEventListener('animationend', () => {
         stepKeywords.classList.remove('step-folding');
-
-        // Hard reset keywords
         keywordInput.value = '';
         document.getElementById('keywordChips').innerHTML = '';
         document.getElementById('keywordHint').textContent = '';
@@ -219,19 +229,18 @@
         keywordInput.placeholder = 'Type a keyword and press Enter…';
         stepKeywords.classList.add('disabled-card', 'step-settling');
         stepKeywords.classList.remove('active');
-
         stepKeywords.addEventListener('animationend', () => {
           stepKeywords.classList.remove('step-settling');
         }, { once: true });
       }, { once: true });
-    }, 80); // 80ms stagger — results folds first, then keywords
+    }, 120);
 
     // ── Show mode buttons after animations complete ──
     setTimeout(() => {
       UIManager.setModeButtonsVisible(true);
       document.getElementById('modeDisplay').style.display = 'none';
       document.querySelector('.mode-buttons').style.display = 'grid';
-    }, 420); // after both fold animations finish
+    }, 480);
   });
 
   function selectMode(mode) {
@@ -245,9 +254,33 @@
     document.querySelector('.mode-buttons').style.display = 'none';
     UIManager.setModeSelected(mode);
 
-    // Activate keyword & results steps
-    UIManager.activateStep('step-keywords');
-    UIManager.activateStep('step-results');
+    // Handle step-split visibility
+    const stepSplit = document.getElementById('step-split');
+    if (mode === 'splitmode') {
+      // Show step-split (03.1), keep step-keywords active but minimal
+      if (stepSplit) {
+        stepSplit.style.display = 'block';
+        // Animate in
+        stepSplit.classList.remove('disabled-card');
+        stepSplit.classList.add('active', 'step-split-entering');
+        stepSplit.addEventListener('animationend', () => {
+          stepSplit.classList.remove('step-split-entering');
+        }, { once: true });
+      }
+      // Activate keyword & results steps
+      UIManager.activateStep('step-keywords');
+      UIManager.activateStep('step-results');
+    } else {
+      // Hide step-split for all other modes
+      if (stepSplit) {
+        stepSplit.style.display = 'none';
+        stepSplit.classList.add('disabled-card');
+        stepSplit.classList.remove('active');
+      }
+      // Activate keyword & results steps
+      UIManager.activateStep('step-keywords');
+      UIManager.activateStep('step-results');
+    }
 
     UIManager.setKeywordSectionMode(mode);
     UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, mode);
@@ -257,6 +290,11 @@
     UIManager.hideProgress();
 
     updateRunBtn();
+
+    // Trigger split preview if files already uploaded
+    if (mode === 'splitmode' && state.files.length > 0) {
+      setTimeout(updateSplitPreview, 100);
+    }
   }
 
   // ===== KEYWORDS =====
@@ -344,7 +382,7 @@
       UIManager.setRunEnabled(false);
       return;
     }
-    if (state.mode === 'extractall' || state.mode === 'tablemode' || state.mode === 'compressmode') {
+    if (state.mode === 'extractall' || state.mode === 'tablemode' || state.mode === 'compressmode' || state.mode === 'splitmode') {
       UIManager.setRunEnabled(true);
       return;
     }
@@ -381,16 +419,17 @@
     if (state.files.length === 0 || !state.mode) return;
 
     UIManager.setRunning(true);
-    UIManager.setProgress(0, state.mode === 'compressmode'
-      ? 'Preparing compression…'
-      : 'Phase 1 · Pre-reading PDFs and marking text locations…');
+    UIManager.setProgress(0,
+      state.mode === 'compressmode' ? 'Preparing compression…' :
+      state.mode === 'splitmode'    ? 'Preparing split…' :
+      'Phase 1 · Pre-reading PDFs and marking text locations…');
     document.getElementById('resultsContainer').style.display = 'none';
 
     // 🚀 Engage warp drive!
     if (window.StarField) window.StarField.startWarp();
 
     try {
-      // ── Compress mode: skip text extraction, work directly on files ──────
+      // ── Compress mode ────────────────────────────────────────────────────
       if (state.mode === 'compressmode') {
         UIManager.setProgress(20, 'Compressing PDFs…');
         await new Promise(r => setTimeout(r, 30));
@@ -400,7 +439,37 @@
         });
         UIManager.setProgress(100, 'Done!');
         UIManager.renderCompressResults(compResults);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        return;
+      }
 
+      // ── Split mode ───────────────────────────────────────────────────────
+      if (state.mode === 'splitmode') {
+        const file = state.files[0];
+        if (!file) throw new Error('Please upload a PDF file first.');
+
+        // Read split config from the panel
+        const activeTab  = document.querySelector('.scp-tab--active');
+        const splitMode  = activeTab ? activeTab.dataset.scp : 'every';
+        const everyN     = parseInt(document.getElementById('scpEveryN')?.value || '1', 10);
+        const rangesStr  = document.getElementById('scpRangeInput')?.value || '';
+
+        const config = {
+          mode:   splitMode,
+          every:  everyN,
+          ranges: rangesStr,
+        };
+
+        UIManager.setProgress(15, 'Reading PDF pages…');
+        await new Promise(r => setTimeout(r, 30));
+
+        const splitResults = await PDFSplitter.split(file, config, (done, total) => {
+          const pct = 15 + Math.round((done / total) * 80);
+          UIManager.setProgress(pct, `Splitting — rendering page ${done}/${total}…`);
+        });
+
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderSplitResults(splitResults, file);
         setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
         return;
       }
@@ -494,6 +563,100 @@
       UIManager.setRunning(false);
       setTimeout(() => UIManager.hideProgress(), 1500);
     }
+  }
+
+  // ===== SPLIT CONFIG PANEL =====
+
+  (function initSplitPanel() {
+    // ── Tab switching ──────────────────────────────────────────────────────
+    document.querySelectorAll('.scp-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.scp-tab').forEach(t => t.classList.remove('scp-tab--active'));
+        document.querySelectorAll('.scp-pane').forEach(p => p.classList.remove('scp-pane--active'));
+        tab.classList.add('scp-tab--active');
+        const key    = tab.dataset.scp;
+        const target = document.getElementById('scp' + key.charAt(0).toUpperCase() + key.slice(1));
+        if (target) target.classList.add('scp-pane--active');
+        updateSplitPreview();
+      });
+    });
+
+    // ── Live preview on input changes ──────────────────────────────────────
+    const everyInput = document.getElementById('scpEveryN');
+    const rangeInput = document.getElementById('scpRangeInput');
+    if (everyInput) everyInput.addEventListener('input', updateSplitPreview);
+    if (rangeInput) rangeInput.addEventListener('input', updateSplitPreview);
+
+    // ── Instruction modal ──────────────────────────────────────────────────
+    const overlay    = document.getElementById('splitInstrOverlay');
+    const openBtn    = document.getElementById('splitInstructionBtn');
+    const closeBtn   = document.getElementById('splitInstrClose');
+    const doneBtn    = document.getElementById('splitInstrDone');
+    const backdrop   = document.getElementById('splitInstrBackdrop');
+
+    function openInstrModal() {
+      overlay.classList.remove('si-closing');
+      overlay.style.display = 'flex';
+    }
+
+    function closeInstrModal() {
+      overlay.classList.add('si-closing');
+      overlay.addEventListener('animationend', () => {
+        overlay.style.display = 'none';
+        overlay.classList.remove('si-closing');
+      }, { once: true });
+    }
+
+    if (openBtn)  openBtn.addEventListener('click',   openInstrModal);
+    if (closeBtn) closeBtn.addEventListener('click',  closeInstrModal);
+    if (doneBtn)  doneBtn.addEventListener('click',   closeInstrModal);
+    if (backdrop) backdrop.addEventListener('click',  closeInstrModal);
+
+    // Esc key closes modal
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && overlay && overlay.style.display !== 'none') {
+        closeInstrModal();
+      }
+    });
+  })();
+
+  function updateSplitPreview() {
+    if (!state.files.length) return;
+    const file = state.files[0];
+
+    // Get page count async and update preview text
+    PDFSplitter.pageCount(file).then(total => {
+      // Every N preview
+      const everyInput   = document.getElementById('scpEveryN');
+      const everyPreview = document.getElementById('scpEveryPreview');
+      if (everyInput && everyPreview) {
+        const n      = Math.max(1, parseInt(everyInput.value, 10) || 1);
+        const groups = PDFSplitter.everyNPages(n, total);
+        everyPreview.textContent =
+          `${total} pages → ${groups.length} file${groups.length !== 1 ? 's' : ''} of up to ${n} page${n !== 1 ? 's' : ''} each`;
+      }
+
+      // Ranges preview
+      const rangeInput   = document.getElementById('scpRangeInput');
+      const rangePreview = document.getElementById('scpRangePreview');
+      if (rangeInput && rangePreview) {
+        const str    = rangeInput.value.trim();
+        if (!str) {
+          rangePreview.textContent = '— enter ranges above';
+          return;
+        }
+        const groups = PDFSplitter.parseRanges(str, total);
+        if (groups.length === 0) {
+          rangePreview.textContent = '⚠ No valid ranges — check your input';
+          rangePreview.style.color = 'var(--danger)';
+        } else {
+          rangePreview.style.color = '';
+          rangePreview.textContent =
+            `${groups.length} file${groups.length !== 1 ? 's' : ''}: ` +
+            groups.map(g => g.length === 1 ? `p${g[0]}` : `p${g[0]}-${g[g.length-1]}`).join(', ');
+        }
+      }
+    }).catch(() => {});
   }
 
   // ===== INIT =====
