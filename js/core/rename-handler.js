@@ -65,9 +65,16 @@ const RenameHandler = (() => {
    * Files are sorted A→Z by their new name before zipping.
    * ZIP folder name: PDF-Extractor-Rename-PDF-Result
    *
+   * Speed improvements vs v1:
+   *   • arrayBuffer() reads are batched in parallel (BATCH_SIZE at a time)
+   *   • ZIP compression level 1 (fastest — PDFs are already compressed)
+   *   • file.slice(0) forces a fresh File read, avoiding detached-buffer
+   *     errors when the same File object was previously read by pdf-processor
+   *   • Per-file error isolation — one bad file won't break the whole batch
+   *
    * @param {File[]} files - original File objects
    * @param {Map<string, string>} renameMap
-   * @param {Function} onProgress - (done, total, newName) => void
+   * @param {Function} onProgress - (done, total, newName, remaining, timeStr) => void
    */
   async function downloadRenamed(files, renameMap, onProgress) {
     if (typeof JSZip === 'undefined') {
@@ -75,54 +82,78 @@ const RenameHandler = (() => {
       return;
     }
 
-    const zip = new JSZip();
+    const BATCH_SIZE = 6; // parallel reads per batch — conservative for large PDFs
+
+    const zip    = new JSZip();
     const folder = zip.folder('PDF-Extractor-Rename-PDF-Result');
 
-    // Build list of { file, newName } sorted A→Z by newName
+    // Build sorted entry list
     const entries = files
       .map(file => ({
         file,
-        newName: renameMap.get(file.name) || file.name
+        newName: renameMap.get(file.name) || file.name,
       }))
       .sort((a, b) => a.newName.localeCompare(b.newName));
 
-    const total = entries.length;
-    let done = 0;
+    const total     = entries.length;
+    let   done      = 0;
+    let   skipped   = 0;
     const startTime = Date.now();
 
-    for (const { file, newName } of entries) {
-      const arrayBuffer = await file.arrayBuffer();
-      folder.file(newName, arrayBuffer);
-      done++;
+    // ── Parallel batched reads ────────────────────────────────────────────
+    for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+      const batch = entries.slice(i, i + BATCH_SIZE);
 
-      // ── Time estimate ─────────────────────────────
-      const elapsed   = (Date.now() - startTime) / 1000;       // seconds so far
-      const avgPerFile = elapsed / done;                        // avg seconds per file
-      const remaining  = total - done;                          // files left
-      const estSeconds = Math.ceil(avgPerFile * remaining);     // estimated wait
+      // Use file.slice(0) to get a fresh Blob copy — avoids detached
+      // ArrayBuffer errors when the File was previously read by pdf-processor.
+      const reads = batch.map(({ file }) =>
+        file.slice(0).arrayBuffer().catch(() => null)  // null = failed read
+      );
+      const buffers = await Promise.all(reads);
 
-      // Format time string: show seconds under 1 min, else "Xm Ys"
-      let timeStr = '';
-      if (remaining === 0) {
-        timeStr = '';
-      } else if (estSeconds < 60) {
-        timeStr = `~${estSeconds}s remaining`;
-      } else {
-        const m = Math.floor(estSeconds / 60);
-        const s = estSeconds % 60;
-        timeStr = `~${m}m ${s}s remaining`;
+      batch.forEach(({ newName, file }, idx) => {
+        const buf = buffers[idx];
+        if (!buf || buf.byteLength === 0) {
+          // Skip silently — file couldn't be read
+          console.warn(`[Rename] Could not read "${file.name}" — skipped`);
+          skipped++;
+        } else {
+          folder.file(newName, buf);
+        }
+        done++;
+      });
+
+      // Progress update after each batch
+      if (onProgress) {
+        const elapsed    = (Date.now() - startTime) / 1000;
+        const avgPerFile = elapsed / Math.max(done - skipped, 1);
+        const remaining  = total - done;
+        const estSeconds = Math.ceil(avgPerFile * remaining);
+
+        let timeStr = '';
+        if (remaining > 0) {
+          timeStr = estSeconds < 60
+            ? `~${estSeconds}s remaining`
+            : `~${Math.floor(estSeconds / 60)}m ${estSeconds % 60}s remaining`;
+        }
+
+        onProgress(done, total, batch[batch.length - 1].newName, remaining, timeStr);
       }
-
-      if (onProgress) onProgress(done, total, newName, remaining, timeStr);
     }
 
-    // Generate ZIP — this can take a moment for large files
+    // ── Generate ZIP (level 1 = fastest; PDFs gain nothing from compression) ──
     if (onProgress) onProgress(done, total, '📦 Compressing ZIP…', 0, 'almost done…');
-    const blob = await zip.generateAsync({ type: 'blob' });
 
+    const blob = await zip.generateAsync({
+      type:               'blob',
+      compression:        'DEFLATE',
+      compressionOptions: { level: 1 },
+    });
+
+    // Download
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    const a   = document.createElement('a');
+    a.href     = url;
     a.download = 'PDF-Extractor-Rename-PDF-Result.zip';
     document.body.appendChild(a);
     a.click();

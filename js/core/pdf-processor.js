@@ -25,8 +25,28 @@ const PDFProcessor = (() => {
    *   itemMap entries: { str: string, start: number, end: number }
    */
   async function extractPages(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    // Always use file.slice(0) to get a fresh Blob copy before reading.
+    // This prevents "invalid PDF structure" errors caused by detached
+    // ArrayBuffers when the same File object is read more than once
+    // (e.g. extraction phase + rename ZIP packing phase).
+    let arrayBuffer;
+    try {
+      arrayBuffer = await file.slice(0).arrayBuffer();
+    } catch (e) {
+      throw new Error(`Cannot read "${file.name}": ${e.message}`);
+    }
+
+    if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+      throw new Error(`"${file.name}" produced an empty buffer — the file may be corrupt.`);
+    }
+
+    let pdf;
+    try {
+      pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    } catch (e) {
+      throw new Error(`"${file.name}" — invalid PDF structure: ${e.message}`);
+    }
+
     const pages = [];
 
     for (let i = 1; i <= pdf.numPages; i++) {
@@ -94,15 +114,22 @@ const PDFProcessor = (() => {
 
   /**
    * Extract all text from multiple files.
+   * Per-file errors are isolated — a corrupt or unreadable file produces
+   * an empty pages array with an error flag instead of crashing the batch.
    * @param {File[]} files
    * @param {Function} onProgress - (current, total) => void
-   * @returns {Promise<Array<{file: File, pages: Array<{page, text}>}>>}
+   * @returns {Promise<Array<{file: File, pages: Array<{page, text}>, error?: string}>>}
    */
   async function extractAll(files, onProgress) {
     const results = [];
     for (let i = 0; i < files.length; i++) {
-      const pages = await extractPages(files[i]);
-      results.push({ file: files[i], pages });
+      try {
+        const pages = await extractPages(files[i]);
+        results.push({ file: files[i], pages });
+      } catch (err) {
+        console.warn(`[PDFProcessor] Skipping "${files[i].name}":`, err.message);
+        results.push({ file: files[i], pages: [], error: err.message });
+      }
       if (onProgress) onProgress(i + 1, files.length);
     }
     return results;
