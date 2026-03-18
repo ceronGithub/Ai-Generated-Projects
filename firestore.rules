@@ -1,0 +1,67 @@
+// ============================================================
+// STREETWISE PH — Firestore Security Rules
+// Paste this into: Firebase Console → Firestore → Rules
+// ============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper: check if user is owner ──────────────────────
+    function isOwner() {
+      return request.auth != null &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
+    }
+
+    // ── Helper: check if logged in ───────────────────────────
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    // ── Users ────────────────────────────────────────────────
+    // Users can read/write their own profile. Owner can read all.
+    match /users/{userId} {
+      allow read:   if isLoggedIn() && (request.auth.uid == userId || isOwner());
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if isOwner();
+    }
+
+    // ── Products ─────────────────────────────────────────────
+    // Anyone can read. Only owner can write.
+    match /products/{productId} {
+      allow read:  if true;
+      allow write: if isOwner();
+    }
+
+    // ── Categories ───────────────────────────────────────────
+    // Anyone can read. Only owner can write.
+    match /categories/{categoryId} {
+      allow read:  if true;
+      allow write: if isOwner();
+    }
+
+    // ── Inventory ────────────────────────────────────────────
+    // Owner can read/write. No public access.
+    match /inventory/{itemId} {
+      allow read, write: if isOwner();
+    }
+
+    // ── Orders ───────────────────────────────────────────────
+    // Anyone can create (place an order). Owner can read/update all.
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read:   if isOwner() || (isLoggedIn() && resource.data.userId == request.auth.uid);
+      allow update: if isOwner();
+      allow delete: if isOwner();
+    }
+
+    // ── Comments ─────────────────────────────────────────────
+    // Anyone can read and create. Owner can delete.
+    match /comments/{commentId} {
+      allow read, create: if true;
+      allow delete:       if isOwner();
+      allow update:       if isOwner();
+    }
+  }
+}

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Streetwise PH — Seed Database</title>
+  <style>
+    body { background: #0a0a0a; color: #f0ece4; font-family: monospace; padding: 40px; }
+    h1 { color: #c9a96e; margin-bottom: 24px; }
+    button { background: #c9a96e; color: #0a0a0a; border: none; padding: 12px 28px; font-size: 1rem; cursor: pointer; border-radius: 4px; font-weight: 700; margin-bottom: 24px; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    #log { background: #111; border: 1px solid #2a2520; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-size: .875rem; line-height: 1.8; max-height: 500px; overflow-y: auto; }
+    .ok  { color: #4caf76; }
+    .err { color: #d94f4f; }
+    .info{ color: #c9a96e; }
+    p { color: #a09888; margin-bottom: 16px; line-height: 1.7; }
+    .warn { background: rgba(230,168,23,.1); border: 1px solid rgba(230,168,23,.3); padding: 14px 18px; border-radius: 6px; color: #e6a817; margin-bottom: 24px; font-size: .875rem; }
+  </style>
+</head>
+<body>
+  <h1>🌱 Streetwise PH — Seed Database</h1>
+  <p>This script populates your Firebase Firestore with sample categories, products, and inventory. Run it <strong>once</strong> after setting up your Firebase project.</p>
+  <div class="warn">⚠️ Make sure you have updated <code>js/firebase/config.js</code> with your Firebase credentials before running this.</div>
+  <p>You must also be logged in as the <strong>owner</strong> account before seeding (Firestore rules require owner role to write products).</p>
+  <button id="seed-btn" onclick="runSeed()">🚀 Run Seed Data</button>
+  <div id="log">Ready. Click "Run Seed Data" to begin...\n</div>
+
+  <script type="module">
+    import { db, auth } from "./js/firebase/config.js";
+    import { collection, addDoc, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const log = (msg, cls = "") => {
+      const el = document.getElementById("log");
+      el.innerHTML += `<span class="${cls}">${msg}</span>\n`;
+      el.scrollTop = el.scrollHeight;
+    };
+
+    window.runSeed = async function() {
+      const btn = document.getElementById("seed-btn");
+      btn.disabled = true;
+      document.getElementById("log").innerHTML = "";
+      log("Starting seed...\n", "info");
+
+      try {
+        // ── Categories ─────────────────────────────────────
+        log("📁 Seeding categories...", "info");
+        const categories = [
+          { id: "men",        name: "Men",        slug: "men",        description: "Men's apparel collection" },
+          { id: "women",      name: "Women",      slug: "women",      description: "Women's apparel collection" },
+          { id: "unisex",     name: "Unisex",     slug: "unisex",     description: "Unisex styles for everyone" },
+          { id: "accessories",name: "Accessories",slug: "accessories",description: "Caps, bags, and more" },
+        ];
+        for (const cat of categories) {
+          await setDoc(doc(db, "categories", cat.id), { ...cat, createdAt: serverTimestamp() });
+          log(`  ✓ Category: ${cat.name}`, "ok");
+        }
+
+        // ── Products ────────────────────────────────────────
+        log("\n📦 Seeding products...", "info");
+        const products = [
+          { name:"Obsidian Oversized Tee",   category:"Unisex",      categorySlug:"unisex",      price:1299, originalPrice:1599, description:"Premium heavyweight cotton oversized tee. 320gsm drop-shoulder cut.", sizes:["XS","S","M","L","XL","XXL"], colors:["Black","White","Charcoal"], isFeatured:true,  isActive:true, imageUrl:"" },
+          { name:"Noir Cargo Pants",          category:"Men",         categorySlug:"men",         price:2499, originalPrice:2999, description:"Tactical cargo pants with utility pockets. Relaxed fit.",            sizes:["28","30","32","34","36"],    colors:["Black","Olive","Grey"],     isFeatured:true,  isActive:true, imageUrl:"" },
+          { name:"Velvet Crop Hoodie",        category:"Women",       categorySlug:"women",       price:1899, originalPrice:null, description:"Cropped hoodie in ultra-soft fleece. Relaxed silhouette.",          sizes:["XS","S","M","L"],            colors:["Black","Dusty Rose","Cream"],isFeatured:true,  isActive:true, imageUrl:"" },
+          { name:"Phantom Zip Jacket",        category:"Unisex",      categorySlug:"unisex",      price:3299, originalPrice:3999, description:"Water-resistant shell jacket. Minimal branding, maximum style.",     sizes:["S","M","L","XL","XXL"],      colors:["Black","Midnight Blue"],    isFeatured:false, isActive:true, imageUrl:"" },
+          { name:"Shadow Cap",                category:"Accessories",  categorySlug:"accessories", price:799,  originalPrice:null, description:"Structured 6-panel cap with embroidered logo.",                     sizes:["One Size"],                  colors:["Black","White","Tan"],      isFeatured:false, isActive:true, imageUrl:"" },
+          { name:"Silk Touch Slip Dress",     category:"Women",       categorySlug:"women",       price:1699, originalPrice:2199, description:"Satin-finish slip dress. Elegant and minimal.",                      sizes:["XS","S","M","L"],            colors:["Black","Champagne","Ivory"],isFeatured:true,  isActive:true, imageUrl:"" },
+        ];
+        const productIds = [];
+        for (const p of products) {
+          const slug = p.name.toLowerCase().replace(/[^a-z0-9]+/g,"-") + "-" + Date.now();
+          const ref  = await addDoc(collection(db, "products"), { ...p, slug, createdAt: serverTimestamp() });
+          productIds.push({ id: ref.id, name: p.name, sizes: p.sizes, colors: p.colors });
+          log(`  ✓ Product: ${p.name}`, "ok");
+        }
+
+        // ── Inventory ────────────────────────────────────────
+        log("\n📊 Seeding inventory...", "info");
+        const inventoryData = [
+          { idx:0, size:"S",        color:"Black",      quantity:25 },
+          { idx:0, size:"M",        color:"Black",      quantity:30 },
+          { idx:0, size:"L",        color:"Black",      quantity:20 },
+          { idx:0, size:"XL",       color:"Black",      quantity:15 },
+          { idx:0, size:"S",        color:"White",      quantity:20 },
+          { idx:0, size:"M",        color:"White",      quantity:25 },
+          { idx:1, size:"30",       color:"Black",      quantity:15 },
+          { idx:1, size:"32",       color:"Black",      quantity:20 },
+          { idx:1, size:"30",       color:"Olive",      quantity:10 },
+          { idx:2, size:"S",        color:"Black",      quantity:18 },
+          { idx:2, size:"M",        color:"Black",      quantity:22 },
+          { idx:2, size:"S",        color:"Dusty Rose", quantity:15 },
+          { idx:3, size:"M",        color:"Black",      quantity:8  },
+          { idx:3, size:"L",        color:"Black",      quantity:10 },
+          { idx:4, size:"One Size", color:"Black",      quantity:40 },
+          { idx:4, size:"One Size", color:"White",      quantity:35 },
+          { idx:4, size:"One Size", color:"Tan",        quantity:20 },
+          { idx:5, size:"S",        color:"Black",      quantity:12 },
+          { idx:5, size:"M",        color:"Black",      quantity:14 },
+          { idx:5, size:"S",        color:"Champagne",  quantity:8  },
+        ];
+        for (const inv of inventoryData) {
+          const product = productIds[inv.idx];
+          await addDoc(collection(db, "inventory"), {
+            productId:         product.id,
+            productName:       product.name,
+            size:              inv.size,
+            color:             inv.color,
+            quantity:          inv.quantity,
+            lowStockThreshold: 5,
+            updatedAt:         serverTimestamp()
+          });
+        }
+        log(`  ✓ ${inventoryData.length} inventory records`, "ok");
+
+        log("\n✅ Seed complete! Your store is ready.", "ok");
+        log("You can now visit index.html to see your products.", "info");
+
+      } catch(err) {
+        log(`\n❌ Error: ${err.message}`, "err");
+        log("Make sure you are logged in as owner and your Firebase config is correct.", "err");
+      }
+
+      btn.disabled = false;
+    };
+  </script>
+</body>
+</html>

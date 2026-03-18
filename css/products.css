@@ -50,4 +50,3 @@
 .carousel-prev, .carousel-next { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 50%; color: var(--text-secondary); transition: var(--transition); }
 .carousel-prev:hover, .carousel-next:hover { border-color: var(--accent); color: var(--accent); }
 .carousel-prev { left: -22px; } .carousel-next { right: -22px; }
-@media(max-width:768px){.product-detail{grid-template-columns:1fr;gap:32px}.product-gallery{position:static}.products-grid{grid-template-columns:repeat(2,1fr);gap:12px}}

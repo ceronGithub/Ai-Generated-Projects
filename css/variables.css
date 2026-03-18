@@ -73,4 +73,3 @@ select.form-input{appearance:none;cursor:pointer}
 .page-loader{position:fixed;inset:0;background:var(--bg-primary);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity .4s ease}
 .page-loader.hidden{opacity:0;pointer-events:none}
 .stars{display:flex;gap:2px;color:var(--accent);font-size:.875rem}
-@media(max-width:768px){.container{padding:0 16px}.section{padding:56px 0}.hide-mobile{display:none!important}}

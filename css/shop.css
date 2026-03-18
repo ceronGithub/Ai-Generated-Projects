@@ -17,4 +17,3 @@
 .pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 40px; }
 .page-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.875rem; transition: var(--transition); }
 .page-btn:hover, .page-btn.active { border-color: var(--accent); color: var(--accent); }
-@media(max-width:768px){.shop-layout{grid-template-columns:1fr}.shop-sidebar{position:static}}

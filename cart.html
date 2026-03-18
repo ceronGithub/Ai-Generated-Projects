@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/cart.css">
+  <link rel="stylesheet" href="css/media-queries.css">
 </head>
 <body>
   <div id="page-loader" class="page-loader"><div style="text-align:center"><p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH</p><div class="spinner" style="margin:16px auto"></div></div></div>
@@ -126,9 +127,18 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="login-modal"><div class="modal"><div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div><div class="modal-body"><form id="signin-form"><div class="form-group"><label class="form-label">Username or Email</label><input type="text" class="form-input" id="si-username" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required></div><button type="submit" class="btn btn-primary" style="width:100%">Sign In</button></form></div></div></div>
-  <script src="js/main.js"></script>
-  <script src="js/cart.js"></script>
+  <div class="modal-overlay" id="login-modal"><div class="modal"><div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div><div class="modal-body"><p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:rgba(201,169,110,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--accent)">🔐 For owner only.</p><form id="signin-form"><div class="form-group"><label class="form-label">Username or Email</label><input type="text" class="form-input" id="si-username" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required></div><button type="submit" class="btn btn-primary" style="width:100%">Sign In</button></form></div></div></div>
+  
+    <script>
+    // Always hide loader — even if Firebase not connected yet
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => {
+        const l = document.getElementById("page-loader");
+        if (l) { l.classList.add("hidden"); setTimeout(() => l.remove(), 400); }
+      }, 600);
+    });
+  </script>
+  <script type="module" src="js/pages/cart.js"></script>
   <script>
   document.getElementById('signin-form')?.addEventListener('submit', async e => {
     e.preventDefault();

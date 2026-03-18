@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Owner Dashboard — Streetwise PH</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/media-queries.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+</head>
+<body>
+  <div id="page-loader" class="page-loader"><div style="text-align:center"><p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH</p><div class="spinner" style="margin:16px auto"></div></div></div>
+  <div id="toast-container"></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar" style="z-index:200">
+    <div style="display:flex;align-items:center;gap:16px">
+      <button id="sidebar-toggle" style="color:var(--text-secondary);width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm)">☰</button>
+      <a href="index.html" class="nav-brand">STREETWISE PH</a>
+      <span style="font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);padding:4px 10px;border:1px solid var(--border);border-radius:2px">Owner Panel</span>
+    </div>
+    <div class="nav-actions">
+      <span style="font-size:.875rem;color:var(--text-secondary)" id="owner-name-nav"></span>
+      <a href="index.html" class="nav-login-btn">View Store</a>
+      <button class="nav-logout" id="nav-logout">Logout</button>
+    </div>
+  </nav>
+
+  <!-- LOGIN GATE -->
+  <div id="login-gate" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div style="width:100%;max-width:420px">
+      <div style="text-align:center;margin-bottom:40px">
+        <p style="font-family:var(--font-display);font-size:2.5rem;color:var(--accent);letter-spacing:.3em;margin-bottom:8px">STREETWISE PH</p>
+        <p style="font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted)">Owner Dashboard</p>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);overflow:hidden">
+        <div style="background:rgba(201,169,110,0.06);border-bottom:1px solid var(--border);padding:20px 28px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:1.25rem">🔐</span>
+          <div>
+            <p style="font-weight:500;font-size:.9375rem">Restricted Access</p>
+            <p style="font-size:.8125rem;color:var(--text-muted);margin-top:2px">For owner only. Unauthorized access is prohibited.</p>
+          </div>
+        </div>
+        <div style="padding:28px">
+          <form id="login-form">
+            <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="login-email" required autocomplete="email"></div>
+            <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="login-password" required></div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" id="login-submit">Sign In to Dashboard</button>
+          </form>
+          <p style="text-align:center;margin-top:20px;font-size:.8125rem;color:var(--text-muted)">Not the owner? <a href="index.html" style="color:var(--accent)">Return to store</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD CONTENT -->
+  <div id="dashboard-content" class="hidden">
+    <div class="dashboard-layout">
+      <!-- SIDEBAR -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">STREETWISE PH</div>
+        <div class="sidebar-section">Main</div>
+        <a href="#" class="sidebar-link active" data-tab="tab-overview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard
+        </a>
+        <a href="#" class="sidebar-link" data-tab="tab-sales">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Sales Analysis
+        </a>
+        <div class="sidebar-section">Store</div>
+        <a href="#" class="sidebar-link" data-tab="tab-products">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>Products
+        </a>
+        <a href="#" class="sidebar-link" data-tab="tab-inventory">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>Inventory
+        </a>
+        <a href="#" class="sidebar-link" data-tab="tab-orders">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Orders
+        </a>
+        <a href="#" class="sidebar-link" data-tab="tab-comments">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Comments
+        </a>
+        <div class="sidebar-section">Account</div>
+        <a href="index.html" class="sidebar-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>View Store
+        </a>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="dashboard-main">
+        <div class="dashboard-content">
+
+          <!-- OVERVIEW TAB -->
+          <div id="tab-overview" class="tab-pane">
+            <div class="dash-header">
+              <div><h1 class="dash-title">Dashboard</h1><p style="color:var(--text-muted);font-size:.875rem">Welcome back, <span id="owner-name-dash" style="color:var(--accent)"></span></p></div>
+              <div style="font-size:.8125rem;color:var(--text-muted)" id="current-date"></div>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card"><p class="stat-label">Total Revenue (Month)</p><p class="stat-value" id="stat-revenue">—</p></div>
+              <div class="stat-card"><p class="stat-label">Total Orders</p><p class="stat-value" id="stat-orders">—</p></div>
+              <div class="stat-card"><p class="stat-label">Today's Revenue</p><p class="stat-value" id="stat-today">—</p></div>
+              <div class="stat-card"><p class="stat-label">Pending Orders</p><p class="stat-value" id="stat-pending" style="color:var(--warning)">—</p></div>
+            </div>
+            <div class="section-card">
+              <div class="section-card-header"><h3 class="section-card-title">Recent Orders</h3></div>
+              <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody id="recent-orders-body"><tr><td colspan="6" style="text-align:center;padding:32px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody></table></div>
+            </div>
+          </div>
+
+          <!-- SALES TAB -->
+          <div id="tab-sales" class="tab-pane hidden">
+            <div class="dash-header">
+              <h1 class="dash-title">Sales Analysis</h1>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                <input type="date" id="date-from" class="form-input" style="width:auto">
+                <span style="color:var(--text-muted)">to</span>
+                <input type="date" id="date-to" class="form-input" style="width:auto">
+                <button class="btn btn-primary btn-sm" id="apply-dates">Apply</button>
+              </div>
+            </div>
+            <div class="export-bar">
+              <p style="font-size:.8125rem;color:var(--text-muted);align-self:center;margin-right:4px">Export:</p>
+              <button class="btn btn-sm btn-outline" id="exp-pdf">📄 PDF</button>
+              <button class="btn btn-sm btn-outline" id="exp-excel">📊 Excel</button>
+              <button class="btn btn-sm btn-outline" id="exp-word">📝 Word</button>
+              <button class="btn btn-sm btn-outline" id="exp-ppt">📑 PowerPoint</button>
+            </div>
+            <div class="stats-grid" style="margin-bottom:24px">
+              <div class="stat-card"><p class="stat-label">Total Revenue</p><p class="stat-value" id="s-revenue">—</p></div>
+              <div class="stat-card"><p class="stat-label">Total Orders</p><p class="stat-value" id="s-orders">—</p></div>
+              <div class="stat-card"><p class="stat-label">Avg Order</p><p class="stat-value" id="s-avg">—</p></div>
+              <div class="stat-card"><p class="stat-label">Today's Revenue</p><p class="stat-value" id="s-today">—</p></div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;margin-bottom:24px">
+              <div class="section-card"><div class="section-card-header"><h3 class="section-card-title">Revenue Over Time</h3></div><div class="chart-container"><canvas id="revenue-chart"></canvas></div></div>
+              <div class="section-card"><div class="section-card-header"><h3 class="section-card-title">By Category</h3></div><div style="padding:16px;overflow-x:auto"><table class="data-table"><thead><tr><th>Category</th><th>Units</th><th>Revenue</th></tr></thead><tbody id="cat-tbody"></tbody></table></div></div>
+            </div>
+            <div class="section-card"><div class="section-card-header"><h3 class="section-card-title">Top Products</h3></div><div class="chart-container"><canvas id="product-chart"></canvas></div></div>
+          </div>
+
+          <!-- PRODUCTS TAB -->
+          <div id="tab-products" class="tab-pane hidden">
+            <div class="dash-header"><h1 class="dash-title">Products</h1><button class="btn btn-primary" id="add-product-btn">+ Add Product</button></div>
+            <div class="section-card"><div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead><tbody id="products-body"><tr><td colspan="5" style="text-align:center;padding:32px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody></table></div></div>
+          </div>
+
+          <!-- INVENTORY TAB -->
+          <div id="tab-inventory" class="tab-pane hidden">
+            <div class="dash-header"><h1 class="dash-title">Inventory</h1></div>
+            <div class="section-card"><div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Product</th><th>Size</th><th>Color</th><th>Stock</th><th>Action</th></tr></thead><tbody id="inventory-body"><tr><td colspan="5" style="text-align:center;padding:32px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody></table></div></div>
+          </div>
+
+          <!-- ORDERS TAB -->
+          <div id="tab-orders" class="tab-pane hidden">
+            <div class="dash-header"><h1 class="dash-title">Orders</h1></div>
+            <div class="section-card"><div style="overflow-x:auto"><table class="data-table"><thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody id="all-orders-body"><tr><td colspan="6" style="text-align:center;padding:32px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody></table></div></div>
+          </div>
+
+          <!-- COMMENTS TAB -->
+          <div id="tab-comments" class="tab-pane hidden">
+            <div class="dash-header"><h1 class="dash-title">Comments & Reviews</h1></div>
+            <div class="section-card"><div style="padding:24px" id="comments-body"><div class="flex-center" style="padding:40px"><div class="spinner"></div></div></div></div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- PRODUCT MODAL -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal" style="max-width:680px">
+      <div class="modal-header"><h2 class="modal-title" id="product-modal-title">Add Product</h2><button class="modal-close">✕</button></div>
+      <div class="modal-body">
+        <form id="product-form">
+          <input type="hidden" id="pf-id">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group" style="grid-column:1/-1"><label class="form-label">Product Name *</label><input type="text" class="form-input" id="pf-name" required></div>
+            <div class="form-group"><label class="form-label">Category</label><input type="text" class="form-input" id="pf-category" placeholder="Men, Women, Unisex..."></div>
+            <div class="form-group"><label class="form-label">Category Slug</label><input type="text" class="form-input" id="pf-cat-slug" placeholder="men, women, unisex..."></div>
+            <div class="form-group"><label class="form-label">Price (₱) *</label><input type="number" class="form-input" id="pf-price" step="0.01" required></div>
+            <div class="form-group"><label class="form-label">Original Price (₱)</label><input type="number" class="form-input" id="pf-original-price" step="0.01"></div>
+            <div class="form-group" style="grid-column:1/-1"><label class="form-label">Description</label><textarea class="form-input" id="pf-description" style="min-height:80px"></textarea></div>
+            <div class="form-group"><label class="form-label">Image URL</label><input type="text" class="form-input" id="pf-image" placeholder="https://..."></div>
+            <div class="form-group"><label class="form-label">Sizes <span style="color:var(--text-muted)">(comma separated)</span></label><input type="text" class="form-input" id="pf-sizes" placeholder="XS,S,M,L,XL"></div>
+            <div class="form-group"><label class="form-label">Colors <span style="color:var(--text-muted)">(comma separated)</span></label><input type="text" class="form-input" id="pf-colors" placeholder="Black,White,Grey"></div>
+            <div class="form-group" style="display:flex;align-items:center;gap:16px">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.875rem;color:var(--text-secondary)"><input type="checkbox" id="pf-featured" style="accent-color:var(--accent)"> Featured</label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.875rem;color:var(--text-secondary)"><input type="checkbox" id="pf-active" checked style="accent-color:var(--accent)"> Active</label>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:8px">
+            <button type="submit" class="btn btn-primary">Save Product</button>
+            <button type="button" class="btn btn-outline" onclick="closeModal('product-modal')">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER DETAIL MODAL -->
+  <div class="modal-overlay" id="order-modal">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header"><h2 class="modal-title">Order Details</h2><button class="modal-close">✕</button></div>
+      <div class="modal-body" id="order-detail-body"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Always hide loader — even if Firebase not connected yet
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(() => {
+        const l = document.getElementById("page-loader");
+        if (l) { l.classList.add("hidden"); setTimeout(() => l.remove(), 400); }
+      }, 600);
+    });
+
+    import { auth }                                              from "./js/firebase/config.js";
+    import { loginUser, logoutUser, onAuthChange, getCurrentProfile } from "./js/firebase/auth.js";
+    import { getAllProductsAdmin, addProduct, updateProduct, deleteProduct } from "./js/firebase/products.js";
+    import { getAllOrders, getOrder, updateOrderStatus }         from "./js/firebase/orders.js";
+    import { getInventory, updateStock }                        from "./js/firebase/inventory.js";
+    import { getSalesOverview, getSalesByDate, getSalesByProduct, getSalesByCategory } from "./js/firebase/sales.js";
+    import { getComments, deleteComment }                       from "./js/firebase/comments.js";
+    import { exportPDF, exportExcel, exportWord, exportPPT }    from "./js/firebase/export.js";
+    import "./js/main.js";
+
+    let salesData = { overview:{}, byDate:[], byProduct:[], byCategory:[] };
+    let revenueChart = null, productChart = null;
+
+    // ── Auth Guard ────────────────────────────────────────
+    onAuthChange(async user => {
+      if (!user) { showGate(); return; }
+      const profile = await getCurrentProfile();
+      if (profile?.role !== "owner") { showGate(); return; }
+      document.getElementById("login-gate").classList.add("hidden");
+      document.getElementById("dashboard-content").classList.remove("hidden");
+      const name = profile.fullName || user.email;
+      document.getElementById("owner-name-nav").textContent  = name;
+      document.getElementById("owner-name-dash").textContent = name;
+      document.getElementById("current-date").textContent    = new Date().toLocaleDateString("en-PH",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+      loadOverview();
+      loadRecentOrders();
+    });
+
+    function showGate() {
+      document.getElementById("login-gate").classList.remove("hidden");
+      document.getElementById("dashboard-content").classList.add("hidden");
+    }
+
+    // ── Login ─────────────────────────────────────────────
+    document.getElementById("login-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const btn = document.getElementById("login-submit");
+      btn.disabled = true; btn.textContent = "Signing in...";
+      try {
+        const { profile } = await loginUser(document.getElementById("login-email").value, document.getElementById("login-password").value);
+        if (profile?.role !== "owner") { await logoutUser(); showToast("Access denied. Owner only.", "error"); }
+        else showToast("Welcome back!", "success");
+      } catch { showToast("Invalid credentials.", "error"); }
+      btn.disabled = false; btn.textContent = "Sign In to Dashboard";
+    });
+
+    document.getElementById("nav-logout").addEventListener("click", async () => {
+      await logoutUser(); showToast("Logged out.", "info"); setTimeout(() => window.location.href = "index.html", 600);
+    });
+
+    // ── Tab switching ─────────────────────────────────────
+    document.querySelectorAll(".sidebar-link[data-tab]").forEach(link => {
+      link.addEventListener("click", e => {
+        e.preventDefault();
+        const tab = link.dataset.tab;
+        document.querySelectorAll(".tab-pane").forEach(p => p.classList.add("hidden"));
+        document.querySelectorAll(".sidebar-link").forEach(l => l.classList.remove("active"));
+        document.getElementById(tab).classList.remove("hidden");
+        link.classList.add("active");
+        document.getElementById("sidebar").classList.remove("open");
+        if (tab === "tab-sales")     loadSales();
+        if (tab === "tab-products")  loadProducts();
+        if (tab === "tab-inventory") loadInventory();
+        if (tab === "tab-orders")    loadAllOrders();
+        if (tab === "tab-comments")  loadComments();
+      });
+    });
+
+    document.getElementById("sidebar-toggle").addEventListener("click", () => document.getElementById("sidebar").classList.toggle("open"));
+
+    // ── Overview ──────────────────────────────────────────
+    async function loadOverview() {
+      const from = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+      const to   = new Date().toISOString().split("T")[0];
+      const data = await getSalesOverview(from, to);
+      document.getElementById("stat-revenue").textContent = formatPrice(data.totalRevenue);
+      document.getElementById("stat-orders").textContent  = data.totalOrders;
+      document.getElementById("stat-today").textContent   = formatPrice(data.todayRevenue);
+      document.getElementById("stat-pending").textContent = data.pending;
+    }
+
+    async function loadRecentOrders() {
+      const orders = (await getAllOrders()).slice(0, 10);
+      renderOrdersTable("recent-orders-body", orders);
+    }
+
+    function statusBadge(s) {
+      return {pending:"warning",confirmed:"info",processing:"info",shipped:"accent",delivered:"success",cancelled:"danger"}[s]||"muted";
+    }
+
+    function renderOrdersTable(tbodyId, orders) {
+      const tbody = document.getElementById(tbodyId);
+      if (!orders.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">No orders yet.</td></tr>'; return; }
+      tbody.innerHTML = orders.map(o => `
+        <tr>
+          <td><span style="font-family:var(--font-display)">${o.orderNumber}</span></td>
+          <td>${o.guestName||"Guest"}</td>
+          <td>${formatPrice(o.total)}</td>
+          <td><span class="badge badge-${statusBadge(o.orderStatus)}">${o.orderStatus}</span></td>
+          <td>${formatDate(o.createdAt)}</td>
+          <td><button class="btn btn-sm btn-outline" onclick="viewOrder('${o.id}')">View</button></td>
+        </tr>`).join("");
+    }
+
+    // ── Sales ─────────────────────────────────────────────
+    function getDateRange() {
+      const from = document.getElementById("date-from")?.value || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+      const to   = document.getElementById("date-to")?.value   || new Date().toISOString().split("T")[0];
+      return { from, to };
+    }
+
+    async function loadSales() {
+      const { from, to } = getDateRange();
+      const [ov, bd, bp, bc] = await Promise.all([getSalesOverview(from,to), getSalesByDate(from,to), getSalesByProduct(from,to), getSalesByCategory(from,to)]);
+      salesData = { overview: ov, byDate: bd, byProduct: bp, byCategory: bc };
+      document.getElementById("s-revenue").textContent = formatPrice(ov.totalRevenue);
+      document.getElementById("s-orders").textContent  = ov.totalOrders;
+      document.getElementById("s-avg").textContent     = formatPrice(ov.avgOrder);
+      document.getElementById("s-today").textContent   = formatPrice(ov.todayRevenue);
+      renderRevenueChart(bd);
+      renderProductChart(bp);
+      renderCategoryTable(bc);
+    }
+
+    function renderRevenueChart(data) {
+      const ctx = document.getElementById("revenue-chart");
+      if (!ctx) return;
+      if (revenueChart) revenueChart.destroy();
+      revenueChart = new Chart(ctx, {
+        type: "line",
+        data: { labels: data.map(d => new Date(d.date).toLocaleDateString("en-PH",{month:"short",day:"numeric"})),
+          datasets: [{ label:"Revenue (₱)", data: data.map(d=>d.revenue), borderColor:"#c9a96e", backgroundColor:"rgba(201,169,110,0.08)", borderWidth:2, fill:true, tension:.4, pointBackgroundColor:"#c9a96e", pointRadius:4 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false,
+          plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>"₱"+parseFloat(c.raw).toLocaleString("en-PH",{minimumFractionDigits:2})}} },
+          scales: { x:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11}}}, y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11},callback:v=>"₱"+v.toLocaleString()}} }
+        }
+      });
+    }
+
+    function renderProductChart(data) {
+      const ctx = document.getElementById("product-chart");
+      if (!ctx) return;
+      if (productChart) productChart.destroy();
+      productChart = new Chart(ctx, {
+        type:"bar",
+        data: { labels: data.map(d=>d.productName.length>18?d.productName.slice(0,18)+"…":d.productName),
+          datasets:[{label:"Revenue (₱)",data:data.map(d=>d.revenue),backgroundColor:"rgba(201,169,110,0.7)",borderColor:"#c9a96e",borderWidth:1,borderRadius:4}]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+          scales: { x:{grid:{display:false},ticks:{color:"#a09888",font:{size:11}}}, y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11},callback:v=>"₱"+v.toLocaleString()}} }
+        }
+      });
+    }
+
+    function renderCategoryTable(data) {
+      const tbody = document.getElementById("cat-tbody");
+      if (!tbody) return;
+      tbody.innerHTML = data.map(d=>`<tr><td>${d.category}</td><td>${d.unitsSold}</td><td>${formatPrice(d.revenue)}</td></tr>`).join("") || '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px">No data.</td></tr>';
+    }
+
+    document.getElementById("apply-dates")?.addEventListener("click", loadSales);
+
+    // Export buttons
+    document.getElementById("exp-pdf")?.addEventListener("click", () => { const {from,to}=getDateRange(); exportPDF(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
+    document.getElementById("exp-excel")?.addEventListener("click", () => { const {from,to}=getDateRange(); exportExcel(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
+    document.getElementById("exp-word")?.addEventListener("click", () => { const {from,to}=getDateRange(); exportWord(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
+    document.getElementById("exp-ppt")?.addEventListener("click", () => { const {from,to}=getDateRange(); exportPPT(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
+
+    // ── Products ──────────────────────────────────────────
+    async function loadProducts() {
+      const products = await getAllProductsAdmin();
+      const tbody    = document.getElementById("products-body");
+      if (!products.length) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">No products yet.</td></tr>'; return; }
+      tbody.innerHTML = products.map(p=>`
+        <tr>
+          <td><div style="display:flex;align-items:center;gap:10px">${p.imageUrl?`<img src="${p.imageUrl}" style="width:40px;height:52px;object-fit:cover;border-radius:4px">`:""}<span>${p.name}</span></div></td>
+          <td>${p.category||"—"}</td>
+          <td>${formatPrice(p.price)}</td>
+          <td><span class="badge badge-${p.isActive?"success":"muted"}">${p.isActive?"Active":"Hidden"}</span></td>
+          <td style="display:flex;gap:6px;padding:14px 16px">
+            <button class="btn btn-sm btn-outline" onclick="editProduct('${p.id}')">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="removeProduct('${p.id}')">Remove</button>
+          </td>
+        </tr>`).join("");
+    }
+
+    document.getElementById("add-product-btn")?.addEventListener("click", () => {
+      document.getElementById("product-modal-title").textContent = "Add Product";
+      document.getElementById("product-form").reset();
+      document.getElementById("pf-id").value = "";
+      document.getElementById("pf-active").checked = true;
+      openModal("product-modal");
+    });
+
+    window.editProduct = async id => {
+      const products = await getAllProductsAdmin();
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById("product-modal-title").textContent = "Edit Product";
+      document.getElementById("pf-id").value            = p.id;
+      document.getElementById("pf-name").value          = p.name;
+      document.getElementById("pf-category").value      = p.category||"";
+      document.getElementById("pf-cat-slug").value      = p.categorySlug||"";
+      document.getElementById("pf-price").value         = p.price;
+      document.getElementById("pf-original-price").value= p.originalPrice||"";
+      document.getElementById("pf-description").value   = p.description||"";
+      document.getElementById("pf-image").value         = p.imageUrl||"";
+      document.getElementById("pf-sizes").value         = (p.sizes||[]).join(",");
+      document.getElementById("pf-colors").value        = (p.colors||[]).join(",");
+      document.getElementById("pf-featured").checked    = p.isFeatured||false;
+      document.getElementById("pf-active").checked      = p.isActive!==false;
+      openModal("product-modal");
+    };
+
+    window.removeProduct = async id => {
+      if (!confirm("Remove this product?")) return;
+      await deleteProduct(id);
+      showToast("Product removed.", "success");
+      loadProducts();
+    };
+
+    document.getElementById("product-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const id   = document.getElementById("pf-id").value;
+      const data = {
+        name:          document.getElementById("pf-name").value,
+        category:      document.getElementById("pf-category").value,
+        categorySlug:  document.getElementById("pf-cat-slug").value,
+        price:         parseFloat(document.getElementById("pf-price").value),
+        originalPrice: parseFloat(document.getElementById("pf-original-price").value)||null,
+        description:   document.getElementById("pf-description").value,
+        imageUrl:      document.getElementById("pf-image").value,
+        sizes:         document.getElementById("pf-sizes").value.split(",").map(s=>s.trim()).filter(Boolean),
+        colors:        document.getElementById("pf-colors").value.split(",").map(s=>s.trim()).filter(Boolean),
+        isFeatured:    document.getElementById("pf-featured").checked,
+        isActive:      document.getElementById("pf-active").checked,
+      };
+      if (id) await updateProduct(id, data);
+      else await addProduct(data);
+      showToast(id ? "Product updated." : "Product added.", "success");
+      closeModal("product-modal");
+      loadProducts();
+    });
+
+    // ── Inventory ─────────────────────────────────────────
+    async function loadInventory() {
+      const items = await getInventory();
+      const tbody = document.getElementById("inventory-body");
+      if (!items.length) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">No inventory records.</td></tr>'; return; }
+      tbody.innerHTML = items.map(i => {
+        const pct = Math.min(100, Math.round((i.quantity/(i.lowStockThreshold*4))*100));
+        const cls = i.quantity<=0?"danger":i.quantity<=i.lowStockThreshold?"warning":"";
+        return `<tr>
+          <td>${i.productName}</td><td>${i.size||"—"}</td><td>${i.color||"—"}</td>
+          <td><span style="font-weight:500;color:${i.quantity==0?"var(--danger)":i.quantity<=(i.lowStockThreshold||5)?"var(--warning)":"var(--text-primary)"}">${i.quantity}</span>
+          <div class="stock-bar"><div class="stock-bar-fill ${cls}" style="width:${pct}%"></div></div></td>
+          <td><button class="btn btn-sm btn-outline" onclick="editStock('${i.id}',${i.quantity})">Edit</button></td>
+        </tr>`;
+      }).join("");
+    }
+
+    window.editStock = async (id, current) => {
+      const qty = prompt(`Update quantity (current: ${current}):`, current);
+      if (qty === null || isNaN(qty)) return;
+      await updateStock(id, parseInt(qty));
+      showToast("Stock updated.", "success");
+      loadInventory();
+    };
+
+    // ── Orders ────────────────────────────────────────────
+    async function loadAllOrders() {
+      const orders = await getAllOrders();
+      renderOrdersTable("all-orders-body", orders);
+    }
+
+    window.viewOrder = async id => {
+      const o = await getOrder(id);
+      if (!o) return;
+      document.getElementById("order-detail-body").innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+          <div><p class="form-label">Order Number</p><p>${o.orderNumber}</p></div>
+          <div><p class="form-label">Status</p><span class="badge badge-${statusBadge(o.orderStatus)}">${o.orderStatus}</span></div>
+          <div><p class="form-label">Customer</p><p>${o.guestName}</p></div>
+          <div><p class="form-label">Phone</p><p>${o.guestPhone}</p></div>
+          <div style="grid-column:1/-1"><p class="form-label">Address</p><p>${o.shippingAddress}</p></div>
+        </div>
+        <p class="form-label" style="margin-bottom:12px">Items</p>
+        ${(o.items||[]).map(i=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.875rem"><span>${i.productName} ${i.size?"("+i.size+")":""} × ${i.quantity}</span><span>${formatPrice(i.totalPrice)}</span></div>`).join("")}
+        <div style="display:flex;justify-content:space-between;padding:16px 0 0;font-weight:500"><span>Total</span><span style="color:var(--accent)">${formatPrice(o.total)}</span></div>
+        <div style="margin-top:20px"><p class="form-label">Update Status</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${["pending","confirmed","processing","shipped","delivered","cancelled"].map(s=>`<button class="btn btn-sm ${s===o.orderStatus?"btn-primary":"btn-outline"}" onclick="updStatus('${o.id}','${s}')">${s}</button>`).join("")}
+          </div>
+        </div>`;
+      openModal("order-modal");
+    };
+
+    window.updStatus = async (id, status) => {
+      await updateOrderStatus(id, status);
+      showToast("Status updated.", "success");
+      closeModal("order-modal");
+      loadAllOrders(); loadRecentOrders(); loadOverview();
+    };
+
+    // ── Comments ──────────────────────────────────────────
+    async function loadComments() {
+      const comments = await getComments();
+      const wrap     = document.getElementById("comments-body");
+      if (!comments.length) { wrap.innerHTML='<p style="text-align:center;color:var(--text-muted);padding:32px">No comments yet.</p>'; return; }
+      wrap.innerHTML = comments.map(c=>`
+        <div style="padding:16px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <p style="font-weight:500;font-size:.875rem;margin-bottom:4px">${c.userName||c.guestName||"Guest"} <span style="color:var(--accent)">${"★".repeat(c.rating||5)}</span></p>
+            <p style="font-size:.875rem;color:var(--text-secondary)">${c.content}</p>
+            <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">${formatDate(c.createdAt)}</p>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="delComment('${c.id}')">Delete</button>
+        </div>`).join("");
+    }
+
+    window.delComment = async id => {
+      if (!confirm("Delete this comment?")) return;
+      await deleteComment(id);
+      showToast("Comment deleted.", "success");
+      loadComments();
+    };
+
+    // Init dates
+    const today = new Date().toISOString().split("T")[0];
+    const first = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+    if (document.getElementById("date-from")) document.getElementById("date-from").value = first;
+    if (document.getElementById("date-to"))   document.getElementById("date-to").value   = today;
+  </script>
+</body>
+</html>

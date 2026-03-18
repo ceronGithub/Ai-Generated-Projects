@@ -36,5 +36,3 @@
 .stock-bar-fill { height: 100%; border-radius: 2px; background: var(--success); transition: var(--transition); }
 .stock-bar-fill.warning { background: var(--warning); }
 .stock-bar-fill.danger { background: var(--danger); }
-@media(max-width:1024px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:768px){.dashboard-layout{grid-template-columns:1fr}.sidebar{transform:translateX(-100%);transition:transform .3s ease}.sidebar.open{transform:translateX(0)}.dashboard-main{margin-left:0}.dashboard-content{padding:20px}.stats-grid{grid-template-columns:repeat(2,1fr)}}

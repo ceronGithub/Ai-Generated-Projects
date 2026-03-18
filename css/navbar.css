@@ -30,4 +30,3 @@
 .mobile-menu { display: none; position: fixed; top: 72px; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 899; padding: 40px 24px; flex-direction: column; gap: 24px; }
 .mobile-menu.open { display: flex; }
 .mobile-menu .nav-link { font-size: 1.5rem; font-family: var(--font-display); text-transform: none; letter-spacing: 0; font-weight: 300; }
-@media(max-width:768px){.nav-links{display:none}.nav-hamburger{display:flex}}
