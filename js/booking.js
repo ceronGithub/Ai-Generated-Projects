@@ -560,9 +560,11 @@ function resetBookingForm() {
   const constraintBanner = document.getElementById('bkConstraintBanner');
   if (constraintBanner) constraintBanner.remove();
   const timeInput = document.getElementById('bkCheckinTime');
-  if (timeInput) timeInput.min = '';
+  if (timeInput) { timeInput.min = ''; timeInput.max = ''; }
+  const hint = document.getElementById('bkCheckinTimeHint');
+  if (hint) hint.remove();
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
-    btn.classList.remove('bk-tour-unavailable');
+    btn.classList.remove('bk-tour-unavailable', 'selected');
     btn.disabled = false;
   });
 }
@@ -650,6 +652,47 @@ function calcCheckout() {
 /* ══════════════════════════════════════
    TOUR TYPE BUTTONS
 ══════════════════════════════════════ */
+
+/* Auto-set time + restrict range by tour type:
+   Day Tour   -> default 08:00, min 08:00, max 11:59
+   Night Tour -> default 12:00, min 12:00, max 22:00
+   Others     -> no restriction
+*/
+function applyTourTimeConstraints(tourType) {
+  const timeInput = document.getElementById('bkCheckinTime');
+  if (!timeInput) return;
+
+  const existingHint = document.getElementById('bkCheckinTimeHint');
+  if (existingHint) existingHint.remove();
+
+  if (tourType === 'Day Tour') {
+    timeInput.min = '08:00';
+    timeInput.max = '11:59';
+    const cur = timeInput.value;
+    if (!cur || cur < '08:00' || cur > '11:59') timeInput.value = '08:00';
+    _insertTimeHint(timeInput, '\u23f0 Day Tour: 8:00 AM \u2013 11:59 AM only');
+    calcCheckout();
+  } else if (tourType === 'Night Tour') {
+    timeInput.min = '12:00';
+    timeInput.max = '22:00';
+    const cur = timeInput.value;
+    if (!cur || cur < '12:00' || cur > '22:00') timeInput.value = '12:00';
+    _insertTimeHint(timeInput, '\ud83c\udf19 Night Tour: 12:00 PM \u2013 10:00 PM only');
+    calcCheckout();
+  } else {
+    timeInput.min = '';
+    timeInput.max = '';
+  }
+}
+
+function _insertTimeHint(timeInput, msg) {
+  const hint = document.createElement('div');
+  hint.id = 'bkCheckinTimeHint';
+  hint.style.cssText = 'font-size:11px;font-weight:700;color:#7c6af4;margin-top:4px;';
+  hint.textContent = msg;
+  timeInput.parentNode.appendChild(hint);
+}
+
 function setupTourButtons() {
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -657,6 +700,7 @@ function setupTourButtons() {
       btn.classList.add('selected');
       _tourType = btn.dataset.type;
       document.getElementById('errTourType').textContent = '';
+      applyTourTimeConstraints(_tourType);
       calcCheckout();
       scheduleDraftSave();
     });
@@ -1289,6 +1333,7 @@ function openEditForm(b, key, color) {
     btn.classList.toggle('selected', btn.dataset.type === tour);
   });
   _tourType = tour;
+  applyTourTimeConstraints(_tourType);
 
   calcTotalPax(); calcBalance(); calcCheckout();
   applyTimeSlotToForm(b.booking?.checkinTime || '');
@@ -1526,6 +1571,7 @@ function restoreDraft(draft) {
       btn.classList.toggle('selected', btn.dataset.type === draft.tourType);
     });
     _tourType = draft.tourType;
+    applyTourTimeConstraints(_tourType);
   }
 
   calcTotalPax();
