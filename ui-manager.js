@@ -74,6 +74,12 @@ const UIManager = (() => {
       tablemode:    'Table Mode',
       compressmode: 'Compress PDF',
       splitmode:    'Split PDF',
+      toexcel:      'Convert to Excel',
+      toword:       'Convert to Word',
+      toppt:        'Convert to PPT',
+      tojpg:        'Convert to JPG',
+      enhancemode:  'Enhance PDF',
+      lockmode:     'Lock PDF',
     };
 
     const display = document.getElementById('modeDisplay');
@@ -118,10 +124,22 @@ const UIManager = (() => {
       hint.textContent = 'No keywords needed — click Run Extraction to compress your PDF files.';
       if (splitPanel) splitPanel.style.display = 'none';
     } else if (mode === 'splitmode') {
-      // Split mode: hide keyword input — config is in the dedicated step-split card
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       hint.textContent = 'Configure your split settings in Step 03.1 below.';
+      if (splitPanel) splitPanel.style.display = 'none';
+    } else if (['toexcel','toword','toppt','tojpg','enhancemode','lockmode'].includes(mode)) {
+      area.style.display = 'none';
+      document.getElementById('keywordChips').innerHTML = '';
+      const modeHints = {
+        toexcel:     'No keywords needed — PDF text will be extracted to Excel.',
+        toword:      'No keywords needed — PDF text will be exported to Word.',
+        toppt:       'No keywords needed — each PDF page becomes a slide.',
+        tojpg:       'No keywords needed — each PDF page will be rendered as a JPG.',
+        enhancemode: 'No keywords needed — your PDF will be re-rendered at higher quality.',
+        lockmode:    'No keywords needed — you will set passwords in the results panel.',
+      };
+      hint.textContent = modeHints[mode] || '';
       if (splitPanel) splitPanel.style.display = 'none';
     } else {
       area.style.display = 'flex';
@@ -1382,6 +1400,326 @@ const UIManager = (() => {
     }
   }
 
+  // =============================================
+  // CONVERSION RESULTS (Excel / Word / PPT / JPG)
+  // =============================================
+
+  const CONV_CONFIG = {
+    toexcel: { icon: '📊', label: 'Excel',       color: 'var(--green)',  rgb: '57,255,160',  ext: '.xlsx' },
+    toword:  { icon: '📝', label: 'Word',        color: '#2B6CB0',       rgb: '43,108,176',  ext: '.docx' },
+    toppt:   { icon: '📽️', label: 'PowerPoint', color: 'var(--gold)',   rgb: '255,201,77',  ext: '.pptx' },
+    tojpg:   { icon: '🖼️', label: 'JPG',        color: 'var(--violet)', rgb: '159,111,255', ext: '.jpg'  },
+  };
+
+  function renderConversionResults(results, mode) {
+    const cfg       = CONV_CONFIG[mode] || CONV_CONFIG.toexcel;
+    const container = document.getElementById('resultsContainer');
+    const list      = document.getElementById('resultsList');
+    const actions   = document.getElementById('resultsActions');
+    container.style.display = 'block';
+    list.innerHTML    = '';
+    actions.innerHTML = '';
+
+    if (!results || !results.length) {
+      list.innerHTML = `<div class="no-results">No files converted.</div>`;
+      return;
+    }
+
+    // Actions row
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+    const dlAllBtn = document.createElement('button');
+    dlAllBtn.className   = `btn-excel conv-dl-all`;
+    dlAllBtn.style.cssText = `background:linear-gradient(135deg,rgba(${cfg.rgb},0.85),rgba(${cfg.rgb},0.55));color:#000;font-weight:700;`;
+    dlAllBtn.textContent = `⬇ Download All`;
+    dlAllBtn.addEventListener('click', () => _downloadAllConv(results));
+    actionsRow.appendChild(dlAllBtn);
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+    actions.appendChild(makeCountBadge(results.length, 'file'));
+
+    // Summary card
+    const ok  = results.filter(r => !r.error).length;
+    const err = results.length - ok;
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'tm-summary-card conv-summary-card';
+    summaryCard.style.cssText = `border-color:rgba(${cfg.rgb},0.2)!important;background:linear-gradient(135deg,rgba(${cfg.rgb},0.04) 0%,rgba(8,15,35,0.85) 60%)!important;`;
+    summaryCard.innerHTML = `
+      <div class="tm-summary-grid">
+        <div class="tm-stat"><span class="tm-stat-val">${cfg.icon}</span><span class="tm-stat-lbl">${cfg.label}</span></div>
+        <div class="tm-stat"><span class="tm-stat-val">${results.length}</span><span class="tm-stat-lbl">Files</span></div>
+        <div class="tm-stat tm-stat--fee"><span class="tm-stat-val" style="color:${cfg.color}">${ok}</span><span class="tm-stat-lbl">Converted</span></div>
+        ${err ? `<div class="tm-stat"><span class="tm-stat-val" style="color:var(--danger)">${err}</span><span class="tm-stat-lbl">Errors</span></div>` : ''}
+      </div>`;
+    list.appendChild(summaryCard);
+
+    for (const result of results) {
+      list.appendChild(_makeConvCard(result, cfg));
+    }
+    capResultsHeight(list);
+  }
+
+  function _makeConvCard(result, cfg) {
+    const card = document.createElement('div');
+    card.className = 'result-item conv-card';
+    const hasError = !!result.error;
+
+    card.innerHTML = `
+      <div class="result-meta">
+        <span class="page-badge">${cfg.ext.toUpperCase().replace('.','')}</span>
+        <span class="result-filename" title="${escapeHtml(result.file.name)}">${escapeHtml(result.file.name)}</span>
+        <button class="result-remove-btn" title="Remove">✕</button>
+      </div>
+      <div class="conv-body">
+        <div class="conv-info-row">
+          <span class="conv-type-badge" style="color:${cfg.color};border-color:rgba(${cfg.rgb ?? '0,229,255'},0.3);background:rgba(${cfg.rgb ?? '0,229,255'},0.08);">${cfg.icon} ${cfg.label}</span>
+          <span class="conv-out-name">${escapeHtml(result.filename || result.file.name)}</span>
+          ${result.pages ? `<span class="conv-pages">${result.pages} page${result.pages !== 1 ? 's' : ''}</span>` : ''}
+          ${result.blob  ? `<span class="conv-size">${_fmtBytes(result.blob.size)}</span>` : ''}
+        </div>
+        ${hasError ? `<div class="cm-error">⚠ ${escapeHtml(result.error)}</div>` : ''}
+      </div>
+      ${!hasError ? `<button class="cm-dl-btn btn btn-accent conv-dl-btn" style="border-color:rgba(${cfg.rgb ?? '0,229,255'},0.3);color:${cfg.color};background:linear-gradient(135deg,rgba(${cfg.rgb ?? '0,229,255'},0.15),rgba(${cfg.rgb ?? '0,229,255'},0.08));">⬇ Download</button>` : ''}
+    `;
+
+    if (!hasError) {
+      card.querySelector('.conv-dl-btn').addEventListener('click', () => {
+        _downloadBlob(result.blob, result.filename);
+      });
+    }
+    card.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(card));
+    return card;
+  }
+
+  async function _downloadAllConv(results) {
+    const valid = results.filter(r => r.blob && !r.error);
+    if (!valid.length) return;
+    if (valid.length === 1) { _downloadBlob(valid[0].blob, valid[0].filename); return; }
+    if (window.JSZip) {
+      const zip = new JSZip();
+      for (const r of valid) { zip.file(r.filename, await r.blob.arrayBuffer()); }
+      const z = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 1 } });
+      _downloadBlob(z, 'converted_files.zip');
+    } else {
+      valid.forEach((r, i) => setTimeout(() => _downloadBlob(r.blob, r.filename), i * 350));
+    }
+  }
+
+  // =============================================
+  // ENHANCE PDF RESULTS
+  // =============================================
+
+  function renderEnhanceResults(results) {
+    const container = document.getElementById('resultsContainer');
+    const list      = document.getElementById('resultsList');
+    const actions   = document.getElementById('resultsActions');
+    container.style.display = 'block';
+    list.innerHTML    = '';
+    actions.innerHTML = '';
+
+    if (!results || !results.length) {
+      list.innerHTML = `<div class="no-results">No files enhanced.</div>`;
+      return;
+    }
+
+    const totalOrig = results.reduce((s, r) => s + (r.originalSize || 0), 0);
+    const totalEnh  = results.reduce((s, r) => s + (r.enhancedSize || 0), 0);
+
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+    const dlAllBtn = document.createElement('button');
+    dlAllBtn.className   = 'btn-excel enh-dl-all-btn';
+    dlAllBtn.textContent = '⬇ Download All';
+    dlAllBtn.addEventListener('click', () => {
+      const valid = results.filter(r => r.blob && !r.error);
+      if (!valid.length) return;
+      if (valid.length === 1) { _downloadBlob(valid[0].blob, valid[0].filename); return; }
+      if (window.JSZip) {
+        const zip = new JSZip();
+        Promise.all(valid.map(r => r.blob.arrayBuffer().then(b => zip.file(r.filename, b))))
+          .then(() => zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 1 } }))
+          .then(z => _downloadBlob(z, 'enhanced_pdfs.zip'));
+      } else {
+        valid.forEach((r, i) => setTimeout(() => _downloadBlob(r.blob, r.filename), i * 350));
+      }
+    });
+    actionsRow.appendChild(dlAllBtn);
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+    actions.appendChild(makeCountBadge(results.length, 'file'));
+
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'tm-summary-card enh-summary-card';
+    summaryCard.innerHTML = `
+      <div class="tm-summary-grid">
+        <div class="tm-stat"><span class="tm-stat-val">${results.length}</span><span class="tm-stat-lbl">Files</span></div>
+        <div class="tm-stat"><span class="tm-stat-val">${_fmtBytes(totalOrig)}</span><span class="tm-stat-lbl">Original</span></div>
+        <div class="tm-stat tm-stat--fee"><span class="tm-stat-val">${_fmtBytes(totalEnh)}</span><span class="tm-stat-lbl">Enhanced</span></div>
+      </div>`;
+    list.appendChild(summaryCard);
+
+    for (const result of results) {
+      const card = document.createElement('div');
+      card.className = 'result-item enh-card';
+      const hasError = !!result.error;
+      const gainLabel = hasError ? '' : `+${result.gainPct ?? 0}% larger`;
+      card.innerHTML = `
+        <div class="result-meta">
+          <span class="page-badge">PDF</span>
+          <span class="result-filename" title="${escapeHtml(result.file.name)}">${escapeHtml(result.file.name)}</span>
+          <button class="result-remove-btn" title="Remove">✕</button>
+        </div>
+        <div class="cm-body">
+          <div class="cm-sizes">
+            <span class="cm-size-orig">${_fmtBytes(result.originalSize)}</span>
+            <span class="cm-arrow">→</span>
+            <span class="cm-size-new enh-size-new">${_fmtBytes(result.enhancedSize)}</span>
+            ${!hasError ? `<span class="cm-badge enh-badge">✨ ${gainLabel}</span>` : ''}
+          </div>
+          ${hasError ? `<div class="cm-error">⚠ ${escapeHtml(result.error)}</div>`
+                     : `<div class="cm-filename-out">Output: <span>${escapeHtml(result.filename)}</span></div>`}
+        </div>
+        ${!hasError ? `<button class="cm-dl-btn btn btn-accent enh-dl-btn">⬇ Download</button>` : ''}
+      `;
+      if (!hasError) {
+        card.querySelector('.enh-dl-btn').addEventListener('click', () => _downloadBlob(result.blob, result.filename));
+      }
+      card.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(card));
+      list.appendChild(card);
+    }
+    capResultsHeight(list);
+  }
+
+  // =============================================
+  // LOCK PDF RESULTS
+  // =============================================
+
+  function renderLockResults(results) {
+    const container = document.getElementById('resultsContainer');
+    const list      = document.getElementById('resultsList');
+    const actions   = document.getElementById('resultsActions');
+    container.style.display = 'block';
+    list.innerHTML    = '';
+    actions.innerHTML = '';
+
+    if (!results || !results.length) {
+      list.innerHTML = `<div class="no-results">No files to lock.</div>`;
+      return;
+    }
+
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+    actions.appendChild(makeCountBadge(results.length, 'file'));
+
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'tm-summary-card lock-summary-card';
+    summaryCard.innerHTML = `
+      <div class="tm-summary-grid">
+        <div class="tm-stat"><span class="tm-stat-val">${results.length}</span><span class="tm-stat-lbl">File${results.length!==1?'s':''} Ready</span></div>
+        <div class="tm-stat tm-stat--fee"><span class="tm-stat-val">🔒</span><span class="tm-stat-lbl">Set passwords below</span></div>
+      </div>`;
+    list.appendChild(summaryCard);
+
+    for (const result of results) {
+      list.appendChild(_makeLockCard(result));
+    }
+    capResultsHeight(list);
+  }
+
+  function _makeLockCard(result) {
+    const card = document.createElement('div');
+    card.className = 'result-item lock-card';
+
+    card.innerHTML = `
+      <div class="result-meta">
+        <span class="page-badge">PDF</span>
+        <span class="result-filename" title="${escapeHtml(result.file.name)}">${escapeHtml(result.file.name)}</span>
+        <button class="result-remove-btn" title="Remove">✕</button>
+      </div>
+      <div class="lock-body">
+        <div class="lock-pw-row">
+          <div class="lock-pw-field-wrap">
+            <input type="password" class="lock-pw-input" placeholder="Enter password (min 8 chars, mixed alphanumeric)" maxlength="64" autocomplete="new-password"/>
+            <button class="lock-pw-toggle" title="Show/hide password" tabindex="-1">👁</button>
+          </div>
+          <div class="lock-pw-strength" aria-live="polite"></div>
+        </div>
+        <div class="lock-status"></div>
+      </div>
+      <button class="cm-dl-btn btn lock-lock-btn" disabled>🔒 Lock &amp; Download</button>
+    `;
+
+    const pwInput    = card.querySelector('.lock-pw-input');
+    const pwToggle   = card.querySelector('.lock-pw-toggle');
+    const strengthEl = card.querySelector('.lock-pw-strength');
+    const statusEl   = card.querySelector('.lock-status');
+    const lockBtn    = card.querySelector('.lock-lock-btn');
+
+    // ── Show/hide password ──
+    pwToggle.addEventListener('click', () => {
+      const show = pwInput.type === 'password';
+      pwInput.type = show ? 'text' : 'password';
+      pwToggle.textContent = show ? '🙈' : '👁';
+    });
+
+    // ── Password strength validation ──
+    function validatePw(pw) {
+      if (pw.length < 8)                              return { ok: false, msg: '⚠ At least 8 characters required', level: 0 };
+      const hasLetter = /[a-zA-Z]/.test(pw);
+      const hasNumber = /[0-9]/.test(pw);
+      if (!hasLetter || !hasNumber)                   return { ok: false, msg: '⚠ Must contain both letters and numbers', level: 1 };
+      const hasUpper  = /[A-Z]/.test(pw);
+      const hasSpec   = /[^a-zA-Z0-9]/.test(pw);
+      if (pw.length >= 12 && hasUpper && hasSpec)     return { ok: true,  msg: '✦ Strong password',   level: 3 };
+      if (pw.length >= 10 && (hasUpper || hasSpec))   return { ok: true,  msg: '✓ Good password',     level: 2 };
+      return                                               { ok: true,  msg: '✓ Acceptable password', level: 1 };
+    }
+
+    const LEVEL_COLORS = ['var(--danger)', 'var(--gold)', 'var(--cyan)', 'var(--green)'];
+
+    pwInput.addEventListener('input', () => {
+      const pw = pwInput.value;
+      if (!pw) { strengthEl.textContent = ''; lockBtn.disabled = true; return; }
+      const v = validatePw(pw);
+      strengthEl.textContent  = v.msg;
+      strengthEl.style.color  = LEVEL_COLORS[v.level] || 'var(--text-dim)';
+      lockBtn.disabled = !v.ok;
+    });
+
+    // ── Lock & Download ──
+    lockBtn.addEventListener('click', async () => {
+      const pw = pwInput.value.trim();
+      const v  = validatePw(pw);
+      if (!v.ok) { strengthEl.textContent = v.msg; strengthEl.style.color = 'var(--danger)'; return; }
+
+      lockBtn.disabled    = true;
+      lockBtn.textContent = '🔒 Locking…';
+      statusEl.textContent = '';
+
+      try {
+        const locked = await PDFLocker.lock(result.file, pw);
+        statusEl.textContent = `✓ Locked as: ${locked.filename}`;
+        statusEl.style.color = 'var(--green)';
+        lockBtn.textContent  = '✓ Locked — Download Again';
+        lockBtn.disabled     = false;
+        lockBtn.classList.add('lock-btn--done');
+        _downloadBlob(locked.blob, locked.filename);
+        // Wire subsequent clicks to re-download
+        lockBtn.onclick = () => _downloadBlob(locked.blob, locked.filename);
+      } catch (err) {
+        statusEl.textContent = `⚠ Error: ${err.message}`;
+        statusEl.style.color = 'var(--danger)';
+        lockBtn.textContent  = '🔒 Lock & Download';
+        lockBtn.disabled     = false;
+      }
+    });
+
+    card.querySelector('.result-remove-btn').addEventListener('click', () => popRemove(card));
+    return card;
+  }
+
   return {
     renderFileList,
     setModeSelected,
@@ -1401,6 +1739,9 @@ const UIManager = (() => {
     renderTableResults,
     renderCompressResults,
     renderSplitResults,
+    renderConversionResults,
+    renderEnhanceResults,
+    renderLockResults,
     escapeHtml,
   };
 })();

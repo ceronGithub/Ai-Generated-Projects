@@ -4554,3 +4554,202 @@ mark {
   border-color: var(--rose) !important;
   box-shadow: 0 0 10px rgba(255, 107, 157, 0.25) !important;
 }
+/* ============================================================
+   NEW MODES — mode button variants
+   ============================================================ */
+
+/* Excel — green */
+.mode-btn--excel { border-color: rgba(57,255,160,0.25) !important; }
+.mode-btn--excel:hover,.mode-btn--excel.selected {
+  border-color: var(--green) !important;
+  box-shadow: 0 0 18px rgba(57,255,160,0.25) !important;
+}
+.mode-btn--excel .mode-icon { filter: drop-shadow(0 0 6px rgba(57,255,160,0.5)); }
+
+/* Word — blue */
+.mode-btn--word { border-color: rgba(43,108,176,0.35) !important; }
+.mode-btn--word:hover,.mode-btn--word.selected {
+  border-color: #2B6CB0 !important;
+  box-shadow: 0 0 18px rgba(43,108,176,0.35) !important;
+}
+.mode-btn--word .mode-icon { filter: drop-shadow(0 0 6px rgba(43,108,176,0.6)); }
+
+/* PPT — gold */
+.mode-btn--ppt { border-color: rgba(255,201,77,0.25) !important; }
+.mode-btn--ppt:hover,.mode-btn--ppt.selected {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 18px rgba(255,201,77,0.25) !important;
+}
+.mode-btn--ppt .mode-icon { filter: drop-shadow(0 0 6px rgba(255,201,77,0.5)); }
+
+/* JPG — violet */
+.mode-btn--jpg { border-color: rgba(159,111,255,0.25) !important; }
+.mode-btn--jpg:hover,.mode-btn--jpg.selected {
+  border-color: var(--violet) !important;
+  box-shadow: 0 0 18px rgba(159,111,255,0.25) !important;
+}
+.mode-btn--jpg .mode-icon { filter: drop-shadow(0 0 6px rgba(159,111,255,0.5)); }
+
+/* Enhance — cyan */
+.mode-btn--enhance { border-color: rgba(0,229,255,0.25) !important; }
+.mode-btn--enhance:hover,.mode-btn--enhance.selected {
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 18px rgba(0,229,255,0.25) !important;
+}
+.mode-btn--enhance .mode-icon { filter: drop-shadow(0 0 8px rgba(0,229,255,0.6)); }
+
+/* Lock — danger/red */
+.mode-btn--lock { border-color: rgba(255,79,107,0.25) !important; }
+.mode-btn--lock:hover,.mode-btn--lock.selected {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 18px rgba(255,79,107,0.25) !important;
+}
+.mode-btn--lock .mode-icon { filter: drop-shadow(0 0 6px rgba(255,79,107,0.5)); }
+
+/* ── Conversion result cards ── */
+.conv-card { display: flex; flex-direction: column; gap: 0.6rem; }
+.conv-body {
+  padding: 0.5rem 0.75rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: var(--radius-sm);
+}
+.conv-info-row { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
+.conv-type-badge {
+  display: inline-block;
+  padding: 0.08em 0.55em;
+  border-radius: 5px;
+  border: 1px solid;
+  font-family: var(--font-head);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+}
+.conv-out-name {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-mid);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+}
+.conv-pages { font-size: 0.7rem; color: var(--text-dim); font-family: var(--font-mono); }
+.conv-size  { font-size: 0.7rem; color: var(--text-dim); font-family: var(--font-mono); margin-left: auto; }
+.conv-dl-btn { align-self: flex-start; }
+.conv-view-btn:hover { transform: translateY(-1px); }
+
+/* ── Enhance result cards ── */
+.enh-summary-card {
+  border-color: rgba(0,229,255,0.2) !important;
+  background: linear-gradient(135deg, rgba(0,229,255,0.04) 0%, rgba(8,15,35,0.85) 60%) !important;
+}
+.enh-card { display: flex; flex-direction: column; gap: 0.6rem; }
+.enh-size-new { color: var(--cyan) !important; font-weight: 700; }
+.enh-badge {
+  background: rgba(0,229,255,0.12) !important;
+  border: 1px solid rgba(0,229,255,0.3) !important;
+  color: var(--cyan) !important;
+}
+.enh-view-btn { color: var(--cyan) !important; border-color: rgba(0,229,255,0.3) !important; }
+.enh-view-btn:hover {
+  background: rgba(0,229,255,0.1) !important;
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 10px rgba(0,229,255,0.25) !important;
+}
+.enh-dl-btn {
+  align-self: flex-start;
+  border-color: rgba(0,229,255,0.3) !important;
+  color: var(--cyan) !important;
+  background: linear-gradient(135deg, rgba(0,229,255,0.12), rgba(159,111,255,0.08)) !important;
+}
+.enh-dl-btn:hover {
+  background: linear-gradient(135deg, rgba(0,229,255,0.22), rgba(159,111,255,0.15)) !important;
+  box-shadow: 0 0 14px rgba(0,229,255,0.2) !important;
+}
+.enh-dl-all-btn {
+  background: linear-gradient(135deg, var(--cyan), #007a8a) !important;
+  color: #000 !important;
+  font-weight: 700;
+}
+
+/* ── Lock PDF result cards ── */
+.lock-summary-card {
+  border-color: rgba(255,79,107,0.2) !important;
+  background: linear-gradient(135deg, rgba(255,79,107,0.04) 0%, rgba(8,15,35,0.85) 60%) !important;
+}
+.lock-card { display: flex; flex-direction: column; gap: 0.75rem; }
+.lock-body { display: flex; flex-direction: column; gap: 0.5rem; }
+.lock-pw-row { display: flex; flex-direction: column; gap: 0.35rem; }
+.lock-pw-field-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid rgba(255,79,107,0.3);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.lock-pw-field-wrap:focus-within {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(255,79,107,0.15);
+}
+.lock-pw-input {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  padding: 0.5rem 0.8rem;
+  outline: none;
+  min-width: 0;
+}
+.lock-pw-input::placeholder { color: var(--text-dim); font-size: 0.72rem; }
+.lock-pw-toggle {
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.08);
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-mid);
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.lock-pw-toggle:hover { background: rgba(255,255,255,0.06); }
+.lock-pw-strength {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  min-height: 1em;
+  transition: color 0.2s;
+}
+.lock-status {
+  font-size: 0.74rem;
+  font-family: var(--font-mono);
+  min-height: 1em;
+}
+.lock-lock-btn {
+  align-self: flex-start;
+  border: 1px solid rgba(255,79,107,0.35) !important;
+  color: var(--danger) !important;
+  background: rgba(255,79,107,0.1) !important;
+  font-weight: 700;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.lock-lock-btn:not(:disabled):hover {
+  background: rgba(255,79,107,0.2) !important;
+  box-shadow: 0 0 14px rgba(255,79,107,0.25) !important;
+  transform: translateY(-1px);
+}
+.lock-lock-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+.lock-btn--done {
+  border-color: rgba(57,255,160,0.35) !important;
+  color: var(--green) !important;
+  background: rgba(57,255,160,0.1) !important;
+}

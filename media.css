@@ -229,8 +229,6 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 0.7rem;
   }
-  /* Stack extract-all full-width */
-  .mode-btn:nth-child(3) { grid-column: 1 / -1; }
   .mode-btn   { padding: 1.1rem 0.9rem; }
   .mode-icon  { font-size: 1.6rem; }
   .mode-name  { font-size: 0.65rem; }

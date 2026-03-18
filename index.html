@@ -133,13 +133,49 @@
           <button class="mode-btn mode-btn--compress" id="modeCompress" data-mode="compressmode">
             <span class="mode-icon">🗜️</span>
             <span class="mode-name">Compress PDF</span>
-            <span class="mode-desc">Reduce the file size of your PDFs. No keywords needed — just run and download the compressed files.</span>
+            <span class="mode-desc">Reduce the file size of your PDFs. No keywords needed — just run and download.</span>
           </button>
           <!-- ── NEW: Split PDF ── -->
           <button class="mode-btn mode-btn--split" id="modeSplit" data-mode="splitmode">
             <span class="mode-icon">✂️</span>
             <span class="mode-name">Split PDF</span>
             <span class="mode-desc">Split one large PDF into multiple files — by page count or custom page ranges.</span>
+          </button>
+          <!-- ── NEW: Convert to Excel ── -->
+          <button class="mode-btn mode-btn--excel" id="modeToExcel" data-mode="toexcel">
+            <span class="mode-icon">📊</span>
+            <span class="mode-name">Convert to Excel</span>
+            <span class="mode-desc">Extract all text from your PDFs into structured Excel spreadsheets (.xlsx).</span>
+          </button>
+          <!-- ── NEW: Convert to Word ── -->
+          <button class="mode-btn mode-btn--word" id="modeToWord" data-mode="toword">
+            <span class="mode-icon">📝</span>
+            <span class="mode-name">Convert to Word</span>
+            <span class="mode-desc">Export all PDF text into editable Word documents (.docx).</span>
+          </button>
+          <!-- ── NEW: Convert to PPT ── -->
+          <button class="mode-btn mode-btn--ppt" id="modeToPPT" data-mode="toppt">
+            <span class="mode-icon">📽️</span>
+            <span class="mode-name">Convert to PPT</span>
+            <span class="mode-desc">Turn each PDF page into a PowerPoint slide (.pptx).</span>
+          </button>
+          <!-- ── NEW: Convert to JPG ── -->
+          <button class="mode-btn mode-btn--jpg" id="modeToJPG" data-mode="tojpg">
+            <span class="mode-icon">🖼️</span>
+            <span class="mode-name">Convert to JPG</span>
+            <span class="mode-desc">Render each PDF page as a high-resolution JPG image.</span>
+          </button>
+          <!-- ── NEW: Enhance PDF ── -->
+          <button class="mode-btn mode-btn--enhance" id="modeEnhance" data-mode="enhancemode">
+            <span class="mode-icon">✨</span>
+            <span class="mode-name">Enhance PDF</span>
+            <span class="mode-desc">Re-render your PDF at higher resolution for a sharper, cleaner output.</span>
+          </button>
+          <!-- ── NEW: Lock PDF ── -->
+          <button class="mode-btn mode-btn--lock" id="modeLock" data-mode="lockmode">
+            <span class="mode-icon">🔒</span>
+            <span class="mode-name">Lock PDF</span>
+            <span class="mode-desc">Password-protect your PDF files. Set a password before downloading.</span>
           </button>
         </div>
 
@@ -748,12 +784,19 @@
     <!-- JS modules (order matters) -->
     <script src="pdf-processor.js"></script>
     <script src="keyword-handler.js"></script>
+    <script src="table-engine.js"></script>
     <script src="table-parser.js"></script>
     <script src="excel-exporter.js"></script>
     <script src="extract-all.js"></script>
     <script src="rename-handler.js"></script>
     <script src="pdf-compressor.js"></script>
     <script src="pdf-splitter.js"></script>
+    <script src="pdf-to-excel.js"></script>
+    <script src="pdf-to-word.js"></script>
+    <script src="pdf-to-ppt.js"></script>
+    <script src="pdf-to-jpg.js"></script>
+    <script src="pdf-enhancer.js"></script>
+    <script src="pdf-locker.js"></script>
     <script src="ui-manager.js"></script>
     <script src="stars.js"></script>
     <script src="datetime-widget.js"></script>

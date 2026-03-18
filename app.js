@@ -382,7 +382,9 @@
       UIManager.setRunEnabled(false);
       return;
     }
-    if (state.mode === 'extractall' || state.mode === 'tablemode' || state.mode === 'compressmode' || state.mode === 'splitmode') {
+    const noKeywordModes = ['extractall','tablemode','compressmode','splitmode',
+                            'toexcel','toword','toppt','tojpg','enhancemode','lockmode'];
+    if (noKeywordModes.includes(state.mode)) {
       UIManager.setRunEnabled(true);
       return;
     }
@@ -418,11 +420,18 @@
   async function runExtraction() {
     if (state.files.length === 0 || !state.mode) return;
 
+    const progressLabels = {
+      compressmode: 'Preparing compression…',
+      splitmode:    'Preparing split…',
+      toexcel:      'Preparing Excel conversion…',
+      toword:       'Preparing Word conversion…',
+      toppt:        'Preparing PowerPoint conversion…',
+      tojpg:        'Preparing JPG conversion…',
+      enhancemode:  'Preparing enhancement…',
+      lockmode:     'Preparing PDF lock…',
+    };
     UIManager.setRunning(true);
-    UIManager.setProgress(0,
-      state.mode === 'compressmode' ? 'Preparing compression…' :
-      state.mode === 'splitmode'    ? 'Preparing split…' :
-      'Phase 1 · Pre-reading PDFs and marking text locations…');
+    UIManager.setProgress(0, progressLabels[state.mode] || 'Phase 1 · Pre-reading PDFs…');
     document.getElementById('resultsContainer').style.display = 'none';
 
     // 🚀 Engage warp drive!
@@ -447,29 +456,102 @@
       if (state.mode === 'splitmode') {
         const file = state.files[0];
         if (!file) throw new Error('Please upload a PDF file first.');
-
-        // Read split config from the panel
-        const activeTab  = document.querySelector('.scp-tab--active');
-        const splitMode  = activeTab ? activeTab.dataset.scp : 'every';
-        const everyN     = parseInt(document.getElementById('scpEveryN')?.value || '1', 10);
-        const rangesStr  = document.getElementById('scpRangeInput')?.value || '';
-
+        const activeTab = document.querySelector('.scp-tab--active');
+        const splitMode = activeTab ? activeTab.dataset.scp : 'every';
         const config = {
           mode:   splitMode,
-          every:  everyN,
-          ranges: rangesStr,
+          every:  parseInt(document.getElementById('scpEveryN')?.value || '1', 10),
+          ranges: document.getElementById('scpRangeInput')?.value || '',
         };
-
         UIManager.setProgress(15, 'Reading PDF pages…');
         await new Promise(r => setTimeout(r, 30));
-
         const splitResults = await PDFSplitter.split(file, config, (done, total) => {
-          const pct = 15 + Math.round((done / total) * 80);
-          UIManager.setProgress(pct, `Splitting — rendering page ${done}/${total}…`);
+          UIManager.setProgress(15 + Math.round((done / total) * 80), `Splitting — rendering page ${done}/${total}…`);
         });
-
         UIManager.setProgress(100, 'Done!');
         UIManager.renderSplitResults(splitResults, file);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        return;
+      }
+
+      // ── Convert to Excel ─────────────────────────────────────────────────
+      if (state.mode === 'toexcel') {
+        UIManager.setProgress(20, 'Converting to Excel…');
+        await new Promise(r => setTimeout(r, 30));
+        const excelResults = await PDFToExcel.convert(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done / total) * 75), `Converting — ${done}/${total} file(s)…`);
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderConversionResults(excelResults, 'toexcel');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        return;
+      }
+
+      // ── Convert to Word ──────────────────────────────────────────────────
+      if (state.mode === 'toword') {
+        UIManager.setProgress(20, 'Converting to Word…');
+        await new Promise(r => setTimeout(r, 30));
+        const wordResults = await PDFToWord.convert(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done / total) * 75), `Converting — ${done}/${total} file(s)…`);
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderConversionResults(wordResults, 'toword');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        return;
+      }
+
+      // ── Convert to PPT ───────────────────────────────────────────────────
+      if (state.mode === 'toppt') {
+        UIManager.setProgress(15, 'Rendering pages…');
+        await new Promise(r => setTimeout(r, 30));
+        const pptResults = await PDFToPPT.convert(state.files, (done, total) => {
+          UIManager.setProgress(15 + Math.round((done / total) * 80), `Converting — ${done}/${total} page(s)…`);
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderConversionResults(pptResults, 'toppt');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        return;
+      }
+
+      // ── Convert to JPG ───────────────────────────────────────────────────
+      if (state.mode === 'tojpg') {
+        UIManager.setProgress(15, 'Rendering pages to images…');
+        await new Promise(r => setTimeout(r, 30));
+        const jpgResults = await PDFToJPG.convert(state.files, (done, total) => {
+          UIManager.setProgress(15 + Math.round((done / total) * 80), `Rendering — ${done}/${total} page(s)…`);
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderConversionResults(jpgResults, 'tojpg');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        return;
+      }
+
+      // ── Enhance PDF ──────────────────────────────────────────────────────
+      if (state.mode === 'enhancemode') {
+        UIManager.setProgress(20, 'Enhancing PDFs…');
+        await new Promise(r => setTimeout(r, 30));
+        const enhResults = await PDFEnhancer.enhance(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done / total) * 75), `Enhancing — ${done}/${total} file(s)…`);
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderEnhanceResults(enhResults);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+        return;
+      }
+
+      // ── Lock PDF ─────────────────────────────────────────────────────────
+      if (state.mode === 'lockmode') {
+        UIManager.setProgress(20, 'Processing PDFs for locking…');
+        await new Promise(r => setTimeout(r, 30));
+        const lockResults = [];
+        for (let i = 0; i < state.files.length; i++) {
+          const file = state.files[i];
+          // password is collected per-card in the results UI — pre-render the cards
+          lockResults.push({ file, filename: file.name.replace(/\.pdf$/i,'') + '_locked.pdf', blob: null, pending: true });
+          UIManager.setProgress(20 + Math.round(((i+1)/state.files.length)*75), `Preparing — ${i+1}/${state.files.length} file(s)…`);
+        }
+        UIManager.setProgress(100, 'Done! Enter passwords and click Lock to process each file.');
+        UIManager.renderLockResults(lockResults);
         setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
         return;
       }
