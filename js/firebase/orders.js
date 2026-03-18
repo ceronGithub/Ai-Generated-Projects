@@ -5,7 +5,7 @@ import { db } from './config.js';
 import {
   collection, doc, addDoc, getDoc, getDocs, updateDoc,
   query, orderBy, where, limit
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { clearCart } from './cart.js';
 import { decrementStock } from './inventory.js';
 
@@ -68,3 +68,6 @@ export async function getOrder(id) {
 export async function updateOrderStatus(id, status) {
   await updateDoc(doc(db, ORDERS, id), { orderStatus: status, updatedAt: new Date() });
 }
+
+// Aliases for compatibility
+export const getAllOrders = getOrders;

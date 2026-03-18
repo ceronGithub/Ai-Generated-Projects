@@ -1,165 +1,108 @@
 // ============================================================
-// STREETWISE PH — main.js | Core Utilities
+// STREETWISE PH — pages/main.js
+// Shared bootstrap for shop, product, cart, contact pages
 // ============================================================
 
-// ── SAFETY: Force hide loader after 3s no matter what ──────
-window.addEventListener("load", () => {
-  setTimeout(() => {
-    const loader = document.getElementById("page-loader");
-    if (loader) { loader.style.opacity = "0"; setTimeout(() => loader.remove(), 400); }
-  }, 3000);
-});
+import { onAuthChange, getCurrentProfile, logoutUser } from "../firebase/auth.js";
 
-// ── Toast ──────────────────────────────────────────────────
-window.showToast = function(message, type = "info", duration = 3500) {
-  let container = document.getElementById("toast-container");
-  if (!container) {
-    container = document.createElement("div");
-    container.id = "toast-container";
-    document.body.appendChild(container);
-  }
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transform = "translateX(100%)";
-    toast.style.transition = "all 0.3s ease";
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
+// ── Globals ────────────────────────────────────────────────
+window.showToast = function(msg, type="info", ms=3500) {
+  let c = document.getElementById("toast-container");
+  if (!c) { c = document.createElement("div"); c.id = "toast-container"; document.body.appendChild(c); }
+  const t = document.createElement("div");
+  t.className = `toast ${type}`; t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity="0"; t.style.transform="translateX(100%)"; t.style.transition="all .3s"; setTimeout(()=>t.remove(),300); }, ms);
 };
 
-// ── Format price ───────────────────────────────────────────
-window.formatPrice = function(amount) {
-  return "₱" + parseFloat(amount || 0).toLocaleString("en-PH", {
-    minimumFractionDigits: 2, maximumFractionDigits: 2
-  });
-};
+window.formatPrice = n => "₱" + parseFloat(n||0).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2});
+window.formatDate  = ts => { if(!ts) return "—"; const d=ts?.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric"}); };
+window.openModal   = id => { document.getElementById(id)?.classList.add("active"); document.body.style.overflow="hidden"; };
+window.closeModal  = id => { document.getElementById(id)?.classList.remove("active"); document.body.style.overflow=""; };
 
-// ── Format date ────────────────────────────────────────────
-window.formatDate = function(ts) {
-  if (!ts) return "—";
-  const d = ts?.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
-};
-
-// ── Modal helpers ──────────────────────────────────────────
-window.openModal  = id => { document.getElementById(id)?.classList.add("active");    document.body.style.overflow = "hidden"; };
-window.closeModal = id => { document.getElementById(id)?.classList.remove("active"); document.body.style.overflow = ""; };
-document.addEventListener("click", e => {
-  if (e.target.classList.contains("modal-overlay")) {
-    e.target.classList.remove("active");
-    document.body.style.overflow = "";
-  }
-});
-
-// ── Cart badge (works without Firebase) ───────────────────
-function updateCartBadge() {
+// ── Cart badge ─────────────────────────────────────────────
+window.updateCartBadge = function() {
   try {
-    const cart  = JSON.parse(localStorage.getItem("swph_cart") || "[]");
-    const count = cart.reduce((s, i) => s + (i.quantity || 0), 0);
+    const cart  = JSON.parse(localStorage.getItem("swph_cart")||"[]");
+    const count = cart.reduce((s,i)=>s+(i.quantity||0),0);
     const badge = document.getElementById("cart-badge");
     if (!badge) return;
-    badge.textContent = count || "";
-    badge.style.display = count > 0 ? "flex" : "none";
+    badge.textContent = count||"";
+    badge.style.display = count>0?"flex":"none";
   } catch {}
-}
-window.updateCartBadge = updateCartBadge;
-window.addEventListener("cartUpdated", updateCartBadge);
-
-// ── Hide loader ────────────────────────────────────────────
-function hideLoader() {
-  const loader = document.getElementById("page-loader");
-  if (loader) { loader.classList.add("hidden"); setTimeout(() => loader.remove(), 400); }
-}
-window.hideLoader = hideLoader;
-
-// ── Navbar scroll ──────────────────────────────────────────
-function initNavbar() {
-  const navbar = document.querySelector(".navbar");
-  if (!navbar) return;
-  window.addEventListener("scroll", () => navbar.classList.toggle("scrolled", window.scrollY > 40));
-  const hamburger  = document.getElementById("nav-hamburger");
-  const mobileMenu = document.getElementById("mobile-menu");
-  hamburger?.addEventListener("click", () => {
-    mobileMenu?.classList.toggle("open");
-    document.body.style.overflow = mobileMenu?.classList.contains("open") ? "hidden" : "";
-  });
-  const page = window.location.pathname.split("/").pop() || "index.html";
-  document.querySelectorAll(".nav-link").forEach(l => {
-    if (l.getAttribute("href") === page) l.classList.add("active");
-  });
-  // Close modal buttons
-  document.querySelectorAll(".modal-close").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const overlay = btn.closest(".modal-overlay");
-      if (overlay) { overlay.classList.remove("active"); document.body.style.overflow = ""; }
-    });
-  });
-}
-
-// ── Update nav with auth state ─────────────────────────────
-window.updateNavAuth = function(profile) {
-  const loginBtn  = document.getElementById("nav-login-btn");
-  const userEl    = document.getElementById("nav-user");
-  const ownerLink = document.getElementById("nav-owner-link");
-  if (!loginBtn) return;
-  if (profile) {
-    loginBtn.classList.add("hidden");
-    if (userEl) {
-      userEl.classList.remove("hidden");
-      const avatar = userEl.querySelector(".nav-user-avatar");
-      const name   = userEl.querySelector(".nav-user-name");
-      if (avatar) avatar.textContent = (profile.fullName || profile.email || "U")[0].toUpperCase();
-      if (name)   name.textContent   = profile.fullName || profile.email || "";
-    }
-    if (ownerLink && profile.role === "owner") ownerLink.classList.remove("hidden");
-  } else {
-    loginBtn.classList.remove("hidden");
-    if (userEl)    userEl.classList.add("hidden");
-    if (ownerLink) ownerLink.classList.add("hidden");
-  }
 };
+window.addEventListener("cartUpdated", window.updateCartBadge);
 
-// ── Init on DOM ready ──────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-  initNavbar();
-  updateCartBadge();
-
-  // Hide loader after short delay (fallback if Firebase loads fine)
-  setTimeout(hideLoader, 500);
-
-  // Try to init Firebase auth state — gracefully
-  import("./firebase/config.js")
-    .then(({ auth }) => {
-      return import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js")
-        .then(({ onAuthStateChanged }) => {
-          return import("./firebase/auth.js").then(({ getCurrentProfile }) => {
-            onAuthStateChanged(auth, async user => {
-              if (user) {
-                const profile = await getCurrentProfile(user.uid);
-                window.updateNavAuth({ ...profile, email: user.email });
-              } else {
-                window.updateNavAuth(null);
-              }
-            });
-          });
-        });
-    })
-    .catch(err => {
-      // Firebase not configured yet — show a helpful message in console
-      console.warn("⚠️ Firebase not connected yet. Open js/firebase/config.js and paste your credentials.");
-      console.warn(err.message);
-    });
-
-  // Logout button
-  document.getElementById("nav-logout")?.addEventListener("click", async () => {
-    try {
-      const { logoutUser } = await import("./firebase/auth.js");
-      await logoutUser();
-      showToast("Logged out.", "info");
-      setTimeout(() => window.location.href = "index.html", 600);
-    } catch {}
+// ── Navbar ─────────────────────────────────────────────────
+function initNavbar() {
+  const nav = document.querySelector(".navbar");
+  if (nav) window.addEventListener("scroll",()=>nav.classList.toggle("scrolled",window.scrollY>40));
+  document.getElementById("nav-hamburger")?.addEventListener("click",()=>{
+    const m=document.getElementById("mobile-menu");
+    m?.classList.toggle("open");
+    document.body.style.overflow=m?.classList.contains("open")?"hidden":"";
   });
+  const page = window.location.pathname.split("/").pop()||"index.html";
+  document.querySelectorAll(".nav-link").forEach(l=>{ if(l.getAttribute("href")===page) l.classList.add("active"); });
+  document.querySelectorAll(".modal-close").forEach(b=>{
+    b.addEventListener("click",()=>{ b.closest(".modal-overlay")?.classList.remove("active"); document.body.style.overflow=""; });
+  });
+  document.addEventListener("click",e=>{ if(e.target.classList.contains("modal-overlay")){ e.target.classList.remove("active"); document.body.style.overflow=""; } });
+  document.getElementById("nav-logout")?.addEventListener("click",async()=>{
+    try { await logoutUser(); } catch {}
+    window.showToast("Logged out.","info");
+    setTimeout(()=>window.location.href="index.html",600);
+  });
+}
+
+// ── Auth state ─────────────────────────────────────────────
+function initAuth() {
+  onAuthChange(async user => {
+    const loginBtn  = document.getElementById("nav-login-btn");
+    const userEl    = document.getElementById("nav-user");
+    const ownerLink = document.getElementById("nav-owner-link");
+    if (user) {
+      const p = await getCurrentProfile(user.uid);
+      loginBtn?.classList.add("hidden");
+      userEl?.classList.remove("hidden");
+      const av = userEl?.querySelector(".nav-user-avatar");
+      const nm = userEl?.querySelector(".nav-user-name");
+      if (av) av.textContent = (p?.fullName||user.email||"U")[0].toUpperCase();
+      if (nm) nm.textContent = p?.fullName||user.email||"";
+      if (ownerLink&&p?.role==="owner") ownerLink.classList.remove("hidden");
+    } else {
+      loginBtn?.classList.remove("hidden");
+      userEl?.classList.add("hidden");
+      ownerLink?.classList.add("hidden");
+    }
+  });
+}
+
+// ── Login form ─────────────────────────────────────────────
+function initLoginForm() {
+  document.getElementById("signin-form")?.addEventListener("submit",async e=>{
+    e.preventDefault();
+    const btn=e.target.querySelector("button[type=submit]");
+    btn.disabled=true; btn.textContent="Signing in...";
+    try {
+      const { loginUser } = await import("../firebase/auth.js");
+      const { profile }   = await loginUser(document.getElementById("si-email").value, document.getElementById("si-password").value);
+      window.showToast("Welcome back!","success");
+      document.getElementById("login-modal")?.classList.remove("active");
+      document.body.style.overflow="";
+      setTimeout(()=>{ window.location.href = profile?.role==="owner"?"dashboard.html":"index.html"; },600);
+    } catch {
+      window.showToast("Invalid email or password.","error");
+      btn.disabled=false; btn.textContent="Sign In";
+    }
+  });
+}
+
+// ── Init ───────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded",()=>{
+  initNavbar(); initAuth(); initLoginForm(); window.updateCartBadge();
+  setTimeout(()=>{
+    const l=document.getElementById("page-loader");
+    if(l){l.style.opacity="0";l.style.transition="opacity .4s";setTimeout(()=>l.style.display="none",500);}
+  },800);
 });

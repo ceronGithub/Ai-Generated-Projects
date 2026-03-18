@@ -5,7 +5,7 @@ import { db, auth } from './config.js';
 import {
   collection, addDoc, getDocs, deleteDoc,
   doc, query, orderBy, where
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const COMMENTS = 'comments';
 

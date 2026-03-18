@@ -5,7 +5,7 @@ import { db } from './config.js';
 import {
   collection, doc, getDocs, getDoc, setDoc,
   updateDoc, query, where
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const INV = 'inventory';
 
@@ -60,4 +60,11 @@ export async function decrementStock(productId, size, color, qty) {
 export async function getLowStock() {
   const all = await getInventory();
   return all.filter(i => i.quantity <= (i.lowStockThreshold || 5));
+}
+
+// Alias for compatibility
+export async function updateStock(id, quantity) {
+  const { doc, updateDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+  const { db } = await import("./config.js");
+  await updateDoc(doc(db, "inventory", id), { quantity, updatedAt: serverTimestamp() });
 }

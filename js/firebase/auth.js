@@ -1,25 +1,46 @@
 // ============================================================
-// STREETWISE PH — Firebase Config
-// ✏️ Paste your Firebase credentials here
-// console.firebase.google.com → Project Settings → Your Apps
+// STREETWISE PH — auth.js | Firebase Authentication
 // ============================================================
 
-import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore }   from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth }        from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { auth, db } from "./config.js";
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  doc, getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
-};
+// ── Login ─────────────────────────────────────────────────
+export async function loginUser(email, password) {
+  const cred    = await signInWithEmailAndPassword(auth, email, password);
+  const profile = await getCurrentProfile(cred.user.uid);
+  return { user: cred.user, profile };
+}
 
-const app  = initializeApp(firebaseConfig);
-const db   = getFirestore(app);
-const auth = getAuth(app);
+// ── Logout ────────────────────────────────────────────────
+export async function logoutUser() {
+  await signOut(auth);
+}
 
-export { app, db, auth };
-export default app;
+// ── Get profile from Firestore ────────────────────────────
+export async function getCurrentProfile(uid) {
+  const id = uid || auth.currentUser?.uid;
+  if (!id) return null;
+  try {
+    const snap = await getDoc(doc(db, "users", id));
+    return snap.exists() ? snap.data() : null;
+  } catch { return null; }
+}
+
+// ── Auth state listener ───────────────────────────────────
+export function onAuthChange(callback) {
+  return onAuthStateChanged(auth, callback);
+}
+
+// ── Is owner ─────────────────────────────────────────────
+export async function isOwner() {
+  const profile = await getCurrentProfile();
+  return profile?.role === "owner";
+}

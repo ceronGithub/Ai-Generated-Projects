@@ -1,128 +1,166 @@
 // ============================================================
-// STREETWISE PH — pages/main.js | Shared page bootstrap
-// Loaded by: shop.html, product.html, cart.html, contact.html
+// STREETWISE PH — pages/main.js  (ZERO external imports)
 // ============================================================
 
-import { onAuthChange, getCurrentProfile, logoutUser } from "../firebase/auth.js";
-import { hideLoader, showToast, formatPrice, formatDate } from "../utils/helpers.js";
+// ── Globals ────────────────────────────────────────────────
+window.showToast = function(msg, type, ms) {
+  type = type || "info"; ms = ms || 3500;
+  var c = document.getElementById("toast-container");
+  if (!c) { c = document.createElement("div"); c.id = "toast-container"; document.body.appendChild(c); }
+  var t = document.createElement("div");
+  t.className = "toast " + type; t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function() {
+    t.style.opacity = "0"; t.style.transform = "translateX(100%)"; t.style.transition = "all .3s";
+    setTimeout(function() { t.remove(); }, 300);
+  }, ms);
+};
 
-// Make globals available to inline HTML onclick handlers
-window.showToast   = showToast;
-window.formatPrice = formatPrice;
-window.formatDate  = formatDate;
-window.hideLoader  = hideLoader;
+window.formatPrice = function(n) {
+  return "₱" + parseFloat(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 
-window.openModal  = id => { document.getElementById(id)?.classList.add("active");    document.body.style.overflow = "hidden"; };
-window.closeModal = id => { document.getElementById(id)?.classList.remove("active"); document.body.style.overflow = ""; };
+window.formatDate = function(ts) {
+  if (!ts) return "—";
+  var d = ts && ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString("en-PH", { year: "numeric", month: "short", day: "numeric" });
+};
 
-// ── Cart badge ─────────────────────────────────────────────
-function updateCartBadge() {
+window.openModal = function(id) {
+  var el = document.getElementById(id);
+  if (el) { el.classList.add("active"); document.body.style.overflow = "hidden"; }
+};
+
+window.closeModal = function(id) {
+  var el = document.getElementById(id);
+  if (el) { el.classList.remove("active"); document.body.style.overflow = ""; }
+};
+
+window.updateCartBadge = function() {
   try {
-    const cart  = JSON.parse(localStorage.getItem("swph_cart") || "[]");
-    const count = cart.reduce((s, i) => s + (i.quantity || 0), 0);
-    const badge = document.getElementById("cart-badge");
+    var cart  = JSON.parse(localStorage.getItem("swph_cart") || "[]");
+    var count = cart.reduce(function(s, i) { return s + (i.quantity || 0); }, 0);
+    var badge = document.getElementById("cart-badge");
     if (!badge) return;
     badge.textContent = count || "";
     badge.style.display = count > 0 ? "flex" : "none";
-  } catch {}
-}
-window.updateCartBadge = updateCartBadge;
-window.addEventListener("cartUpdated", updateCartBadge);
+  } catch(e) {}
+};
 
-// ── Navbar scroll ──────────────────────────────────────────
+window.addEventListener("cartUpdated", window.updateCartBadge);
+
+// ── Navbar ─────────────────────────────────────────────────
 function initNavbar() {
-  const navbar = document.querySelector(".navbar");
-  if (navbar) window.addEventListener("scroll", () => navbar.classList.toggle("scrolled", window.scrollY > 40));
+  var nav = document.querySelector(".navbar");
+  if (nav) window.addEventListener("scroll", function() { nav.classList.toggle("scrolled", window.scrollY > 40); });
 
-  const hamburger  = document.getElementById("nav-hamburger");
-  const mobileMenu = document.getElementById("mobile-menu");
-  hamburger?.addEventListener("click", () => {
-    mobileMenu?.classList.toggle("open");
-    document.body.style.overflow = mobileMenu?.classList.contains("open") ? "hidden" : "";
-  });
-
-  const page = window.location.pathname.split("/").pop() || "index.html";
-  document.querySelectorAll(".nav-link").forEach(l => {
-    if (l.getAttribute("href") === page) l.classList.add("active");
-  });
-
-  document.querySelectorAll(".modal-close").forEach(btn => {
-    btn.addEventListener("click", () => {
-      btn.closest(".modal-overlay")?.classList.remove("active");
-      document.body.style.overflow = "";
+  var hamburger  = document.getElementById("nav-hamburger");
+  var mobileMenu = document.getElementById("mobile-menu");
+  if (hamburger && mobileMenu) {
+    hamburger.addEventListener("click", function() {
+      mobileMenu.classList.toggle("open");
+      document.body.style.overflow = mobileMenu.classList.contains("open") ? "hidden" : "";
     });
-  });
+  }
 
-  document.addEventListener("click", e => {
+  var page = window.location.pathname.split("/").pop() || "index.html";
+  var links = document.querySelectorAll(".nav-link");
+  for (var i = 0; i < links.length; i++) {
+    if (links[i].getAttribute("href") === page) links[i].classList.add("active");
+  }
+
+  var closes = document.querySelectorAll(".modal-close");
+  for (var j = 0; j < closes.length; j++) {
+    closes[j].addEventListener("click", function() {
+      var overlay = this.closest(".modal-overlay");
+      if (overlay) { overlay.classList.remove("active"); document.body.style.overflow = ""; }
+    });
+  }
+
+  document.addEventListener("click", function(e) {
     if (e.target.classList.contains("modal-overlay")) {
       e.target.classList.remove("active");
       document.body.style.overflow = "";
     }
   });
 
-  document.getElementById("nav-logout")?.addEventListener("click", async () => {
-    try { await logoutUser(); } catch {}
-    showToast("Logged out.", "info");
-    setTimeout(() => window.location.href = "index.html", 600);
-  });
+  var logoutBtn = document.getElementById("nav-logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", function() {
+      import("../firebase/auth.js").then(function(m) {
+        m.logoutUser().catch(function() {});
+      }).catch(function() {});
+      window.showToast("Logged out.", "info");
+      setTimeout(function() { window.location.href = "index.html"; }, 600);
+    });
+  }
 }
 
-// ── Auth state → update nav ────────────────────────────────
+// ── Auth state ─────────────────────────────────────────────
 function initAuth() {
-  onAuthChange(async user => {
-    const loginBtn  = document.getElementById("nav-login-btn");
-    const userEl    = document.getElementById("nav-user");
-    const ownerLink = document.getElementById("nav-owner-link");
-
-    if (user) {
-      const profile = await getCurrentProfile(user.uid);
-      loginBtn?.classList.add("hidden");
-      userEl?.classList.remove("hidden");
-      const avatar = userEl?.querySelector(".nav-user-avatar");
-      const name   = userEl?.querySelector(".nav-user-name");
-      if (avatar) avatar.textContent = (profile?.fullName || user.email || "U")[0].toUpperCase();
-      if (name)   name.textContent   = profile?.fullName || user.email || "";
-      if (ownerLink && profile?.role === "owner") ownerLink.classList.remove("hidden");
-    } else {
-      loginBtn?.classList.remove("hidden");
-      userEl?.classList.add("hidden");
-      ownerLink?.classList.add("hidden");
-    }
+  import("../firebase/auth.js").then(function(m) {
+    m.onAuthChange(function(user) {
+      var loginBtn  = document.getElementById("nav-login-btn");
+      var userEl    = document.getElementById("nav-user");
+      var ownerLink = document.getElementById("nav-owner-link");
+      if (user) {
+        m.getCurrentProfile(user.uid).then(function(p) {
+          if (loginBtn) loginBtn.classList.add("hidden");
+          if (userEl) {
+            userEl.classList.remove("hidden");
+            var av = userEl.querySelector(".nav-user-avatar");
+            var nm = userEl.querySelector(".nav-user-name");
+            if (av) av.textContent = ((p && p.fullName) || user.email || "U")[0].toUpperCase();
+            if (nm) nm.textContent = (p && p.fullName) || user.email || "";
+          }
+          if (ownerLink && p && p.role === "owner") ownerLink.classList.remove("hidden");
+        }).catch(function() {});
+      } else {
+        if (loginBtn) loginBtn.classList.remove("hidden");
+        if (userEl) userEl.classList.add("hidden");
+        if (ownerLink) ownerLink.classList.add("hidden");
+      }
+    });
+  }).catch(function(err) {
+    console.warn("Firebase auth not available:", err.message);
   });
 }
 
-// ── Sign in form handler ───────────────────────────────────
+// ── Login form ─────────────────────────────────────────────
 function initLoginForm() {
-  document.getElementById("signin-form")?.addEventListener("submit", async e => {
+  var form = document.getElementById("signin-form");
+  if (!form) return;
+  form.addEventListener("submit", function(e) {
     e.preventDefault();
-    const btn = e.target.querySelector("button[type=submit]");
-    btn.disabled = true; btn.textContent = "Signing in...";
-    try {
-      const { loginUser } = await import("../firebase/auth.js");
-      const { profile }   = await loginUser(
-        document.getElementById("si-email").value,
-        document.getElementById("si-password").value
-      );
-      showToast("Welcome back!", "success");
-      document.getElementById("login-modal")?.classList.remove("active");
-      document.body.style.overflow = "";
-      setTimeout(() => {
-        if (profile?.role === "owner") window.location.href = "dashboard.html";
-        else window.location.reload();
+    var btn = form.querySelector("button[type=submit]");
+    if (btn) { btn.disabled = true; btn.textContent = "Signing in..."; }
+    var email    = (document.getElementById("si-email") || {}).value || "";
+    var password = (document.getElementById("si-password") || {}).value || "";
+    import("../firebase/auth.js").then(function(m) {
+      return m.loginUser(email, password);
+    }).then(function(result) {
+      window.showToast("Welcome back!", "success");
+      window.closeModal("login-modal");
+      setTimeout(function() {
+        var role = result && result.profile && result.profile.role;
+        window.location.href = role === "owner" ? "dashboard.html" : "index.html";
       }, 600);
-    } catch(err) {
-      showToast("Invalid email or password.", "error");
-      btn.disabled = false; btn.textContent = "Sign In";
-    }
+    }).catch(function() {
+      window.showToast("Invalid email or password.", "error");
+      if (btn) { btn.disabled = false; btn.textContent = "Sign In"; }
+    });
   });
 }
 
-// ── Init on DOM ready ──────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
+// ── Init ───────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", function() {
   initNavbar();
   initAuth();
   initLoginForm();
-  updateCartBadge();
+  window.updateCartBadge();
   // Hide loader
-  setTimeout(hideLoader, 500);
+  setTimeout(function() {
+    var l = document.getElementById("page-loader");
+    if (l) { l.style.opacity = "0"; l.style.transition = "opacity .4s"; setTimeout(function() { l.style.display = "none"; }, 500); }
+  }, 800);
 });

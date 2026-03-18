@@ -5,7 +5,7 @@ import { db } from './config.js';
 import {
   collection, doc, getDocs, getDoc, addDoc, updateDoc,
   deleteDoc, query, where, orderBy, limit
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const PRODUCTS = 'products';
 const CATS     = 'categories';
@@ -61,3 +61,7 @@ export async function getCategories() {
   const snap = await getDocs(collection(db, CATS));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
+
+// Alias for compatibility
+export const getFeaturedProducts = getFeatured;
+export const getAllProductsAdmin = getProducts;
