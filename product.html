@@ -116,43 +116,9 @@
 
   <div class="modal-overlay" id="login-modal">
     <div class="modal"><div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div>
-    <div class="modal-body"><p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:rgba(201,169,110,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--accent)">🔐 For owner only.</p><form id="signin-form"><div class="form-group"><label class="form-label">Username or Email</label><input type="text" class="form-input" id="si-username" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required></div><button type="submit" class="btn btn-primary" style="width:100%">Sign In</button></form></div></div>
+    <div class="modal-body"><p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:rgba(201,169,110,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--accent)">🔐 For owner only.</p><form id="signin-form"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="si-email" required autocomplete="email" placeholder="owner@streetwiseph.com"></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required autocomplete="current-password" placeholder="••••••••"></div><button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">Sign In</button></form></div></div>
   </div>
 
-  
-    <script>
-    // Always hide loader — even if Firebase not connected yet
-    document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => {
-        const l = document.getElementById("page-loader");
-        if (l) { l.classList.add("hidden"); setTimeout(() => l.remove(), 400); }
-      }, 600);
-    });
-  </script>
   <script type="module" src="js/pages/product.js"></script>
-  <script>
-  // Star rating
-  document.querySelectorAll('.star-select span').forEach(star => {
-    star.addEventListener('click', () => {
-      const v = star.dataset.v;
-      document.getElementById('rating-value').value = v;
-      document.querySelectorAll('.star-select span').forEach((s,i) => s.style.color = i < v ? 'var(--accent)' : 'var(--text-muted)');
-    });
-  });
-  document.getElementById('signin-form')?.addEventListener('submit', async e => {
-    e.preventDefault();
-    const body = new URLSearchParams({ action:'login', username: document.getElementById('si-username').value, password: document.getElementById('si-password').value });
-    const res  = await fetch('php/controllers/auth.php', { method:'POST', body });
-    const data = await res.json();
-    if (data.success) { showToast('Welcome back!','success'); closeModal('login-modal'); setTimeout(()=>window.location.reload(),600); }
-    else showToast(data.message,'error');
-  });
-  // Update breadcrumb name after product loads
-  const origRender = typeof renderProduct !== 'undefined' ? renderProduct : null;
-  document.addEventListener('productLoaded', e => {
-    const bc = document.getElementById('breadcrumb-name');
-    if (bc && e.detail?.name) bc.textContent = e.detail.name;
-  });
-  </script>
 </body>
 </html>

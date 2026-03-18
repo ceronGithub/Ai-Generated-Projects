@@ -1,330 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Streetwise PH — Luxury Streetwear</title>
+  <title>Shop — Streetwise PH</title>
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/navbar.css">
-  <link rel="stylesheet" href="css/hero.css">
   <link rel="stylesheet" href="css/products.css">
+  <link rel="stylesheet" href="css/shop.css">
   <link rel="stylesheet" href="css/media-queries.css">
-  <style>
-    body{padding-top:0}
-    .featured-section{padding:96px 0}
-    .about-section{padding:96px 0;background:var(--bg-secondary);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-    .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
-    .about-visual{aspect-ratio:4/5;background:linear-gradient(135deg,var(--bg-elevated) 0%,var(--bg-card) 100%);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:6rem;color:var(--border-light);border:1px solid var(--border)}
-    .value-list{list-style:none;margin-top:24px}
-    .value-list li{padding:12px 0;border-bottom:1px solid var(--border);font-size:.9375rem;color:var(--text-secondary);display:flex;align-items:center;gap:12px}
-    .value-list li::before{content:'—';color:var(--accent)}
-    .marquee-section{padding:24px 0;background:var(--accent);overflow:hidden}
-    .marquee-track{display:flex;gap:48px;animation:marquee 20s linear infinite;white-space:nowrap}
-    .marquee-item{font-size:.75rem;letter-spacing:.25em;text-transform:uppercase;color:var(--bg-primary);font-weight:500}
-    @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-    .newsletter{padding:80px 0;text-align:center}
-    .newsletter-form{display:flex;gap:0;max-width:440px;margin:32px auto 0}
-    .newsletter-form input{flex:1;padding:14px 20px;background:var(--bg-elevated);border:1px solid var(--border-light);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);color:var(--text-primary);font-size:.9375rem}
-    .newsletter-form input:focus{outline:none;border-color:var(--accent)}
-    .newsletter-form button{padding:14px 24px;background:var(--accent);color:var(--bg-primary);font-size:.8125rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;border-radius:0 var(--radius-sm) var(--radius-sm) 0;white-space:nowrap;cursor:pointer;border:none}
-    .newsletter-form button:hover{background:var(--accent-light)}
-    footer{background:var(--bg-secondary);border-top:1px solid var(--border);padding:64px 0 32px}
-    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px}
-    .footer-brand{font-family:var(--font-display);font-size:1.5rem;color:var(--accent);letter-spacing:.2em;margin-bottom:16px}
-    .footer-desc{font-size:.875rem;color:var(--text-secondary);line-height:1.7}
-    .footer-title{font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;color:var(--text-primary);margin-bottom:16px}
-    .footer-links{list-style:none;display:flex;flex-direction:column;gap:10px}
-    .footer-links a{font-size:.875rem;color:var(--text-muted);transition:color .2s}
-    .footer-links a:hover{color:var(--accent)}
-    .footer-bottom{padding-top:32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:.8125rem;color:var(--text-muted)}
-  </style>
 </head>
-<body>
-  <div id="page-loader" class="page-loader"><div style="text-align:center"><p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH</p><div class="spinner" style="margin:16px auto"></div></div></div>
-  <div id="toast-container"></div>
 
-  <!-- NAVBAR -->
+<body>
+  <div id="page-loader" class="page-loader">
+    <div style="text-align:center">
+      <p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH
+      </p>
+      <div class="spinner" style="margin:16px auto"></div>
+    </div>
+  </div>
+  <div id="toast-container"></div>
   <nav class="navbar" id="navbar">
     <div style="display:flex;align-items:center;gap:48px">
       <a href="index.html" class="nav-brand">STREETWISE PH</a>
       <div class="nav-links">
-        <a href="index.html" class="nav-link active">Home</a>
-        <a href="shop.html" class="nav-link">Shop</a>
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="shop.html" class="nav-link active">Shop</a>
         <a href="contact.html" class="nav-link">Contact</a>
       </div>
     </div>
     <div class="nav-actions">
-      <a href="cart.html" class="nav-cart-btn" aria-label="Cart">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        <span class="cart-badge hidden" id="cart-badge">0</span>
-      </a>
-      <a href="#" id="nav-login-btn" class="nav-login-btn" onclick="document.getElementById('login-modal').classList.add('active');return false;">Sign In</a>
+      <a href="cart.html" class="nav-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.5">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <path d="M16 10a4 4 0 01-8 0" />
+        </svg><span class="cart-badge hidden" id="cart-badge">0</span></a>
+      <a href="#" id="nav-login-btn" class="nav-login-btn" onclick="openModal('login-modal');return false;">Sign In</a>
       <div class="nav-user hidden" id="nav-user">
-        <div class="nav-user-avatar" id="nav-avatar">U</div>
-        <span class="nav-user-name" id="nav-user-name"></span>
-        <a href="owner-dashboard.html" id="nav-owner-link" class="nav-login-btn hidden">Dashboard</a>
-        <button class="nav-logout" id="nav-logout">Logout</button>
+        <div class="nav-user-avatar">O</div><span class="nav-user-name"></span><a href="owner-dashboard.html"
+          id="nav-owner-link" class="nav-login-btn hidden">Dashboard</a><button class="nav-logout"
+          id="nav-logout">Logout</button>
       </div>
-      <button class="nav-hamburger" id="nav-hamburger"><span></span><span></span><span></span></button>
     </div>
   </nav>
 
-  <div class="mobile-menu" id="mobile-menu">
-    <a href="index.html" class="nav-link">Home</a>
-    <a href="shop.html" class="nav-link">Shop</a>
-    <a href="contact.html" class="nav-link">Contact</a>
-    <a href="cart.html" class="nav-link">Cart</a>
-  </div>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-slides">
-      <div class="hero-slide active">
-        <div class="hero-slide-bg"></div>
-        <div class="hero-overlay"></div>
-        <div class="hero-content container">
-          <div class="hero-text">
-            <p class="hero-eyebrow">New Collection — 2025</p>
-            <h1 class="hero-title">Wear<br>The Dark.</h1>
-            <p class="hero-subtitle">Luxury streetwear crafted for those who move in silence. Premium fabrics. Zero compromise.</p>
-            <div class="hero-cta">
-              <a href="shop.html" class="btn btn-primary btn-lg">Shop Now</a>
-              <a href="shop.html" class="btn btn-ghost btn-lg" style="color:var(--text-secondary)">View Collection →</a>
+  <main class="shop-page">
+    <div class="container">
+      <div style="padding:24px 0 32px;border-bottom:1px solid var(--border);margin-bottom:40px">
+        <p class="section-subtitle">All Collections</p>
+        <h1 class="section-title">The Shop</h1>
+      </div>
+      <div class="shop-layout">
+        <!-- SIDEBAR FILTERS -->
+        <aside class="shop-sidebar">
+          <div class="filter-card">
+            <div class="search-bar"><span class="search-icon">⌕</span><input type="text" class="form-input"
+                id="search-input" placeholder="Search products..."></div>
+          </div>
+          <div class="filter-card">
+            <p class="filter-title">Category</p>
+            <div id="category-filters">
+              <div class="spinner" style="width:16px;height:16px"></div>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="hero-slide">
-        <div class="hero-slide-bg" style="background:linear-gradient(135deg,#0d0b08 0%,#12100d 50%,#0d0b08 100%)"></div>
-        <div class="hero-overlay"></div>
-        <div class="hero-content container">
-          <div class="hero-text">
-            <p class="hero-eyebrow">Signature Series</p>
-            <h1 class="hero-title">Defined<br>By Edge.</h1>
-            <p class="hero-subtitle">Oversized fits. Premium fabrics. Every piece tells a story.</p>
-            <div class="hero-cta"><a href="shop.html" class="btn btn-primary btn-lg">Explore Collection</a></div>
+          <div class="filter-card">
+            <p class="filter-title">Price Range</p>
+            <div class="filter-option"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input
+                  type="radio" name="price" value="all" checked> All prices</label></div>
+            <div class="filter-option"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input
+                  type="radio" name="price" value="low"> Under ₱1,000</label></div>
+            <div class="filter-option"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input
+                  type="radio" name="price" value="mid"> ₱1,000 – ₱2,500</label></div>
+            <div class="filter-option"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input
+                  type="radio" name="price" value="high"> Over ₱2,500</label></div>
           </div>
-        </div>
-      </div>
-      <div class="hero-slide">
-        <div class="hero-slide-bg" style="background:linear-gradient(135deg,#080808 0%,#111008 50%,#080808 100%)"></div>
-        <div class="hero-overlay"></div>
-        <div class="hero-content container">
-          <div class="hero-text">
-            <p class="hero-eyebrow">Limited Drop</p>
-            <h1 class="hero-title">The Phantom<br>Drop.</h1>
-            <p class="hero-subtitle">Limited pieces. Permanent style. Once it's gone, it's gone.</p>
-            <div class="hero-cta"><a href="shop.html" class="btn btn-primary btn-lg">Get Yours</a></div>
+        </aside>
+        <!-- PRODUCTS -->
+        <div>
+          <div class="shop-header">
+            <span class="shop-results" id="results-count">Loading...</span>
+            <div class="shop-sort">
+              <span>Sort:</span>
+              <select class="form-input" style="width:auto;padding:6px 12px">
+                <option>Newest</option>
+                <option>Price: Low to High</option>
+                <option>Price: High to Low</option>
+              </select>
+            </div>
           </div>
+          <div class="products-grid" id="products-grid"></div>
+          <div class="pagination" id="pagination"></div>
         </div>
       </div>
     </div>
-    <div class="hero-indicators">
-      <div class="hero-dot active"></div>
-      <div class="hero-dot"></div>
-      <div class="hero-dot"></div>
-    </div>
-    <div class="hero-scroll"><div class="hero-scroll-line"></div><span>Scroll</span></div>
-  </section>
-
-  <!-- MARQUEE -->
-  <div class="marquee-section">
-    <div class="marquee-track">
-      <span class="marquee-item">Premium Quality</span><span class="marquee-item">★</span>
-      <span class="marquee-item">Free Shipping Over ₱2000</span><span class="marquee-item">★</span>
-      <span class="marquee-item">Cash on Delivery</span><span class="marquee-item">★</span>
-      <span class="marquee-item">New Arrivals Weekly</span><span class="marquee-item">★</span>
-      <span class="marquee-item">Premium Quality</span><span class="marquee-item">★</span>
-      <span class="marquee-item">Free Shipping Over ₱2000</span><span class="marquee-item">★</span>
-      <span class="marquee-item">Cash on Delivery</span><span class="marquee-item">★</span>
-      <span class="marquee-item">New Arrivals Weekly</span><span class="marquee-item">★</span>
-    </div>
-  </div>
-
-  <!-- FEATURED PRODUCTS -->
-  <section class="featured-section">
-    <div class="container">
-      <div style="text-align:center;margin-bottom:56px">
-        <p class="section-subtitle">Curated Selection</p>
-        <h2 class="section-title">Featured Pieces</h2>
-        <div class="divider"></div>
-      </div>
-      <div class="products-grid" id="featured-grid">
-        <div class="flex-center" style="grid-column:1/-1;padding:60px"><div class="spinner"></div></div>
-      </div>
-      <div style="text-align:center;margin-top:48px">
-        <a href="shop.html" class="btn btn-outline btn-lg">View All Products</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="about-section">
-    <div class="container">
-      <div class="about-grid">
-        <div>
-          <p class="section-subtitle">Our Philosophy</p>
-          <h2 class="section-title">Craft Over Hype.</h2>
-          <div class="divider" style="margin:16px 0"></div>
-          <p style="color:var(--text-secondary);line-height:1.8;font-size:1rem;max-width:480px">Streetwise PH was built on a single belief — that luxury doesn't have to be loud. Every piece we create carries intent: from the weight of the fabric to the precision of the cut.</p>
-          <ul class="value-list">
-            <li>320gsm heavyweight cotton on every tee</li>
-            <li>Drop-shoulder, oversized silhouettes</li>
-            <li>Minimal branding, maximum presence</li>
-            <li>Limited runs — never restocked</li>
-          </ul>
-          <a href="shop.html" class="btn btn-primary" style="margin-top:32px">Shop The Collection</a>
-        </div>
-        <div class="about-visual">◈</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- NEWSLETTER -->
-  <section class="newsletter">
-    <div class="container">
-      <p class="section-subtitle">Stay In The Loop</p>
-      <h2 class="section-title">Get Early Access</h2>
-      <p style="color:var(--text-secondary);max-width:400px;margin:0 auto 8px">Be first to know about new drops, restocks, and exclusive offers.</p>
-      <div class="newsletter-form">
-        <input type="email" placeholder="your@email.com">
-        <button type="button" onclick="showToast('Thanks for subscribing!','success')">Subscribe</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="container">
-      <div class="footer-grid">
-        <div>
-          <div class="footer-brand">STREETWISE PH</div>
-          <p class="footer-desc">Luxury streetwear crafted for those who move in silence. Premium fabrics. Zero compromise.</p>
-        </div>
-        <div>
-          <p class="footer-title">Shop</p>
-          <ul class="footer-links">
-            <li><a href="shop.html">All Products</a></li>
-            <li><a href="shop.html?cat=men">Men</a></li>
-            <li><a href="shop.html?cat=women">Women</a></li>
-            <li><a href="shop.html?cat=accessories">Accessories</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="footer-title">Info</p>
-          <ul class="footer-links">
-            <li><a href="contact.html">Contact</a></li>
-            <li><a href="#">Size Guide</a></li>
-            <li><a href="#">Shipping Policy</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="footer-title">Account</p>
-          <ul class="footer-links">
-            <li><a href="#" onclick="document.getElementById('login-modal').classList.add('active');return false">Sign In</a></li>
-            <li><a href="cart.html">Cart</a></li>
-            <li><a href="owner-dashboard.html" style="color:var(--text-muted);font-size:.8125rem">Owner Portal</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>© 2025 Streetwise PH. All rights reserved.</span>
-        <span>Cash on Delivery · Philippines</span>
-      </div>
-    </div>
-  </footer>
+  </main>
 
   <!-- LOGIN MODAL -->
   <div class="modal-overlay" id="login-modal">
     <div class="modal">
       <div class="modal-header">
-        <h2 class="modal-title">Sign In</h2>
-        <button class="modal-close">✕</button>
+        <h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button>
       </div>
       <div class="modal-body">
-        <p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:rgba(201,169,110,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--accent)">
-          🔐 For owner only.
-        </p>
+        <p
+          style="font-size:.8125rem;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:rgba(201,169,110,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--accent)">
+          🔐 For owner only.</p>
         <form id="signin-form">
-          <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="si-email" required autocomplete="email" placeholder="owner@streetwiseph.com"></div>
-          <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required autocomplete="current-password" placeholder="••••••••"></div>
-          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center" id="signin-btn">Sign In</button>
+          <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input"
+              id="si-email" required autocomplete="email" placeholder="owner@streetwiseph.com"></div>
+          <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input"
+              id="si-password" required autocomplete="current-password" placeholder="••••••••"></div>
+          <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">Sign In</button>
         </form>
       </div>
     </div>
   </div>
 
-  <script type="module">
-    import { getFeaturedProducts } from "./js/firebase/products.js";
-    import { addToCart }           from "./js/firebase/cart.js";
-    import { loginUser }           from "./js/firebase/auth.js";
-    import "./js/main.js";
-
-    // ── Hero slider ──────────────────────────────────────────
-    let cur = 0;
-    const slides = document.querySelectorAll(".hero-slide");
-    const dots   = document.querySelectorAll(".hero-dot");
-    function goTo(i) {
-      slides[cur].classList.remove("active"); dots[cur].classList.remove("active");
-      cur = (i + slides.length) % slides.length;
-      slides[cur].classList.add("active"); dots[cur].classList.add("active");
-    }
-    dots.forEach((d, i) => d.addEventListener("click", () => goTo(i)));
-    setInterval(() => goTo(cur + 1), 6000);
-
-    // ── Featured products ────────────────────────────────────
-    try {
-      const products = await getFeaturedProducts();
-      const grid     = document.getElementById("featured-grid");
-      if (!products.length) {
-        grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet.</p>';
-      } else {
-        grid.innerHTML = products.map(p => `
-          <div class="product-card">
-            <div class="product-img-wrap">
-              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
-              <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
-              <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
-            </div>
-            <div class="product-info">
-              <p class="product-category">${p.category || ""}</p>
-              <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-              <div class="product-price">
-                <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
-                ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
-              </div>
-            </div>
-          </div>`).join("");
-      }
-    } catch(e) { console.error("Featured products error:", e); }
-
-    // ── Quick add to cart ────────────────────────────────────
-    window.quickAdd = (id, name, price, imageUrl) => {
-      addToCart({ id, name, price, imageUrl }, "", "", 1);
-      showToast("Added to cart!", "success");
-    };
-
-    // ── Sign in handler ──────────────────────────────────────
-    document.getElementById("signin-form").addEventListener("submit", async e => {
-      e.preventDefault();
-      const btn = document.getElementById("signin-btn");
-      btn.disabled = true; btn.textContent = "Signing in...";
-      try {
-        const { profile } = await loginUser(
-          document.getElementById("si-email").value,
-          document.getElementById("si-password").value
-        );
-        showToast("Welcome back!", "success");
-        closeModal("login-modal");
-        setTimeout(() => {
-          window.location.href = profile?.role === "owner" ? "dashboard.html" : "index.html";
-          if (profile?.role !== "owner") window.location.reload();
-        }, 600);
-      } catch(err) {
-        showToast("Invalid email or password.", "error");
-        btn.disabled = false; btn.textContent = "Sign In";
-      }
-    });
-  </script>
+  <script type="module" src="js/pages/shop.js"></script>
 </body>
+
 </html>

@@ -111,54 +111,8 @@
     </div>
   </main>
 
-  <div class="modal-overlay" id="login-modal"><div class="modal"><div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div><div class="modal-body"><p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:rgba(201,169,110,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--accent)">🔐 For owner only.</p><form id="signin-form"><div class="form-group"><label class="form-label">Username or Email</label><input type="text" class="form-input" id="si-username" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required></div><button type="submit" class="btn btn-primary" style="width:100%">Sign In</button></form></div></div></div>
+  <div class="modal-overlay" id="login-modal"><div class="modal"><div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div><div class="modal-body"><p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:rgba(201,169,110,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--accent)">🔐 For owner only.</p><form id="signin-form"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="si-email" required autocomplete="email" placeholder="owner@streetwiseph.com"></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required autocomplete="current-password" placeholder="••••••••"></div><button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">Sign In</button></form></div></div></div>
 
-  
-  <script>
-  async function loadContactComments() {
-    const res  = await fetch('php/controllers/comments.php?action=list');
-    const data = await res.json();
-    const wrap = document.getElementById('contact-comments');
-    if (!wrap) return;
-    if (!data.comments?.length) { wrap.innerHTML='<p style="text-align:center;color:var(--text-muted);padding:20px">No messages yet. Be the first!</p>'; return; }
-    wrap.innerHTML = data.comments.map(c=>`
-      <div style="padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <div style="width:28px;height:28px;background:var(--bg-elevated);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;color:var(--accent)">${(c.user_name||c.guest_name||'G')[0]}</div>
-          <span style="font-size:.875rem;font-weight:500">${c.user_name||c.guest_name||'Guest'}</span>
-          <span style="font-size:.75rem;color:var(--text-muted);margin-left:auto">${new Date(c.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}</span>
-        </div>
-        <p style="font-size:.9rem;color:var(--text-secondary);line-height:1.6">${c.content}</p>
-      </div>`).join('');
-  }
-  document.getElementById('contact-comment-form')?.addEventListener('submit', async e => {
-    e.preventDefault();
-    const form = new FormData(e.target);
-    form.append('action','add');
-    const res  = await fetch('php/controllers/comments.php', { method:'POST', body: form });
-    const data = await res.json();
-    showToast(data.message, data.success?'success':'error');
-    if (data.success) { e.target.reset(); loadContactComments(); }
-  });
-  document.getElementById('signin-form')?.addEventListener('submit', async e => {
-    e.preventDefault();
-    const body = new URLSearchParams({action:'login',username:document.getElementById('si-username').value,password:document.getElementById('si-password').value});
-    const res=await fetch('php/controllers/auth.php',{method:'POST',body});
-    const data=await res.json();
-    if(data.success){showToast('Welcome back!','success');closeModal('login-modal');setTimeout(()=>window.location.reload(),600);}
-    else showToast(data.message,'error');
-  });
-  document.addEventListener('DOMContentLoaded', loadContactComments);
-  </script>
-  <script>
-    // Always hide loader — even if Firebase not connected yet
-    document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => {
-        const l = document.getElementById("page-loader");
-        if (l) { l.classList.add("hidden"); setTimeout(() => l.remove(), 400); }
-      }, 600);
-    });
-  </script>
   <script type="module" src="js/pages/contact.js"></script>
 </body>
 </html>

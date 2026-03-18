@@ -212,14 +212,6 @@
   </div>
 
   <script type="module">
-    // Always hide loader — even if Firebase not connected yet
-    document.addEventListener("DOMContentLoaded", () => {
-      setTimeout(() => {
-        const l = document.getElementById("page-loader");
-        if (l) { l.classList.add("hidden"); setTimeout(() => l.remove(), 400); }
-      }, 600);
-    });
-
     import { auth }                                              from "./js/firebase/config.js";
     import { loginUser, logoutUser, onAuthChange, getCurrentProfile } from "./js/firebase/auth.js";
     import { getAllProductsAdmin, addProduct, updateProduct, deleteProduct } from "./js/firebase/products.js";
@@ -234,7 +226,10 @@
     let revenueChart = null, productChart = null;
 
     // ── Auth Guard ────────────────────────────────────────
+    // Hide loader as soon as auth state is known
     onAuthChange(async user => {
+      const loader = document.getElementById("page-loader");
+      if (loader) { loader.classList.add("hidden"); setTimeout(() => loader.remove(), 400); }
       if (!user) { showGate(); return; }
       const profile = await getCurrentProfile();
       if (profile?.role !== "owner") { showGate(); return; }

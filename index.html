@@ -255,7 +255,12 @@
   </div>
 
   <script type="module">
-    // Always hide loader — even if Firebase not connected yet
+    import { getFeaturedProducts } from "./js/firebase/products.js";
+    import { addToCart }           from "./js/firebase/cart.js";
+    import { loginUser }           from "./js/firebase/auth.js";
+    import "./js/main.js";
+
+    // ── Loader: hide immediately on DOM ready ─────────────
     document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
         const l = document.getElementById("page-loader");
@@ -263,12 +268,7 @@
       }, 600);
     });
 
-    import { getFeaturedProducts } from "./js/firebase/products.js";
-    import { addToCart }           from "./js/firebase/cart.js";
-    import { loginUser }           from "./js/firebase/auth.js";
-    import "./js/main.js";
-
-    // ── Hero slider ──────────────────────────────────────────
+    // ── Hero slider ───────────────────────────────────────
     let cur = 0;
     const slides = document.querySelectorAll(".hero-slide");
     const dots   = document.querySelectorAll(".hero-dot");
@@ -280,57 +280,61 @@
     dots.forEach((d, i) => d.addEventListener("click", () => goTo(i)));
     setInterval(() => goTo(cur + 1), 6000);
 
-    // ── Featured products ────────────────────────────────────
+    // ── Featured products ─────────────────────────────────
     try {
       const products = await getFeaturedProducts();
-      const grid     = document.getElementById("featured-grid");
-      if (!products.length) {
-        grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet.</p>';
-      } else {
-        grid.innerHTML = products.map(p => `
-          <div class="product-card">
-            <div class="product-img-wrap">
-              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
-              <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
-              <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
-            </div>
-            <div class="product-info">
-              <p class="product-category">${p.category || ""}</p>
-              <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-              <div class="product-price">
-                <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
-                ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
+      const grid = document.getElementById("featured-grid");
+      if (grid) {
+        if (!products.length) {
+          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet. Add products via the owner dashboard.</p>';
+        } else {
+          grid.innerHTML = products.map(p => `
+            <div class="product-card">
+              <div class="product-img-wrap">
+                ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
+                <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
+                <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
               </div>
-            </div>
-          </div>`).join("");
+              <div class="product-info">
+                <p class="product-category">${p.category || ""}</p>
+                <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+                <div class="product-price">
+                  <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
+                  ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
+                </div>
+              </div>
+            </div>`).join("");
+        }
       }
-    } catch(e) { console.error("Featured products error:", e); }
+    } catch(e) {
+      const grid = document.getElementById("featured-grid");
+      if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">Connect Firebase to load products.</p>';
+    }
 
-    // ── Quick add to cart ────────────────────────────────────
+    // ── Quick add to cart ─────────────────────────────────
     window.quickAdd = (id, name, price, imageUrl) => {
       addToCart({ id, name, price, imageUrl }, "", "", 1);
-      showToast("Added to cart!", "success");
+      window.showToast("Added to cart!", "success");
     };
 
-    // ── Sign in handler ──────────────────────────────────────
-    document.getElementById("signin-form").addEventListener("submit", async e => {
+    // ── Sign in handler ───────────────────────────────────
+    document.getElementById("signin-form")?.addEventListener("submit", async e => {
       e.preventDefault();
       const btn = document.getElementById("signin-btn");
-      btn.disabled = true; btn.textContent = "Signing in...";
+      if (btn) { btn.disabled = true; btn.textContent = "Signing in..."; }
       try {
         const { profile } = await loginUser(
           document.getElementById("si-email").value,
           document.getElementById("si-password").value
         );
-        showToast("Welcome back!", "success");
-        closeModal("login-modal");
+        window.showToast("Welcome back!", "success");
+        window.closeModal("login-modal");
         setTimeout(() => {
           window.location.href = profile?.role === "owner" ? "dashboard.html" : "index.html";
-          if (profile?.role !== "owner") window.location.reload();
         }, 600);
       } catch(err) {
-        showToast("Invalid email or password.", "error");
-        btn.disabled = false; btn.textContent = "Sign In";
+        window.showToast("Invalid email or password.", "error");
+        if (btn) { btn.disabled = false; btn.textContent = "Sign In"; }
       }
     });
   </script>
