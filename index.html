@@ -687,11 +687,14 @@
                   —
                 </div>
               </div>
-              <div class="bk-field">
+              <div class="bk-field" id="bkCheckinTimeField">
                 <label class="bk-label"
                   >Check-in Time <span class="bk-req">*</span></label
                 >
-                <input class="bk-input" id="bkCheckinTime" type="time" />
+                <!-- Hidden native input keeps value for all existing JS references -->
+                <input id="bkCheckinTime" type="hidden" />
+                <!-- Custom time picker rendered by JS -->
+                <div id="bkCustomTimePicker"></div>
                 <span class="bk-err" id="errCheckinTime"></span>
               </div>
               <div class="bk-field">

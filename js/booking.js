@@ -203,10 +203,6 @@ function applyCheckoutConstraint(constraint) {
   const old = document.getElementById('bkConstraintBanner');
   if (old) old.remove();
 
-  // Reset time input min
-  const timeInput = document.getElementById('bkCheckinTime');
-  if (timeInput) timeInput.min = constraint ? constraint.time : '';
-
   if (!constraint) return;
 
   // Build and inject the constraint banner above the check-in time field
@@ -229,8 +225,8 @@ function applyCheckoutConstraint(constraint) {
     `Check-in must be <b>${constraint.time12} or later</b>. ` +
     `Day Tour unavailable (guests still checking out).</span>`;
 
-  // Insert before the check-in time field
-  const ciField = document.getElementById('bkCheckinTime');
+  // Insert before the custom time picker
+  const ciField = document.getElementById('bkCustomTimePicker');
   if (ciField && ciField.parentNode) {
     ciField.parentNode.insertBefore(banner, ciField);
   }
@@ -249,6 +245,9 @@ function applyCheckoutConstraint(constraint) {
       }
     }
   });
+
+  // Re-render picker PM-only now that constraint is known
+  if (_tourType) applyTourTimeConstraints(_tourType);
 }
 
 /* Validate that entered check-in time respects constraint */
@@ -559,12 +558,12 @@ function resetBookingForm() {
   if (banner) banner.remove();
   const constraintBanner = document.getElementById('bkConstraintBanner');
   if (constraintBanner) constraintBanner.remove();
-  const timeInput = document.getElementById('bkCheckinTime');
-  if (timeInput) { timeInput.min = ''; timeInput.max = ''; }
+  // Reset custom picker to unrestricted state
+  renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 8, defaultM: 0 });
   const hint = document.getElementById('bkCheckinTimeHint');
   if (hint) hint.remove();
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
-    btn.classList.remove('bk-tour-unavailable', 'selected');
+    btn.classList.remove('bk-tour-unavailable');
     btn.disabled = false;
   });
 }
@@ -652,45 +651,164 @@ function calcCheckout() {
 /* ══════════════════════════════════════
    TOUR TYPE BUTTONS
 ══════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   CUSTOM CHECK-IN TIME PICKER
+   Replaces native <input type="time"> so we can physically
+   remove AM or PM options rather than relying on min/max.
+═══════════════════════════════════════════════════════════ */
 
-/* Auto-set time + restrict range by tour type:
-   Day Tour   -> default 08:00, min 08:00, max 11:59
-   Night Tour -> default 12:00, min 12:00, max 22:00
-   Others     -> no restriction
-*/
+function renderCustomTimePicker(options) {
+  const wrap   = document.getElementById('bkCustomTimePicker');
+  const hidden = document.getElementById('bkCheckinTime');
+  if (!wrap || !hidden) return;
+
+  const { minH = 0, maxH = 23, allowAM = true, allowPM = true,
+          defaultH = null, defaultM = 0 } = options;
+
+  // Restore previous value if still in range
+  let curH = defaultH !== null ? defaultH : minH;
+  let curM = defaultM;
+  if (hidden.value) {
+    const [ph, pm] = hidden.value.split(':').map(Number);
+    if (!isNaN(ph) && ph >= minH && ph <= maxH) { curH = ph; curM = pm || 0; }
+  }
+  if (curH < minH) curH = minH;
+  if (curH > maxH) curH = maxH;
+
+  // Build 24-hr hour list filtered by AM/PM allowance
+  const hourOptions = [];
+  for (let h = minH; h <= maxH; h++) {
+    if (h < 12 && !allowAM) continue;
+    if (h >= 12 && !allowPM) continue;
+    hourOptions.push(h);
+  }
+  if (!hourOptions.includes(curH)) curH = hourOptions[0] || minH;
+
+  const minuteOptions = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+  function fmt12(h)  { const d = h === 0 ? 12 : h > 12 ? h - 12 : h; return String(d).padStart(2,'0'); }
+  function fmtM(m)   { return String(m).padStart(2,'0'); }
+  function ampm(h)   { return h < 12 ? 'AM' : 'PM'; }
+
+  function syncHidden() {
+    hidden.value = String(curH).padStart(2,'0') + ':' + fmtM(curM);
+    hidden.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  wrap.innerHTML = '';
+  wrap.style.cssText = 'display:flex;gap:6px;align-items:center;';
+
+  const selStyle = [
+    'flex:1;padding:9px 10px;border-radius:10px;',
+    'border:1.5px solid #d0caff;background:#faf9ff;',
+    'font-family:\'Nunito\',sans-serif;font-size:14px;font-weight:700;',
+    'color:#1a1a2e;cursor:pointer;outline:none;',
+    'appearance:none;-webkit-appearance:none;',
+    'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%237c6af4\'/%3E%3C/svg%3E");',
+    'background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;',
+  ].join('');
+
+  // Hour select
+  const hourSel = document.createElement('select');
+  hourSel.style.cssText = selStyle;
+  hourOptions.forEach(h => {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = fmt12(h);
+    if (h === curH) opt.selected = true;
+    hourSel.appendChild(opt);
+  });
+  hourSel.addEventListener('change', () => {
+    curH = parseInt(hourSel.value);
+    ampmBadge.textContent = ampm(curH);
+    syncHidden();
+  });
+
+  // Colon
+  const colon = document.createElement('span');
+  colon.textContent = ':';
+  colon.style.cssText = 'font-size:18px;font-weight:800;color:#7c6af4;flex-shrink:0;';
+
+  // Minute select
+  const minSel = document.createElement('select');
+  minSel.style.cssText = selStyle;
+  minuteOptions.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = fmtM(m);
+    if (m === curM) opt.selected = true;
+    minSel.appendChild(opt);
+  });
+  minSel.addEventListener('change', () => {
+    curM = parseInt(minSel.value);
+    syncHidden();
+  });
+
+  // AM/PM badge (display-only — enforced by hour range)
+  const ampmBadge = document.createElement('div');
+  const isPMonly  = !allowAM && allowPM;
+  const isAMonly  = allowAM && !allowPM;
+  ampmBadge.style.cssText =
+    'padding:9px 13px;border-radius:10px;font-size:13px;font-weight:800;' +
+    'letter-spacing:0.5px;white-space:nowrap;flex-shrink:0;' +
+    (isPMonly ? 'background:#eef6ff;color:#1565c0;border:1.5px solid #90caf9;'
+              : isAMonly ? 'background:#fff8e1;color:#e65100;border:1.5px solid #ffcc80;'
+              : 'background:#f0eeff;color:#7c6af4;border:1.5px solid #d0caff;');
+  ampmBadge.textContent = ampm(curH);
+
+  wrap.appendChild(hourSel);
+  wrap.appendChild(colon);
+  wrap.appendChild(minSel);
+  wrap.appendChild(ampmBadge);
+
+  syncHidden();
+}
+
 function applyTourTimeConstraints(tourType) {
-  const timeInput = document.getElementById('bkCheckinTime');
-  if (!timeInput) return;
-
   const existingHint = document.getElementById('bkCheckinTimeHint');
   if (existingHint) existingHint.remove();
 
-  if (tourType === 'Day Tour') {
-    timeInput.min = '08:00';
-    timeInput.max = '11:59';
-    const cur = timeInput.value;
-    if (!cur || cur < '08:00' || cur > '11:59') timeInput.value = '08:00';
-    _insertTimeHint(timeInput, '\u23f0 Day Tour: 8:00 AM \u2013 11:59 AM only');
+  // Checkout on this date: ALL tours PM-only — AM physically absent
+  if (_checkinConstraint) {
+    const minH = _checkinConstraint.mins >= 12 * 60
+      ? Math.floor(_checkinConstraint.mins / 60) : 12;
+    const minM = _checkinConstraint.mins >= 12 * 60
+      ? _checkinConstraint.mins % 60 : 0;
+    renderCustomTimePicker({ minH, maxH: 22, allowAM: false, allowPM: true, defaultH: minH, defaultM: minM });
+    const label = _checkinConstraint.mins >= 12 * 60 ? _checkinConstraint.time12 : '12:00 PM';
+    _insertTimeHint('⚠️ Checkout day — PM only (' + label + ' – 10:00 PM)');
     calcCheckout();
-  } else if (tourType === 'Night Tour') {
-    timeInput.min = '12:00';
-    timeInput.max = '22:00';
-    const cur = timeInput.value;
-    if (!cur || cur < '12:00' || cur > '22:00') timeInput.value = '12:00';
-    _insertTimeHint(timeInput, '\ud83c\udf19 Night Tour: 12:00 PM \u2013 10:00 PM only');
-    calcCheckout();
-  } else {
-    timeInput.min = '';
-    timeInput.max = '';
+    return;
   }
+
+  // Day Tour: AM only, 8:00-11:55
+  if (tourType === 'Day Tour') {
+    renderCustomTimePicker({ minH: 8, maxH: 11, allowAM: true, allowPM: false, defaultH: 8, defaultM: 0 });
+    _insertTimeHint('⏰ Day Tour: 8:00 AM – 11:55 AM only');
+    calcCheckout();
+    return;
+  }
+
+  // Night Tour: PM only, 12:00-22:00
+  if (tourType === 'Night Tour') {
+    renderCustomTimePicker({ minH: 12, maxH: 22, allowAM: false, allowPM: true, defaultH: 12, defaultM: 0 });
+    _insertTimeHint('🌙 Night Tour: 12:00 PM – 10:00 PM only');
+    calcCheckout();
+    return;
+  }
+
+  // Over-Night / 3D2N: unrestricted
+  renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 8, defaultM: 0 });
 }
 
-function _insertTimeHint(timeInput, msg) {
+function _insertTimeHint(msg) {
+  const field = document.getElementById('bkCheckinTimeField');
+  if (!field) return;
   const hint = document.createElement('div');
   hint.id = 'bkCheckinTimeHint';
   hint.style.cssText = 'font-size:11px;font-weight:700;color:#7c6af4;margin-top:4px;';
   hint.textContent = msg;
-  timeInput.parentNode.appendChild(hint);
+  field.appendChild(hint);
 }
 
 function setupTourButtons() {
@@ -1333,7 +1451,6 @@ function openEditForm(b, key, color) {
     btn.classList.toggle('selected', btn.dataset.type === tour);
   });
   _tourType = tour;
-  applyTourTimeConstraints(_tourType);
 
   calcTotalPax(); calcBalance(); calcCheckout();
   applyTimeSlotToForm(b.booking?.checkinTime || '');
@@ -1571,7 +1688,6 @@ function restoreDraft(draft) {
       btn.classList.toggle('selected', btn.dataset.type === draft.tourType);
     });
     _tourType = draft.tourType;
-    applyTourTimeConstraints(_tourType);
   }
 
   calcTotalPax();
