@@ -198,7 +198,7 @@
         <div id="tab-products" class="db-tab">
           <div class="db-page-header">
             <h1 class="db-page-title">Products</h1>
-            <button class="db-btn db-btn-primary" id="btn-add-product">+ Add Product</button>
+            <button class="db-btn db-btn-primary" id="btn-how-to-add">📋 How to Add Product</button>
           </div>
           <div class="db-card">
             <div class="db-table-wrap">
@@ -270,6 +270,106 @@
     </main>
   </div><!-- /db-layout -->
 </div><!-- /dashboard-root -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     HOW TO ADD PRODUCT GUIDE MODAL
+════════════════════════════════════════════════════════════ -->
+<div class="db-modal-overlay" id="guide-modal">
+  <div class="db-modal" style="max-width:620px">
+    <div class="db-modal-head">
+      <h2 class="db-modal-title">How to Add a Product</h2>
+      <button class="db-modal-close" onclick="closeDbModal('guide-modal')">✕</button>
+    </div>
+    <div class="db-modal-body">
+
+      <!-- Step by step guide -->
+      <div style="display:flex;flex-direction:column;gap:0">
+
+        <!-- Step 1 -->
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid #2a2520">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid #c9a96e;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:1rem;color:#c9a96e">1</div>
+          <div>
+            <p style="font-weight:500;color:#f0ece4;margin-bottom:4px">Fill in the Product Name & Category</p>
+            <p style="font-size:.85rem;color:#a09888;line-height:1.6">Enter the product name (required). For category, type the display name like <span style="color:#c9a96e">Men</span>, <span style="color:#c9a96e">Women</span>, or <span style="color:#c9a96e">Unisex</span>. The slug is the lowercase version used in URLs — e.g. <span style="color:#c9a96e">men</span>, <span style="color:#c9a96e">women</span>.</p>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid #2a2520">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid #c9a96e;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:1rem;color:#c9a96e">2</div>
+          <div>
+            <p style="font-weight:500;color:#f0ece4;margin-bottom:4px">Set the Price</p>
+            <p style="font-size:.85rem;color:#a09888;line-height:1.6">Enter the selling price (required). You can also enter an <span style="color:#c9a96e">Original Price</span> to show a crossed-out price and a sale badge on the product card.</p>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid #2a2520">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid #c9a96e;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:1rem;color:#c9a96e">3</div>
+          <div>
+            <p style="font-weight:500;color:#f0ece4;margin-bottom:4px">Upload a Product Image</p>
+            <p style="font-size:.85rem;color:#a09888;line-height:1.6">
+              You have two options:<br>
+              <span style="color:#f0ece4">Option A —</span> Drag &amp; drop or click the image zone to upload directly (requires Firebase Storage to be enabled).<br>
+              <span style="color:#f0ece4">Option B —</span> Upload your image to
+              <a href="https://imgbb.com" target="_blank" style="color:#c9a96e;text-decoration:underline">imgbb.com</a>
+              (free, no sign-up needed) → copy the <strong style="color:#f0ece4">Direct link</strong> → the image field will accept it automatically.
+            </p>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid #2a2520">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid #c9a96e;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:1rem;color:#c9a96e">4</div>
+          <div>
+            <p style="font-weight:500;color:#f0ece4;margin-bottom:4px">Add Sizes & Colors</p>
+            <p style="font-size:.85rem;color:#a09888;line-height:1.6">Enter sizes and colors separated by commas — e.g. <span style="color:#c9a96e">XS,S,M,L,XL</span> and <span style="color:#c9a96e">Black,White,Grey</span>. These will appear as selectable options on the product page.</p>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div style="display:flex;gap:16px;padding:16px 0;border-bottom:1px solid #2a2520">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid #c9a96e;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:1rem;color:#c9a96e">5</div>
+          <div>
+            <p style="font-weight:500;color:#f0ece4;margin-bottom:4px">Set Featured & Active</p>
+            <p style="font-size:.85rem;color:#a09888;line-height:1.6"><span style="color:#f0ece4">Featured</span> — shows the product in the homepage hero section. <span style="color:#f0ece4">Active</span> — makes the product visible in the shop. Uncheck Active to hide it without deleting.</p>
+          </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div style="display:flex;gap:16px;padding:16px 0">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(201,169,110,.15);border:1px solid #c9a96e;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:1rem;color:#c9a96e">6</div>
+          <div>
+            <p style="font-weight:500;color:#f0ece4;margin-bottom:4px">Save & Done</p>
+            <p style="font-size:.85rem;color:#a09888;line-height:1.6">Click <span style="color:#c9a96e">Save Product</span>. The product will be saved to Firebase and inventory rows will be automatically created for each size/color combination at 0 stock. You can update stock from the <span style="color:#c9a96e">Inventory</span> tab.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- imgbb tip -->
+      <div style="background:rgba(201,169,110,.06);border:1px solid rgba(201,169,110,.2);border-radius:8px;padding:14px 16px;margin-top:8px;display:flex;gap:12px;align-items:start">
+        <span style="font-size:1.1rem;flex-shrink:0">💡</span>
+        <p style="font-size:.82rem;color:#a09888;line-height:1.6;margin:0">
+          <span style="color:#c9a96e;font-weight:500">Free image tip:</span> Use
+          <a href="https://imgbb.com" target="_blank" style="color:#c9a96e;text-decoration:underline">imgbb.com</a>
+          to host product images for free. Upload → click the image → copy the link that ends in <code style="background:#1e1e1e;padding:1px 5px;border-radius:3px;color:#f0ece4">.jpg</code> or <code style="background:#1e1e1e;padding:1px 5px;border-radius:3px;color:#f0ece4">.png</code>.
+        </p>
+      </div>
+
+      <!-- CTA button -->
+      <div style="margin-top:24px;display:flex;gap:12px">
+        <button class="db-btn db-btn-primary" onclick="openAddProductFromGuide()" style="flex:1;justify-content:center">
+          + Add Product Now
+        </button>
+        <button class="db-btn db-btn-outline" onclick="closeDbModal('guide-modal')">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════════
      PRODUCT MODAL
@@ -627,14 +727,23 @@ async function loadProducts() {
   }
 }
 
-$id('btn-add-product').addEventListener('click', () => {
-  $id('product-modal-title').textContent = 'Add Product';
-  $id('product-form').reset();
-  $id('pf-id').value = '';
-  $id('pf-active').checked = true;
-  resetImgDropZone();
-  openDbModal('product-modal');
+// Guide modal button
+$id('btn-how-to-add').addEventListener('click', () => {
+  openDbModal('guide-modal');
 });
+
+// Open add product form — callable from guide modal too
+window.openAddProductFromGuide = function() {
+  closeDbModal('guide-modal');
+  setTimeout(() => {
+    $id('product-modal-title').textContent = 'Add Product';
+    $id('product-form').reset();
+    $id('pf-id').value = '';
+    $id('pf-active').checked = true;
+    resetImgDropZone();
+    openDbModal('product-modal');
+  }, 250);
+};
 
 window.editProduct = async id => {
   const list = await getProductsAdmin();
@@ -849,22 +958,38 @@ const hint      = document.getElementById('img-hint');
 const progWrap  = document.getElementById('img-progress-wrap');
 const progBar   = document.getElementById('img-progress-bar');
 const progText  = document.getElementById('img-progress-text');
+const saveBtn   = document.getElementById('product-form-save');
+
+// Track upload state — Save button is locked while uploading
+let uploading = false;
+
+function setUploadLock(on) {
+  uploading = on;
+  if (saveBtn) {
+    saveBtn.disabled = on;
+    if (on) saveBtn.textContent = 'Waiting for image upload…';
+  }
+}
 
 function setImgPreviewLocal(url) {
   preview.src = url; preview.style.display = 'block';
   icon.style.display = 'none';
-  label.textContent  = 'Image ready — click or drop to replace';
+  label.textContent  = '✓ Image ready — click or drop to replace';
+  label.style.color  = '#4caf76';
   hint.style.display = 'none';
 }
 
 window.resetImgDropZone = function() {
   preview.src = ''; preview.style.display = 'none';
-  icon.style.display = 'block';
-  label.innerHTML    = 'Drag &amp; drop or <u style="color:#c9a96e;cursor:pointer">click to browse</u>';
-  hint.style.display = 'block';
+  icon.style.display  = 'block';
+  label.innerHTML     = 'Drag &amp; drop or <u style="color:#c9a96e;cursor:pointer">click to browse</u>';
+  label.style.color   = '#5a5248';
+  hint.style.display  = 'block';
   progWrap.style.display = 'none';
   progBar.style.width = '0%';
-  hiddenUrl.value = '';
+  hiddenUrl.value     = '';
+  setUploadLock(false);
+  if (saveBtn && !saveBtn.disabled) saveBtn.textContent = 'Save Product';
 };
 
 window.setImgPreview = function(url) {
@@ -874,40 +999,80 @@ window.setImgPreview = function(url) {
 };
 
 async function handleFile(file) {
-  if (!file?.type.startsWith('image/')) { alert('Please select an image file.'); return; }
-  if (file.size > 5 * 1024 * 1024)     { alert('Max file size is 5MB.');         return; }
+  if (!file?.type.startsWith('image/')) { alert('Please select a valid image (JPG, PNG, WEBP).'); return; }
+  if (file.size > 5 * 1024 * 1024)     { alert('Image too large. Max 5MB.'); return; }
 
+  // Show local preview immediately
   setImgPreviewLocal(URL.createObjectURL(file));
   progWrap.style.display = 'block';
   progBar.style.width = '0%';
-  progText.textContent = 'Uploading...';
+  progText.textContent = 'Uploading to Firebase Storage…';
+  progText.style.color = '#a09888';
   dropZone.style.pointerEvents = 'none';
 
-  const ext  = file.name.split('.').pop();
-  const path = `products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-  const task = uploadBytesResumable(ref(storage, path), file);
+  // Lock Save button until upload finishes
+  setUploadLock(true);
 
-  task.on('state_changed',
-    snap => {
-      const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
-      progBar.style.width = pct + '%';
-      progText.textContent = `Uploading… ${pct}%`;
-    },
-    err => { progText.textContent = 'Upload failed: ' + err.message; dropZone.style.pointerEvents = 'auto'; },
-    async () => {
-      const url = await getDownloadURL(task.snapshot.ref);
-      hiddenUrl.value = url;
-      progWrap.style.display = 'none';
-      dropZone.style.pointerEvents = 'auto';
-      setImgPreviewLocal(url);
-    }
-  );
+  const ext  = file.name.split('.').pop().toLowerCase();
+  const path = `products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+  try {
+    const task = uploadBytesResumable(ref(storage, path), file);
+
+    task.on('state_changed',
+      snap => {
+        const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
+        progBar.style.width  = pct + '%';
+        progText.textContent = `Uploading… ${pct}%`;
+      },
+      err => {
+        // Upload failed — show error clearly
+        console.error('[image upload] failed:', err);
+        progBar.style.width    = '0%';
+        progBar.style.background = '#d94f4f';
+        progText.style.color   = '#d94f4f';
+        progText.textContent   = '✗ Upload failed: ' + (err.code === 'storage/unauthorized'
+          ? 'Storage not enabled. Go to Firebase Console → Storage → Get Started.'
+          : err.message);
+        dropZone.style.pointerEvents = 'auto';
+        setUploadLock(false);
+        if (saveBtn) saveBtn.textContent = 'Save Product';
+      },
+      async () => {
+        // Upload complete — get download URL and store it
+        try {
+          const url = await getDownloadURL(task.snapshot.ref);
+          hiddenUrl.value        = url;
+          progWrap.style.display = 'none';
+          progBar.style.background = '#c9a96e';
+          dropZone.style.pointerEvents = 'auto';
+          setImgPreviewLocal(url);
+          console.log('[image upload] saved URL:', url);
+        } catch(e) {
+          progText.style.color   = '#d94f4f';
+          progText.textContent   = '✗ Could not get download URL: ' + e.message;
+        }
+        setUploadLock(false);
+        if (saveBtn && !saveBtn.disabled) saveBtn.textContent = 'Save Product';
+      }
+    );
+  } catch(err) {
+    console.error('[image upload] error:', err);
+    progText.style.color   = '#d94f4f';
+    progText.textContent   = '✗ ' + err.message;
+    dropZone.style.pointerEvents = 'auto';
+    setUploadLock(false);
+    if (saveBtn) saveBtn.textContent = 'Save Product';
+  }
 }
 
 fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); fileInput.value = ''; });
 dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.style.borderColor = '#c9a96e'; });
 dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = ''; });
-dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.style.borderColor = ''; if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.style.borderColor = '';
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
 </script>
 
 </body>
