@@ -1,9 +1,9 @@
 // ============================================================
 // STREETWISE PH — index.js (Homepage)
 // ============================================================
-import './main.js';
-import { initAuth } from './main.js';
-import { getFeatured } from '../firebase/products.js';
+import './p_main.js';
+import { initAuth } from './p_main.js';
+import { getFeatured } from '../firebase/f_products.js';
 import { formatPrice } from '../utils/helpers.js';
 
 initAuth();
@@ -57,12 +57,12 @@ function productCard(p) {
 }
 
 window.quickAdd = function(id, name, price, imageUrl) {
-  const { addToCart } = require('../firebase/cart.js');
+  const { addToCart } = require('../firebase/f_cart.js');
 };
 
 // Use dynamic import for quickAdd
 window.quickAdd = async function(id, name, price, imageUrl) {
-  const { addToCart } = await import('../firebase/cart.js');
+  const { addToCart } = await import('../firebase/f_cart.js');
   addToCart({ productId: id, name, price, imageUrl, size: '', color: '', quantity: 1 });
   const { showToast } = await import('../utils/helpers.js');
   showToast('Added to cart!', 'success');

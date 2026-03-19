@@ -1,7 +1,7 @@
 // ============================================================
 // STREETWISE PH — Sales Analysis Module
 // ============================================================
-import { db } from './config.js';
+import { db } from './f_config.js';
 import {
   collection, getDocs, query, where, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";

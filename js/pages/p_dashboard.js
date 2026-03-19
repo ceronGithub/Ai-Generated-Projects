@@ -1,12 +1,12 @@
 // ============================================================
 // STREETWISE PH — dashboard.js (Owner Dashboard)
 // ============================================================
-import { onAuthChange, logout } from '../firebase/auth.js';
-import { getProducts, addProduct, updateProduct, deleteProduct, getCategories } from '../firebase/products.js';
-import { getOrders, getRecentOrders, updateOrderStatus, getOrder } from '../firebase/orders.js';
+import { onAuthChange, logout } from '../firebase/f_auth.js';
+import { getProducts, addProduct, updateProduct, deleteProduct, getCategories } from '../firebase/f_products.js';
+import { getOrders, getRecentOrders, updateOrderStatus, getOrder } from '../firebase/f_orders.js';
 import { getInventory, getLowStock, setStock } from '../firebase/inventory.js';
-import { getSalesOverview, getSalesByDate, getSalesByProduct, getSalesByCategory } from '../firebase/sales.js';
-import { getComments, deleteComment } from '../firebase/comments.js';
+import { getSalesOverview, getSalesByDate, getSalesByProduct, getSalesByCategory } from '../firebase/f_sales.js';
+import { getComments, deleteComment } from '../firebase/f_comments.js';
 import { exportPDF, exportExcel, exportWord, exportPPT } from '../utils/export.js';
 import { formatPrice, formatDate, showToast, openModal, closeModal, getFirstDayOfMonth, getTodayDate, statusBadge, hideLoader } from '../utils/helpers.js';
 
@@ -33,7 +33,7 @@ document.getElementById('login-form')?.addEventListener('submit', async e => {
   const btn = document.getElementById('login-submit');
   btn.disabled = true; btn.textContent = 'Signing in...';
   try {
-    const { login } = await import('../firebase/auth.js');
+    const { login } = await import('../firebase/f_auth.js');
     const { role }  = await login(document.getElementById('login-username').value, document.getElementById('login-password').value);
     if (role !== 'owner') throw new Error('Access denied. Owner only.');
     showToast('Welcome back!', 'success');
@@ -176,7 +176,7 @@ window.openAddProduct = async () => {
 
 window.openEditProduct = async (id) => {
   await loadCategorySelect();
-  const { getProduct } = await import('../firebase/products.js');
+  const { getProduct } = await import('../firebase/f_products.js');
   const p = await getProduct(id);
   if (!p) return;
   document.getElementById('product-form-title').textContent = 'Edit Product';

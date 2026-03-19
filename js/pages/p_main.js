@@ -1,6 +1,8 @@
 // ============================================================
-// STREETWISE PH — js/main.js  (loaded by index.html)
+// STREETWISE PH — js/page./main.js
+// Used by: shop.html, cart.html, product.html, contact.html
 // ============================================================
+import { logoutUser, loginUser, onAuthChange } from "../firebase/f_auth.js";
 
 // ── Globals ────────────────────────────────────────────────
 window.showToast = function(msg, type, ms) {
@@ -47,19 +49,34 @@ window.updateCartBadge = function() {
   } catch(e) {}
 };
 
+window.hideLoader = function() {
+  var l = document.getElementById("page-loader");
+  if (l) { l.style.opacity = "0"; l.style.transition = "opacity .4s"; setTimeout(function() { l.style.display = "none"; }, 500); }
+};
+
+// ── Auth navbar ────────────────────────────────────────────
+// FIX: Cache last known auth state so DOMContentLoaded can re-apply it
+// if Firebase resolved before the DOM was ready (common on cached sessions).
+var _lastAuthProfile = undefined; // undefined = not yet resolved; null = logged out
+
 window.updateNavAuth = function(profile) {
+  _lastAuthProfile = profile; // always cache, even null
   var loginBtn  = document.getElementById("nav-login-btn");
   var userEl    = document.getElementById("nav-user");
   var ownerLink = document.getElementById("nav-owner-link");
-  if (!loginBtn) return;
+  if (!loginBtn) return; // DOM not ready — DOMContentLoaded will retry
   if (profile) {
     loginBtn.classList.add("hidden");
     if (userEl) {
       userEl.classList.remove("hidden");
-      var av = userEl.querySelector(".nav-user-avatar");
-      var nm = userEl.querySelector(".nav-user-name");
-      if (av) av.textContent = ((profile.fullName || profile.email || "U")[0]).toUpperCase();
-      if (nm) nm.textContent  = profile.fullName || profile.email || "";
+      var av = document.getElementById("nav-avatar") || userEl.querySelector(".nav-user-avatar");
+      var nm = document.getElementById("nav-user-name") || userEl.querySelector(".nav-user-name");
+      var displayName = profile.fullName
+        || (profile.user && profile.user.email)
+        || profile.email
+        || "Owner";
+      if (av) av.textContent = displayName[0].toUpperCase();
+      if (nm) nm.textContent = displayName;
     }
     if (ownerLink && profile.role === "owner") ownerLink.classList.remove("hidden");
   } else {
@@ -69,20 +86,24 @@ window.updateNavAuth = function(profile) {
   }
 };
 
-window.hideLoader = function() {
-  var l = document.getElementById("page-loader");
-  if (l) { l.style.opacity = "0"; l.style.transition = "opacity .4s"; setTimeout(function() { l.style.display = "none"; }, 500); }
-};
-
 window.addEventListener("cartUpdated", window.updateCartBadge);
 
-// ── Navbar ─────────────────────────────────────────────────
+// ── Single auth listener ───────────────────────────────────
+// Registered immediately at module load. May fire before DOM ready — handled below.
+onAuthChange(function(profile) {
+  window.updateNavAuth(profile);
+});
+
+// ── DOM Ready ──────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
-  // Navbar scroll
+  // FIX: Re-apply auth state if Firebase already resolved before DOM was ready
+  if (_lastAuthProfile !== undefined) {
+    window.updateNavAuth(_lastAuthProfile);
+  }
+
   var nav = document.querySelector(".navbar");
   if (nav) window.addEventListener("scroll", function() { nav.classList.toggle("scrolled", window.scrollY > 40); });
 
-  // Hamburger
   var hb = document.getElementById("nav-hamburger");
   var mm = document.getElementById("mobile-menu");
   if (hb && mm) {
@@ -92,13 +113,11 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Active nav link
   var page = window.location.pathname.split("/").pop() || "index.html";
   document.querySelectorAll(".nav-link").forEach(function(l) {
     if (l.getAttribute("href") === page) l.classList.add("active");
   });
 
-  // Modal close buttons
   document.querySelectorAll(".modal-close").forEach(function(b) {
     b.addEventListener("click", function() {
       var o = b.closest(".modal-overlay");
@@ -111,12 +130,48 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // Logout
+  // ── Sign-in form ────────────────────────────────────────
+  var signinForm = document.getElementById("signin-form");
+  if (signinForm) {
+    signinForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      var emailEl = document.getElementById("si-email");
+      var passEl  = document.getElementById("si-password");
+      var btn     = signinForm.querySelector("button[type=submit]");
+      if (!emailEl || !passEl) return;
+      var originalText = btn ? btn.textContent : "";
+      if (btn) { btn.disabled = true; btn.textContent = "Signing in..."; }
+      loginUser(emailEl.value, passEl.value)
+        .then(function(result) {
+          var profile = result.profile;
+          window.closeModal("login-modal");
+          window.showToast("Welcome back!", "success");
+          // onAuthChange will fire and update the navbar automatically
+          if (profile && profile.role === "owner") {
+            setTimeout(function() { window.location.href = "dashboard.html"; }, 600);
+          }
+        })
+        .catch(function() {
+          window.showToast("Invalid email or password.", "error");
+          if (btn) { btn.disabled = false; btn.textContent = originalText; }
+        });
+    });
+  }
+
+  // ── Logout ──────────────────────────────────────────────
   var logoutBtn = document.getElementById("nav-logout");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", function() {
-      window.showToast("Logged out.", "info");
-      setTimeout(function() { window.location.href = "index.html"; }, 600);
+      logoutUser()
+        .then(function() {
+          window.updateNavAuth(null);
+          window.showToast("Logged out.", "info");
+          setTimeout(function() { window.location.href = "index.html"; }, 600);
+        })
+        .catch(function(err) {
+          console.error("Logout error:", err);
+          window.location.href = "index.html";
+        });
     });
   }
 

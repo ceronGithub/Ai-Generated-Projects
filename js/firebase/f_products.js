@@ -1,7 +1,7 @@
 // ============================================================
 // STREETWISE PH — Products Module
 // ============================================================
-import { db } from './config.js';
+import { db } from './f_config.js';
 import {
   collection, doc, getDocs, getDoc, addDoc, updateDoc,
   deleteDoc, query, where, orderBy, limit
@@ -65,3 +65,9 @@ export async function getCategories() {
 // Alias for compatibility
 export const getFeaturedProducts = getFeatured;
 export const getAllProductsAdmin = getProducts;
+
+// ── Get ALL products for admin (no pagination, includes inactive) ──
+export async function getProductsAdmin() {
+  const snap = await getDocs(query(collection(db, PRODUCTS), orderBy('createdAt', 'desc')));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}

@@ -1,7 +1,7 @@
 // ============================================================
 // STREETWISE PH — Comments Module
 // ============================================================
-import { db, auth } from './config.js';
+import { db, auth } from './f_config.js';
 import {
   collection, addDoc, getDocs, deleteDoc,
   doc, query, orderBy, where

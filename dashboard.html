@@ -212,30 +212,35 @@
   </div>
 
   <script type="module">
-    import { auth }                                              from "./js/firebase/config.js";
-    import { loginUser, logoutUser, onAuthChange, getCurrentProfile } from "./js/firebase/auth.js";
-    import { getAllProductsAdmin, addProduct, updateProduct, deleteProduct } from "./js/firebase/products.js";
-    import { getAllOrders, getOrder, updateOrderStatus }         from "./js/firebase/orders.js";
-    import { getInventory, updateStock }                        from "./js/firebase/inventory.js";
-    import { getSalesOverview, getSalesByDate, getSalesByProduct, getSalesByCategory } from "./js/firebase/sales.js";
-    import { getComments, deleteComment }                       from "./js/firebase/comments.js";
-    import { exportPDF, exportExcel, exportWord, exportPPT }    from "./js/firebase/export.js";
+    // ── Imports ───────────────────────────────────────────
+    import { loginUser, logoutUser, onAuthChange }           from "./js/firebase/f_auth.js";
+    import { getProductsAdmin, addProduct, updateProduct, deleteProduct } from "./js/firebase/f_products.js";
+    import { getAllOrders, getOrder, updateOrderStatus }     from "./js/firebase/f_orders.js";
+    import { getInventory, updateStock }                     from "./js/firebase/f_inventory.js";
+    import { getSalesOverview, getSalesByDate, getSalesByProduct, getSalesByCategory } from "./js/firebase/f_sales.js";
+    import { getComments, deleteComment }                    from "./js/firebase/f_comments.js";
+    import { exportPDF, exportExcel, exportWord, exportPPT } from "./js/firebase/f_export.js";
     import "./js/main.js";
 
-    let salesData = { overview:{}, byDate:[], byProduct:[], byCategory:[] };
+    // ── Helper globals (main.js sets these on window) ─────
+    const showToast   = (...a) => window.showToast(...a);
+    const formatPrice = (...a) => window.formatPrice(...a);
+    const formatDate  = (...a) => window.formatDate(...a);
+    const openModal   = (...a) => window.openModal(...a);
+    const closeModal  = (...a) => window.closeModal(...a);
+
+    let salesData    = { overview:{}, byDate:[], byProduct:[], byCategory:[] };
     let revenueChart = null, productChart = null;
 
     // ── Auth Guard ────────────────────────────────────────
-    // Hide loader as soon as auth state is known
-    onAuthChange(async user => {
+    // onAuthChange now delivers merged {user,...profile} — no need to re-fetch profile
+    onAuthChange(state => {
       const loader = document.getElementById("page-loader");
       if (loader) { loader.classList.add("hidden"); setTimeout(() => loader.remove(), 400); }
-      if (!user) { showGate(); return; }
-      const profile = await getCurrentProfile();
-      if (profile?.role !== "owner") { showGate(); return; }
+      if (!state || state.role !== "owner") { showGate(); return; }
+      const name = state.fullName || (state.user && state.user.email) || "Owner";
       document.getElementById("login-gate").classList.add("hidden");
       document.getElementById("dashboard-content").classList.remove("hidden");
-      const name = profile.fullName || user.email;
       document.getElementById("owner-name-nav").textContent  = name;
       document.getElementById("owner-name-dash").textContent = name;
       document.getElementById("current-date").textContent    = new Date().toLocaleDateString("en-PH",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
@@ -254,15 +259,27 @@
       const btn = document.getElementById("login-submit");
       btn.disabled = true; btn.textContent = "Signing in...";
       try {
-        const { profile } = await loginUser(document.getElementById("login-email").value, document.getElementById("login-password").value);
-        if (profile?.role !== "owner") { await logoutUser(); showToast("Access denied. Owner only.", "error"); }
-        else showToast("Welcome back!", "success");
-      } catch { showToast("Invalid credentials.", "error"); }
+        const { profile } = await loginUser(
+          document.getElementById("login-email").value,
+          document.getElementById("login-password").value
+        );
+        if (profile?.role !== "owner") {
+          await logoutUser();
+          showToast("Access denied. Owner only.", "error");
+        } else {
+          showToast("Welcome back!", "success");
+        }
+      } catch {
+        showToast("Invalid credentials.", "error");
+      }
       btn.disabled = false; btn.textContent = "Sign In to Dashboard";
     });
 
+    // ── Logout ────────────────────────────────────────────
     document.getElementById("nav-logout").addEventListener("click", async () => {
-      await logoutUser(); showToast("Logged out.", "info"); setTimeout(() => window.location.href = "index.html", 600);
+      await logoutUser();
+      showToast("Logged out.", "info");
+      setTimeout(() => window.location.href = "index.html", 600);
     });
 
     // ── Tab switching ─────────────────────────────────────
@@ -283,22 +300,29 @@
       });
     });
 
-    document.getElementById("sidebar-toggle").addEventListener("click", () => document.getElementById("sidebar").classList.toggle("open"));
+    document.getElementById("sidebar-toggle").addEventListener("click", () =>
+      document.getElementById("sidebar").classList.toggle("open")
+    );
 
     // ── Overview ──────────────────────────────────────────
     async function loadOverview() {
-      const from = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
-      const to   = new Date().toISOString().split("T")[0];
-      const data = await getSalesOverview(from, to);
-      document.getElementById("stat-revenue").textContent = formatPrice(data.totalRevenue);
-      document.getElementById("stat-orders").textContent  = data.totalOrders;
-      document.getElementById("stat-today").textContent   = formatPrice(data.todayRevenue);
-      document.getElementById("stat-pending").textContent = data.pending;
+      try {
+        const from = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+        const to   = new Date().toISOString().split("T")[0];
+        const data = await getSalesOverview(from, to);
+        document.getElementById("stat-revenue").textContent = formatPrice(data.totalRevenue);
+        document.getElementById("stat-orders").textContent  = data.totalOrders;
+        document.getElementById("stat-today").textContent   = formatPrice(data.todayRevenue);
+        // Bug 4 fix: sales.js returns pendingOrders not pending
+        document.getElementById("stat-pending").textContent = data.pendingOrders ?? data.pending ?? 0;
+      } catch(e) { console.error("loadOverview:", e); }
     }
 
     async function loadRecentOrders() {
-      const orders = (await getAllOrders()).slice(0, 10);
-      renderOrdersTable("recent-orders-body", orders);
+      try {
+        const orders = (await getAllOrders()).slice(0, 10);
+        renderOrdersTable("recent-orders-body", orders);
+      } catch(e) { console.error("loadRecentOrders:", e); }
     }
 
     function statusBadge(s) {
@@ -307,36 +331,52 @@
 
     function renderOrdersTable(tbodyId, orders) {
       const tbody = document.getElementById(tbodyId);
-      if (!orders.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">No orders yet.</td></tr>'; return; }
-      tbody.innerHTML = orders.map(o => `
-        <tr>
+      if (!tbody) return;
+      if (!orders.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">No orders yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = orders.map(o => {
+        // Bug 3 fix: support both flattened fields and nested customerInfo
+        const name = o.guestName || o.customerInfo?.name || o.customerInfo?.fullName || "Guest";
+        return `<tr>
           <td><span style="font-family:var(--font-display)">${o.orderNumber}</span></td>
-          <td>${o.guestName||"Guest"}</td>
+          <td>${name}</td>
           <td>${formatPrice(o.total)}</td>
           <td><span class="badge badge-${statusBadge(o.orderStatus)}">${o.orderStatus}</span></td>
           <td>${formatDate(o.createdAt)}</td>
           <td><button class="btn btn-sm btn-outline" onclick="viewOrder('${o.id}')">View</button></td>
-        </tr>`).join("");
+        </tr>`;
+      }).join("");
     }
 
     // ── Sales ─────────────────────────────────────────────
     function getDateRange() {
-      const from = document.getElementById("date-from")?.value || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
-      const to   = document.getElementById("date-to")?.value   || new Date().toISOString().split("T")[0];
+      const from = document.getElementById("date-from")?.value
+        || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+      const to   = document.getElementById("date-to")?.value
+        || new Date().toISOString().split("T")[0];
       return { from, to };
     }
 
     async function loadSales() {
-      const { from, to } = getDateRange();
-      const [ov, bd, bp, bc] = await Promise.all([getSalesOverview(from,to), getSalesByDate(from,to), getSalesByProduct(from,to), getSalesByCategory(from,to)]);
-      salesData = { overview: ov, byDate: bd, byProduct: bp, byCategory: bc };
-      document.getElementById("s-revenue").textContent = formatPrice(ov.totalRevenue);
-      document.getElementById("s-orders").textContent  = ov.totalOrders;
-      document.getElementById("s-avg").textContent     = formatPrice(ov.avgOrder);
-      document.getElementById("s-today").textContent   = formatPrice(ov.todayRevenue);
-      renderRevenueChart(bd);
-      renderProductChart(bp);
-      renderCategoryTable(bc);
+      try {
+        const { from, to } = getDateRange();
+        const [ov, bd, bp, bc] = await Promise.all([
+          getSalesOverview(from, to),
+          getSalesByDate(from, to),
+          getSalesByProduct(from, to),
+          getSalesByCategory(from, to)
+        ]);
+        salesData = { overview: ov, byDate: bd, byProduct: bp, byCategory: bc };
+        document.getElementById("s-revenue").textContent = formatPrice(ov.totalRevenue);
+        document.getElementById("s-orders").textContent  = ov.totalOrders;
+        document.getElementById("s-avg").textContent     = formatPrice(ov.avgOrder);
+        document.getElementById("s-today").textContent   = formatPrice(ov.todayRevenue);
+        renderRevenueChart(bd);
+        renderProductChart(bp);
+        renderCategoryTable(bc);
+      } catch(e) { console.error("loadSales:", e); }
     }
 
     function renderRevenueChart(data) {
@@ -345,12 +385,22 @@
       if (revenueChart) revenueChart.destroy();
       revenueChart = new Chart(ctx, {
         type: "line",
-        data: { labels: data.map(d => new Date(d.date).toLocaleDateString("en-PH",{month:"short",day:"numeric"})),
-          datasets: [{ label:"Revenue (₱)", data: data.map(d=>d.revenue), borderColor:"#c9a96e", backgroundColor:"rgba(201,169,110,0.08)", borderWidth:2, fill:true, tension:.4, pointBackgroundColor:"#c9a96e", pointRadius:4 }]
+        data: {
+          labels: data.map(d => new Date(d.date).toLocaleDateString("en-PH",{month:"short",day:"numeric"})),
+          datasets: [{
+            label: "Revenue (₱)", data: data.map(d => d.revenue),
+            borderColor:"#c9a96e", backgroundColor:"rgba(201,169,110,0.08)",
+            borderWidth:2, fill:true, tension:.4,
+            pointBackgroundColor:"#c9a96e", pointRadius:4
+          }]
         },
-        options: { responsive:true, maintainAspectRatio:false,
-          plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>"₱"+parseFloat(c.raw).toLocaleString("en-PH",{minimumFractionDigits:2})}} },
-          scales: { x:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11}}}, y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11},callback:v=>"₱"+v.toLocaleString()}} }
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>"₱"+parseFloat(c.raw).toLocaleString("en-PH",{minimumFractionDigits:2})}}},
+          scales: {
+            x:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11}}},
+            y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11},callback:v=>"₱"+v.toLocaleString()}}
+          }
         }
       });
     }
@@ -360,12 +410,21 @@
       if (!ctx) return;
       if (productChart) productChart.destroy();
       productChart = new Chart(ctx, {
-        type:"bar",
-        data: { labels: data.map(d=>d.productName.length>18?d.productName.slice(0,18)+"…":d.productName),
-          datasets:[{label:"Revenue (₱)",data:data.map(d=>d.revenue),backgroundColor:"rgba(201,169,110,0.7)",borderColor:"#c9a96e",borderWidth:1,borderRadius:4}]
+        type: "bar",
+        data: {
+          labels: data.map(d => d.productName.length > 18 ? d.productName.slice(0,18)+"…" : d.productName),
+          datasets: [{
+            label:"Revenue (₱)", data:data.map(d=>d.revenue),
+            backgroundColor:"rgba(201,169,110,0.7)", borderColor:"#c9a96e", borderWidth:1, borderRadius:4
+          }]
         },
-        options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-          scales: { x:{grid:{display:false},ticks:{color:"#a09888",font:{size:11}}}, y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11},callback:v=>"₱"+v.toLocaleString()}} }
+        options: {
+          responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales: {
+            x:{grid:{display:false},ticks:{color:"#a09888",font:{size:11}}},
+            y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"#a09888",font:{size:11},callback:v=>"₱"+v.toLocaleString()}}
+          }
         }
       });
     }
@@ -373,33 +432,42 @@
     function renderCategoryTable(data) {
       const tbody = document.getElementById("cat-tbody");
       if (!tbody) return;
-      tbody.innerHTML = data.map(d=>`<tr><td>${d.category}</td><td>${d.unitsSold}</td><td>${formatPrice(d.revenue)}</td></tr>`).join("") || '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px">No data.</td></tr>';
+      tbody.innerHTML = data.map(d =>
+        `<tr><td>${d.category}</td><td>${d.unitsSold}</td><td>${formatPrice(d.revenue)}</td></tr>`
+      ).join("") || '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px">No data.</td></tr>';
     }
 
     document.getElementById("apply-dates")?.addEventListener("click", loadSales);
-
-    // Export buttons
-    document.getElementById("exp-pdf")?.addEventListener("click", () => { const {from,to}=getDateRange(); exportPDF(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
+    document.getElementById("exp-pdf")?.addEventListener("click",   () => { const {from,to}=getDateRange(); exportPDF(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
     document.getElementById("exp-excel")?.addEventListener("click", () => { const {from,to}=getDateRange(); exportExcel(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
-    document.getElementById("exp-word")?.addEventListener("click", () => { const {from,to}=getDateRange(); exportWord(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
-    document.getElementById("exp-ppt")?.addEventListener("click", () => { const {from,to}=getDateRange(); exportPPT(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
+    document.getElementById("exp-word")?.addEventListener("click",  () => { const {from,to}=getDateRange(); exportWord(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
+    document.getElementById("exp-ppt")?.addEventListener("click",   () => { const {from,to}=getDateRange(); exportPPT(salesData.overview,salesData.byDate,salesData.byProduct,from,to); });
 
     // ── Products ──────────────────────────────────────────
+    // Bug 2 fix: use getProductsAdmin() which returns a plain array
     async function loadProducts() {
-      const products = await getAllProductsAdmin();
-      const tbody    = document.getElementById("products-body");
-      if (!products.length) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">No products yet.</td></tr>'; return; }
-      tbody.innerHTML = products.map(p=>`
-        <tr>
-          <td><div style="display:flex;align-items:center;gap:10px">${p.imageUrl?`<img src="${p.imageUrl}" style="width:40px;height:52px;object-fit:cover;border-radius:4px">`:""}<span>${p.name}</span></div></td>
-          <td>${p.category||"—"}</td>
-          <td>${formatPrice(p.price)}</td>
-          <td><span class="badge badge-${p.isActive?"success":"muted"}">${p.isActive?"Active":"Hidden"}</span></td>
-          <td style="display:flex;gap:6px;padding:14px 16px">
-            <button class="btn btn-sm btn-outline" onclick="editProduct('${p.id}')">Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="removeProduct('${p.id}')">Remove</button>
-          </td>
-        </tr>`).join("");
+      try {
+        const products = await getProductsAdmin();
+        const tbody    = document.getElementById("products-body");
+        if (!products.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">No products yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = products.map(p => `
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:10px">
+              ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:40px;height:52px;object-fit:cover;border-radius:4px">` : ""}
+              <span>${p.name}</span>
+            </div></td>
+            <td>${p.category||"—"}</td>
+            <td>${formatPrice(p.price)}</td>
+            <td><span class="badge badge-${p.isActive?"success":"muted"}">${p.isActive?"Active":"Hidden"}</span></td>
+            <td style="display:flex;gap:6px;padding:14px 16px">
+              <button class="btn btn-sm btn-outline" onclick="editProduct('${p.id}')">Edit</button>
+              <button class="btn btn-sm btn-danger"  onclick="removeProduct('${p.id}')">Remove</button>
+            </td>
+          </tr>`).join("");
+      } catch(e) { console.error("loadProducts:", e); }
     }
 
     document.getElementById("add-product-btn")?.addEventListener("click", () => {
@@ -411,22 +479,22 @@
     });
 
     window.editProduct = async id => {
-      const products = await getAllProductsAdmin();
+      const products = await getProductsAdmin();
       const p = products.find(x => x.id === id);
       if (!p) return;
       document.getElementById("product-modal-title").textContent = "Edit Product";
-      document.getElementById("pf-id").value            = p.id;
-      document.getElementById("pf-name").value          = p.name;
-      document.getElementById("pf-category").value      = p.category||"";
-      document.getElementById("pf-cat-slug").value      = p.categorySlug||"";
-      document.getElementById("pf-price").value         = p.price;
-      document.getElementById("pf-original-price").value= p.originalPrice||"";
-      document.getElementById("pf-description").value   = p.description||"";
-      document.getElementById("pf-image").value         = p.imageUrl||"";
-      document.getElementById("pf-sizes").value         = (p.sizes||[]).join(",");
-      document.getElementById("pf-colors").value        = (p.colors||[]).join(",");
-      document.getElementById("pf-featured").checked    = p.isFeatured||false;
-      document.getElementById("pf-active").checked      = p.isActive!==false;
+      document.getElementById("pf-id").value             = p.id;
+      document.getElementById("pf-name").value           = p.name;
+      document.getElementById("pf-category").value       = p.category||"";
+      document.getElementById("pf-cat-slug").value       = p.categorySlug||"";
+      document.getElementById("pf-price").value          = p.price;
+      document.getElementById("pf-original-price").value = p.originalPrice||"";
+      document.getElementById("pf-description").value    = p.description||"";
+      document.getElementById("pf-image").value          = p.imageUrl||"";
+      document.getElementById("pf-sizes").value          = (p.sizes||[]).join(",");
+      document.getElementById("pf-colors").value         = (p.colors||[]).join(",");
+      document.getElementById("pf-featured").checked     = p.isFeatured||false;
+      document.getElementById("pf-active").checked       = p.isActive!==false;
       openModal("product-modal");
     };
 
@@ -453,28 +521,40 @@
         isFeatured:    document.getElementById("pf-featured").checked,
         isActive:      document.getElementById("pf-active").checked,
       };
-      if (id) await updateProduct(id, data);
-      else await addProduct(data);
-      showToast(id ? "Product updated." : "Product added.", "success");
-      closeModal("product-modal");
-      loadProducts();
+      try {
+        if (id) await updateProduct(id, data);
+        else    await addProduct(data);
+        showToast(id ? "Product updated." : "Product added.", "success");
+        closeModal("product-modal");
+        loadProducts();
+      } catch(e) { showToast("Failed to save product.", "error"); console.error(e); }
     });
 
     // ── Inventory ─────────────────────────────────────────
     async function loadInventory() {
-      const items = await getInventory();
-      const tbody = document.getElementById("inventory-body");
-      if (!items.length) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">No inventory records.</td></tr>'; return; }
-      tbody.innerHTML = items.map(i => {
-        const pct = Math.min(100, Math.round((i.quantity/(i.lowStockThreshold*4))*100));
-        const cls = i.quantity<=0?"danger":i.quantity<=i.lowStockThreshold?"warning":"";
-        return `<tr>
-          <td>${i.productName}</td><td>${i.size||"—"}</td><td>${i.color||"—"}</td>
-          <td><span style="font-weight:500;color:${i.quantity==0?"var(--danger)":i.quantity<=(i.lowStockThreshold||5)?"var(--warning)":"var(--text-primary)"}">${i.quantity}</span>
-          <div class="stock-bar"><div class="stock-bar-fill ${cls}" style="width:${pct}%"></div></div></td>
-          <td><button class="btn btn-sm btn-outline" onclick="editStock('${i.id}',${i.quantity})">Edit</button></td>
-        </tr>`;
-      }).join("");
+      try {
+        const items = await getInventory();
+        const tbody = document.getElementById("inventory-body");
+        if (!items.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">No inventory records.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = items.map(i => {
+          const threshold = i.lowStockThreshold || 5;
+          const pct = Math.min(100, Math.round((i.quantity / (threshold * 4)) * 100));
+          const cls = i.quantity <= 0 ? "danger" : i.quantity <= threshold ? "warning" : "";
+          return `<tr>
+            <td>${i.productName||"—"}</td>
+            <td>${i.size||"—"}</td>
+            <td>${i.color||"—"}</td>
+            <td>
+              <span style="font-weight:500;color:${i.quantity===0?"var(--danger)":i.quantity<=threshold?"var(--warning)":"var(--text-primary)"}">${i.quantity}</span>
+              <div class="stock-bar"><div class="stock-bar-fill ${cls}" style="width:${pct}%"></div></div>
+            </td>
+            <td><button class="btn btn-sm btn-outline" onclick="editStock('${i.id}',${i.quantity})">Edit</button></td>
+          </tr>`;
+        }).join("");
+      } catch(e) { console.error("loadInventory:", e); }
     }
 
     window.editStock = async (id, current) => {
@@ -487,30 +567,46 @@
 
     // ── Orders ────────────────────────────────────────────
     async function loadAllOrders() {
-      const orders = await getAllOrders();
-      renderOrdersTable("all-orders-body", orders);
+      try {
+        const orders = await getAllOrders();
+        renderOrdersTable("all-orders-body", orders);
+      } catch(e) { console.error("loadAllOrders:", e); }
     }
 
     window.viewOrder = async id => {
-      const o = await getOrder(id);
-      if (!o) return;
-      document.getElementById("order-detail-body").innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-          <div><p class="form-label">Order Number</p><p>${o.orderNumber}</p></div>
-          <div><p class="form-label">Status</p><span class="badge badge-${statusBadge(o.orderStatus)}">${o.orderStatus}</span></div>
-          <div><p class="form-label">Customer</p><p>${o.guestName}</p></div>
-          <div><p class="form-label">Phone</p><p>${o.guestPhone}</p></div>
-          <div style="grid-column:1/-1"><p class="form-label">Address</p><p>${o.shippingAddress}</p></div>
-        </div>
-        <p class="form-label" style="margin-bottom:12px">Items</p>
-        ${(o.items||[]).map(i=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.875rem"><span>${i.productName} ${i.size?"("+i.size+")":""} × ${i.quantity}</span><span>${formatPrice(i.totalPrice)}</span></div>`).join("")}
-        <div style="display:flex;justify-content:space-between;padding:16px 0 0;font-weight:500"><span>Total</span><span style="color:var(--accent)">${formatPrice(o.total)}</span></div>
-        <div style="margin-top:20px"><p class="form-label">Update Status</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            ${["pending","confirmed","processing","shipped","delivered","cancelled"].map(s=>`<button class="btn btn-sm ${s===o.orderStatus?"btn-primary":"btn-outline"}" onclick="updStatus('${o.id}','${s}')">${s}</button>`).join("")}
+      try {
+        const o = await getOrder(id);
+        if (!o) return;
+        // Bug 3 fix: support both flat and nested customerInfo
+        const name    = o.guestName    || o.customerInfo?.name    || o.customerInfo?.fullName || "Guest";
+        const phone   = o.guestPhone   || o.customerInfo?.phone   || "—";
+        const address = o.shippingAddress || o.customerInfo?.address || "—";
+        document.getElementById("order-detail-body").innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div><p class="form-label">Order Number</p><p>${o.orderNumber}</p></div>
+            <div><p class="form-label">Status</p><span class="badge badge-${statusBadge(o.orderStatus)}">${o.orderStatus}</span></div>
+            <div><p class="form-label">Customer</p><p>${name}</p></div>
+            <div><p class="form-label">Phone</p><p>${phone}</p></div>
+            <div style="grid-column:1/-1"><p class="form-label">Address</p><p>${address}</p></div>
           </div>
-        </div>`;
-      openModal("order-modal");
+          <p class="form-label" style="margin-bottom:12px">Items</p>
+          ${(o.items||[]).map(i=>`
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:.875rem">
+              <span>${i.productName||i.name||"Item"} ${i.size?"("+i.size+")":""} × ${i.quantity}</span>
+              <span>${formatPrice((i.totalPrice)||(i.price*i.quantity)||0)}</span>
+            </div>`).join("")}
+          <div style="display:flex;justify-content:space-between;padding:16px 0 0;font-weight:500">
+            <span>Total</span><span style="color:var(--accent)">${formatPrice(o.total)}</span>
+          </div>
+          <div style="margin-top:20px"><p class="form-label">Update Status</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${["pending","confirmed","processing","shipped","delivered","cancelled"].map(s=>
+                `<button class="btn btn-sm ${s===o.orderStatus?"btn-primary":"btn-outline"}" onclick="updStatus('${o.id}','${s}')">${s}</button>`
+              ).join("")}
+            </div>
+          </div>`;
+        openModal("order-modal");
+      } catch(e) { console.error("viewOrder:", e); }
     };
 
     window.updStatus = async (id, status) => {
@@ -522,18 +618,26 @@
 
     // ── Comments ──────────────────────────────────────────
     async function loadComments() {
-      const comments = await getComments();
-      const wrap     = document.getElementById("comments-body");
-      if (!comments.length) { wrap.innerHTML='<p style="text-align:center;color:var(--text-muted);padding:32px">No comments yet.</p>'; return; }
-      wrap.innerHTML = comments.map(c=>`
-        <div style="padding:16px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:start">
-          <div>
-            <p style="font-weight:500;font-size:.875rem;margin-bottom:4px">${c.userName||c.guestName||"Guest"} <span style="color:var(--accent)">${"★".repeat(c.rating||5)}</span></p>
-            <p style="font-size:.875rem;color:var(--text-secondary)">${c.content}</p>
-            <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">${formatDate(c.createdAt)}</p>
-          </div>
-          <button class="btn btn-sm btn-danger" onclick="delComment('${c.id}')">Delete</button>
-        </div>`).join("");
+      try {
+        const comments = await getComments();
+        const wrap     = document.getElementById("comments-body");
+        if (!comments.length) {
+          wrap.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">No comments yet.</p>';
+          return;
+        }
+        wrap.innerHTML = comments.map(c => `
+          <div style="padding:16px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <p style="font-weight:500;font-size:.875rem;margin-bottom:4px">
+                ${c.userName||c.guestName||"Guest"}
+                <span style="color:var(--accent)">${"★".repeat(c.rating||5)}</span>
+              </p>
+              <p style="font-size:.875rem;color:var(--text-secondary)">${c.content}</p>
+              <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">${formatDate(c.createdAt)}</p>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="delComment('${c.id}')">Delete</button>
+          </div>`).join("");
+      } catch(e) { console.error("loadComments:", e); }
     }
 
     window.delComment = async id => {
@@ -543,7 +647,7 @@
       loadComments();
     };
 
-    // Init dates
+    // ── Init date pickers ─────────────────────────────────
     const today = new Date().toISOString().split("T")[0];
     const first = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
     if (document.getElementById("date-from")) document.getElementById("date-from").value = first;

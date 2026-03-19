@@ -2,9 +2,9 @@
 // STREETWISE PH — pages/cart.js
 // ============================================================
 
-import "./main.js";
-import { getCart, getCartTotals, updateCartItem, removeCartItem } from "../firebase/cart.js";
-import { placeOrder } from "../firebase/orders.js";
+import "./p_main.js";
+import { getCart, getCartTotals, updateCartItem, removeCartItem } from "../firebase/f_cart.js";
+import { placeOrder } from "../firebase/f_orders.js";
 
 function renderCart() {
   const items   = getCart();
@@ -35,13 +35,13 @@ function renderCart() {
         <p class="cart-item-variant">${[item.size, item.color].filter(Boolean).join(" · ")}</p>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
           <div class="qty-control" style="transform:scale(0.9);transform-origin:left">
-            <button class="qty-btn" onclick="updQty('${item.key}',${item.quantity - 1})">−</button>
+            <button class="qty-btn" onclick="updQty('${item.cartId}',${item.quantity - 1})">−</button>
             <span style="padding:0 12px;font-size:.875rem">${item.quantity}</span>
-            <button class="qty-btn" onclick="updQty('${item.key}',${item.quantity + 1})">+</button>
+            <button class="qty-btn" onclick="updQty('${item.cartId}',${item.quantity + 1})">+</button>
           </div>
           <span class="cart-item-price">₱${(item.price * item.quantity).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
         </div>
-        <button class="cart-item-remove" onclick="remItem('${item.key}')">Remove</button>
+        <button class="cart-item-remove" onclick="remItem('${item.cartId}')">Remove</button>
       </div>
     </div>`).join("");
 
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  document.getElementById("back-btn")?.addEventListener("click", () => {
+  document.getElementById("back-to-cart-btn")?.addEventListener("click", () => {
     document.getElementById("checkout-view").classList.add("hidden");
     document.getElementById("cart-view").classList.remove("hidden");
   });
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const result = await placeOrder({
         cartItems:    getCart(),
-        customerInfo: { name: fd.get("name"), email: fd.get("email"), phone: fd.get("phone"), address: fd.get("address"), notes: fd.get("notes") || "" },
+        customerInfo: { name: fd.get("guest_name"), email: fd.get("guest_email"), phone: fd.get("guest_phone"), address: fd.get("shipping_address"), notes: fd.get("notes") || "" },
         totals:       getCartTotals()
       });
       document.getElementById("checkout-view").classList.add("hidden");

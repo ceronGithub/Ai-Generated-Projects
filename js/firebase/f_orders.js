@@ -1,13 +1,13 @@
 // ============================================================
 // STREETWISE PH — Orders Module
 // ============================================================
-import { db } from './config.js';
+import { db } from './f_config.js';
 import {
   collection, doc, addDoc, getDoc, getDocs, updateDoc,
   query, orderBy, where, limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { clearCart } from './cart.js';
-import { decrementStock } from './inventory.js';
+import { clearCart } from './f_cart.js';
+import { decrementStock } from './f_inventory.js';
 
 const ORDERS = 'orders';
 
@@ -22,15 +22,19 @@ export async function placeOrder({ cartItems, customerInfo, userId = null }) {
     orderNumber,
     userId,
     customerInfo,
-    items:         cartItems,
+    // Flattened for easy dashboard display
+    guestName:       customerInfo?.name || customerInfo?.fullName || '',
+    guestPhone:      customerInfo?.phone || '',
+    shippingAddress: customerInfo?.address || '',
+    items:           cartItems,
     subtotal,
     shippingFee,
     total,
-    paymentMethod: 'cash_on_delivery',
-    paymentStatus: 'pending',
-    orderStatus:   'pending',
-    createdAt:     new Date(),
-    updatedAt:     new Date()
+    paymentMethod:   'cash_on_delivery',
+    paymentStatus:   'pending',
+    orderStatus:     'pending',
+    createdAt:       new Date(),
+    updatedAt:       new Date()
   });
 
   // Decrement stock for each item

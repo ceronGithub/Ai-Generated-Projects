@@ -2,9 +2,9 @@
 // STREETWISE PH — pages/shop.js
 // ============================================================
 
-import "./main.js";
-import { getProducts, getCategories } from "../firebase/products.js";
-import { addToCart } from "../firebase/cart.js";
+import "./p_main.js";
+import { getProducts, getCategories } from "../firebase/f_products.js";
+import { addToCart } from "../firebase/f_cart.js";
 
 let allProducts  = [];
 let currentPage  = 1;
@@ -28,10 +28,17 @@ async function loadProducts() {
   if (!grid) return;
   grid.innerHTML = '<div class="flex-center" style="grid-column:1/-1;padding:60px"><div class="spinner"></div></div>';
   try {
-    allProducts = await getProducts({ category: currentCat, search: currentSearch });
+    const result = await getProducts({ category: currentCat, search: currentSearch });
+    // getProducts returns {products, total, pages} — extract the array
+    allProducts = Array.isArray(result) ? result : (result.products || []);
     const sort = document.getElementById("sort-select")?.value;
     if (sort === "price-low")  allProducts.sort((a, b) => a.price - b.price);
     if (sort === "price-high") allProducts.sort((a, b) => b.price - a.price);
+    // Apply price filter
+    const priceFilter = document.querySelector("input[name='price']:checked")?.value || "all";
+    if (priceFilter === "low")  allProducts = allProducts.filter(p => p.price < 1000);
+    if (priceFilter === "mid")  allProducts = allProducts.filter(p => p.price >= 1000 && p.price <= 2500);
+    if (priceFilter === "high") allProducts = allProducts.filter(p => p.price > 2500);
     const total = allProducts.length;
     const paged = allProducts.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
     const rc = document.getElementById("results-count");
@@ -89,12 +96,16 @@ function renderPagination(pages) {
 window.changePage = p => { currentPage = p; loadProducts(); window.scrollTo({ top: 200, behavior: "smooth" }); };
 window.filterCat  = slug => { currentCat = slug; currentPage = 1; loadProducts(); };
 window.quickAdd   = (id, name, price, imageUrl) => {
-  addToCart({ id, name, price, imageUrl }, "", "", 1);
+  addToCart({ id, name, price, imageUrl, size: '', color: '', quantity: 1 });
   window.showToast("Added to cart!", "success");
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("sort-select")?.addEventListener("change", () => { currentPage = 1; loadProducts(); });
+  // Price filter
+  document.querySelectorAll("input[name='price']").forEach(r => {
+    r.addEventListener("change", () => { currentPage = 1; loadProducts(); });
+  });
   let debounce;
   document.getElementById("search-input")?.addEventListener("input", e => {
     clearTimeout(debounce);

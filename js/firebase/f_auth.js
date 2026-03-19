@@ -2,7 +2,7 @@
 // STREETWISE PH — auth.js | Firebase Authentication
 // ============================================================
 
-import { auth, db } from "./config.js";
+import { auth, db } from "./f_config.js";
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -13,16 +13,20 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ── Login ─────────────────────────────────────────────────
+// Exported as both loginUser and login to support all pages
 export async function loginUser(email, password) {
   const cred    = await signInWithEmailAndPassword(auth, email, password);
   const profile = await getCurrentProfile(cred.user.uid);
   return { user: cred.user, profile };
 }
+export const login = loginUser; // alias used by dashboard.js
 
 // ── Logout ────────────────────────────────────────────────
+// Exported as both logoutUser and logout to support all pages
 export async function logoutUser() {
   await signOut(auth);
 }
+export const logout = logoutUser; // alias used by dashboard.js
 
 // ── Get profile from Firestore ────────────────────────────
 export async function getCurrentProfile(uid) {
@@ -35,8 +39,18 @@ export async function getCurrentProfile(uid) {
 }
 
 // ── Auth state listener ───────────────────────────────────
+// Fetches the Firestore profile (including role) and passes
+// a merged { user, ...profile } object to the callback
 export function onAuthChange(callback) {
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(auth, async (user) => {
+    if (!user) { callback(null); return; }
+    try {
+      const profile = await getCurrentProfile(user.uid);
+      callback(profile ? { user, ...profile } : { user });
+    } catch {
+      callback({ user });
+    }
+  });
 }
 
 // ── Is owner ─────────────────────────────────────────────

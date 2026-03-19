@@ -1,7 +1,7 @@
 // ============================================================
 // STREETWISE PH — Inventory Module
 // ============================================================
-import { db } from './config.js';
+import { db } from './f_config.js';
 import {
   collection, doc, getDocs, getDoc, setDoc,
   updateDoc, query, where
@@ -62,9 +62,7 @@ export async function getLowStock() {
   return all.filter(i => i.quantity <= (i.lowStockThreshold || 5));
 }
 
-// Alias for compatibility
+// Alias for compatibility — uses already-imported db and updateDoc
 export async function updateStock(id, quantity) {
-  const { doc, updateDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-  const { db } = await import("./config.js");
-  await updateDoc(doc(db, "inventory", id), { quantity, updatedAt: serverTimestamp() });
+  await updateDoc(doc(db, INV, id), { quantity, updatedAt: new Date() });
 }

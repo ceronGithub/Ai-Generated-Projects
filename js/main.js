@@ -1,6 +1,7 @@
 // ============================================================
-// STREETWISE PH — js/main.js  (loaded by index.html)
+// STREETWISE PH — js/main.js  (used by index.html)
 // ============================================================
+import { logoutUser, loginUser, onAuthChange } from "./firebase/f_auth.js";
 
 // ── Globals ────────────────────────────────────────────────
 window.showToast = function(msg, type, ms) {
@@ -47,19 +48,34 @@ window.updateCartBadge = function() {
   } catch(e) {}
 };
 
+window.hideLoader = function() {
+  var l = document.getElementById("page-loader");
+  if (l) { l.style.opacity = "0"; l.style.transition = "opacity .4s"; setTimeout(function() { l.style.display = "none"; }, 500); }
+};
+
+// ── Auth navbar ────────────────────────────────────────────
+// FIX: Cache last known auth state so DOMContentLoaded can re-apply it
+// if Firebase resolved before the DOM was ready (common on cached sessions).
+var _lastAuthProfile = undefined; // undefined = not yet resolved; null = logged out
+
 window.updateNavAuth = function(profile) {
+  _lastAuthProfile = profile; // always cache, even null
   var loginBtn  = document.getElementById("nav-login-btn");
   var userEl    = document.getElementById("nav-user");
   var ownerLink = document.getElementById("nav-owner-link");
-  if (!loginBtn) return;
+  if (!loginBtn) return; // DOM not ready — DOMContentLoaded will retry
   if (profile) {
     loginBtn.classList.add("hidden");
     if (userEl) {
       userEl.classList.remove("hidden");
-      var av = userEl.querySelector(".nav-user-avatar");
-      var nm = userEl.querySelector(".nav-user-name");
-      if (av) av.textContent = ((profile.fullName || profile.email || "U")[0]).toUpperCase();
-      if (nm) nm.textContent  = profile.fullName || profile.email || "";
+      var av = document.getElementById("nav-avatar") || userEl.querySelector(".nav-user-avatar");
+      var nm = document.getElementById("nav-user-name") || userEl.querySelector(".nav-user-name");
+      var displayName = profile.fullName
+        || (profile.user && profile.user.email)
+        || profile.email
+        || "Owner";
+      if (av) av.textContent = displayName[0].toUpperCase();
+      if (nm) nm.textContent = displayName;
     }
     if (ownerLink && profile.role === "owner") ownerLink.classList.remove("hidden");
   } else {
@@ -69,20 +85,25 @@ window.updateNavAuth = function(profile) {
   }
 };
 
-window.hideLoader = function() {
-  var l = document.getElementById("page-loader");
-  if (l) { l.style.opacity = "0"; l.style.transition = "opacity .4s"; setTimeout(function() { l.style.display = "none"; }, 500); }
-};
-
 window.addEventListener("cartUpdated", window.updateCartBadge);
 
-// ── Navbar ─────────────────────────────────────────────────
+// ── Auth listener — registered immediately at module load ──
+// Fires once with current auth state when Firebase SDK initialises.
+// May fire before or after DOMContentLoaded — both cases handled below.
+onAuthChange(function(profile) {
+  window.updateNavAuth(profile);
+});
+
+// ── DOM Ready ──────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
-  // Navbar scroll
+  // FIX: Re-apply auth state if Firebase already resolved before DOM was ready
+  if (_lastAuthProfile !== undefined) {
+    window.updateNavAuth(_lastAuthProfile);
+  }
+
   var nav = document.querySelector(".navbar");
   if (nav) window.addEventListener("scroll", function() { nav.classList.toggle("scrolled", window.scrollY > 40); });
 
-  // Hamburger
   var hb = document.getElementById("nav-hamburger");
   var mm = document.getElementById("mobile-menu");
   if (hb && mm) {
@@ -92,13 +113,11 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Active nav link
   var page = window.location.pathname.split("/").pop() || "index.html";
   document.querySelectorAll(".nav-link").forEach(function(l) {
     if (l.getAttribute("href") === page) l.classList.add("active");
   });
 
-  // Modal close buttons
   document.querySelectorAll(".modal-close").forEach(function(b) {
     b.addEventListener("click", function() {
       var o = b.closest(".modal-overlay");
@@ -111,12 +130,21 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // Logout
-  var logoutBtn = document.getElementById("nav-logout");
-  if (logoutBtn) {
+  // ── Logout — skip on dashboard (it has its own listener) ─
+  var isDashboard = page === "dashboard.html";
+  var logoutBtn   = document.getElementById("nav-logout");
+  if (logoutBtn && !isDashboard) {
     logoutBtn.addEventListener("click", function() {
-      window.showToast("Logged out.", "info");
-      setTimeout(function() { window.location.href = "index.html"; }, 600);
+      logoutUser()
+        .then(function() {
+          window.updateNavAuth(null);
+          window.showToast("Logged out.", "info");
+          setTimeout(function() { window.location.href = "index.html"; }, 600);
+        })
+        .catch(function(err) {
+          console.error("Logout error:", err);
+          window.location.href = "index.html";
+        });
     });
   }
 

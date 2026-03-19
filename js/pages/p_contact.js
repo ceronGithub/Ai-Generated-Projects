@@ -2,8 +2,8 @@
 // STREETWISE PH — pages/contact.js
 // ============================================================
 
-import "./main.js";
-import { getComments, addComment } from "../firebase/comments.js";
+import "./p_main.js";
+import { getComments, addComment } from "../firebase/f_comments.js";
 
 async function loadComments() {
   const wrap = document.getElementById("contact-comments");
@@ -31,12 +31,12 @@ async function loadComments() {
 document.addEventListener("DOMContentLoaded", () => {
   loadComments();
 
-  document.getElementById("contact-form")?.addEventListener("submit", async e => {
+  document.getElementById("contact-comment-form")?.addEventListener("submit", async e => {
     e.preventDefault();
     const btn = e.target.querySelector("button[type=submit]");
     btn.disabled = true;
     try {
-      await addComment({ content: e.target.content.value, guestName: e.target.guestName.value });
+      await addComment({ content: e.target.content.value, guestName: e.target.guest_name.value });
       window.showToast("Message sent!", "success");
       e.target.reset();
       loadComments();

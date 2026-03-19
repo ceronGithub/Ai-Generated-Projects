@@ -39,7 +39,7 @@
         </svg><span class="cart-badge hidden" id="cart-badge">0</span></a>
       <a href="#" id="nav-login-btn" class="nav-login-btn" onclick="openModal('login-modal');return false;">Sign In</a>
       <div class="nav-user hidden" id="nav-user">
-        <div class="nav-user-avatar">O</div><span class="nav-user-name"></span><a href="owner-dashboard.html"
+        <div class="nav-user-avatar">O</div><span class="nav-user-name"></span><a href="dashboard.html"
           id="nav-owner-link" class="nav-login-btn hidden">Dashboard</a><button class="nav-logout"
           id="nav-logout">Logout</button>
       </div>
@@ -83,10 +83,10 @@
             <span class="shop-results" id="results-count">Loading...</span>
             <div class="shop-sort">
               <span>Sort:</span>
-              <select class="form-input" style="width:auto;padding:6px 12px">
-                <option>Newest</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
+              <select id="sort-select" class="form-input" style="width:auto;padding:6px 12px">
+                <option value="newest">Newest</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
               </select>
             </div>
           </div>
@@ -118,7 +118,7 @@
     </div>
   </div>
 
-  <script type="module" src="js/pages/shop.js"></script>
+  <script type="module" src="js/pages/p_shop.js"></script>
 </body>
 
 </html>
