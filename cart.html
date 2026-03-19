@@ -25,8 +25,16 @@
       <a href="cart.html" class="nav-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="cart-badge hidden" id="cart-badge">0</span></a>
       <a href="#" id="nav-login-btn" class="nav-login-btn" onclick="openModal('login-modal');return false;">Sign In</a>
       <div class="nav-user hidden" id="nav-user"><div class="nav-user-avatar">O</div><span class="nav-user-name"></span><a href="dashboard.html" id="nav-owner-link" class="nav-login-btn hidden">Dashboard</a><button class="nav-logout" id="nav-logout">Logout</button></div>
+            <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
     </div>
   </nav>
+
+  <div class="mobile-menu" id="mobile-menu">
+    <a href="index.html" class="nav-link">Home</a>
+    <a href="shop.html" class="nav-link">Shop</a>
+    <a href="contact.html" class="nav-link">Contact</a>
+    <a href="cart.html" class="nav-link">Cart</a>
+  </div>
 
   <!-- CART VIEW -->
   <main class="cart-page" id="cart-view">

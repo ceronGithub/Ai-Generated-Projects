@@ -1,7 +1,7 @@
 // ============================================================
 // STREETWISE PH — js/main.js  (used by index.html)
+// NO top-level imports — Firebase loaded dynamically only
 // ============================================================
-import { logoutUser, loginUser, onAuthChange } from "./firebase/f_auth.js";
 
 // ── Globals ────────────────────────────────────────────────
 window.showToast = function(msg, type, ms) {
@@ -53,29 +53,20 @@ window.hideLoader = function() {
   if (l) { l.style.opacity = "0"; l.style.transition = "opacity .4s"; setTimeout(function() { l.style.display = "none"; }, 500); }
 };
 
-// ── Auth navbar ────────────────────────────────────────────
-// FIX: Cache last known auth state so DOMContentLoaded can re-apply it
-// if Firebase resolved before the DOM was ready (common on cached sessions).
-var _lastAuthProfile = undefined; // undefined = not yet resolved; null = logged out
-
 window.updateNavAuth = function(profile) {
-  _lastAuthProfile = profile; // always cache, even null
   var loginBtn  = document.getElementById("nav-login-btn");
   var userEl    = document.getElementById("nav-user");
   var ownerLink = document.getElementById("nav-owner-link");
-  if (!loginBtn) return; // DOM not ready — DOMContentLoaded will retry
+  if (!loginBtn) return;
   if (profile) {
     loginBtn.classList.add("hidden");
     if (userEl) {
       userEl.classList.remove("hidden");
-      var av = document.getElementById("nav-avatar") || userEl.querySelector(".nav-user-avatar");
-      var nm = document.getElementById("nav-user-name") || userEl.querySelector(".nav-user-name");
-      var displayName = profile.fullName
-        || (profile.user && profile.user.email)
-        || profile.email
-        || "Owner";
-      if (av) av.textContent = displayName[0].toUpperCase();
-      if (nm) nm.textContent = displayName;
+      var av = userEl.querySelector(".nav-user-avatar");
+      var nm = userEl.querySelector(".nav-user-name");
+      var name = profile.fullName || (profile.user && profile.user.email) || profile.email || "Owner";
+      if (av) av.textContent = name[0].toUpperCase();
+      if (nm) nm.textContent = name;
     }
     if (ownerLink && profile.role === "owner") ownerLink.classList.remove("hidden");
   } else {
@@ -87,23 +78,14 @@ window.updateNavAuth = function(profile) {
 
 window.addEventListener("cartUpdated", window.updateCartBadge);
 
-// ── Auth listener — registered immediately at module load ──
-// Fires once with current auth state when Firebase SDK initialises.
-// May fire before or after DOMContentLoaded — both cases handled below.
-onAuthChange(function(profile) {
-  window.updateNavAuth(profile);
-});
-
 // ── DOM Ready ──────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", function() {
-  // FIX: Re-apply auth state if Firebase already resolved before DOM was ready
-  if (_lastAuthProfile !== undefined) {
-    window.updateNavAuth(_lastAuthProfile);
-  }
 
+  // ── Navbar scroll ─────────────────────────────────────
   var nav = document.querySelector(".navbar");
   if (nav) window.addEventListener("scroll", function() { nav.classList.toggle("scrolled", window.scrollY > 40); });
 
+  // ── Hamburger menu ────────────────────────────────────
   var hb = document.getElementById("nav-hamburger");
   var mm = document.getElementById("mobile-menu");
   if (hb && mm) {
@@ -113,11 +95,13 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
+  // ── Active nav link ───────────────────────────────────
   var page = window.location.pathname.split("/").pop() || "index.html";
   document.querySelectorAll(".nav-link").forEach(function(l) {
     if (l.getAttribute("href") === page) l.classList.add("active");
   });
 
+  // ── Modal close buttons ───────────────────────────────
   document.querySelectorAll(".modal-close").forEach(function(b) {
     b.addEventListener("click", function() {
       var o = b.closest(".modal-overlay");
@@ -130,24 +114,32 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 
-  // ── Logout — skip on dashboard (it has its own listener) ─
-  var isDashboard = page === "dashboard.html";
-  var logoutBtn   = document.getElementById("nav-logout");
-  if (logoutBtn && !isDashboard) {
-    logoutBtn.addEventListener("click", function() {
-      logoutUser()
-        .then(function() {
+  window.updateCartBadge();
+  setTimeout(window.hideLoader, 500);
+
+  // ── Firebase auth — loaded dynamically ───────────────
+  // Loaded AFTER DOM is ready so failures don't block hamburger/navbar
+  import("./firebase/f_auth.js").then(function(m) {
+    m.onAuthChange(function(profile) {
+      window.updateNavAuth(profile);
+    });
+
+    // ── Logout button ────────────────────────────────
+    var isDashboard = page === "dashboard.html";
+    var logoutBtn   = document.getElementById("nav-logout");
+    if (logoutBtn && !isDashboard) {
+      logoutBtn.addEventListener("click", function() {
+        m.logoutUser().then(function() {
           window.updateNavAuth(null);
           window.showToast("Logged out.", "info");
           setTimeout(function() { window.location.href = "index.html"; }, 600);
-        })
-        .catch(function(err) {
-          console.error("Logout error:", err);
+        }).catch(function() {
           window.location.href = "index.html";
         });
-    });
-  }
+      });
+    }
+  }).catch(function(err) {
+    console.warn("Firebase auth not available:", err.message);
+  });
 
-  window.updateCartBadge();
-  setTimeout(window.hideLoader, 500);
 });
