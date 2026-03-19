@@ -72,7 +72,7 @@ function getVal(id) {
 function getTourConfig(tourType) {
   switch (tourType) {
     case 'Day Tour':   return { mins: 10 * 60, daysOffset: 0 };
-    case 'Night Tour': return { mins: 10 * 60, daysOffset: 1 };
+    case 'Night Tour': return { mins: 10 * 60, daysOffset: 0 }; // checkout 22:00 same day
     case 'Over-Night': return { mins: 21 * 60, daysOffset: 1 };
     case '3D2N':       return { mins: 42 * 60, daysOffset: 2 }; // 21+21 hrs, checkout day 3
     case 'Half Day':   return { mins:  5 * 60, daysOffset: 0 };
@@ -604,18 +604,31 @@ function calcBalance() {
 function calcCheckout() {
   if (!_tourType) return;
 
-  const ci   = getVal('bkCheckinTime');
-  const slot = getTimeSlot(ci);
-  const cfg  = getTourConfig(_tourType);
+  const ci  = getVal('bkCheckinTime');
+  const cfg = getTourConfig(_tourType);
 
-  // Night Tour: afternoon slot → same day checkout, evening → next day
-  let daysOffset = cfg.daysOffset;
-  if (_tourType === 'Night Tour' && slot) {
-    daysOffset = slot.slot === 'afternoon' ? 0 : 1;
+  // Night Tour: fixed checkout at 22:00 same day regardless of check-in time
+  if (_tourType === 'Night Tour') {
+    const NIGHT_CHECKOUT = '22:00';
+    document.getElementById('bkCheckoutDisplay').textContent =
+      formatDateLabel(_bkYear, _bkMonth, _bkDay);
+    if (ci) {
+      const [ch, cm] = ci.split(':').map(Number);
+      const durationMins = (22 * 60) - (ch * 60 + cm);
+      const durHrs = (durationMins / 60).toFixed(1).replace(/\.0$/, '');
+      document.getElementById('bkCheckoutTime').textContent = to12hr(NIGHT_CHECKOUT);
+      document.getElementById('bkDuration').textContent =
+        `${durHrs} hrs (${to12hr(ci)} → ${to12hr(NIGHT_CHECKOUT)})`;
+    } else {
+      document.getElementById('bkCheckoutTime').textContent = '10:00 PM';
+      document.getElementById('bkDuration').textContent = 'up to 10 hrs (ends 10:00 PM)';
+    }
+    return;
   }
 
+  const daysOffset   = cfg.daysOffset;
   const durationMins = cfg.mins;
-  const coDate = addDays(daysOffset);
+  const coDate       = addDays(daysOffset);
 
   document.getElementById('bkCheckoutDisplay').textContent =
     daysOffset === 0
@@ -835,16 +848,25 @@ async function saveBooking() {
     const downpayment = parseFloat(getVal('bkDownpayment')) || 0;
     const ciTime      = getVal('bkCheckinTime');
 
-    const ciSlot   = getTimeSlot(ciTime);
     const cfg      = getTourConfig(savedTour);
     let daysOffset = cfg.daysOffset;
-    // Night Tour: afternoon slot → same-day checkout; morning/evening → next day
-    if (savedTour === 'Night Tour' && ciSlot) {
-      daysOffset = ciSlot.slot === 'afternoon' ? 0 : 1;
-    }
+    let durationMins = cfg.mins;
+    let coTime;
 
-    const durationMins = cfg.mins;
-    const coTime       = addMinutesToTime(ciTime, durationMins);
+    if (savedTour === 'Night Tour') {
+      // Night Tour: always checkout at 22:00 same day
+      const NIGHT_CHECKOUT = '22:00';
+      coTime = NIGHT_CHECKOUT;
+      daysOffset = 0;
+      if (ciTime) {
+        const [ch, cm] = ciTime.split(':').map(Number);
+        durationMins = (22 * 60) - (ch * 60 + cm);
+      } else {
+        durationMins = 10 * 60; // default 10hrs if no time
+      }
+    } else {
+      coTime = addMinutesToTime(ciTime, durationMins);
+    }
 
     const bookingJSON = compileBookingJSON(
       pax, extraPax, pets, total, downpayment,
@@ -1179,6 +1201,21 @@ function closeBookingList() {
   document.getElementById('bkListOverlay').classList.remove('open');
 }
 
+/* Check if guest name has appeared in any other booking (excluding current fbKey) */
+function _getGuestBookingCount(guestName, excludeFbKey) {
+  if (!guestName || guestName === '—') return 0;
+  const normalized = guestName.trim().toLowerCase();
+  let count = 0;
+  Object.values(Bookings).forEach(dayArr => {
+    (dayArr || []).forEach(bk => {
+      if (bk.fbKey === excludeFbKey) return; // skip self
+      const bkName = ((bk.guest && bk.guest.name) || bk.guestName || '').trim().toLowerCase();
+      if (bkName && bkName === normalized) count++;
+    });
+  });
+  return count;
+}
+
 function buildSummaryCard(b, key, idx, color, onDelete) {
   const card = document.createElement('div');
   card.className = 'bk-summary-card';
@@ -1196,14 +1233,34 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
   const coLabel  = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
   const fbKey    = b.fbKey || null;
 
+  // Check booking history for this guest
+  const priorCount = _getGuestBookingCount(name, b.fbKey);
+  const isNewGuest = priorCount === 0;
+
   const hdr = document.createElement('div');
   hdr.className = 'bk-summary-card-header';
   const nameEl = document.createElement('div');
   nameEl.className = 'bk-summary-name'; nameEl.textContent = name;
+
+  const badgeWrap = document.createElement('div');
+  badgeWrap.style.cssText = 'display:flex;align-items:center;gap:6px;flex-shrink:0;';
+
+  // Guest history tag
+  const guestTag = document.createElement('span');
+  guestTag.style.cssText =
+    'font-size:9px;font-weight:800;letter-spacing:0.5px;padding:3px 8px;' +
+    'border-radius:20px;white-space:nowrap;' +
+    (isNewGuest
+      ? 'background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;'
+      : 'background:#e3f2fd;color:#1565c0;border:1.5px solid #90caf9;');
+  guestTag.textContent = isNewGuest ? '🆕 New' : `🔄 ${priorCount + 1}× booked`;
+
   const badge = document.createElement('span');
   badge.className = 'bk-summary-badge'; badge.textContent = tourType;
   badge.style.background = color.accent;
-  hdr.append(nameEl, badge);
+
+  badgeWrap.append(guestTag, badge);
+  hdr.append(nameEl, badgeWrap);
 
   const rows = [
     [`📧 ${email}`, `📞 ${phone}`],
