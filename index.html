@@ -860,7 +860,7 @@
         "
       >
         <!-- Header -->
-        <div style="padding: 24px 28px 0; flex-shrink: 0">
+        <div style="padding: 20px 24px 0 28px; flex-shrink: 0">
           <div class="an-header-row">
             <div class="an-header-left">
               <span style="font-size: 26px">📊</span>
@@ -882,7 +882,8 @@
                 </p>
               </div>
             </div>
-            <div class="an-header-right">
+            <!-- Export PDF + Close grouped top-right -->
+            <div class="an-header-right" style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
               <button
                 onclick="exportBookingAnalysisPDF()"
                 title="Export to PDF"
@@ -923,18 +924,11 @@
                   border: none;
                   cursor: pointer;
                   transition: all 0.15s;
+                  flex-shrink: 0;
                 "
-                onmouseover="
-                  this.style.background = '#ffe0e6';
-                  this.style.color = '#e04060';
-                "
-                onmouseout="
-                  this.style.background = '#f5f5f8';
-                  this.style.color = '#9996b0';
-                "
-              >
-                ×
-              </button>
+                onmouseover="this.style.background='#ffe0e6';this.style.color='#e04060';"
+                onmouseout="this.style.background='#f5f5f8';this.style.color='#9996b0';"
+              >×</button>
             </div>
           </div>
           <!-- Tabs -->
