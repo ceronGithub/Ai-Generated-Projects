@@ -228,8 +228,6 @@ function applyCheckoutConstraint(constraint) {
       }
     }
   });
-
-  // Re-render picker PM-only now that constraint is known
   if (_tourType) applyTourTimeConstraints(_tourType);
 }
 
@@ -513,6 +511,10 @@ function openBookingForm(key, day, month, year, color) {
 }
 
 function closeBookingForm() {
+  // Cancel any pending draft save — prevents stale data writing after close
+  if (_draftTimer) { clearTimeout(_draftTimer); _draftTimer = null; }
+  // Null out key so scheduleDraftSave won't fire if triggered after close
+  _bkKey = null;
   document.getElementById('bookingOverlay').classList.remove('open');
 }
 
@@ -544,6 +546,9 @@ function resetBookingForm() {
   renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 8, defaultM: 0 });
   const hint = document.getElementById('bkCheckinTimeHint');
   if (hint) hint.remove();
+  // Hide reschedule button (not applicable for new bookings)
+  const rescheduleBtn = document.getElementById('bkBtnReschedule');
+  if (rescheduleBtn) rescheduleBtn.style.display = 'none';
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
     btn.classList.remove('bk-tour-unavailable');
     btn.disabled = false;
@@ -633,19 +638,11 @@ function calcCheckout() {
 /* ══════════════════════════════════════
    TOUR TYPE BUTTONS
 ══════════════════════════════════════ */
-/* ═══════════════════════════════════════════════
-   CUSTOM CHECK-IN TIME PICKER
-   Controls hour/minute dropdowns so AM or PM can
-   be physically removed — not just min/max clamped.
-═══════════════════════════════════════════════ */
 function renderCustomTimePicker(options) {
   const wrap   = document.getElementById('bkCustomTimePicker');
   const hidden = document.getElementById('bkCheckinTime');
   if (!wrap || !hidden) return;
-
-  const { minH = 0, maxH = 23, allowAM = true, allowPM = true,
-          defaultH = null, defaultM = 0 } = options;
-
+  const { minH = 0, maxH = 23, allowAM = true, allowPM = true, defaultH = null, defaultM = 0 } = options;
   let curH = defaultH !== null ? defaultH : minH;
   let curM = defaultM;
   if (hidden.value) {
@@ -654,7 +651,6 @@ function renderCustomTimePicker(options) {
   }
   if (curH < minH) curH = minH;
   if (curH > maxH) curH = maxH;
-
   const hourOptions = [];
   for (let h = minH; h <= maxH; h++) {
     if (h < 12 && !allowAM) continue;
@@ -662,26 +658,21 @@ function renderCustomTimePicker(options) {
     hourOptions.push(h);
   }
   if (!hourOptions.includes(curH)) curH = hourOptions[0] || minH;
-
   const minuteOptions = [0,5,10,15,20,25,30,35,40,45,50,55];
   const fmt12 = h => { const d = h===0?12:h>12?h-12:h; return String(d).padStart(2,'0'); };
   const fmtM  = m => String(m).padStart(2,'0');
   const ampm  = h => h < 12 ? 'AM' : 'PM';
-
   function syncHidden() {
     hidden.value = String(curH).padStart(2,'0') + ':' + fmtM(curM);
     hidden.dispatchEvent(new Event('change', { bubbles: true }));
   }
-
   wrap.innerHTML = '';
   wrap.style.cssText = 'display:flex;gap:6px;align-items:center;';
-
   const selStyle = 'flex:1;padding:9px 10px;border-radius:10px;border:1.5px solid #d0caff;background:#faf9ff;' +
     'font-family:\'Nunito\',sans-serif;font-size:14px;font-weight:700;color:#1a1a2e;cursor:pointer;outline:none;' +
     'appearance:none;-webkit-appearance:none;' +
     'background-image:url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'10\' height=\'6\'%3E%3Cpath d=\'M0 0l5 6 5-6z\' fill=\'%237c6af4\'/%3E%3C/svg%3E");' +
     'background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;';
-
   const hourSel = document.createElement('select');
   hourSel.style.cssText = selStyle;
   hourOptions.forEach(h => {
@@ -690,16 +681,10 @@ function renderCustomTimePicker(options) {
     if (h === curH) opt.selected = true;
     hourSel.appendChild(opt);
   });
-  hourSel.addEventListener('change', () => {
-    curH = parseInt(hourSel.value);
-    ampmBadge.textContent = ampm(curH);
-    syncHidden();
-  });
-
+  hourSel.addEventListener('change', () => { curH = parseInt(hourSel.value); ampmBadge.textContent = ampm(curH); syncHidden(); });
   const colon = document.createElement('span');
   colon.textContent = ':';
   colon.style.cssText = 'font-size:18px;font-weight:800;color:#7c6af4;flex-shrink:0;';
-
   const minSel = document.createElement('select');
   minSel.style.cssText = selStyle;
   minuteOptions.forEach(m => {
@@ -709,7 +694,6 @@ function renderCustomTimePicker(options) {
     minSel.appendChild(opt);
   });
   minSel.addEventListener('change', () => { curM = parseInt(minSel.value); syncHidden(); });
-
   const isPMonly = !allowAM && allowPM;
   const isAMonly =  allowAM && !allowPM;
   const ampmBadge = document.createElement('div');
@@ -719,47 +703,34 @@ function renderCustomTimePicker(options) {
               : isAMonly ? 'background:#fff8e1;color:#e65100;border:1.5px solid #ffcc80;'
               : 'background:#f0eeff;color:#7c6af4;border:1.5px solid #d0caff;');
   ampmBadge.textContent = ampm(curH);
-
   wrap.appendChild(hourSel);
   wrap.appendChild(colon);
   wrap.appendChild(minSel);
   wrap.appendChild(ampmBadge);
-
   syncHidden();
 }
 
 function applyTourTimeConstraints(tourType) {
   const existingHint = document.getElementById('bkCheckinTimeHint');
   if (existingHint) existingHint.remove();
-
-  // Checkout on this date: ALL tours PM-only — AM physically absent
   if (_checkinConstraint) {
     const minH = _checkinConstraint.mins >= 12*60 ? Math.floor(_checkinConstraint.mins/60) : 12;
     const minM = _checkinConstraint.mins >= 12*60 ? _checkinConstraint.mins % 60 : 0;
     renderCustomTimePicker({ minH, maxH: 22, allowAM: false, allowPM: true, defaultH: minH, defaultM: minM });
     const label = _checkinConstraint.mins >= 12*60 ? _checkinConstraint.time12 : '12:00 PM';
     _insertTimeHint('⚠️ Checkout day — PM only (' + label + ' – 10:00 PM)');
-    calcCheckout();
-    return;
+    calcCheckout(); return;
   }
-
-  // Day Tour: AM only, 8:00-11:55
   if (tourType === 'Day Tour') {
     renderCustomTimePicker({ minH: 8, maxH: 11, allowAM: true, allowPM: false, defaultH: 8, defaultM: 0 });
     _insertTimeHint('⏰ Day Tour: 8:00 AM – 11:55 AM only');
-    calcCheckout();
-    return;
+    calcCheckout(); return;
   }
-
-  // Night Tour: PM only, 12:00-22:00
   if (tourType === 'Night Tour') {
     renderCustomTimePicker({ minH: 12, maxH: 22, allowAM: false, allowPM: true, defaultH: 12, defaultM: 0 });
     _insertTimeHint('🌙 Night Tour: 12:00 PM – 10:00 PM only');
-    calcCheckout();
-    return;
+    calcCheckout(); return;
   }
-
-  // Over-Night / 3D2N: unrestricted, auto-set 8:00
   renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 8, defaultM: 0 });
 }
 
@@ -1421,6 +1392,15 @@ function openEditForm(b, key, color) {
   saveBtn._editFbKey = b.fbKey || null;
   saveBtn._editKey   = key;
   saveBtn.innerHTML  = '<span>Update Booking</span><span class="bk-btn-arrow">→</span>';
+
+  // Show Reschedule button in edit mode
+  const rescheduleBtn = document.getElementById('bkBtnReschedule');
+  if (rescheduleBtn) {
+    rescheduleBtn.style.display = 'inline-flex';
+    rescheduleBtn._booking = b;
+    rescheduleBtn._fbKey   = b.fbKey || null;
+    rescheduleBtn._oldKey  = key;
+  }
 }
 
 /* ══════════════════════════════════════
@@ -1456,6 +1436,200 @@ function openModal(key, day, month, year, color) {
     openBookingList(key, day, month, year, color);
   } else {
     openBookingForm(key, day, month, year, color);
+  }
+}
+
+/* ============================================
+   RESCHEDULE DATE
+============================================ */
+function _onRescheduleDateChange(val) {
+  const info = document.getElementById('bkRescheduleInfo');
+  if (!info || !val) return;
+  const [y, m, d] = val.split('-').map(Number);
+  const dow = new Date(y, m - 1, d).getDay();
+  const isWeekend = dow === 0 || dow === 6;
+  const label = new Date(y, m-1, d).toLocaleDateString('en-PH', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  });
+  info.style.display = 'block';
+  info.style.background = '#f3f0ff';
+  info.style.color = '#7c6af4';
+  info.style.border = '1.5px solid #d0caff';
+  info.innerHTML = 'New check-in: <b>' + label + '</b> ' +
+    (isWeekend
+      ? '<span style="color:#2e7d32;background:#e8f5e9;padding:1px 8px;border-radius:20px;font-size:10px;">Weekend</span>'
+      : '<span style="color:#5a48c8;background:#f0eeff;padding:1px 8px;border-radius:20px;font-size:10px;">Weekday</span>');
+}
+
+function openReschedulePicker() {
+  const overlay = document.getElementById('bkRescheduleOverlay');
+  const input   = document.getElementById('bkRescheduleDate');
+  const info    = document.getElementById('bkRescheduleInfo');
+  const confirmBtn = document.getElementById('bkRescheduleConfirmBtn');
+  if (!overlay || !input) return;
+
+  const btn = document.getElementById('bkBtnReschedule');
+  const oldKey = btn && btn._oldKey ? btn._oldKey : '';
+
+  // Reset state
+  input.value = '';
+  if (info) { info.style.display = 'none'; info.style.opacity = '1'; }
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '✅ Confirm Reschedule'; }
+
+  // Show current date label
+  const currentLabel = document.getElementById('bkRescheduleCurrentLabel');
+  if (currentLabel && oldKey) {
+    const [oy, om, od] = oldKey.split('-').map(Number);
+    currentLabel.textContent = 'Current: ' + formatDateLabel(oy, om - 1, od);
+  }
+
+  // Set min to today
+  const today = new Date();
+  input.min = toKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+  overlay.style.display = 'flex';
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeReschedulePicker() {
+  const overlay = document.getElementById('bkRescheduleOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+async function confirmReschedule() {
+  const input  = document.getElementById('bkRescheduleDate');
+  const btn    = document.getElementById('bkBtnReschedule');
+
+  if (!input || !input.value) {
+    _showRescheduleMsg('Please pick a new date.', 'error');
+    return;
+  }
+
+  const newKey  = input.value;
+  const oldKey  = btn._oldKey;
+  const fbKey   = btn._fbKey;
+  const booking = btn._booking;
+
+  if (newKey === oldKey) {
+    _showRescheduleMsg('That is already the current date.', 'error');
+    return;
+  }
+
+  const [ny, nm, nd] = newKey.split('-').map(Number);
+
+  // Clone and update booking with new dates
+  const updated = JSON.parse(JSON.stringify(booking));
+  // Strip old Firebase key — Firebase will assign a new one on insert
+  delete updated.fbKey;
+  delete updated.id;
+  updated.dateKey   = newKey;
+  updated.createdAt = new Date().toISOString();
+
+  if (updated.booking) {
+    updated.booking.checkinDate      = newKey;
+    updated.booking.checkinDateLabel = formatDateLabel(ny, nm - 1, nd);
+    const offset = updated.booking.checkoutDaysOffset != null
+      ? updated.booking.checkoutDaysOffset
+      : getTourConfig(updated.booking.tourType || '').daysOffset;
+    const coD  = new Date(ny, nm - 1, nd + offset);
+    const coKey = toKey(coD.getFullYear(), coD.getMonth(), coD.getDate());
+    const [cy, cm, cd2] = coKey.split('-').map(Number);
+    updated.booking.checkoutDate      = coKey;
+    updated.booking.checkoutDateLabel = formatDateLabel(cy, cm - 1, cd2);
+    // Recalculate 12hr labels from existing times
+    if (updated.booking.checkinTime)  updated.booking.checkinTime12  = to12hr(updated.booking.checkinTime);
+    if (updated.booking.checkoutTime) updated.booking.checkoutTime12 = to12hr(updated.booking.checkoutTime);
+  }
+  updated.dayInfo = getDateEventInfo(ny, nm - 1, nd);
+
+  const confirmBtn = document.getElementById('bkRescheduleConfirmBtn');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Saving...'; }
+
+  try {
+    // Clear ALL drafts related to this booking so nothing restores on reopen
+    try { localStorage.removeItem(DRAFT_PREFIX + oldKey); } catch(e) {}
+    try { localStorage.removeItem(DRAFT_PREFIX + newKey); } catch(e) {}
+    // Clear the current active _bkKey draft if the form was in edit mode
+    if (typeof _bkKey !== 'undefined' && _bkKey && _bkKey !== oldKey && _bkKey !== newKey) {
+      try { localStorage.removeItem(DRAFT_PREFIX + _bkKey); } catch(e) {}
+    }
+
+    // Update in-memory Bookings
+    if (Bookings[oldKey]) {
+      Bookings[oldKey] = Bookings[oldKey].filter(b => b.fbKey !== fbKey);
+      if (!Bookings[oldKey].length) delete Bookings[oldKey];
+    }
+    if (!Bookings[newKey]) Bookings[newKey] = [];
+    Bookings[newKey].push(updated);
+    saveBookingsLocal(Bookings);
+
+    // Sync with Firebase
+    if (fbKey && typeof FB !== 'undefined') {
+      await FB.deleteByKey(fbKey);
+      const newFbKey = await FB.insert(updated);
+      updated.fbKey = newFbKey;
+      const idx = Bookings[newKey].indexOf(updated);
+      if (idx >= 0) Bookings[newKey][idx].fbKey = newFbKey;
+      saveBookingsLocal(Bookings);
+    }
+
+    // Show success message, fade out after 2s, then close + full calendar repaint
+    const newLabel = formatDateLabel(ny, nm - 1, nd);
+    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Done ✓'; }
+    _showRescheduleMsg('Rescheduled to ' + newLabel, 'success', () => {
+      closeReschedulePicker();
+      closeBookingForm();
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '✅ Confirm Reschedule'; }
+      // Full repaint: rebuild all months then apply all indicators
+      setTimeout(() => {
+        renderAllMonths();
+        applyBookingIndicators();
+      }, 50);
+    });
+
+  } catch(e) {
+    console.error('Reschedule failed:', e);
+    _showRescheduleMsg('Failed: ' + e.message, 'error');
+    // Only re-enable button on error (success path handles it via onDone)
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '✅ Confirm Reschedule'; }
+  }
+}
+
+/* Show inline message in the reschedule modal with fade-out */
+function _showRescheduleMsg(msg, type, onDone) {
+  const info = document.getElementById('bkRescheduleInfo');
+  if (!info) { if (onDone) onDone(); return; }
+
+  const isSuccess = type === 'success';
+
+  // Set styles individually to preserve transition property
+  info.style.display    = 'block';
+  info.style.opacity    = '1';
+  info.style.transition = 'opacity 1.2s ease';
+  info.style.fontSize   = '13px';
+  info.style.fontWeight = '700';
+  info.style.borderRadius = '10px';
+  info.style.padding    = '12px 14px';
+  info.style.textAlign  = 'center';
+
+  if (isSuccess) {
+    info.style.background = '#f0fff4';
+    info.style.color      = '#1a7a45';
+    info.style.border     = '1.5px solid #3cb771';
+    info.textContent      = '✅ Success! ' + msg;
+    // Fade out after 2s, then trigger onDone
+    setTimeout(() => {
+      info.style.opacity = '0';
+      setTimeout(() => {
+        info.style.display = 'none';
+        if (onDone) onDone();
+      }, 1200);
+    }, 2000);
+  } else {
+    info.style.background = '#fff0f3';
+    info.style.color      = '#e04060';
+    info.style.border     = '1.5px solid #ff8080';
+    info.textContent      = '⚠️ ' + msg;
   }
 }
 

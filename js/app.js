@@ -62,10 +62,12 @@ function renderTodayBadge() {
 
 // Wrap refreshMonth so full booking indicators re-apply after a card rebuild
 const _origRefreshMonth = refreshMonth;
+let _skipIndicators = false; // set true when caller will handle applyBookingIndicators itself
 function refreshMonth(month) {
   _origRefreshMonth(month);
-  // Re-apply full indicators (colors, stayover, checkout) not just has-booking dot
-  if (typeof applyBookingIndicators === 'function') applyBookingIndicators();
+  if (!_skipIndicators && typeof applyBookingIndicators === 'function') {
+    applyBookingIndicators();
+  }
 }
 
 function init() {
