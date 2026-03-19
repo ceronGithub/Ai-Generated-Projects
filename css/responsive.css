@@ -20,7 +20,9 @@
 /* ════════════════════════════════════════════
    BASE — touch & box model
 ════════════════════════════════════════════ */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
 }
@@ -47,102 +49,255 @@
    SUPER-BIG SCREEN  ≥ 1281px
 ════════════════════════════════════════════ */
 @media (min-width: 1281px) {
-
   /* ── Header ── */
-  .site-header        { padding: 22px 72px; }
-  .header-year        { font-size: 52px; }
-  .header-label       { font-size: 14px; letter-spacing: 3px; }
-  .header-today-badge { font-size: 14px; padding: 10px 28px; }
-  .db-status          { font-size: 13px; padding: 9px 20px; }
+  .site-header {
+    padding: 22px 72px;
+  }
+  .header-year {
+    font-size: 52px;
+  }
+  .header-label {
+    font-size: 14px;
+    letter-spacing: 3px;
+  }
+  .header-today-badge {
+    font-size: 14px;
+    padding: 10px 28px;
+  }
+  .db-status {
+    font-size: 13px;
+    padding: 9px 20px;
+  }
 
   /* ── Calendar ── */
-  .year-grid          { max-width: 1800px; padding: 64px 72px 110px; gap: 36px; }
-  .month-header       { padding: 30px 28px 22px; }
-  .month-name         { font-size: 32px; }
-  .month-year-tag     { font-size: 12px; padding: 5px 12px; }
-  .weekday-row        { padding: 0 20px 10px; }
-  .weekday-row span   { font-size: 11px; letter-spacing: 2px; }
-  .month-grid         { padding: 0 20px 26px; gap: 6px; }
-  .day-cell           { min-height: 48px; padding-top: 9px; }
-  .day-num            { font-size: 15px; width: 32px; height: 32px; }
-  .day-cell.today .day-num { width: 32px; height: 32px; }
-  .event-dot          { width: 6px; height: 6px; }
+  .year-grid {
+    max-width: 1800px;
+    padding: 64px 72px 110px;
+    gap: 36px;
+  }
+  .month-header {
+    padding: 30px 28px 22px;
+  }
+  .month-name {
+    font-size: 32px;
+  }
+  .month-year-tag {
+    font-size: 12px;
+    padding: 5px 12px;
+  }
+  .weekday-row {
+    padding: 0 20px 10px;
+  }
+  .weekday-row span {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+  .month-grid {
+    padding: 0 20px 26px;
+    gap: 6px;
+  }
+  .day-cell {
+    min-height: 48px;
+    padding-top: 9px;
+  }
+  .day-num {
+    font-size: 15px;
+    width: 32px;
+    height: 32px;
+  }
+  .day-cell.today .day-num {
+    width: 32px;
+    height: 32px;
+  }
+  .event-dot {
+    width: 6px;
+    height: 6px;
+  }
 
   /* ── Booking modals ── */
-  .bk-modal           { width: 780px; }
-  .bk-list-modal      { width: 760px; }
-  .bk-modal-header    { padding: 28px 32px 22px; }
-  .bk-footer          { padding: 22px 32px; }
-  .bk-input           { font-size: 14px; padding: 12px 15px; }
-  .bk-label           { font-size: 12px; }
-  .bk-section-title   { font-size: 13px; }
-  .bk-tour-btn        { font-size: 14px; padding: 13px 18px; }
+  .bk-modal {
+    width: 780px;
+  }
+  .bk-list-modal {
+    width: 760px;
+  }
+  .bk-modal-header {
+    padding: 28px 32px 22px;
+  }
+  .bk-footer {
+    padding: 22px 32px;
+  }
+  .bk-input {
+    font-size: 14px;
+    padding: 12px 15px;
+  }
+  .bk-label {
+    font-size: 12px;
+  }
+  .bk-section-title {
+    font-size: 13px;
+  }
+  .bk-tour-btn {
+    font-size: 14px;
+    padding: 13px 18px;
+  }
   .bk-btn-save,
-  .bk-btn-cancel      { font-size: 14px; padding: 13px 28px; }
+  .bk-btn-cancel {
+    font-size: 14px;
+    padding: 13px 28px;
+  }
 
   /* ── Analytics modal ── */
-  .an-modal           { max-width: 880px; }
-  .an-modal-header    { padding: 28px 32px 22px; }
-  .an-title           { font-size: 26px; }
-  .an-body            { padding: 28px 32px; gap: 24px; }
-  .an-stat-row        { grid-template-columns: repeat(3, 1fr); }
+  .an-modal {
+    max-width: 880px;
+  }
+  .an-modal-header {
+    padding: 28px 32px 22px;
+  }
+  .an-title {
+    font-size: 26px;
+  }
+  .an-body {
+    padding: 28px 32px;
+    gap: 24px;
+  }
+  .an-stat-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* ════════════════════════════════════════════
    BIG LAPTOP  769px – 1280px  (DEFAULT TARGET)
 ════════════════════════════════════════════ */
 @media (max-width: 1280px) {
-
   /* ── Header ── */
-  .site-header        { padding: 16px 40px; }
-  .header-year        { font-size: 42px; }
-  .header-inner       { gap: 14px; }
+  .site-header {
+    padding: 16px 40px;
+  }
+  .header-year {
+    font-size: 42px;
+  }
+  .header-inner {
+    gap: 14px;
+  }
 
   /* ── Calendar ── */
-  .year-grid          { padding: 44px 40px 80px; gap: 28px; }
-  .month-header       { padding: 24px 22px 18px; }
-  .month-name         { font-size: 26px; }
-  .month-grid         { padding: 0 14px 20px; gap: 4px; }
-  .day-cell           { min-height: 40px; }
-  .day-num            { font-size: 13px; }
+  .year-grid {
+    padding: 44px 40px 80px;
+    gap: 28px;
+  }
+  .month-header {
+    padding: 24px 22px 18px;
+  }
+  .month-name {
+    font-size: 26px;
+  }
+  .month-grid {
+    padding: 0 14px 20px;
+    gap: 4px;
+  }
+  .day-cell {
+    min-height: 40px;
+  }
+  .day-num {
+    font-size: 13px;
+  }
 
   /* ── Booking modals ── */
-  .bk-modal           { width: 680px; }
-  .bk-list-modal      { width: 680px; max-height: 85vh; }
+  .bk-modal {
+    width: 680px;
+  }
+  .bk-list-modal {
+    width: 680px;
+    max-height: 85vh;
+  }
 
   /* ── Analytics modal ── */
-  .an-modal           { max-width: 760px; }
-  .an-stat-row        { grid-template-columns: repeat(3, 1fr); }
+  .an-modal {
+    max-width: 760px;
+  }
+  .an-stat-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* ════════════════════════════════════════════
    MEDIUM TABLET  601px – 768px
 ════════════════════════════════════════════ */
 @media (max-width: 768px) {
-
   /* ── Header ── */
-  .site-header        { padding: 12px 20px; }
-  .header-inner       { gap: 10px; flex-wrap: wrap; }
-  .header-year        { font-size: 32px; }
-  .header-label       { font-size: 10px; letter-spacing: 1.5px; }
-  .header-today-badge { font-size: 11px; padding: 7px 14px; }
-  .db-status          { font-size: 11px; padding: 6px 12px; }
+  .site-header {
+    padding: 12px 20px;
+  }
+  .header-inner {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .header-year {
+    font-size: 32px;
+  }
+  .header-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+  }
+  .header-today-badge {
+    font-size: 11px;
+    padding: 7px 14px;
+  }
+  .db-status {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
 
   /* ── Calendar ── */
-  .year-grid          { padding: 24px 20px 60px; gap: 20px; }
-  .month-card:hover   { transform: none; }
-  .month-header       { padding: 18px 16px 14px; }
-  .month-name         { font-size: 22px; }
-  .weekday-row        { padding: 0 10px 6px; }
-  .weekday-row span   { font-size: 9px; letter-spacing: 1px; }
-  .month-grid         { padding: 0 10px 16px; gap: 2px; }
-  .day-cell           { min-height: 32px; padding-top: 5px; }
-  .day-num            { font-size: 11px; width: 24px; height: 24px; }
-  .day-cell.today .day-num { width: 24px; height: 24px; font-size: 11px; }
-  .event-dot          { width: 4px; height: 4px; }
+  .year-grid {
+    padding: 24px 20px 60px;
+    gap: 20px;
+  }
+  .month-card:hover {
+    transform: none;
+  }
+  .month-header {
+    padding: 18px 16px 14px;
+  }
+  .month-name {
+    font-size: 22px;
+  }
+  .weekday-row {
+    padding: 0 10px 6px;
+  }
+  .weekday-row span {
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .month-grid {
+    padding: 0 10px 16px;
+    gap: 2px;
+  }
+  .day-cell {
+    min-height: 32px;
+    padding-top: 5px;
+  }
+  .day-num {
+    font-size: 11px;
+    width: 24px;
+    height: 24px;
+  }
+  .day-cell.today .day-num {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+  .event-dot {
+    width: 4px;
+    height: 4px;
+  }
 
   /* ── Booking form — bottom sheet ── */
-  .bk-overlay         { padding: 16px; align-items: flex-end; }
+  .bk-overlay {
+    padding: 16px;
+    align-items: flex-end;
+  }
   .bk-modal {
     width: 100%;
     max-width: 100%;
@@ -150,16 +305,34 @@
     border-radius: 24px 24px 0 0;
     transform: translateY(100%);
   }
-  .bk-overlay.open .bk-modal { transform: translateY(0) scale(1); }
-  .bk-modal-header    { padding: 18px 20px 16px; }
-  .bk-header-date     { font-size: 16px; }
-  .bk-body            { padding: 0; }
-  .bk-section         { padding: 16px 20px; }
-  .bk-section-title   { font-size: 12px; margin-bottom: 14px; }
-  .bk-footer          { padding: 14px 20px; }
+  .bk-overlay.open .bk-modal {
+    transform: translateY(0) scale(1);
+  }
+  .bk-modal-header {
+    padding: 18px 20px 16px;
+  }
+  .bk-header-date {
+    font-size: 16px;
+  }
+  .bk-body {
+    padding: 0;
+  }
+  .bk-section {
+    padding: 16px 20px;
+  }
+  .bk-section-title {
+    font-size: 12px;
+    margin-bottom: 14px;
+  }
+  .bk-footer {
+    padding: 14px 20px;
+  }
 
   /* ── Booking list — bottom sheet ── */
-  .bk-list-overlay    { align-items: flex-end; padding: 0; }
+  .bk-list-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
   .bk-list-modal {
     width: 100%;
     max-width: 100%;
@@ -171,9 +344,11 @@
     flex-direction: column;
     overflow: hidden;
     transform: translateY(100%);
-    transition: transform 0.30s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .bk-list-overlay.open .bk-list-modal { transform: translateY(0); }
+  .bk-list-overlay.open .bk-list-modal {
+    transform: translateY(0);
+  }
   #bkListBody {
     flex: 1 1 0;
     min-height: 0;
@@ -181,13 +356,29 @@
     flex-direction: column;
     overflow: hidden;
   }
-  .bk-list-header     { padding: 18px 22px 14px; flex-shrink: 0; }
-  .bk-list-title      { font-size: 18px; }
-  .bk-list-body-inner { padding: 14px 18px 10px; flex: 1 1 0; min-height: 0; overflow-y: auto; }
-  .bk-list-footer     { padding: 14px 18px 20px; flex-shrink: 0; }
+  .bk-list-header {
+    padding: 18px 22px 14px;
+    flex-shrink: 0;
+  }
+  .bk-list-title {
+    font-size: 18px;
+  }
+  .bk-list-body-inner {
+    padding: 14px 18px 10px;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .bk-list-footer {
+    padding: 14px 18px 20px;
+    flex-shrink: 0;
+  }
 
   /* ── Analytics modal — bottom sheet ── */
-  .an-overlay         { padding: 0; align-items: flex-end; }
+  .an-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
   .an-modal {
     width: 100%;
     max-width: 100%;
@@ -195,19 +386,41 @@
     max-height: 92vh;
     box-sizing: border-box;
   }
-  .an-modal-header    { padding: 16px 18px 12px; }
-  .an-title           { font-size: 17px; }
-  .an-subtitle        { font-size: 11px; }
-  .an-body            { padding: 14px 16px 22px; gap: 14px; }
+  .an-modal-header {
+    padding: 16px 18px 12px;
+  }
+  .an-title {
+    font-size: 17px;
+  }
+  .an-subtitle {
+    font-size: 11px;
+  }
+  .an-body {
+    padding: 14px 16px 22px;
+    gap: 14px;
+  }
   /* 2-col stat grid on tablet */
-  .an-stat-row        { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .an-stat-card       { padding: 12px 12px 10px; }
-  .an-stat-value      { font-size: 14px; }
-  .an-stat-icon       { font-size: 17px; }
+  .an-stat-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .an-stat-card {
+    padding: 12px 12px 10px;
+  }
+  .an-stat-value {
+    font-size: 14px;
+  }
+  .an-stat-icon {
+    font-size: 17px;
+  }
   /* Section padding tighter */
-  .an-section         { padding: 14px 14px 16px; }
+  .an-section {
+    padding: 14px 14px 16px;
+  }
   /* Chart heights */
-  .an-chart-wrap      { height: 120px; }
+  .an-chart-wrap {
+    height: 120px;
+  }
 
   /* ── Analysis modal header: fix overlap on mobile ── */
   .an-header-row {
@@ -241,88 +454,234 @@
     font-size: 10px !important;
     padding: 6px 10px !important;
   }
-  .an-chart-wrap--tall { height: 140px; }
+  .an-chart-wrap--tall {
+    height: 140px;
+  }
   /* Tour row stays horizontal */
-  .an-tour-row        { flex-direction: row; }
+  .an-tour-row {
+    flex-direction: row;
+  }
   /* Tab bar scrollable — hide scrollbar */
-  .ana-tab-bar::-webkit-scrollbar { display: none; }
+  .ana-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
   /* Table — shrink columns */
   .an-table-head,
-  .an-table-row       { grid-template-columns: 0.6fr 2fr 1.8fr 0.8fr 1.8fr; font-size: 11px; padding: 7px 10px; }
+  .an-table-row {
+    grid-template-columns: 0.6fr 2fr 1.8fr 0.8fr 1.8fr;
+    font-size: 11px;
+    padding: 7px 10px;
+  }
 
   /* ── Scrollbars — hide on touch ── */
   .bk-body::-webkit-scrollbar,
-  .bk-list-body::-webkit-scrollbar { display: none; }
+  .bk-list-body::-webkit-scrollbar {
+    display: none;
+  }
   .bk-body,
-  .bk-list-body { -ms-overflow-style: none; scrollbar-width: none; }
+  .bk-list-body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 
 /* ════════════════════════════════════════════
    SMALL PHONE  481px – 600px
 ════════════════════════════════════════════ */
 @media (max-width: 600px) {
-
   /* ── Header ── */
-  .site-header        { padding: 10px 14px; }
-  .header-year        { font-size: 26px; }
-  .header-label       { display: none; }
-  .header-today-badge { font-size: 10px; padding: 6px 12px; }
-  .db-status          { padding: 5px 10px; }
-  .db-status .db-status-label { display: none; }
+  .site-header {
+    padding: 10px 14px;
+  }
+  .header-year {
+    font-size: 26px;
+  }
+  .header-label {
+    display: none;
+  }
+  .header-today-badge {
+    font-size: 10px;
+    padding: 6px 12px;
+  }
+  .db-status {
+    padding: 5px 10px;
+  }
+  .db-status .db-status-label {
+    display: none;
+  }
 
   /* ── Calendar ── */
-  .year-grid          { padding: 14px 10px 48px; gap: 10px; }
-  .month-header       { padding: 14px 12px 10px; }
-  .month-name         { font-size: 18px; }
-  .month-year-tag     { font-size: 9px; padding: 3px 7px; }
-  .weekday-row        { padding: 0 8px 4px; }
-  .weekday-row span   { font-size: 8px; letter-spacing: 0.5px; }
-  .month-grid         { padding: 0 8px 12px; gap: 1px; }
-  .day-cell           { min-height: 28px; padding-top: 4px; }
-  .day-num            { font-size: 10px; width: 22px; height: 22px; }
-  .event-dot          { width: 3px; height: 3px; }
+  .year-grid {
+    padding: 14px 10px 48px;
+    gap: 10px;
+  }
+  .month-header {
+    padding: 14px 12px 10px;
+  }
+  .month-name {
+    font-size: 18px;
+  }
+  .month-year-tag {
+    font-size: 9px;
+    padding: 3px 7px;
+  }
+  .weekday-row {
+    padding: 0 8px 4px;
+  }
+  .weekday-row span {
+    font-size: 8px;
+    letter-spacing: 0.5px;
+  }
+  .month-grid {
+    padding: 0 8px 12px;
+    gap: 1px;
+  }
+  .day-cell {
+    min-height: 28px;
+    padding-top: 4px;
+  }
+  .day-num {
+    font-size: 10px;
+    width: 22px;
+    height: 22px;
+  }
+  .event-dot {
+    width: 3px;
+    height: 3px;
+  }
 
   /* ── Booking form ── */
-  .bk-overlay         { padding: 0; }
-  .bk-modal           { border-radius: 20px 20px 0 0; max-height: 95vh; }
-  .bk-grid-2          { grid-template-columns: 1fr; gap: 12px; }
-  .bk-input           { font-size: 15px; padding: 11px 14px; min-height: 44px; }
-  .bk-input-icon      { padding-left: 34px; }
-  .bk-label           { font-size: 10px; }
-  .bk-auto            { font-size: 13px; padding: 10px 12px; min-height: 44px; }
-  .bk-modal-header    { padding: 16px 16px 14px; }
-  .bk-header-date     { font-size: 14px; }
-  .bk-header-label    { font-size: 9px; }
-  .bk-section         { padding: 14px 16px; }
-  .bk-footer          { padding: 12px 16px 20px; gap: 10px; }
+  .bk-overlay {
+    padding: 0;
+  }
+  .bk-modal {
+    border-radius: 20px 20px 0 0;
+    max-height: 95vh;
+  }
+  .bk-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .bk-input {
+    font-size: 15px;
+    padding: 11px 14px;
+    min-height: 44px;
+  }
+  .bk-input-icon {
+    padding-left: 34px;
+  }
+  .bk-label {
+    font-size: 10px;
+  }
+  .bk-auto {
+    font-size: 13px;
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+  .bk-modal-header {
+    padding: 16px 16px 14px;
+  }
+  .bk-header-date {
+    font-size: 14px;
+  }
+  .bk-header-label {
+    font-size: 9px;
+  }
+  .bk-section {
+    padding: 14px 16px;
+  }
+  .bk-footer {
+    padding: 12px 16px 20px;
+    gap: 10px;
+  }
   .bk-btn-save,
-  .bk-btn-cancel      { padding: 13px 20px; font-size: 14px; min-height: 48px; }
-  .bk-tour-options    { gap: 8px; }
-  .bk-tour-btn        { padding: 10px 14px; font-size: 12px; flex: 1; min-height: 44px; }
-  .bk-color-pill      { width: 6px; min-height: 44px; }
-  .bk-event-badge     { font-size: 10px; padding: 4px 10px 4px 8px; }
-  .bk-tour-hint       { font-size: 10px; padding: 7px 10px; }
+  .bk-btn-cancel {
+    padding: 13px 20px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+  .bk-tour-options {
+    gap: 8px;
+  }
+  .bk-tour-btn {
+    padding: 10px 14px;
+    font-size: 12px;
+    flex: 1;
+    min-height: 44px;
+  }
+  .bk-tour-btn[data-type="3D2N"] {
+    flex: 1 1 100%;
+    min-height: 50px;
+    overflow: visible;
+    padding-bottom: 20px;
+  }
+  .bk-tour-btn[data-type="3D2N"]::after {
+    right: 12px;
+    font-size: 9px;
+  }
+  .bk-color-pill {
+    width: 6px;
+    min-height: 44px;
+  }
+  .bk-event-badge {
+    font-size: 10px;
+    padding: 4px 10px 4px 8px;
+  }
+  .bk-tour-hint {
+    font-size: 10px;
+    padding: 7px 10px;
+  }
 
   /* ── Booking list ── */
-  .bk-list-modal      { border-radius: 20px 20px 0 0; max-height: 92vh; }
-  .bk-list-header     { padding: 14px 16px 12px; }
-  .bk-list-body-inner { padding: 10px 14px; }
-  .bk-list-footer     { padding: 10px 14px 18px; }
-  .bk-summary-card    { padding: 12px 14px; }
-  .bk-summary-name    { font-size: 13px; }
-  .bk-summary-row     { gap: 8px; }
-  .bk-summary-item    { font-size: 10px; }
-  .bk-card-actions    { gap: 6px; }
-  .bk-card-btn        { font-size: 11px; padding: 7px 8px; }
+  .bk-list-modal {
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+  }
+  .bk-list-header {
+    padding: 14px 16px 12px;
+  }
+  .bk-list-body-inner {
+    padding: 10px 14px;
+  }
+  .bk-list-footer {
+    padding: 10px 14px 18px;
+  }
+  .bk-summary-card {
+    padding: 12px 14px;
+  }
+  .bk-summary-name {
+    font-size: 13px;
+  }
+  .bk-summary-row {
+    gap: 8px;
+  }
+  .bk-summary-item {
+    font-size: 10px;
+  }
+  .bk-card-actions {
+    gap: 6px;
+  }
+  .bk-card-btn {
+    font-size: 11px;
+    padding: 7px 8px;
+  }
 
   /* ── Booking view / actions ── */
-  .bk-summary-actions { flex-wrap: wrap; }
-  .bk-action-btn      { flex: 1 1 calc(50% - 4px); font-size: 11px; padding: 7px 8px; }
-  .bk-view-grid       { grid-template-columns: 1fr; }
+  .bk-summary-actions {
+    flex-wrap: wrap;
+  }
+  .bk-action-btn {
+    flex: 1 1 calc(50% - 4px);
+    font-size: 11px;
+    padding: 7px 8px;
+  }
+  .bk-view-grid {
+    grid-template-columns: 1fr;
+  }
 
   /* ── Drag handle ── */
   .bk-modal::before {
-    content: '';
+    content: "";
     display: block;
     width: 40px;
     height: 4px;
@@ -334,65 +693,185 @@
 
   /* ── Toast ── */
   .bk-toast {
-    left: 12px; right: 12px; bottom: 16px;
+    left: 12px;
+    right: 12px;
+    bottom: 16px;
     transform: translateY(80px);
-    width: auto; text-align: center;
-    font-size: 12px; padding: 10px 16px;
+    width: auto;
+    text-align: center;
+    font-size: 12px;
+    padding: 10px 16px;
   }
-  .bk-toast.show { transform: translateY(0); }
+  .bk-toast.show {
+    transform: translateY(0);
+  }
 }
 
 /* ════════════════════════════════════════════
    X-SMALL PHONE  321px – 480px
 ════════════════════════════════════════════ */
 @media (max-width: 480px) {
-
   /* ── Header ── */
-  .site-header        { padding: 9px 12px; }
-  .header-year        { font-size: 22px; }
-  .header-inner       { gap: 6px; }
-  .header-today-badge { font-size: 9px; padding: 5px 10px; }
+  .site-header {
+    padding: 9px 12px;
+  }
+  .header-year {
+    font-size: 22px;
+  }
+  .header-inner {
+    gap: 6px;
+  }
+  .header-today-badge {
+    font-size: 9px;
+    padding: 5px 10px;
+  }
 
   /* ── Calendar — 1 col ── */
-  .year-grid          { padding: 12px 10px 40px; gap: 12px; }
-  .month-header       { padding: 16px 14px 12px; }
-  .month-name         { font-size: 24px; }
-  .month-year-tag     { font-size: 10px; padding: 4px 10px; }
-  .weekday-row        { padding: 0 12px 6px; }
-  .weekday-row span   { font-size: 9px; letter-spacing: 1px; }
-  .month-grid         { padding: 0 12px 16px; gap: 3px; }
-  .day-cell           { min-height: 38px; padding-top: 6px; }
-  .day-num            { font-size: 12px; width: 26px; height: 26px; }
-  .day-cell.today .day-num { width: 26px; height: 26px; }
-  .day-cell:hover     { transform: scale(1.08); }
-  .event-dot          { width: 4px; height: 4px; }
+  .year-grid {
+    padding: 12px 10px 40px;
+    gap: 12px;
+  }
+  .month-header {
+    padding: 16px 14px 12px;
+  }
+  .month-name {
+    font-size: 24px;
+  }
+  .month-year-tag {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+  .weekday-row {
+    padding: 0 12px 6px;
+  }
+  .weekday-row span {
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .month-grid {
+    padding: 0 12px 16px;
+    gap: 3px;
+  }
+  .day-cell {
+    min-height: 38px;
+    padding-top: 6px;
+  }
+  .day-num {
+    font-size: 12px;
+    width: 26px;
+    height: 26px;
+  }
+  .day-cell.today .day-num {
+    width: 26px;
+    height: 26px;
+  }
+  .day-cell:hover {
+    transform: scale(1.08);
+  }
+  .event-dot {
+    width: 4px;
+    height: 4px;
+  }
 
   /* ── Booking form ── */
-  .bk-modal-header    { padding: 14px 14px 12px; gap: 8px; }
-  .bk-header-date     { font-size: 13px; }
-  .bk-section-title   { font-size: 11px; }
-  .bk-section         { padding: 12px 14px; }
-  .bk-footer          { flex-direction: column; padding: 10px 14px 18px; }
-  .bk-btn-cancel      { order: 2; width: 100%; justify-content: center; }
-  .bk-btn-save        { order: 1; width: 100%; justify-content: center; }
-  .bk-tour-options    { flex-direction: column; }
-  .bk-tour-btn        { width: 100%; justify-content: center; min-height: 46px; }
-  .bk-input           { font-size: 14px; min-height: 46px; }
-  .bk-auto            { min-height: 46px; }
+  .bk-modal-header {
+    padding: 14px 14px 12px;
+    gap: 8px;
+  }
+  .bk-header-date {
+    font-size: 13px;
+  }
+  .bk-section-title {
+    font-size: 11px;
+  }
+  .bk-section {
+    padding: 12px 14px;
+  }
+  .bk-footer {
+    flex-direction: column;
+    padding: 10px 14px 18px;
+  }
+  .bk-btn-cancel {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+  .bk-btn-save {
+    order: 1;
+    width: 100%;
+    justify-content: center;
+  }
+  .bk-tour-options {
+    flex-direction: column;
+  }
+  .bk-tour-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+    flex: unset;
+  }
+  /* 3D2N full-width on mobile — stack subtitle below label */
+  .bk-tour-btn[data-type="3D2N"] {
+    flex: unset;
+    width: 100%;
+    min-height: 54px;
+    overflow: visible;
+    padding-bottom: 22px;
+  }
+  .bk-tour-btn[data-type="3D2N"]::after {
+    right: 50%;
+    top: auto;
+    bottom: 6px;
+    transform: translateX(50%);
+    font-size: 9px;
+    white-space: nowrap;
+  }
+  .bk-input {
+    font-size: 14px;
+    min-height: 46px;
+  }
+  .bk-auto {
+    min-height: 46px;
+  }
 
   /* ── Booking list ── */
-  .bk-list-modal      { height: 94vh; max-height: 94vh; }
-  .bk-list-header     { padding: 12px 14px 10px; }
-  .bk-list-title      { font-size: 17px; }
-  .bk-summary-card    { padding: 12px; }
-  .bk-summary-name    { font-size: 13px; }
-  .bk-summary-item    { font-size: 10px; }
-  .bk-card-actions    { gap: 6px; }
-  .bk-card-btn        { font-size: 11px; padding: 8px 6px; min-height: 38px; }
-  .bk-list-footer .bk-btn-save { width: 100%; justify-content: center; }
+  .bk-list-modal {
+    height: 94vh;
+    max-height: 94vh;
+  }
+  .bk-list-header {
+    padding: 12px 14px 10px;
+  }
+  .bk-list-title {
+    font-size: 17px;
+  }
+  .bk-summary-card {
+    padding: 12px;
+  }
+  .bk-summary-name {
+    font-size: 13px;
+  }
+  .bk-summary-item {
+    font-size: 10px;
+  }
+  .bk-card-actions {
+    gap: 6px;
+  }
+  .bk-card-btn {
+    font-size: 11px;
+    padding: 8px 6px;
+    min-height: 38px;
+  }
+  .bk-list-footer .bk-btn-save {
+    width: 100%;
+    justify-content: center;
+  }
 
   /* ── Analytics modal ── */
-  .an-overlay         { padding: 0; align-items: flex-end; }
+  .an-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
   .an-modal {
     width: 100%;
     max-width: 100%;
@@ -400,35 +879,90 @@
     max-height: 94vh;
     box-sizing: border-box;
   }
-  .an-modal-header    { padding: 14px 14px 10px; }
-  .an-title           { font-size: 16px; }
-  .an-subtitle        { font-size: 10px; }
+  .an-modal-header {
+    padding: 14px 14px 10px;
+  }
+  .an-title {
+    font-size: 16px;
+  }
+  .an-subtitle {
+    font-size: 10px;
+  }
   /* Body padding matches screen edge */
-  .an-body            { padding: 12px 12px 18px; gap: 10px; }
+  .an-body {
+    padding: 12px 12px 18px;
+    gap: 10px;
+  }
   /* 1-col stat grid on small phones so cards never clip */
-  .an-stat-row        { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .an-stat-card       { padding: 10px 10px 8px; gap: 8px; }
-  .an-stat-icon       { font-size: 16px; }
-  .an-stat-value      { font-size: 13px; }
-  .an-stat-label      { font-size: 9px; }
-  .an-section         { padding: 10px 10px 12px; gap: 10px; }
-  .an-section-title   { font-size: 10px; }
-  .an-chart-wrap      { height: 100px; }
-  .an-chart-wrap--tall { height: 120px; }
+  .an-stat-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .an-stat-card {
+    padding: 10px 10px 8px;
+    gap: 8px;
+  }
+  .an-stat-icon {
+    font-size: 16px;
+  }
+  .an-stat-value {
+    font-size: 13px;
+  }
+  .an-stat-label {
+    font-size: 9px;
+  }
+  .an-section {
+    padding: 10px 10px 12px;
+    gap: 10px;
+  }
+  .an-section-title {
+    font-size: 10px;
+  }
+  .an-chart-wrap {
+    height: 100px;
+  }
+  .an-chart-wrap--tall {
+    height: 120px;
+  }
   /* Tour donut row stacks on small phones */
-  .an-tour-row        { flex-direction: column; gap: 10px; }
-  .an-donut-wrap      { width: 90px; height: 90px; align-self: center; }
+  .an-tour-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .an-donut-wrap {
+    width: 90px;
+    height: 90px;
+    align-self: center;
+  }
   /* Table scrolls horizontally */
-  .an-table           { overflow-x: auto; }
+  .an-table {
+    overflow-x: auto;
+  }
   .an-table-head,
-  .an-table-row       { grid-template-columns: 0.5fr 1.8fr 1.6fr 0.6fr 1.6fr; font-size: 10px; padding: 6px 8px; min-width: 340px; }
+  .an-table-row {
+    grid-template-columns: 0.5fr 1.8fr 1.6fr 0.6fr 1.6fr;
+    font-size: 10px;
+    padding: 6px 8px;
+    min-width: 340px;
+  }
   /* Hide scrollbar on tab bar */
-  .ana-tab-bar        { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .ana-tab-bar::-webkit-scrollbar { display: none; }
-  #btnYearAnalytics   { font-size: 11px; padding: 6px 12px; }
+  .ana-tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ana-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+  #btnYearAnalytics {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
 
   /* ── Month analysis modal ── */
-  #monthAnalysisOverlay { padding: 0; align-items: flex-end; }
+  #monthAnalysisOverlay {
+    padding: 0;
+    align-items: flex-end;
+  }
   #monthAnalysisModal {
     width: 100% !important;
     max-width: 100% !important;
@@ -436,90 +970,242 @@
     max-height: 94vh !important;
     box-sizing: border-box;
   }
-  #monthAnalysisBody  { padding: 0 14px 20px !important; }
+  #monthAnalysisBody {
+    padding: 0 14px 20px !important;
+  }
 
   /* ── Toast ── */
-  .bk-toast           { font-size: 11px; padding: 9px 14px; }
+  .bk-toast {
+    font-size: 11px;
+    padding: 9px 14px;
+  }
 }
 
 /* ════════════════════════════════════════════
    XX-SMALL PHONE  ≤ 320px
 ════════════════════════════════════════════ */
 @media (max-width: 320px) {
-
   /* ── Header ── */
-  .site-header        { padding: 8px 10px; }
-  .header-year        { font-size: 20px; letter-spacing: -0.5px; }
-  .header-today-badge { display: none; }
-  .db-status          { padding: 4px 8px; font-size: 10px; }
-  .db-status .db-status-label { display: none; }
+  .site-header {
+    padding: 8px 10px;
+  }
+  .header-year {
+    font-size: 20px;
+    letter-spacing: -0.5px;
+  }
+  .header-today-badge {
+    display: none;
+  }
+  .db-status {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+  .db-status .db-status-label {
+    display: none;
+  }
 
   /* ── Calendar ── */
-  .year-grid          { padding: 10px 8px 32px; gap: 10px; }
-  .month-header       { padding: 12px 10px 8px; }
-  .month-name         { font-size: 20px; }
-  .month-year-tag     { display: none; }
-  .weekday-row        { padding: 0 8px 4px; }
-  .weekday-row span   { font-size: 7px; letter-spacing: 0; }
-  .month-grid         { padding: 0 8px 10px; gap: 1px; }
-  .day-cell           { min-height: 30px; padding-top: 4px; }
-  .day-num            { font-size: 10px; width: 20px; height: 20px; }
-  .day-cell.today .day-num { width: 20px; height: 20px; font-size: 10px; }
-  .event-dot          { width: 3px; height: 3px; }
-  .event-dots         { gap: 1px; }
+  .year-grid {
+    padding: 10px 8px 32px;
+    gap: 10px;
+  }
+  .month-header {
+    padding: 12px 10px 8px;
+  }
+  .month-name {
+    font-size: 20px;
+  }
+  .month-year-tag {
+    display: none;
+  }
+  .weekday-row {
+    padding: 0 8px 4px;
+  }
+  .weekday-row span {
+    font-size: 7px;
+    letter-spacing: 0;
+  }
+  .month-grid {
+    padding: 0 8px 10px;
+    gap: 1px;
+  }
+  .day-cell {
+    min-height: 30px;
+    padding-top: 4px;
+  }
+  .day-num {
+    font-size: 10px;
+    width: 20px;
+    height: 20px;
+  }
+  .day-cell.today .day-num {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+  .event-dot {
+    width: 3px;
+    height: 3px;
+  }
+  .event-dots {
+    gap: 1px;
+  }
 
   /* ── Booking form ── */
-  .bk-modal-header    { padding: 10px 12px; gap: 6px; }
-  .bk-color-pill      { display: none; }
-  .bk-header-label    { font-size: 8px; letter-spacing: 1.5px; }
-  .bk-header-date     { font-size: 12px; }
-  .bk-event-badge     { display: none; }
-  .bk-section         { padding: 10px 12px; }
-  .bk-section-title   { font-size: 10px; letter-spacing: 1px; }
-  .bk-label           { font-size: 9px; }
-  .bk-input           { font-size: 13px; padding: 9px 10px; min-height: 42px; }
-  .bk-auto            { font-size: 12px; padding: 8px 10px; min-height: 42px; }
-  .bk-tour-btn        { font-size: 11px; padding: 9px 10px; min-height: 42px; }
-  .bk-err             { font-size: 10px; }
-  .bk-footer          { padding: 8px 12px 14px; gap: 8px; }
+  .bk-modal-header {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .bk-color-pill {
+    display: none;
+  }
+  .bk-header-label {
+    font-size: 8px;
+    letter-spacing: 1.5px;
+  }
+  .bk-header-date {
+    font-size: 12px;
+  }
+  .bk-event-badge {
+    display: none;
+  }
+  .bk-section {
+    padding: 10px 12px;
+  }
+  .bk-section-title {
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .bk-label {
+    font-size: 9px;
+  }
+  .bk-input {
+    font-size: 13px;
+    padding: 9px 10px;
+    min-height: 42px;
+  }
+  .bk-auto {
+    font-size: 12px;
+    padding: 8px 10px;
+    min-height: 42px;
+  }
+  .bk-tour-btn {
+    font-size: 11px;
+    padding: 9px 10px;
+    min-height: 42px;
+  }
+  .bk-err {
+    font-size: 10px;
+  }
+  .bk-footer {
+    padding: 8px 12px 14px;
+    gap: 8px;
+  }
   .bk-btn-save,
-  .bk-btn-cancel      { font-size: 13px; padding: 11px 14px; min-height: 44px; }
-  .bk-tour-hint       { font-size: 9px; padding: 6px 8px; }
+  .bk-btn-cancel {
+    font-size: 13px;
+    padding: 11px 14px;
+    min-height: 44px;
+  }
+  .bk-tour-hint {
+    font-size: 9px;
+    padding: 6px 8px;
+  }
 
   /* ── Booking list ── */
-  .bk-list-header     { padding: 10px 12px 8px; }
-  .bk-list-title      { font-size: 15px; }
-  .bk-list-body-inner { padding: 8px 12px; }
-  .bk-summary-card    { padding: 10px; }
-  .bk-summary-name    { font-size: 12px; }
-  .bk-summary-badge   { font-size: 9px; padding: 2px 7px; }
-  .bk-summary-item    { font-size: 9px; }
-  .bk-summary-row     { gap: 6px; }
-  .bk-card-actions    { gap: 4px; }
-  .bk-card-btn        { font-size: 10px; padding: 7px 5px; min-height: 36px; }
-  .bk-list-footer     { padding: 8px 12px 14px; }
-  .bk-slot-notice     { font-size: 10px; padding: 8px 10px; }
+  .bk-list-header {
+    padding: 10px 12px 8px;
+  }
+  .bk-list-title {
+    font-size: 15px;
+  }
+  .bk-list-body-inner {
+    padding: 8px 12px;
+  }
+  .bk-summary-card {
+    padding: 10px;
+  }
+  .bk-summary-name {
+    font-size: 12px;
+  }
+  .bk-summary-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+  }
+  .bk-summary-item {
+    font-size: 9px;
+  }
+  .bk-summary-row {
+    gap: 6px;
+  }
+  .bk-card-actions {
+    gap: 4px;
+  }
+  .bk-card-btn {
+    font-size: 10px;
+    padding: 7px 5px;
+    min-height: 36px;
+  }
+  .bk-list-footer {
+    padding: 8px 12px 14px;
+  }
+  .bk-slot-notice {
+    font-size: 10px;
+    padding: 8px 10px;
+  }
 
   /* ── Booking view ── */
-  .bk-view-section       { padding: 10px 12px; border-radius: 10px; }
-  .bk-view-section-title { font-size: 9px; margin-bottom: 8px; }
-  .bk-view-row span:first-child { font-size: 9px; }
-  .bk-view-row span:last-child  { font-size: 11px; }
-  .bk-view-total span:last-child { font-size: 13px; }
+  .bk-view-section {
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+  .bk-view-section-title {
+    font-size: 9px;
+    margin-bottom: 8px;
+  }
+  .bk-view-row span:first-child {
+    font-size: 9px;
+  }
+  .bk-view-row span:last-child {
+    font-size: 11px;
+  }
+  .bk-view-total span:last-child {
+    font-size: 13px;
+  }
 
   /* ── Analytics modal ── */
-  .an-body            { padding: 10px 10px 16px; gap: 8px; }
-  .an-stat-row        { grid-template-columns: 1fr 1fr; gap: 6px; }
-  .an-stat-card       { padding: 8px 8px 6px; gap: 6px; }
-  .an-stat-value      { font-size: 12px; }
-  .an-section         { padding: 8px 10px 10px; }
+  .an-body {
+    padding: 10px 10px 16px;
+    gap: 8px;
+  }
+  .an-stat-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .an-stat-card {
+    padding: 8px 8px 6px;
+    gap: 6px;
+  }
+  .an-stat-value {
+    font-size: 12px;
+  }
+  .an-section {
+    padding: 8px 10px 10px;
+  }
   .an-table-head,
-  .an-table-row       { grid-template-columns: 0.5fr 1.8fr 1.6fr 0.6fr 1.6fr; font-size: 9px; min-width: 320px; }
+  .an-table-row {
+    grid-template-columns: 0.5fr 1.8fr 1.6fr 0.6fr 1.6fr;
+    font-size: 9px;
+    min-width: 320px;
+  }
 
   /* ── Toast ── */
   .bk-toast {
-    left: 8px; right: 8px; bottom: 10px;
-    font-size: 10px; padding: 8px 12px;
+    left: 8px;
+    right: 8px;
+    bottom: 10px;
+    font-size: 10px;
+    padding: 8px 12px;
     border-radius: 30px;
   }
 }
