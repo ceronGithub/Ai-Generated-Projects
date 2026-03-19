@@ -11,8 +11,8 @@ const COMMENTS = 'comments';
 
 export async function getComments(productId = null) {
   let q = productId
-    ? query(collection(db, COMMENTS), where('productId', '==', productId), orderBy('createdAt', 'desc'))
-    : query(collection(db, COMMENTS), orderBy('createdAt', 'desc'));
+    ? query(collection(db, COMMENTS), where('productId', '==', productId))
+    : collection(db, COMMENTS);
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }

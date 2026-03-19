@@ -75,7 +75,7 @@ export async function getSalesByCategory(from, to) {
 
 // ── Helper: fetch orders in date range ────────────────────
 async function getOrdersInRange(from, to) {
-  const snap   = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')));
+  const snap   = await getDocs(collection(db, 'orders'));
   const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   const fromDate = new Date(from);
   const toDate   = new Date(to); toDate.setHours(23,59,59,999);

@@ -12,9 +12,11 @@ const CATS     = 'categories';
 
 // ── Get all products ───────────────────────────────────────
 export async function getProducts({ category = '', search = '', page = 1, perPage = 12 } = {}) {
-  let q = query(collection(db, PRODUCTS), where('isActive', '==', true), orderBy('createdAt', 'desc'));
+  // No orderBy to avoid Firestore index requirement — sort client-side
+  let q = query(collection(db, PRODUCTS), where('isActive', '==', true));
   const snap = await getDocs(q);
   let items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  items.sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
   if (category) items = items.filter(p => p.categorySlug === category);
   if (search)   items = items.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
   const total = items.length;
@@ -25,9 +27,14 @@ export async function getProducts({ category = '', search = '', page = 1, perPag
 
 // ── Get featured products ──────────────────────────────────
 export async function getFeatured() {
-  const q    = query(collection(db, PRODUCTS), where('isFeatured', '==', true), where('isActive', '==', true), limit(8));
+  // Single where clause to avoid composite index requirement
+  // Filter isActive client-side
+  const q    = query(collection(db, PRODUCTS), where('isFeatured', '==', true), limit(20));
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(p => p.isActive !== false)
+    .slice(0, 8);
 }
 
 // ── Get single product ─────────────────────────────────────
@@ -38,9 +45,13 @@ export async function getProduct(id) {
 
 // ── Add product (owner only) ───────────────────────────────
 export async function addProduct(data) {
+  // Derive categoryName from category string if not provided
+  const categoryName = data.categoryName || data.category || '';
   return await addDoc(collection(db, PRODUCTS), {
     ...data,
-    isActive:  true,
+    categoryName,
+    // Respect isActive from form — default true only if not set
+    isActive:  data.isActive !== undefined ? data.isActive : true,
     createdAt: new Date(),
     updatedAt: new Date()
   });
@@ -48,12 +59,14 @@ export async function addProduct(data) {
 
 // ── Update product (owner only) ────────────────────────────
 export async function updateProduct(id, data) {
-  await updateDoc(doc(db, PRODUCTS, id), { ...data, updatedAt: new Date() });
+  const categoryName = data.categoryName || data.category || '';
+  await updateDoc(doc(db, PRODUCTS, id), { ...data, categoryName, updatedAt: new Date() });
 }
 
-// ── Soft delete product (owner only) ──────────────────────
+// ── Hard delete product (owner only) ──────────────────────
+// Uses deleteDoc so removed products disappear from admin list permanently
 export async function deleteProduct(id) {
-  await updateDoc(doc(db, PRODUCTS, id), { isActive: false, updatedAt: new Date() });
+  await deleteDoc(doc(db, PRODUCTS, id));
 }
 
 // ── Get categories ─────────────────────────────────────────
@@ -68,6 +81,13 @@ export const getAllProductsAdmin = getProducts;
 
 // ── Get ALL products for admin (no pagination, includes inactive) ──
 export async function getProductsAdmin() {
-  const snap = await getDocs(query(collection(db, PRODUCTS), orderBy('createdAt', 'desc')));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // No orderBy — avoids Firestore composite index requirement
+  // Sort client-side instead: newest first
+  const snap = await getDocs(collection(db, PRODUCTS));
+  const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return items.sort((a, b) => {
+    const ta = a.createdAt?.seconds ?? 0;
+    const tb = b.createdAt?.seconds ?? 0;
+    return tb - ta;
+  });
 }

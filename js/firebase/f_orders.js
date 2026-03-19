@@ -48,18 +48,22 @@ export async function placeOrder({ cartItems, customerInfo, userId = null }) {
 
 // ── Get all orders (owner) ─────────────────────────────────
 export async function getOrders(statusFilter = '') {
-  let q = statusFilter
-    ? query(collection(db, ORDERS), where('orderStatus', '==', statusFilter), orderBy('createdAt', 'desc'))
-    : query(collection(db, ORDERS), orderBy('createdAt', 'desc'));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const snap = await getDocs(statusFilter
+    ? query(collection(db, ORDERS), where('orderStatus', '==', statusFilter))
+    : collection(db, ORDERS));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a,b)=>(b.createdAt?.seconds??0)-(a.createdAt?.seconds??0));
 }
 
 // ── Get recent orders ──────────────────────────────────────
 export async function getRecentOrders(count = 10) {
-  const q    = query(collection(db, ORDERS), orderBy('createdAt', 'desc'), limit(count));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  // No orderBy — fetch all, sort client-side, slice
+  const snap = await getDocs(collection(db, ORDERS));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+    .slice(0, count);
 }
 
 // ── Get single order ───────────────────────────────────────
