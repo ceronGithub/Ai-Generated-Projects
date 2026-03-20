@@ -49,7 +49,7 @@ export async function setStock(productId, size, color, quantity, threshold = 5, 
 
 // ── Auto-create inventory entries for all size/color combos ─
 // Called right after addProduct() so inventory tab is populated immediately
-export async function createInventoryForProduct(productId, productName, sizes = [], colors = []) {
+export async function createInventoryForProduct(productId, productName, sizes = [], colors = [], initialStock = 0) {
   const effectiveSizes  = sizes.length  ? sizes  : [''];
   const effectiveColors = colors.length ? colors : [''];
   const writes = [];
@@ -61,7 +61,7 @@ export async function createInventoryForProduct(productId, productName, sizes = 
         productName,
         size:  size  || '',
         color: color || '',
-        quantity: 0,
+        quantity: initialStock > 0 ? initialStock : 0,
         lowStockThreshold: 5,
         updatedAt: new Date()
       }, { merge: true }));
@@ -100,4 +100,3 @@ export async function getLowStock() {
 export async function updateStock(id, quantity) {
   await updateDoc(doc(db, INV, id), { quantity, updatedAt: new Date() });
 }
-

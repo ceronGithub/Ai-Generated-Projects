@@ -277,6 +277,258 @@
     import "./js/main.js";
     // onAuthChange is handled by main.js — navbar stays in sync automatically
 
+    // ── Admin homepage editor ─────────────────────────────
+    import { onAuthChange } from "./js/firebase/f_auth.js";
+    import { db } from "./js/firebase/f_config.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getProductsAdmin } from "./js/firebase/f_products.js";
+
+    const SETTINGS_DOC = doc(db, "settings", "homepage");
+
+    // Load saved homepage settings and apply them
+    async function applyHomepageSettings() {
+      try {
+        const snap = await getDoc(SETTINGS_DOC);
+        if (!snap.exists()) return;
+        const s = snap.data();
+
+        // Hero slide 1
+        if (s.hero1Eyebrow) document.querySelector(".hero-slide:nth-child(1) .hero-eyebrow").textContent = s.hero1Eyebrow;
+        if (s.hero1Title)   document.querySelector(".hero-slide:nth-child(1) .hero-title").innerHTML    = s.hero1Title.replace(/\n/g,"<br>");
+        if (s.hero1Sub)     document.querySelector(".hero-slide:nth-child(1) .hero-subtitle").textContent = s.hero1Sub;
+
+        // About section
+        if (s.aboutSub)     document.querySelector(".about-section .section-subtitle").textContent = s.aboutSub;
+        if (s.aboutTitle)   document.querySelector(".about-section .section-title").textContent    = s.aboutTitle;
+        if (s.aboutBody)    document.querySelector(".about-section p[style*='line-height:1.8']").textContent = s.aboutBody;
+        if (s.aboutValues)  {
+          const items = s.aboutValues.split("\n").filter(Boolean);
+          const lis   = document.querySelectorAll(".value-list li");
+          items.forEach((v, i) => { if (lis[i]) lis[i].textContent = v; });
+        }
+
+        // Footer
+        if (s.footerDesc) document.querySelector(".footer-desc").textContent = s.footerDesc;
+        if (s.footerCopy) document.querySelector(".footer-bottom span:first-child").textContent = s.footerCopy;
+      } catch(e) { console.error("applyHomepageSettings", e); }
+    }
+    applyHomepageSettings();
+
+    // Show admin toolbar only when owner is logged in
+    onAuthChange(state => {
+      if (state?.role === "owner") {
+        showAdminBar();
+      }
+    });
+
+    function showAdminBar() {
+      const bar = document.getElementById("admin-edit-bar");
+      if (bar) bar.style.display = "flex";
+    }
+
+    // ── Admin panel open/close ────────────────────────────
+    window.openAdminPanel = function(section) {
+      document.querySelectorAll(".admin-panel").forEach(p => p.classList.remove("active"));
+      const panel = document.getElementById("admin-panel-" + section);
+      if (panel) panel.classList.add("active");
+      const titles = { hero:"Edit Hero", featured:"Pin Featured Products", about:"Edit About Section", footer:"Edit Footer" };
+      const titleEl = document.getElementById("admin-editor-title");
+      if (titleEl) titleEl.textContent = titles[section] || "Edit Section";
+      document.getElementById("admin-editor").style.display = "flex";
+    };
+    window.closeAdminEditor = function() {
+      document.getElementById("admin-editor").style.display = "none";
+      document.querySelectorAll(".admin-panel").forEach(p => p.classList.remove("active"));
+    };
+
+    // ── Save homepage settings ────────────────────────────
+    window.saveHomepageSection = async function(section) {
+      const btn = document.getElementById("save-btn-" + section);
+      if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+      try {
+        const get = id => document.getElementById(id)?.value || "";
+        let data = {};
+        if (section === "hero") {
+          data = {
+            hero1Eyebrow: get("he-eyebrow"),
+            hero1Title:   get("he-title"),
+            hero1Sub:     get("he-subtitle"),
+          };
+        } else if (section === "about") {
+          data = {
+            aboutSub:    get("ab-sub"),
+            aboutTitle:  get("ab-title"),
+            aboutBody:   get("ab-body"),
+            aboutValues: get("ab-values"),
+          };
+        } else if (section === "footer") {
+          data = {
+            footerDesc: get("ft-desc"),
+            footerCopy: get("ft-copy"),
+          };
+        }
+        await setDoc(SETTINGS_DOC, data, { merge: true });
+        applyHomepageSettings();
+        showAdminToast("Saved!");
+      } catch(e) { showAdminToast("Save failed.", true); console.error(e); }
+      finally {
+        if (btn) { btn.disabled = false; btn.textContent = "Save"; }
+      }
+    };
+
+    // ── Manage pinned featured products ───────────────────
+    window.openFeaturedPanel = async function() {
+      openAdminPanel("featured");
+      const list = document.getElementById("featured-pin-list");
+      list.innerHTML = "<p style='color:#5a5248;font-size:.85rem'>Loading products...</p>";
+      try {
+        const snap = await getDoc(SETTINGS_DOC);
+        const pinned = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
+        const products = await getProductsAdmin();
+        list.innerHTML = products.map(p => `
+          <label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1c1814;cursor:pointer">
+            <input type="checkbox" value="${p.id}" ${pinned.includes(p.id) ? "checked" : ""} style="accent-color:#c9a96e;width:15px;height:15px">
+            ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:36px;height:44px;object-fit:cover;border-radius:4px;flex-shrink:0">` : `<div style="width:36px;height:44px;background:#1e1e1e;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#5a5248;font-size:.7rem">◈</div>`}
+            <div>
+              <p style="margin:0;font-size:.875rem;color:#f0ece4">${p.name}</p>
+              <p style="margin:0;font-size:.75rem;color:#5a5248">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})} · ${p.category||"—"}</p>
+            </div>
+          </label>`).join("");
+      } catch(e) { list.innerHTML = "<p style='color:#d94f4f;font-size:.85rem'>Failed to load products.</p>"; }
+    };
+
+    window.savePinnedFeatured = async function() {
+      const btn = document.getElementById("save-btn-featured");
+      btn.disabled = true; btn.textContent = "Saving...";
+      try {
+        const checked = [...document.querySelectorAll("#featured-pin-list input[type=checkbox]:checked")].map(c => c.value);
+        await setDoc(SETTINGS_DOC, { pinnedFeatured: checked }, { merge: true });
+        showAdminToast("Pinned products saved!");
+        // Re-render featured grid immediately
+        await renderFeaturedGrid(checked);
+      } catch(e) { showAdminToast("Save failed.", true); }
+      finally { btn.disabled = false; btn.textContent = "Save Pinned"; }
+    };
+
+    async function renderFeaturedGrid(pinnedIds) {
+      const grid = document.getElementById("featured-grid");
+      if (!grid) return;
+      try {
+        let products;
+        if (pinnedIds && pinnedIds.length) {
+          const all = await getProductsAdmin();
+          products  = pinnedIds.map(id => all.find(p => p.id === id)).filter(Boolean);
+        } else {
+          products = await getFeaturedProducts();
+        }
+        if (!products.length) {
+          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet.</p>';
+          return;
+        }
+        grid.innerHTML = products.map(p => `
+          <div class="product-card">
+            <div class="product-img-wrap">
+              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
+              <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
+              <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
+            </div>
+            <div class="product-info">
+              <p class="product-category">${p.category || ""}</p>
+              <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+              <div class="product-price">
+                <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
+                ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
+              </div>
+            </div>
+          </div>`).join("");
+      } catch(e) { console.error(e); }
+    }
+
+    // Pre-populate admin panel fields when opened
+    window.openHeroPanel = async function() {
+      openAdminPanel("hero");
+      try {
+        const snap = await getDoc(SETTINGS_DOC);
+        if (!snap.exists()) return;
+        const s = snap.data();
+        const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+        set("he-eyebrow",  s.hero1Eyebrow);
+        set("he-title",    s.hero1Title);
+        set("he-subtitle", s.hero1Sub);
+      } catch(e) {}
+    };
+    window.openAboutPanel = async function() {
+      openAdminPanel("about");
+      try {
+        const snap = await getDoc(SETTINGS_DOC);
+        if (!snap.exists()) return;
+        const s = snap.data();
+        const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+        set("ab-sub",    s.aboutSub);
+        set("ab-title",  s.aboutTitle);
+        set("ab-body",   s.aboutBody);
+        set("ab-values", s.aboutValues);
+      } catch(e) {}
+    };
+    window.openFooterPanel = async function() {
+      openAdminPanel("footer");
+      try {
+        const snap = await getDoc(SETTINGS_DOC);
+        if (!snap.exists()) return;
+        const s = snap.data();
+        const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+        set("ft-desc", s.footerDesc);
+        set("ft-copy", s.footerCopy);
+      } catch(e) {}
+    };
+
+    // Admin toast
+    function showAdminToast(msg, isError = false) {
+      const t = document.getElementById("admin-toast");
+      t.textContent = msg;
+      t.style.background = isError ? "#d94f4f" : "#4caf76";
+      t.style.opacity = "1";
+      setTimeout(() => t.style.opacity = "0", 2500);
+    }
+
+    // Load pinned featured on page load
+    try {
+      const snap = await getDoc(SETTINGS_DOC);
+      const pinned = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
+      if (pinned.length) {
+        await renderFeaturedGrid(pinned);
+      } else {
+        // fall through to default featured logic below
+        const products = await getFeaturedProducts();
+        const grid = document.getElementById("featured-grid");
+        if (grid) {
+          if (!products.length) {
+            grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet. Add products via the owner dashboard.</p>';
+          } else {
+            grid.innerHTML = products.map(p => `
+              <div class="product-card">
+                <div class="product-img-wrap">
+                  ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
+                  <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
+                  <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
+                </div>
+                <div class="product-info">
+                  <p class="product-category">${p.category || ""}</p>
+                  <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+                  <div class="product-price">
+                    <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
+                    ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
+                  </div>
+                </div>
+              </div>`).join("");
+          }
+        }
+      }
+    } catch(e) {
+      const grid = document.getElementById("featured-grid");
+      if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">Connect Firebase to load products.</p>';
+    }
+
 
     // ── Loader: hide immediately on DOM ready ─────────────
     document.addEventListener("DOMContentLoaded", () => {
@@ -297,37 +549,6 @@
     }
     dots.forEach((d, i) => d.addEventListener("click", () => goTo(i)));
     setInterval(() => goTo(cur + 1), 6000);
-
-    // ── Featured products ─────────────────────────────────
-    try {
-      const products = await getFeaturedProducts();
-      const grid = document.getElementById("featured-grid");
-      if (grid) {
-        if (!products.length) {
-          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet. Add products via the owner dashboard.</p>';
-        } else {
-          grid.innerHTML = products.map(p => `
-            <div class="product-card">
-              <div class="product-img-wrap">
-                ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
-                <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
-                <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
-              </div>
-              <div class="product-info">
-                <p class="product-category">${p.category || ""}</p>
-                <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-                <div class="product-price">
-                  <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
-                  ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
-                </div>
-              </div>
-            </div>`).join("");
-        }
-      }
-    } catch(e) {
-      const grid = document.getElementById("featured-grid");
-      if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">Connect Firebase to load products.</p>';
-    }
 
     // ── Quick add to cart ─────────────────────────────────
     window.quickAdd = (id, name, price, imageUrl) => {
@@ -356,5 +577,152 @@
       }
     });
   </script>
+<!-- ═══════════════════════════════════════════════════════
+     ADMIN HOMEPAGE EDITOR (visible only to owner)
+═══════════════════════════════════════════════════════ -->
+<style>
+  #admin-edit-bar {
+    display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    z-index:9000;background:#161616;border:1px solid #3a332c;border-radius:40px;
+    padding:8px 16px;gap:8px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,.6);
+  }
+  #admin-edit-bar span { font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#5a5248;margin-right:4px; }
+  .admin-edit-btn {
+    padding:7px 14px;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+    border-radius:20px;cursor:pointer;transition:all .2s;border:1px solid #3a332c;
+    background:transparent;color:#a09888;font-family:'DM Sans',sans-serif;
+  }
+  .admin-edit-btn:hover { border-color:#c9a96e;color:#c9a96e; }
+
+  #admin-editor {
+    display:none;position:fixed;top:0;right:0;bottom:0;width:380px;z-index:9100;
+    background:#111;border-left:1px solid #2a2520;flex-direction:column;
+    box-shadow:-8px 0 32px rgba(0,0,0,.5);
+  }
+  .admin-editor-head {
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid #1c1814;flex-shrink:0;
+  }
+  .admin-editor-title { font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;color:#f0ece4;margin:0; }
+  .admin-editor-close {
+    width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+    border:none;background:transparent;color:#a09888;font-size:1rem;cursor:pointer;border-radius:50%;
+  }
+  .admin-editor-close:hover { background:#1e1e1e;color:#f0ece4; }
+  .admin-panel { display:none;flex:1;overflow-y:auto;padding:20px; }
+  .admin-panel.active { display:block; }
+  .admin-panel::-webkit-scrollbar { width:4px; }
+  .admin-panel::-webkit-scrollbar-thumb { background:#3a332c;border-radius:4px; }
+  .admin-panel::-webkit-scrollbar-thumb:hover { background:#c9a96e; }
+  .admin-field-label {
+    display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+    color:#a09888;margin-bottom:6px;
+  }
+  .admin-field-group { margin-bottom:16px; }
+  .admin-input, .admin-textarea {
+    width:100%;padding:10px 12px;background:#1e1e1e;border:1px solid #2a2520;
+    border-radius:4px;color:#f0ece4;font-size:.875rem;font-family:'DM Sans',sans-serif;
+    box-sizing:border-box;transition:border-color .2s;
+  }
+  .admin-input:focus, .admin-textarea:focus { outline:none;border-color:#c9a96e; }
+  .admin-textarea { resize:vertical;min-height:80px; }
+  .admin-save-btn {
+    width:100%;padding:10px;background:#c9a96e;color:#0a0a0a;border:none;border-radius:4px;
+    font-size:.78rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+    cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s;margin-top:4px;
+  }
+  .admin-save-btn:hover { background:#e8c99b; }
+  .admin-save-btn:disabled { opacity:.5;cursor:not-allowed; }
+  .admin-hint { font-size:.72rem;color:#5a5248;margin:4px 0 0;line-height:1.5; }
+  .admin-section-divider { border-top:1px solid #1c1814;margin:16px 0; }
+  #admin-toast {
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:#4caf76;color:#fff;padding:8px 20px;border-radius:20px;
+    font-size:.82rem;font-weight:500;opacity:0;transition:opacity .3s;
+    z-index:9200;pointer-events:none;
+  }
+</style>
+
+<!-- Admin floating toolbar -->
+<div id="admin-edit-bar">
+  <span>Edit</span>
+  <button class="admin-edit-btn" onclick="openHeroPanel()">Hero</button>
+  <button class="admin-edit-btn" onclick="openFeaturedPanel()">Featured</button>
+  <button class="admin-edit-btn" onclick="openAboutPanel()">About</button>
+  <button class="admin-edit-btn" onclick="openFooterPanel()">Footer</button>
+</div>
+
+<!-- Admin side editor -->
+<div id="admin-editor">
+  <div class="admin-editor-head">
+    <h2 class="admin-editor-title" id="admin-editor-title">Edit Section</h2>
+    <button class="admin-editor-close" onclick="closeAdminEditor()">✕</button>
+  </div>
+
+  <!-- HERO panel -->
+  <div class="admin-panel" id="admin-panel-hero">
+    <div class="admin-field-group">
+      <label class="admin-field-label">Eyebrow Text</label>
+      <input type="text" class="admin-input" id="he-eyebrow" placeholder="e.g. New Collection — 2025">
+      <p class="admin-hint">Small label above the main title</p>
+    </div>
+    <div class="admin-field-group">
+      <label class="admin-field-label">Main Title</label>
+      <textarea class="admin-textarea" id="he-title" placeholder="Wear&#10;The Dark." style="min-height:64px"></textarea>
+      <p class="admin-hint">Use a new line to create a line break in the title</p>
+    </div>
+    <div class="admin-field-group">
+      <label class="admin-field-label">Subtitle</label>
+      <textarea class="admin-textarea" id="he-subtitle" placeholder="Luxury streetwear crafted..."></textarea>
+    </div>
+    <button class="admin-save-btn" id="save-btn-hero" onclick="saveHomepageSection('hero')">Save Hero</button>
+  </div>
+
+  <!-- FEATURED panel -->
+  <div class="admin-panel" id="admin-panel-featured">
+    <p style="font-size:.82rem;color:#a09888;line-height:1.6;margin:0 0 16px">Select which products appear in the Featured section. Changes take effect immediately.</p>
+    <div id="featured-pin-list" style="margin-bottom:16px"></div>
+    <button class="admin-save-btn" id="save-btn-featured" onclick="savePinnedFeatured()">Save Pinned</button>
+  </div>
+
+  <!-- ABOUT panel -->
+  <div class="admin-panel" id="admin-panel-about">
+    <div class="admin-field-group">
+      <label class="admin-field-label">Section Subtitle</label>
+      <input type="text" class="admin-input" id="ab-sub" placeholder="Our Philosophy">
+    </div>
+    <div class="admin-field-group">
+      <label class="admin-field-label">Section Title</label>
+      <input type="text" class="admin-input" id="ab-title" placeholder="Craft Over Hype.">
+    </div>
+    <div class="admin-field-group">
+      <label class="admin-field-label">Body Text</label>
+      <textarea class="admin-textarea" id="ab-body" style="min-height:100px" placeholder="Streetwise PH was built on..."></textarea>
+    </div>
+    <div class="admin-field-group">
+      <label class="admin-field-label">Value List</label>
+      <textarea class="admin-textarea" id="ab-values" style="min-height:100px" placeholder="320gsm heavyweight cotton on every tee&#10;Drop-shoulder, oversized silhouettes&#10;Minimal branding, maximum presence&#10;Limited runs — never restocked"></textarea>
+      <p class="admin-hint">One item per line — each becomes a bullet point</p>
+    </div>
+    <button class="admin-save-btn" id="save-btn-about" onclick="saveHomepageSection('about')">Save About</button>
+  </div>
+
+  <!-- FOOTER panel -->
+  <div class="admin-panel" id="admin-panel-footer">
+    <div class="admin-field-group">
+      <label class="admin-field-label">Brand Description</label>
+      <textarea class="admin-textarea" id="ft-desc" placeholder="Luxury streetwear crafted for those who move in silence..."></textarea>
+    </div>
+    <div class="admin-field-group">
+      <label class="admin-field-label">Copyright Text</label>
+      <input type="text" class="admin-input" id="ft-copy" placeholder="© 2026 Streetwise PH. All rights reserved.">
+    </div>
+    <button class="admin-save-btn" id="save-btn-footer" onclick="saveHomepageSection('footer')">Save Footer</button>
+  </div>
+</div>
+
+<!-- Admin toast notification -->
+<div id="admin-toast"></div>
+
 </body>
 </html>
