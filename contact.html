@@ -114,20 +114,22 @@
               <div class="form-group">
                 <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
                   <span>Rating</span>
-                  <span id="rating-display" style="color:var(--accent);font-weight:500;font-size:.875rem">50%</span>
+                  <span id="rating-val" style="font-weight:500;font-size:.875rem;color:#e6a817">50%</span>
                 </label>
                 <input type="range" name="rating" id="rating-slider" min="1" max="100" value="50"
-                  style="width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:6px"
-                  oninput="document.getElementById('rating-display').textContent=this.value+'%';
-                           document.getElementById('rating-bar-preview').style.width=this.value+'%';
-                           const v=+this.value;
-                           const c=v>=70?'#4caf76':v>=40?'#e6a817':'#d94f4f';
-                           document.getElementById('rating-bar-preview').style.background=c;
-                           document.getElementById('rating-display').style.color=c;">
-                <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
-                  <div id="rating-bar-preview" style="height:100%;width:50%;background:#e6a817;border-radius:2px;transition:width .15s,background .15s"></div>
+                  style="width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:8px;display:block"
+                  oninput="
+                    var v=+this.value,
+                        c=v>=70?'#4caf76':v>=40?'#e6a817':'#d94f4f';
+                    document.getElementById('rating-val').textContent=v+'%';
+                    document.getElementById('rating-val').style.color=c;
+                    document.getElementById('rating-fill').style.width=v+'%';
+                    document.getElementById('rating-fill').style.background=c;
+                  ">
+                <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px">
+                  <div id="rating-fill" style="height:100%;width:50%;background:#e6a817;border-radius:3px;transition:width .15s,background .15s"></div>
                 </div>
-                <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted);margin-top:4px">
+                <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted)">
                   <span>1% — Poor</span>
                   <span>50% — Okay</span>
                   <span>100% — Excellent</span>

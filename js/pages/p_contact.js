@@ -17,8 +17,8 @@ async function loadComments() {
     wrap.innerHTML = comments.map(c => {
       const rating = Math.min(100, Math.max(1, c.rating || 50));
       const pct    = rating + "%";
-      const barCol = rating >= 70 ? "#4caf76" : rating >= 40 ? "#e6a817" : "#d94f4f";
-      const label  = rating >= 70 ? "Maganda" : rating >= 40 ? "Okay" : "Mahirap";
+      const col    = rating >= 70 ? "#4caf76" : rating >= 40 ? "#e6a817" : "#d94f4f";
+      const label  = rating >= 70 ? "Excellent" : rating >= 40 ? "Okay" : "Poor";
       const reply  = c.adminReply ? `
         <div style="margin-top:10px;padding:10px 14px;background:var(--bg-elevated);border-left:2px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0">
           <p style="font-size:.7rem;color:var(--accent);font-weight:500;margin:0 0 3px;text-transform:uppercase;letter-spacing:.05em">Owner Reply</p>
@@ -33,9 +33,9 @@ async function loadComments() {
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
           <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
-            <div style="width:${pct};height:100%;background:${barCol};border-radius:2px"></div>
+            <div style="width:${pct};height:100%;background:${col};border-radius:2px"></div>
           </div>
-          <span style="font-size:.75rem;font-weight:500;color:${barCol};min-width:36px;text-align:right">${pct}</span>
+          <span style="font-size:.75rem;font-weight:600;color:${col};min-width:34px;text-align:right">${pct}</span>
           <span style="font-size:.7rem;color:var(--text-muted)">${label}</span>
         </div>
         <p style="font-size:.9rem;color:var(--text-secondary);line-height:1.6;margin:0">${c.content}</p>
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("contact-comment-form")?.addEventListener("submit", async e => {
     e.preventDefault();
     const btn    = e.target.querySelector("button[type=submit]");
-    const rating = parseInt(e.target.rating?.value || "50", 10);
+    const rating = parseInt(document.getElementById("rating-slider")?.value || "50", 10);
     btn.disabled = true;
     try {
       await addComment({
@@ -63,11 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       window.showToast("Message sent!", "success");
       e.target.reset();
-      // Reset slider display
-      const display = document.getElementById("rating-display");
-      const bar     = document.getElementById("rating-bar-preview");
-      if (display) { display.textContent = "50%"; display.style.color = "#e6a817"; }
-      if (bar)     { bar.style.width = "50%"; bar.style.background = "#e6a817"; }
+      // Reset slider UI back to 50%
+      const slider = document.getElementById("rating-slider");
+      const val    = document.getElementById("rating-val");
+      const fill   = document.getElementById("rating-fill");
+      if (slider) slider.value = 50;
+      if (val)    { val.textContent = "50%"; val.style.color = "#e6a817"; }
+      if (fill)   { fill.style.width = "50%"; fill.style.background = "#e6a817"; }
       loadComments();
     } catch(err) {
       window.showToast(err.message || "Failed to send.", "error");
