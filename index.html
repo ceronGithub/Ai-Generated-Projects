@@ -340,15 +340,393 @@
       display: none;
     }
     #webhookHint.visible { display: block; }
+
+    /* HELP BUTTON */
+    .help-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 6px 14px;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .help-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .help-btn .help-icon {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 1px solid currentColor;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      font-weight: 700;
+    }
+
+    /* MODAL OVERLAY */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* MODAL BOX */
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      width: 100%;
+      max-width: 640px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transform: translateY(20px);
+      transition: transform 0.25s ease;
+      overflow: hidden;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 0;
+      flex-shrink: 0;
+    }
+
+    .modal-title {
+      font-family: var(--display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    /* TABS */
+    .modal-tabs {
+      display: flex;
+      gap: 0;
+      padding: 16px 24px 0;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 8px 16px;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* TAB CONTENT */
+    .modal-body {
+      overflow-y: auto;
+      padding: 24px;
+      flex: 1;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* HELP CONTENT STYLES */
+    .help-section {
+      margin-bottom: 28px;
+    }
+
+    .help-section:last-child { margin-bottom: 0; }
+
+    .help-section-title {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .help-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .help-text {
+      font-size: 0.8rem;
+      line-height: 1.8;
+      color: #a0a0b8;
+    }
+
+    .help-text strong { color: var(--text); font-weight: 700; }
+
+    .help-steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .help-steps li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: #a0a0b8;
+    }
+
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.6rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .help-flow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+
+    .flow-node {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 6px 12px;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text);
+    }
+
+    .flow-arrow {
+      color: var(--accent);
+      font-size: 0.7rem;
+    }
+
+    .capability-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .capability-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 14px;
+    }
+
+    .capability-item .cap-icon {
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    .capability-item .cap-title {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .capability-item .cap-desc {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .limit-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: #a0a0b8;
+      line-height: 1.6;
+    }
+    .limit-item:last-child { border-bottom: none; }
+    .limit-dot { color: var(--accent); flex-shrink: 0; margin-top: 4px; }
+    .limit-dot.warn { color: #ffaa00; }
+    .limit-dot.bad { color: var(--error); }
+
+    @media (max-width: 480px) {
+      .capability-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 <div class="container">
 
   <header>
-    <div class="logo">Scrp<span>d</span></div>
-    <div class="tagline">AI web scraper · powered by <em>n8n</em> + <em>netlify</em></div>
+    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px;">
+      <div>
+        <div class="logo">Scrp<span>d</span></div>
+        <div class="tagline">AI web scraper · powered by <em>n8n</em> + <em>netlify</em></div>
+      </div>
+      <button class="help-btn" onclick="openHelp()">
+        <span class="help-icon">?</span> Help
+      </button>
+    </div>
   </header>
+
+  <!-- HELP MODAL -->
+  <div class="modal-overlay" id="helpModal" onclick="closeHelpOnOverlay(event)">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Help & Documentation</div>
+        <button class="modal-close" onclick="closeHelp()">✕</button>
+      </div>
+      <div class="modal-tabs">
+        <button class="tab-btn active" id="tab-btn-how" onclick="switchTab('how')">How This Works</button>
+        <button class="tab-btn" id="tab-btn-expect" onclick="switchTab('expect')">What to Expect</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- TAB 1: HOW THIS WORKS -->
+        <div class="tab-panel active" id="tab-how">
+          <div class="help-section">
+            <div class="help-section-title">Overview</div>
+            <p class="help-text"><strong>Scrpd</strong> is an AI-powered web scraper that takes any URL you provide, fetches the page content, and uses a large language model to generate a clear, concise summary — all in a few seconds.</p>
+          </div>
+          <div class="help-section">
+            <div class="help-section-title">The Pipeline</div>
+            <div class="help-flow">
+              <div class="flow-node">Your Browser</div><div class="flow-arrow">→</div>
+              <div class="flow-node">n8n Webhook</div><div class="flow-arrow">→</div>
+              <div class="flow-node">Fetch URL</div><div class="flow-arrow">→</div>
+              <div class="flow-node">Extract Text</div><div class="flow-arrow">→</div>
+              <div class="flow-node">Groq AI</div><div class="flow-arrow">→</div>
+              <div class="flow-node">Summary</div>
+            </div>
+            <p class="help-text">Every scrape request travels through this 6-step pipeline powered by n8n workflows running on a backend server.</p>
+          </div>
+          <div class="help-section">
+            <div class="help-section-title">Step by Step</div>
+            <ul class="help-steps">
+              <li><span class="step-num">1</span><span><strong>You enter a URL</strong> — paste any publicly accessible web page address and click Scrape.</span></li>
+              <li><span class="step-num">2</span><span><strong>Request sent to n8n</strong> — the app sends your URL to an n8n webhook running on Render.com.</span></li>
+              <li><span class="step-num">3</span><span><strong>Page is fetched</strong> — n8n makes an HTTP GET request and retrieves the raw HTML of the page.</span></li>
+              <li><span class="step-num">4</span><span><strong>Text is extracted</strong> — a Code node strips all HTML tags, scripts, and noise — leaving only readable text (up to 12,000 characters).</span></li>
+              <li><span class="step-num">5</span><span><strong>AI summarizes it</strong> — the cleaned text is sent to <strong>Groq's free API</strong> running <strong>LLaMA 3.3 70B</strong>, which generates a human-readable summary.</span></li>
+              <li><span class="step-num">6</span><span><strong>Result displayed</strong> — the summary, word count, and domain are returned to your browser and shown on screen.</span></li>
+            </ul>
+          </div>
+          <div class="help-section">
+            <div class="help-section-title">Tech Stack</div>
+            <div class="capability-grid">
+              <div class="capability-item"><div class="cap-icon">🌐</div><div class="cap-title">Frontend</div><div class="cap-desc">Plain HTML, CSS & JavaScript — hosted free on Netlify with global CDN.</div></div>
+              <div class="capability-item"><div class="cap-icon">⚙️</div><div class="cap-title">Automation</div><div class="cap-desc">n8n workflow engine handles all scraping logic, hosted on Render.com free tier.</div></div>
+              <div class="capability-item"><div class="cap-icon">🤖</div><div class="cap-title">AI Model</div><div class="cap-desc">Groq API running LLaMA 3.3 70B — one of the fastest free AI inference APIs available.</div></div>
+              <div class="capability-item"><div class="cap-icon">🔗</div><div class="cap-title">Webhook</div><div class="cap-desc">n8n webhook acts as the backend API — receives POST requests and returns JSON summaries.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: WHAT TO EXPECT -->
+        <div class="tab-panel" id="tab-expect">
+          <div class="help-section">
+            <div class="help-section-title">What Works Well ✅</div>
+            <div class="limit-item"><span class="limit-dot">▸</span><span><strong>News articles & blog posts</strong> — Clean text content scrapes and summarizes perfectly.</span></div>
+            <div class="limit-item"><span class="limit-dot">▸</span><span><strong>Documentation pages</strong> — Technical docs, READMEs, and wikis summarize very well.</span></div>
+            <div class="limit-item"><span class="limit-dot">▸</span><span><strong>Product pages</strong> — E-commerce and landing pages with readable text content.</span></div>
+            <div class="limit-item"><span class="limit-dot">▸</span><span><strong>Wikipedia & encyclopedias</strong> — Excellent results due to structured, clean content.</span></div>
+            <div class="limit-item"><span class="limit-dot">▸</span><span><strong>Research & academic pages</strong> — Abstracts and article pages summarize clearly.</span></div>
+          </div>
+          <div class="help-section">
+            <div class="help-section-title">Limitations ⚠️</div>
+            <div class="limit-item"><span class="limit-dot warn">▸</span><span><strong>First request may be slow (30–60s)</strong> — The free Render server spins down after inactivity. First request wakes it up. Subsequent requests are fast.</span></div>
+            <div class="limit-item"><span class="limit-dot warn">▸</span><span><strong>JavaScript-heavy sites</strong> — Single-page apps (React, Vue) that load content dynamically may return little text since n8n fetches raw HTML only.</span></div>
+            <div class="limit-item"><span class="limit-dot warn">▸</span><span><strong>Text limit of 12,000 characters</strong> — Only the first ~12,000 characters of extracted text are sent to the AI. Very long pages are truncated.</span></div>
+            <div class="limit-item"><span class="limit-dot bad">▸</span><span><strong>Login-required pages</strong> — Pages behind authentication (Gmail, Facebook, paywalled articles) cannot be scraped.</span></div>
+            <div class="limit-item"><span class="limit-dot bad">▸</span><span><strong>Bot-blocking sites</strong> — Some sites (Cloudflare-protected, LinkedIn, Twitter/X) actively block automated requests.</span></div>
+            <div class="limit-item"><span class="limit-dot bad">▸</span><span><strong>PDFs & images</strong> — The scraper reads HTML text only. PDFs, image-heavy pages, and videos won't produce meaningful summaries.</span></div>
+          </div>
+          <div class="help-section">
+            <div class="help-section-title">Performance & Costs</div>
+            <p class="help-text" style="margin-bottom:10px;"><strong>This app is 100% free to run</strong> using the current stack:</p>
+            <div class="limit-item"><span class="limit-dot">▸</span><span><strong>Netlify</strong> — Free hosting with 100GB bandwidth/month.</span></div>
+            <div class="limit-item"><span class="limit-dot">▸</span><span><strong>Render.com</strong> — Free tier for n8n (750 hrs/month, spins down after 15 min inactivity).</span></div>
+            <div class="limit-item"><span class="limit-dot">▸</span><span><strong>Groq API</strong> — Free tier with up to 30 requests/min on LLaMA 3.3 70B.</span></div>
+          </div>
+          <div class="help-section">
+            <div class="help-section-title">Tips for Best Results</div>
+            <ul class="help-steps">
+              <li><span class="step-num">💡</span><span>Use <strong>direct article URLs</strong> — e.g. <code style="color:var(--accent);font-size:0.75rem">site.com/article/title</code> not just <code style="color:var(--accent);font-size:0.75rem">site.com</code></span></li>
+              <li><span class="step-num">💡</span><span>If a page fails, <strong>wait 5 seconds and retry</strong> — the Render server may have been waking up from sleep.</span></li>
+              <li><span class="step-num">💡</span><span>For paywalled content, try the <strong>Google cached version</strong> of the article instead.</span></li>
+              <li><span class="step-num">💡</span><span>The AI summary covers <strong>main topic, key points, and notable details</strong> — it won't reproduce the full article.</span></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
   <div class="card">
     <div class="field-label">Target URL</div>
@@ -381,13 +759,29 @@
     </div>
   </div>
 
-  <footer>
-    Built with 
-    <span>n8n</span> · Deployed on 
-    <span>Netlify · Owner : Daniella Calsena · Created by : Ceron Matthew Calsena</span>
-  </footer>
+  <footer>Built with <span>n8n</span> · Deployed on <span>Netlify · Owner : Daniella Calsena · Created by : Ceron Matthew Calsena</span></footer>
 
 </div>
 <script src="app.js"></script>
-</body>
+<script>
+  function openHelp() {
+    document.getElementById('helpModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeHelp() {
+    document.getElementById('helpModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function closeHelpOnOverlay(e) {
+    if (e.target === document.getElementById('helpModal')) closeHelp();
+  }
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.getElementById('tab-btn-' + name).classList.add('active');
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHelp(); });
+</script>
+
 </html>
