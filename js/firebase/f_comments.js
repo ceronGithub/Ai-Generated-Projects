@@ -3,7 +3,7 @@
 // ============================================================
 import { db, auth } from './f_config.js';
 import {
-  collection, addDoc, getDocs, deleteDoc,
+  collection, addDoc, getDocs, deleteDoc, updateDoc,
   doc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -17,7 +17,7 @@ export async function getComments(productId = null) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-export async function addComment({ content, guestName, productId = null, rating = 5 }) {
+export async function addComment({ content, guestName, productId = null, rating = 50 }) {
   const user = auth.currentUser;
   await addDoc(collection(db, COMMENTS), {
     content,
@@ -32,4 +32,11 @@ export async function addComment({ content, guestName, productId = null, rating 
 
 export async function deleteComment(id) {
   await deleteDoc(doc(db, COMMENTS, id));
+}
+
+export async function replyToComment(id, replyText) {
+  await updateDoc(doc(db, COMMENTS, id), {
+    adminReply: replyText,
+    repliedAt:  new Date()
+  });
 }

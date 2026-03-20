@@ -111,6 +111,28 @@
             <form id="contact-comment-form">
               <div class="form-group"><label class="form-label">Your Name</label><input type="text" name="guest_name" class="form-input" placeholder="How should we call you?" required></div>
               <div class="form-group"><label class="form-label">Message</label><textarea name="content" class="form-input" placeholder="Write your message here..." required style="min-height:100px"></textarea></div>
+              <div class="form-group">
+                <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
+                  <span>Rating</span>
+                  <span id="rating-display" style="color:var(--accent);font-weight:500;font-size:.875rem">50%</span>
+                </label>
+                <input type="range" name="rating" id="rating-slider" min="1" max="100" value="50"
+                  style="width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:6px"
+                  oninput="document.getElementById('rating-display').textContent=this.value+'%';
+                           document.getElementById('rating-bar-preview').style.width=this.value+'%';
+                           const v=+this.value;
+                           const c=v>=70?'#4caf76':v>=40?'#e6a817':'#d94f4f';
+                           document.getElementById('rating-bar-preview').style.background=c;
+                           document.getElementById('rating-display').style.color=c;">
+                <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+                  <div id="rating-bar-preview" style="height:100%;width:50%;background:#e6a817;border-radius:2px;transition:width .15s,background .15s"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted);margin-top:4px">
+                  <span>1% — Poor</span>
+                  <span>50% — Okay</span>
+                  <span>100% — Excellent</span>
+                </div>
+              </div>
               <button type="submit" class="btn btn-primary">Send Message</button>
             </form>
           </div>
