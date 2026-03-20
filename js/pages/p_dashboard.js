@@ -4,7 +4,7 @@
 import { onAuthChange, logout } from '../firebase/f_auth.js';
 import { getProducts, addProduct, updateProduct, deleteProduct, getCategories } from '../firebase/f_products.js';
 import { getOrders, getRecentOrders, updateOrderStatus, getOrder } from '../firebase/f_orders.js';
-import { getInventory, getLowStock, setStock } from '../firebase/inventory.js';
+import { getInventory, getLowStock, setStock } from '../firebase/f_inventory.js';
 import { getSalesOverview, getSalesByDate, getSalesByProduct, getSalesByCategory } from '../firebase/f_sales.js';
 import { getComments, deleteComment } from '../firebase/f_comments.js';
 import { exportPDF, exportExcel, exportWord, exportPPT } from '../utils/export.js';

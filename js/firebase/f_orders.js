@@ -11,10 +11,12 @@ import { decrementStock } from './f_inventory.js';
 
 const ORDERS = 'orders';
 
+
+
 // ── Place order ────────────────────────────────────────────
-export async function placeOrder({ cartItems, customerInfo, userId = null }) {
+export async function placeOrder({ cartItems, customerInfo, userId = null, totals = null }) {
   const subtotal    = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const shippingFee = 150;
+  const shippingFee = totals?.shipping ?? (subtotal >= 2000 ? 0 : 150);
   const total       = subtotal + shippingFee;
   const orderNumber = 'SWP-' + Date.now().toString(36).toUpperCase();
 

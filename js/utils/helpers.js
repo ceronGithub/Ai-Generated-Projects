@@ -41,3 +41,32 @@ export function hideLoader() {
     setTimeout(() => loader.remove(), 500);
   }
 }
+
+export function openModal(id) {
+  document.getElementById(id)?.classList.remove("hidden");
+}
+
+export function closeModal(id) {
+  document.getElementById(id)?.classList.add("hidden");
+}
+
+export function getFirstDayOfMonth() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split("T")[0];
+}
+
+export function getTodayDate() {
+  return new Date().toISOString().split("T")[0];
+}
+
+export function statusBadge(status) {
+  const map = {
+    pending:    "warning",
+    confirmed:  "info",
+    processing: "info",
+    shipped:    "info",
+    delivered:  "success",
+    cancelled:  "danger"
+  };
+  return map[status] || "muted";
+}
