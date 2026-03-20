@@ -63,7 +63,7 @@ async function loadRecentOrdersTable() {
   tbody.innerHTML = orders.map(o => `
     <tr>
       <td><span style="font-family:var(--font-display)">${o.orderNumber}</span></td>
-      <td>${o.customerInfo?.name || 'Guest'}</td>
+      <td>${esc(o.customerInfo?.name || 'Guest')}</td>
       <td>${formatPrice(o.total)}</td>
       <td><span class="badge badge-${statusBadge(o.orderStatus)}">${o.orderStatus}</span></td>
       <td>${formatDate(o.createdAt)}</td>
@@ -148,7 +148,7 @@ async function loadProductsTable() {
   if (!tbody) return;
   tbody.innerHTML = products.map(p => `
     <tr>
-      <td><div style="display:flex;align-items:center;gap:10px">${p.imageUrl?`<img src="${p.imageUrl}" style="width:40px;height:52px;object-fit:cover;border-radius:4px">`:''}<span>${p.name}</span></div></td>
+      <td><div style="display:flex;align-items:center;gap:10px">${p.imageUrl?`<img src="${p.imageUrl}" style="width:40px;height:52px;object-fit:cover;border-radius:4px">`:''}<span>${esc(p.name)}</span></div></td>
       <td>${p.categoryName||'—'}</td>
       <td>${formatPrice(p.price)}</td>
       <td><span class="badge badge-${p.isActive?'success':'muted'}">${p.isActive?'Active':'Hidden'}</span></td>
@@ -282,8 +282,8 @@ async function loadCommentsAdmin() {
   wrap.innerHTML = comments.map(c => `
     <div style="padding:16px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:start">
       <div>
-        <p style="font-weight:500;font-size:.875rem;margin-bottom:4px">${c.userName||c.guestName||'Guest'} <span style="color:var(--accent);margin-left:8px">${'★'.repeat(c.rating||5)}</span></p>
-        <p style="font-size:.875rem;color:var(--text-secondary)">${c.content}</p>
+        <p style="font-weight:500;font-size:.875rem;margin-bottom:4px">${esc(c.userName||c.guestName||'Guest')} <span style="color:var(--accent);margin-left:8px">${'★'.repeat(c.rating||5)}</span></p>
+        <p style="font-size:.875rem;color:var(--text-secondary)">${esc(c.content)}</p>
         <p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">${formatDate(c.createdAt)}</p>
       </div>
       <button class="btn btn-sm btn-danger" onclick="deleteCommentAdmin('${c.id}')">Delete</button>
