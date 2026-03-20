@@ -530,43 +530,47 @@
       setTimeout(() => t.style.opacity = "0", 2500);
     }
 
-    // Load pinned featured on page load
-    try {
-      const snap = await getDoc(SETTINGS_DOC);
-      const pinned = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
-      if (pinned.length) {
-        await renderFeaturedGrid(pinned);
-      } else {
-        // fall through to default featured logic below
-        const products = await getFeaturedProducts();
-        const grid = document.getElementById("featured-grid");
-        if (grid) {
-          if (!products.length) {
-            grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet. Add products via the owner dashboard.</p>';
-          } else {
-            grid.innerHTML = products.map(p => `
-              <div class="product-card">
-                <div class="product-img-wrap">
-                  ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
-                  <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
-                  <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
-                </div>
-                <div class="product-info">
-                  <p class="product-category">${p.category || ""}</p>
-                  <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-                  <div class="product-price">
-                    <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
-                    ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
-                  </div>
-                </div>
-              </div>`).join("");
-          }
-        }
-      }
-    } catch(e) {
+    // ── Featured products initial load ───────────────────
+    async function loadFeaturedGrid() {
       const grid = document.getElementById("featured-grid");
-      if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">Connect Firebase to load products.</p>';
+      if (!grid) return;
+      try {
+        let products = [];
+        try {
+          const snap   = await getDoc(SETTINGS_DOC);
+          const pinned = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
+          if (pinned.length) {
+            const all = await getProductsAdmin();
+            products  = pinned.map(id => all.find(p => p.id === id)).filter(Boolean);
+          }
+        } catch(e) { /* settings not available, use isFeatured flag */ }
+        if (!products.length) products = await getFeaturedProducts();
+        if (!products.length) {
+          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet. Add products via the owner dashboard.</p>';
+          return;
+        }
+        grid.innerHTML = products.map(p => `
+          <div class="product-card">
+            <div class="product-img-wrap">
+              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
+              <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
+              <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
+            </div>
+            <div class="product-info">
+              <p class="product-category">${p.category || ""}</p>
+              <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+              <div class="product-price">
+                <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
+                ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
+              </div>
+            </div>
+          </div>`).join("");
+      } catch(e) {
+        console.error("loadFeaturedGrid", e);
+        grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet.</p>';
+      }
     }
+    loadFeaturedGrid();
 
 
     // ── Loader: hide immediately on DOM ready ─────────────

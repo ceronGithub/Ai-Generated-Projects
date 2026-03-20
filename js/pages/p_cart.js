@@ -25,8 +25,15 @@ function renderCart() {
   }
   sumWrap?.classList.remove("hidden");
 
-  wrap.innerHTML = items.map(item => `
-    <div class="cart-item">
+  // Item count label
+  const totalQty = items.reduce((s, i) => s + i.quantity, 0);
+  wrap.innerHTML = `<p style="font-size:.8125rem;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px">${totalQty} item${totalQty !== 1 ? "s" : ""} in your cart</p>` +
+  items.map(item => `
+    <div class="cart-item" style="position:relative">
+      <button onclick="remItem('${item.cartId}')" title="Remove item"
+        style="position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-muted);font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .2s;z-index:1"
+        onmouseover="this.style.background='var(--danger)';this.style.color='#fff';this.style.borderColor='var(--danger)'"
+        onmouseout="this.style.background='var(--bg-elevated)';this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">✕</button>
       <div class="cart-item-img">
         ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.name}">` : '<div style="width:100%;height:100%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-muted)">◈</div>'}
       </div>
@@ -41,11 +48,15 @@ function renderCart() {
           </div>
           <span class="cart-item-price">₱${(item.price * item.quantity).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
         </div>
-        <button class="cart-item-remove" onclick="remItem('${item.cartId}')">Remove</button>
       </div>
     </div>`).join("");
 
-  const ss = document.getElementById("summary-subtotal");
+  // Update page header count
+  const countEl = document.getElementById("cart-item-count");
+  if (countEl) {
+    const totalQty = items.reduce((s, i) => s + i.quantity, 0);
+    countEl.textContent = totalQty ? `(${totalQty} item${totalQty !== 1 ? "s" : ""})` : "";
+  }
   const sh = document.getElementById("summary-shipping");
   const st = document.getElementById("summary-total");
   const ct = document.getElementById("checkout-total");
