@@ -1,0 +1,7 @@
+openAI API key - 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
+
+gemini key -
+AIzaSyDt_KlRzrPmwmH9LZyK3SFzNLFGbLolxYk
+
+groq key - 
+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
