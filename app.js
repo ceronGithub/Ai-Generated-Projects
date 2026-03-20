@@ -4,7 +4,7 @@
 //  See SETUP.md for instructions on how to get this URL.
 // ============================================================
 
-const N8N_WEBHOOK_URL = "https://matthewceron.app.n8n.cloud/webhook/scrape";
+const N8N_WEBHOOK_URL = "https://n8n-3zpf.onrender.com/webhook-test/scrape";
 
 // ── DOM refs ─────────────────────────────────────────────────
 const urlInput    = document.getElementById("urlInput");
