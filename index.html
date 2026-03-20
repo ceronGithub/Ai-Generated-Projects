@@ -271,17 +271,12 @@
   </div>
 
   <script type="module">
-    import { getFeaturedProducts } from "./js/firebase/f_products.js";
+    import { getFeaturedProducts, getProductsAdmin } from "./js/firebase/f_products.js";
     import { addToCart }           from "./js/firebase/f_cart.js";
-    import { loginUser } from "./js/firebase/f_auth.js";
-    import "./js/main.js";
-    // onAuthChange is handled by main.js — navbar stays in sync automatically
-
-    // ── Admin homepage editor ─────────────────────────────
-    import { onAuthChange } from "./js/firebase/f_auth.js";
+    import { loginUser, onAuthChange } from "./js/firebase/f_auth.js";
     import { db } from "./js/firebase/f_config.js";
     import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getProductsAdmin } from "./js/firebase/f_products.js";
+    import "./js/main.js";
 
     const SETTINGS_DOC = doc(db, "settings", "homepage");
 
@@ -292,10 +287,17 @@
         if (!snap.exists()) return;
         const s = snap.data();
 
-        // Hero slide 1
-        if (s.hero1Eyebrow) document.querySelector(".hero-slide:nth-child(1) .hero-eyebrow").textContent = s.hero1Eyebrow;
-        if (s.hero1Title)   document.querySelector(".hero-slide:nth-child(1) .hero-title").innerHTML    = s.hero1Title.replace(/\n/g,"<br>");
-        if (s.hero1Sub)     document.querySelector(".hero-slide:nth-child(1) .hero-subtitle").textContent = s.hero1Sub;
+        // Hero slides
+        const slides = document.querySelectorAll(".hero-slide");
+        const applySlide = (slide, eyebrow, title, sub) => {
+          if (!slide) return;
+          if (eyebrow) slide.querySelector(".hero-eyebrow").textContent = eyebrow;
+          if (title)   slide.querySelector(".hero-title").innerHTML     = title.replace(/\n/g,"<br>");
+          if (sub)     slide.querySelector(".hero-subtitle").textContent = sub;
+        };
+        applySlide(slides[0], s.hero1Eyebrow, s.hero1Title, s.hero1Sub);
+        applySlide(slides[1], s.hero2Eyebrow, s.hero2Title, s.hero2Sub);
+        applySlide(slides[2], s.hero3Eyebrow, s.hero3Title, s.hero3Sub);
 
         // About section
         if (s.aboutSub)     document.querySelector(".about-section .section-subtitle").textContent = s.aboutSub;
@@ -353,6 +355,12 @@
             hero1Eyebrow: get("he-eyebrow"),
             hero1Title:   get("he-title"),
             hero1Sub:     get("he-subtitle"),
+            hero2Eyebrow: get("he2-eyebrow"),
+            hero2Title:   get("he2-title"),
+            hero2Sub:     get("he2-subtitle"),
+            hero3Eyebrow: get("he3-eyebrow"),
+            hero3Title:   get("he3-title"),
+            hero3Sub:     get("he3-subtitle"),
           };
         } else if (section === "about") {
           data = {
@@ -382,19 +390,32 @@
       const list = document.getElementById("featured-pin-list");
       list.innerHTML = "<p style='color:#5a5248;font-size:.85rem'>Loading products...</p>";
       try {
-        const snap = await getDoc(SETTINGS_DOC);
-        const pinned = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
-        const products = await getProductsAdmin();
+        const snap    = await getDoc(SETTINGS_DOC);
+        const pinned  = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
+        // Use getFeaturedProducts first, fall back to getProductsAdmin
+        let products  = [];
+        try {
+          products = await getProductsAdmin();
+        } catch(e) {
+          products = await getFeaturedProducts();
+        }
+        if (!products.length) {
+          list.innerHTML = "<p style='color:#5a5248;font-size:.85rem'>No products found. Add products from the dashboard first.</p>";
+          return;
+        }
         list.innerHTML = products.map(p => `
           <label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1c1814;cursor:pointer">
             <input type="checkbox" value="${p.id}" ${pinned.includes(p.id) ? "checked" : ""} style="accent-color:#c9a96e;width:15px;height:15px">
             ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:36px;height:44px;object-fit:cover;border-radius:4px;flex-shrink:0">` : `<div style="width:36px;height:44px;background:#1e1e1e;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#5a5248;font-size:.7rem">◈</div>`}
             <div>
               <p style="margin:0;font-size:.875rem;color:#f0ece4">${p.name}</p>
-              <p style="margin:0;font-size:.75rem;color:#5a5248">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})} · ${p.category||"—"}</p>
+              <p style="margin:0;font-size:.75rem;color:#5a5248">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})} · ${p.category||"—"} ${p.isActive===false ? '· <span style="color:#d94f4f">Hidden</span>' : ''}</p>
             </div>
           </label>`).join("");
-      } catch(e) { list.innerHTML = "<p style='color:#d94f4f;font-size:.85rem'>Failed to load products.</p>"; }
+      } catch(e) {
+        console.error("openFeaturedPanel", e);
+        list.innerHTML = `<p style='color:#d94f4f;font-size:.85rem'>Failed to load products: ${e.message}</p>`;
+      }
     };
 
     window.savePinnedFeatured = async function() {
@@ -449,13 +470,31 @@
       openAdminPanel("hero");
       try {
         const snap = await getDoc(SETTINGS_DOC);
-        if (!snap.exists()) return;
-        const s = snap.data();
-        const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-        set("he-eyebrow",  s.hero1Eyebrow);
-        set("he-title",    s.hero1Title);
-        set("he-subtitle", s.hero1Sub);
-      } catch(e) {}
+        const s    = snap.exists() ? snap.data() : {};
+        const slides = document.querySelectorAll(".hero-slide");
+        // Pre-fill each slide from saved settings, falling back to live HTML
+        const fill = (inputId, savedVal, liveEl) => {
+          const el = document.getElementById(inputId);
+          if (!el) return;
+          if (savedVal) { el.value = savedVal; return; }
+          if (liveEl)   { el.value = liveEl.innerHTML.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "").trim(); }
+        };
+        fill("he-eyebrow",  s.hero1Eyebrow, slides[0]?.querySelector(".hero-eyebrow"));
+        fill("he-title",    s.hero1Title,   slides[0]?.querySelector(".hero-title"));
+        fill("he-subtitle", s.hero1Sub,     slides[0]?.querySelector(".hero-subtitle"));
+        fill("he2-eyebrow", s.hero2Eyebrow, slides[1]?.querySelector(".hero-eyebrow"));
+        fill("he2-title",   s.hero2Title,   slides[1]?.querySelector(".hero-title"));
+        fill("he2-subtitle",s.hero2Sub,     slides[1]?.querySelector(".hero-subtitle"));
+        fill("he3-eyebrow", s.hero3Eyebrow, slides[2]?.querySelector(".hero-eyebrow"));
+        fill("he3-title",   s.hero3Title,   slides[2]?.querySelector(".hero-title"));
+        fill("he3-subtitle",s.hero3Sub,     slides[2]?.querySelector(".hero-subtitle"));
+      } catch(e) { console.error("openHeroPanel", e); }
+    };
+    window.switchHeroTab = function(n) {
+      [1,2,3].forEach(i => {
+        document.getElementById("hero-tab-btn-"+i).classList.toggle("hero-tab-active", i===n);
+        document.getElementById("hero-tab-"+i).style.display = i===n ? "block" : "none";
+      });
     };
     window.openAboutPanel = async function() {
       openAdminPanel("about");
@@ -661,21 +700,36 @@
 
   <!-- HERO panel -->
   <div class="admin-panel" id="admin-panel-hero">
-    <div class="admin-field-group">
-      <label class="admin-field-label">Eyebrow Text</label>
-      <input type="text" class="admin-input" id="he-eyebrow" placeholder="e.g. New Collection — 2025">
-      <p class="admin-hint">Small label above the main title</p>
+    <style>
+      .hero-tab-btn { padding:6px 14px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;border:1px solid #2a2520;background:transparent;color:#5a5248;cursor:pointer;border-radius:3px;font-family:'DM Sans',sans-serif;transition:all .2s; }
+      .hero-tab-btn:hover { border-color:#c9a96e;color:#c9a96e; }
+      .hero-tab-active { background:#c9a96e!important;color:#0a0a0a!important;border-color:#c9a96e!important; }
+    </style>
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="hero-tab-btn hero-tab-active" id="hero-tab-btn-1" onclick="switchHeroTab(1)">Slide 1</button>
+      <button class="hero-tab-btn" id="hero-tab-btn-2" onclick="switchHeroTab(2)">Slide 2</button>
+      <button class="hero-tab-btn" id="hero-tab-btn-3" onclick="switchHeroTab(3)">Slide 3</button>
     </div>
-    <div class="admin-field-group">
-      <label class="admin-field-label">Main Title</label>
-      <textarea class="admin-textarea" id="he-title" placeholder="Wear&#10;The Dark." style="min-height:64px"></textarea>
-      <p class="admin-hint">Use a new line to create a line break in the title</p>
+
+    <div id="hero-tab-1">
+      <div class="admin-field-group"><label class="admin-field-label">Eyebrow</label><input type="text" class="admin-input" id="he-eyebrow" placeholder="e.g. New Collection — 2025"></div>
+      <div class="admin-field-group"><label class="admin-field-label">Title <span style="color:#5a5248;font-size:.68rem">new line = line break</span></label><textarea class="admin-textarea" id="he-title" style="min-height:64px"></textarea></div>
+      <div class="admin-field-group"><label class="admin-field-label">Subtitle</label><textarea class="admin-textarea" id="he-subtitle"></textarea></div>
     </div>
-    <div class="admin-field-group">
-      <label class="admin-field-label">Subtitle</label>
-      <textarea class="admin-textarea" id="he-subtitle" placeholder="Luxury streetwear crafted..."></textarea>
+
+    <div id="hero-tab-2" style="display:none">
+      <div class="admin-field-group"><label class="admin-field-label">Eyebrow</label><input type="text" class="admin-input" id="he2-eyebrow" placeholder="e.g. Signature Series"></div>
+      <div class="admin-field-group"><label class="admin-field-label">Title</label><textarea class="admin-textarea" id="he2-title" style="min-height:64px"></textarea></div>
+      <div class="admin-field-group"><label class="admin-field-label">Subtitle</label><textarea class="admin-textarea" id="he2-subtitle"></textarea></div>
     </div>
-    <button class="admin-save-btn" id="save-btn-hero" onclick="saveHomepageSection('hero')">Save Hero</button>
+
+    <div id="hero-tab-3" style="display:none">
+      <div class="admin-field-group"><label class="admin-field-label">Eyebrow</label><input type="text" class="admin-input" id="he3-eyebrow" placeholder="e.g. Limited Drop"></div>
+      <div class="admin-field-group"><label class="admin-field-label">Title</label><textarea class="admin-textarea" id="he3-title" style="min-height:64px"></textarea></div>
+      <div class="admin-field-group"><label class="admin-field-label">Subtitle</label><textarea class="admin-textarea" id="he3-subtitle"></textarea></div>
+    </div>
+
+    <button class="admin-save-btn" id="save-btn-hero" onclick="saveHomepageSection('hero')" style="margin-top:8px">Save All Slides</button>
   </div>
 
   <!-- FEATURED panel -->
