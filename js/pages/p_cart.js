@@ -65,7 +65,7 @@ function renderCart() {
   const st = document.getElementById("summary-total");
   const ct = document.getElementById("checkout-total");
   if (ss) ss.textContent = window.formatPrice(totals.subtotal);
-  if (sh) sh.textContent = totals.shipping ? window.formatPrice(totals.shipping) : "Free";
+  if (sh) sh.textContent = "Depends on Courier";
   if (st) st.textContent = window.formatPrice(totals.total);
   if (ct) ct.textContent = window.formatPrice(totals.total);
 

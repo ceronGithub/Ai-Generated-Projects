@@ -14,7 +14,7 @@ const ORDERS = 'orders';
 // ── Place order ────────────────────────────────────────────
 export async function placeOrder({ cartItems, customerInfo, userId = null, totals = null }) {
   const subtotal    = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const shippingFee = totals?.shipping ?? (subtotal >= 2000 ? 0 : 150);
+  const shippingFee = 0; // Depends on Courier
   const total       = subtotal + shippingFee;
   const orderNumber = 'SWP-' + Date.now().toString(36).toUpperCase();
 
@@ -28,6 +28,7 @@ export async function placeOrder({ cartItems, customerInfo, userId = null, total
     items:           cartItems,
     subtotal,
     shippingFee,
+    shippingLabel:   'Depends on Courier',
     total,
     paymentMethod:   'cash_on_delivery',
     paymentStatus:   'pending',

@@ -1197,7 +1197,7 @@ window.createInvoice = function() {
     doc.text('₱'+parseFloat(o.subtotal||0).toLocaleString('en-PH',{minimumFractionDigits:2}), W-14, y, { align:'right' });
     y += 6;
     doc.text('Shipping:', 140, y);
-    doc.text('₱'+parseFloat(o.shippingFee||0).toLocaleString('en-PH',{minimumFractionDigits:2}), W-14, y, { align:'right' });
+    doc.text(o.shippingFee ? '₱'+parseFloat(o.shippingFee).toLocaleString('en-PH',{minimumFractionDigits:2}) : 'Depends on Courier', W-14, y, { align:'right' });
     y += 6;
     doc.setDrawColor(200,200,200);
     doc.line(130, y, W-14, y);

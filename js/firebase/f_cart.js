@@ -59,7 +59,7 @@ export function getCartSubtotal() {
 
 export function getCartTotals() {
   const subtotal = getCartSubtotal();
-  const shipping = subtotal >= 2000 ? 0 : 150;
+  const shipping = 0; // Depends on Courier — collected at delivery
   return { subtotal, shipping, total: subtotal + shipping };
 }
 
