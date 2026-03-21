@@ -11,8 +11,6 @@ import { decrementStock } from './f_inventory.js';
 
 const ORDERS = 'orders';
 
-
-
 // ── Place order ────────────────────────────────────────────
 export async function placeOrder({ cartItems, customerInfo, userId = null, totals = null }) {
   const subtotal    = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
@@ -24,7 +22,6 @@ export async function placeOrder({ cartItems, customerInfo, userId = null, total
     orderNumber,
     userId,
     customerInfo,
-    // Flattened for easy dashboard display
     guestName:       customerInfo?.name || customerInfo?.fullName || '',
     guestPhone:      customerInfo?.phone || '',
     shippingAddress: customerInfo?.address || '',
@@ -39,9 +36,12 @@ export async function placeOrder({ cartItems, customerInfo, userId = null, total
     updatedAt:       new Date()
   });
 
-  // Decrement stock for each item
+  // Decrement stock — never blocks checkout even if it fails
   for (const item of cartItems) {
-    await decrementStock(item.productId, item.size, item.color, item.quantity);
+    const pid = item.productId || item.id;
+    if (pid) {
+      await decrementStock(pid, item.size || '', item.color || '', item.quantity);
+    }
   }
 
   clearCart();
@@ -60,7 +60,6 @@ export async function getOrders(statusFilter = '') {
 
 // ── Get recent orders ──────────────────────────────────────
 export async function getRecentOrders(count = 10) {
-  // No orderBy — fetch all, sort client-side, slice
   const snap = await getDocs(collection(db, ORDERS));
   return snap.docs
     .map(d => ({ id: d.id, ...d.data() }))
@@ -79,5 +78,4 @@ export async function updateOrderStatus(id, status) {
   await updateDoc(doc(db, ORDERS, id), { orderStatus: status, updatedAt: new Date() });
 }
 
-// Aliases for compatibility
 export const getAllOrders = getOrders;

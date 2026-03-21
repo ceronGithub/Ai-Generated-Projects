@@ -453,6 +453,8 @@
      MAIN SCRIPT
 ════════════════════════════════════════════════════════════ -->
 <script type="module">
+import { db } from './js/firebase/f_config.js';
+import { collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { loginUser, logoutUser, onAuthChange }                               from './js/firebase/f_auth.js';
 import { getProductsAdmin, addProduct, updateProduct, deleteProduct }        from './js/firebase/f_products.js';
 import { getAllOrders, getOrder, updateOrderStatus }                          from './js/firebase/f_orders.js';
@@ -545,6 +547,15 @@ onAuthChange(state => {
 
   loadOverview();
   loadRecentOrders();
+
+  // Real-time listener: auto-refresh when any guest places an order
+  if (!window._ordersListener) {
+    window._ordersListener = onSnapshot(collection(db, 'orders'), () => {
+      loadOverview();
+      if ($id('tab-overview')?.classList.contains('active')) loadRecentOrders();
+      if ($id('tab-orders')?.classList.contains('active'))   loadOrders();
+    }, err => console.warn('orders listener:', err.message));
+  }
 });
 
 /* ── Login ────────────────────────────────────────────────── */

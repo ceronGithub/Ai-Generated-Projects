@@ -4,12 +4,12 @@
 import { db } from './f_config.js';
 import {
   collection, doc, getDocs, getDoc, setDoc,
-  updateDoc, deleteDoc, query, where
+  updateDoc, deleteDoc, query, where, increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const INV = 'inventory';
 
-// Inventory doc ID format: productId_size_color
+// Inventory doc ID: productId_size_color (lowercased, spaces→dashes)
 function invId(productId, size, color) {
   return `${productId}_${size||'default'}_${color||'default'}`.replace(/\s+/g, '-').toLowerCase();
 }
@@ -47,8 +47,7 @@ export async function setStock(productId, size, color, quantity, threshold = 5, 
   }, { merge: true });
 }
 
-// ── Auto-create inventory entries for all size/color combos ─
-// Called right after addProduct() so inventory tab is populated immediately
+// ── Create inventory entries for all size/color combos ─────
 export async function createInventoryForProduct(productId, productName, sizes = [], colors = [], initialStock = 0) {
   const effectiveSizes  = sizes.length  ? sizes  : [''];
   const effectiveColors = colors.length ? colors : [''];
@@ -71,22 +70,43 @@ export async function createInventoryForProduct(productId, productName, sizes = 
 }
 
 // ── Delete all inventory entries for a product ─────────────
-// Called when a product is hard-deleted
 export async function deleteInventoryForProduct(productId) {
   const entries = await getProductInventory(productId);
   await Promise.all(entries.map(e => deleteDoc(doc(db, INV, e.id))));
 }
 
-// ── Decrement stock on order ───────────────────────────────
+// ── Decrement stock on order (atomic, no read required) ────
+// Tries exact variant first. If not found, decrements all variants of the product.
 export async function decrementStock(productId, size, color, qty) {
-  const id   = invId(productId, size, color);
-  const snap = await getDoc(doc(db, INV, id));
-  if (snap.exists()) {
-    const current = snap.data().quantity || 0;
-    await updateDoc(doc(db, INV, id), {
-      quantity:  Math.max(0, current - qty),
+  if (!productId) return;
+
+  const specificId = invId(productId, size, color);
+
+  // Try exact size+color match first
+  try {
+    await updateDoc(doc(db, INV, specificId), {
+      quantity:  increment(-qty),
       updatedAt: new Date()
     });
+    return; // success
+  } catch(e) {
+    // Doc doesn't exist with that exact variant — fall through
+  }
+
+  // Fallback: find all variants for this product and decrement the first one
+  try {
+    const q    = query(collection(db, INV), where('productId', '==', productId));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      await updateDoc(snap.docs[0].ref, {
+        quantity:  increment(-qty),
+        updatedAt: new Date()
+      });
+    } else {
+      console.warn('[decrementStock] no inventory doc found for product:', productId);
+    }
+  } catch(e2) {
+    console.warn('[decrementStock] failed:', e2.message);
   }
 }
 

@@ -25,10 +25,16 @@ function renderCart() {
   }
   sumWrap?.classList.remove("hidden");
 
-  // Item count label
+  // Item count
   const totalQty = items.reduce((s, i) => s + i.quantity, 0);
-  wrap.innerHTML = `<p style="font-size:.8125rem;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px">${totalQty} item${totalQty !== 1 ? "s" : ""} in your cart</p>` +
-  items.map(item => `
+
+  // Update page header count
+  const countEl = document.getElementById("cart-item-count");
+  if (countEl) countEl.textContent = totalQty ? `(${totalQty} item${totalQty !== 1 ? "s" : ""})` : "";
+
+  wrap.innerHTML =
+    `<p style="font-size:.8125rem;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px">${totalQty} item${totalQty !== 1 ? "s" : ""} in your cart</p>` +
+    items.map(item => `
     <div class="cart-item" style="position:relative">
       <button onclick="remItem('${item.cartId}')" title="Remove item"
         style="position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-muted);font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .2s;z-index:1"
@@ -51,12 +57,8 @@ function renderCart() {
       </div>
     </div>`).join("");
 
-  // Update page header count
-  const countEl = document.getElementById("cart-item-count");
-  if (countEl) {
-    const totalQty = items.reduce((s, i) => s + i.quantity, 0);
-    countEl.textContent = totalQty ? `(${totalQty} item${totalQty !== 1 ? "s" : ""})` : "";
-  }
+  // Update order summary
+  const ss = document.getElementById("summary-subtotal");
   const sh = document.getElementById("summary-shipping");
   const st = document.getElementById("summary-total");
   const ct = document.getElementById("checkout-total");
