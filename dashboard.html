@@ -202,7 +202,7 @@
         <div id="tab-products" class="db-tab">
           <div class="db-page-header">
             <h1 class="db-page-title">Products</h1>
-            <button class="db-btn db-btn-primary" id="btn-how-to-add">📋 How to Add Product</button>
+            <button class="db-btn db-btn-primary" id="btn-how-to-add">📋 Paano Magdagdag ng Produkto</button>
           </div>
           <div class="db-card">
             <div class="db-table-wrap">
@@ -325,7 +325,7 @@
 <div class="db-modal-overlay" id="guide-modal">
   <div class="db-modal pm-guide">
     <div class="pm-head">
-      <h2 class="pm-title">How to Add a Product</h2>
+      <h2 class="pm-title">Paano Magdagdag ng Produkto</h2>
       <button class="db-modal-close" onclick="closeDbModal('guide-modal')">✕</button>
     </div>
     <div class="pm-body">
@@ -333,54 +333,61 @@
         <div class="guide-step">
           <div class="guide-num">1</div>
           <div class="guide-text">
-            <p class="guide-step-title">Fill in the Product Name &amp; Category</p>
-            <p class="guide-step-desc">Enter the product name (required). For category, type the display name like <em class="guide-accent">Men</em>, <em class="guide-accent">Women</em>, or <em class="guide-accent">Unisex</em>. The slug is the lowercase version used in URLs — e.g. <em class="guide-accent">men</em>, <em class="guide-accent">women</em>.</p>
+            <p class="guide-step-title">Ilagay ang Pangalan at Kategorya ng Produkto</p>
+            <p class="guide-step-desc">Ilagay ang pangalan ng produkto (kinakailangan). Para sa kategorya, i-type ang pangalang ipapakita tulad ng <em class="guide-accent">Men</em>, <em class="guide-accent">Women</em>, o <em class="guide-accent">Unisex</em>. Ang slug ay ang lowercase na bersyon na ginagamit sa URLs — hal. <em class="guide-accent">men</em>, <em class="guide-accent">women</em>.</p>
           </div>
         </div>
         <div class="guide-step">
           <div class="guide-num">2</div>
           <div class="guide-text">
-            <p class="guide-step-title">Set the Price</p>
-            <p class="guide-step-desc">Enter the selling price (required). You can also enter an <em class="guide-accent">Original Price</em> to show a crossed-out price and a sale badge on the product card.</p>
+            <p class="guide-step-title">Itakda ang Presyo</p>
+            <p class="guide-step-desc">Ilagay ang presyo ng benta (kinakailangan). Maaari ka ring maglagay ng <em class="guide-accent">Original na Presyo</em> para ipakita ang crossed-out na presyo at sale badge sa product card.</p>
           </div>
         </div>
         <div class="guide-step">
           <div class="guide-num">3</div>
           <div class="guide-text">
-            <p class="guide-step-title">Add a Product Image</p>
-            <p class="guide-step-desc">Upload your image to <a href="https://imgbb.com" target="_blank" class="guide-link">imgbb.com</a> (free, no sign-up needed) → copy the <strong class="guide-strong">Direct link</strong> → paste it into the Image URL field.</p>
+            <p class="guide-step-title">Magdagdag ng Larawan ng Produkto</p>
+            <p class="guide-step-desc">Mag-upload ng larawan sa <a href="https://imgbb.com" target="_blank" class="guide-link">imgbb.com</a> (libre, hindi kailangan mag-sign up) → kopyahin ang <strong class="guide-strong">Direct link</strong> → i-paste sa Image URL field.</p>
           </div>
         </div>
         <div class="guide-step">
           <div class="guide-num">4</div>
           <div class="guide-text">
-            <p class="guide-step-title">Add Sizes &amp; Colors</p>
-            <p class="guide-step-desc">Enter sizes and colors separated by commas — e.g. <em class="guide-accent">XS,S,M,L,XL</em> and <em class="guide-accent">Black,White,Grey</em>. These will appear as selectable options on the product page.</p>
+            <p class="guide-step-title">Magdagdag ng mga Sukat at Kulay</p>
+            <p class="guide-step-desc">Ilagay ang mga sukat at kulay na pinaghihiwalay ng kuwit — hal. <em class="guide-accent">XS,S,M,L,XL</em> at <em class="guide-accent">Black,White,Grey</em>. Lalabas ang mga ito bilang mga pagpipilian sa product page.</p>
           </div>
         </div>
         <div class="guide-step">
           <div class="guide-num">5</div>
           <div class="guide-text">
-            <p class="guide-step-title">Set Featured &amp; Active</p>
-            <p class="guide-step-desc"><strong class="guide-strong">Featured</strong> — shows the product on the homepage. <strong class="guide-strong">Active</strong> — makes it visible in the shop. Uncheck Active to hide without deleting.</p>
+            <p class="guide-step-title">Itakda ang Stock</p>
+            <p class="guide-step-desc">Ilagay ang bilang ng stock para sa bawat variant ng sukat at kulay. Ito ang magiging panimulang dami sa iyong <em class="guide-accent">Inventory</em>. Maaari mo ring baguhin ito mula sa Inventory tab pagkatapos ma-save.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="guide-num">6</div>
+          <div class="guide-text">
+            <p class="guide-step-title">Itakda ang Featured at Active</p>
+            <p class="guide-step-desc"><strong class="guide-strong">Featured</strong> — ipinakita ang produkto sa homepage. <strong class="guide-strong">Active</strong> — ginagawang visible ang produkto sa shop. Alisin ang tsek sa Active para itago ito nang hindi binubura.</p>
           </div>
         </div>
         <div class="guide-step guide-step--last">
-          <div class="guide-num">6</div>
+          <div class="guide-num">7</div>
           <div class="guide-text">
-            <p class="guide-step-title">Save &amp; Done</p>
-            <p class="guide-step-desc">Click <em class="guide-accent">Save Product</em>. It saves to Firebase and auto-creates inventory rows for each size/color at 0 stock. Update stock from the <em class="guide-accent">Inventory</em> tab.</p>
+            <p class="guide-step-title">I-save at Tapos Na</p>
+            <p class="guide-step-desc">I-click ang <em class="guide-accent">Save Product</em>. Mase-save ang produkto sa Firebase at awtomatikong malilikha ang mga inventory row para sa bawat kombinasyon ng sukat at kulay. I-update ang stock mula sa tab na <em class="guide-accent">Inventory</em>.</p>
           </div>
         </div>
       </div>
       <div class="guide-tip">
         <span class="guide-tip-icon">💡</span>
-        <p class="guide-tip-text"><strong class="guide-strong">Free image tip:</strong> Use <a href="https://imgbb.com" target="_blank" class="guide-link">imgbb.com</a> to host product images for free. Upload → click the image → copy the link ending in <code class="guide-code">.jpg</code> or <code class="guide-code">.png</code>.</p>
+        <p class="guide-tip-text"><strong class="guide-strong">Libreng tip para sa larawan:</strong> Gamitin ang <a href="https://imgbb.com" target="_blank" class="guide-link">imgbb.com</a> para mag-host ng mga larawan ng produkto nang libre. Mag-upload → i-click ang larawan → kopyahin ang link na nagtatapos sa <code class="guide-code">.jpg</code> o <code class="guide-code">.png</code>.</p>
       </div>
     </div>
     <div class="pm-footer">
-      <button class="db-btn db-btn-primary pm-footer-cta" onclick="openAddProductFromGuide()">+ Add Product Now</button>
-      <button class="db-btn db-btn-outline" onclick="closeDbModal('guide-modal')">Close</button>
+      <button class="db-btn db-btn-primary pm-footer-cta" onclick="openAddProductFromGuide()">+ Magdagdag ng Produkto</button>
+      <button class="db-btn db-btn-outline" onclick="closeDbModal('guide-modal')">Isara</button>
     </div>
   </div>
 </div>
