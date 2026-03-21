@@ -13,6 +13,8 @@
     body{padding-top:0}
     .featured-section{padding:96px 0}
     .about-section{padding:96px 0;background:var(--bg-secondary);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;transition:opacity .4s ease}
+    .about-grid.fading{opacity:0}
     .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
     .about-visual{aspect-ratio:4/5;background:linear-gradient(135deg,var(--bg-elevated) 0%,var(--bg-card) 100%);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:6rem;color:var(--border-light);border:1px solid var(--border);overflow:hidden;position:relative}
     .about-visual img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius-lg);display:block}
@@ -174,13 +176,15 @@
   <!-- ABOUT -->
   <section class="about-section">
     <div class="container">
-      <div class="about-grid">
+      <!-- Tab nav (hidden when only 1 tab) -->
+      <div id="about-tab-nav" style="display:none;justify-content:center;gap:8px;margin-bottom:48px"></div>
+      <div class="about-grid" id="about-content">
         <div>
-          <p class="section-subtitle">Our Philosophy</p>
-          <h2 class="section-title">Craft Over Hype.</h2>
+          <p class="section-subtitle" id="about-sub-text">Our Philosophy</p>
+          <h2 class="section-title" id="about-title-text">Craft Over Hype.</h2>
           <div class="divider" style="margin:16px 0"></div>
-          <p style="color:var(--text-secondary);line-height:1.8;font-size:1rem;max-width:480px">Streetwise PH was built on a single belief — that luxury doesn't have to be loud. Every piece we create carries intent: from the weight of the fabric to the precision of the cut.</p>
-          <ul class="value-list">
+          <p id="about-body-text" style="color:var(--text-secondary);line-height:1.8;font-size:1rem;max-width:480px">Streetwise PH was built on a single belief — that luxury doesn't have to be loud. Every piece we create carries intent: from the weight of the fabric to the precision of the cut.</p>
+          <ul class="value-list" id="about-values-list">
             <li>320gsm heavyweight cotton on every tee</li>
             <li>Drop-shoulder, oversized silhouettes</li>
             <li>Minimal branding, maximum presence</li>
@@ -302,37 +306,12 @@
         applySlide(slides[1], s.hero2Eyebrow, s.hero2Title, s.hero2Sub);
         applySlide(slides[2], s.hero3Eyebrow, s.hero3Title, s.hero3Sub);
 
-        // About section
-        if (s.aboutSub)     document.querySelector(".about-section .section-subtitle").textContent = s.aboutSub;
-        if (s.aboutTitle)   document.querySelector(".about-section .section-title").textContent    = s.aboutTitle;
-        if (s.aboutBody)    document.querySelector(".about-section p[style*='line-height:1.8']").textContent = s.aboutBody;
-        if (s.aboutValues)  {
-          const items = s.aboutValues.split("\n").filter(Boolean);
-          const lis   = document.querySelectorAll(".value-list li");
-          items.forEach((v, i) => { if (lis[i]) lis[i].textContent = v; });
-        }
-        // About image
-        const wrap = document.getElementById("about-visual-wrap");
-        if (wrap) {
-          const existing = wrap.querySelector("img");
-          if (s.aboutImage) {
-            if (existing) {
-              existing.src = s.aboutImage;
-            } else {
-              const img = document.createElement("img");
-              img.src = s.aboutImage;
-              img.alt = "About Streetwise PH";
-              img.loading = "lazy";
-              const ph = document.getElementById("about-visual-placeholder");
-              if (ph) ph.style.display = "none";
-              wrap.appendChild(img);
-            }
-          } else if (existing) {
-            existing.remove();
-            const ph = document.getElementById("about-visual-placeholder");
-            if (ph) ph.style.display = "";
-          }
-        }
+        // About section — multi-tab support
+        const aboutTabs = s.aboutTabs || (s.aboutSub || s.aboutTitle ? [{
+          sub: s.aboutSub, title: s.aboutTitle, body: s.aboutBody,
+          values: s.aboutValues, image: s.aboutImage
+        }] : []);
+        if (aboutTabs.length) About.init(aboutTabs, s);
 
         // Footer
         if (s.footerDesc) document.querySelector(".footer-desc").textContent = s.footerDesc;
@@ -340,8 +319,120 @@
       } catch(e) { console.error("applyHomepageSettings", e); }
     }
     applyHomepageSettings();
+    applyHomepageSettings();
 
-    // Show admin toolbar only when owner is logged in
+    // ── About section slideshow ───────────────────────────
+    const About = {
+      tabs:     [],
+      settings: null,
+      current:  0,
+      timer:    null,
+      INTERVAL: 5000,
+
+      show(idx) {
+        const grid = document.getElementById('about-content');
+        if (!grid) return;
+        this.current = ((idx % this.tabs.length) + this.tabs.length) % this.tabs.length;
+        grid.style.transition = 'opacity .4s';
+        grid.style.opacity    = '0';
+        const self = this;
+        setTimeout(() => {
+          self._render(self.current);
+          grid.style.opacity = '1';
+        }, 400);
+      },
+
+      _render(idx) {
+        const t   = this.tabs[idx]    || {};
+        const s   = this.settings     || {};
+        const sub    = t.sub    || (idx===0 ? s.aboutSub    : '') || '';
+        const title  = t.title  || (idx===0 ? s.aboutTitle  : '') || '';
+        const body   = t.body   || (idx===0 ? s.aboutBody   : '') || '';
+        const values = t.values || (idx===0 ? s.aboutValues : '') || '';
+        const image  = t.image  || (idx===0 ? s.aboutImage  : '') || '';
+        const el = id => document.getElementById(id);
+        if (el('about-sub-text')    && sub)    el('about-sub-text').textContent    = sub;
+        if (el('about-title-text')  && title)  el('about-title-text').textContent  = title;
+        if (el('about-body-text')   && body)   el('about-body-text').textContent   = body;
+        if (el('about-values-list') && values) {
+          el('about-values-list').innerHTML = values.split('\n').filter(Boolean)
+            .map(v => '<li>' + v + '</li>').join('');
+        }
+        const wrap = el('about-visual-wrap');
+        if (wrap) {
+          const existing = wrap.querySelector('img');
+          if (image) {
+            if (existing) { existing.src = image; }
+            else {
+              const img = document.createElement('img');
+              img.src = image; img.alt = 'About'; img.loading = 'lazy';
+              const ph = el('about-visual-placeholder');
+              if (ph) ph.style.display = 'none';
+              wrap.appendChild(img);
+            }
+          } else if (existing) {
+            existing.remove();
+            const ph = el('about-visual-placeholder');
+            if (ph) ph.style.display = '';
+          }
+        }
+        const nav = el('about-tab-nav');
+        if (nav) {
+          if (this.tabs.length > 1) {
+            nav.style.display = 'flex';
+            nav.style.alignItems = 'center';
+            nav.style.gap = '8px';
+            const self = this;
+            nav.innerHTML = this.tabs.map((_, i) => {
+              const active = i === idx;
+              return '<button onclick="About.jump(' + i + ')" style="'
+                + 'width:' + (active ? '28' : '8') + 'px;height:8px;border-radius:20px;'
+                + 'cursor:pointer;border:none;padding:0;flex-shrink:0;'
+                + 'background:' + (active ? 'var(--accent)' : 'rgba(201,169,110,.25)') + ';'
+                + 'transition:all .4s ease"></button>';
+            }).join('');
+          } else {
+            nav.style.display = 'none';
+          }
+        }
+      },
+
+      start() {
+        this.stop();
+        if (this.tabs.length < 2) return;
+        const self = this;
+        this.timer = setInterval(() => self.show(self.current + 1), self.INTERVAL);
+      },
+
+      stop() {
+        if (this.timer) { clearInterval(this.timer); this.timer = null; }
+      },
+
+      jump(idx) {
+        this.stop();
+        this.show(idx);
+        this.start();
+      },
+
+      init(tabs, s) {
+        this.tabs     = tabs;
+        this.settings = s;
+        this.current  = 0;
+        this._render(0);
+        this.start();
+      }
+    };
+    window.About = About;
+    window._switchAboutTab = idx => About.jump(idx);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const section = document.querySelector('.about-section');
+      if (section) {
+        section.addEventListener('mouseenter', () => About.stop());
+        section.addEventListener('mouseleave', () => About.start());
+      }
+    });
+
     onAuthChange(state => {
       if (state?.role === "owner") {
         showAdminBar();
@@ -388,13 +479,19 @@
             hero3Sub:     get("he3-subtitle"),
           };
         } else if (section === "about") {
-          data = {
-            aboutSub:    get("ab-sub"),
-            aboutTitle:  get("ab-title"),
-            aboutBody:   get("ab-body"),
-            aboutValues: get("ab-values"),
-            aboutImage:  get("ab-image"),
-          };
+          // Collect all tabs from the panel
+          const tabCount = parseInt(document.getElementById("ab-tab-count")?.value || "1", 10);
+          const tabs = [];
+          for (let i = 0; i < tabCount; i++) {
+            tabs.push({
+              sub:    (document.getElementById("ab-sub-"    + i)?.value || "").trim(),
+              title:  (document.getElementById("ab-title-"  + i)?.value || "").trim(),
+              body:   (document.getElementById("ab-body-"   + i)?.value || "").trim(),
+              values: (document.getElementById("ab-values-" + i)?.value || "").trim(),
+              image:  (document.getElementById("ab-image-"  + i)?.value || "").trim(),
+            });
+          }
+          data = { aboutTabs: tabs };
         } else if (section === "footer") {
           data = {
             footerDesc: get("ft-desc"),
@@ -570,19 +667,111 @@
       openAdminPanel("about");
       try {
         const snap = await getDoc(SETTINGS_DOC);
-        if (!snap.exists()) return;
-        const s = snap.data();
-        const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-        set("ab-sub",    s.aboutSub);
-        set("ab-title",  s.aboutTitle);
-        set("ab-body",   s.aboutBody);
-        set("ab-values", s.aboutValues);
-        set("ab-image",  s.aboutImage);
-        // Show preview if image already saved
-        const prev = document.getElementById("ab-img-preview");
-        if (prev && s.aboutImage) { prev.src = s.aboutImage; prev.style.display = "block"; }
-      } catch(e) {}
+        const s    = snap.exists() ? snap.data() : {};
+        // Normalise: legacy single-tab or new multi-tab
+        let tabs = s.aboutTabs || [];
+        if (!tabs.length && (s.aboutSub || s.aboutTitle)) {
+          tabs = [{ sub: s.aboutSub||'', title: s.aboutTitle||'', body: s.aboutBody||'', values: s.aboutValues||'', image: s.aboutImage||'' }];
+        }
+        if (!tabs.length) tabs = [{ sub:'', title:'', body:'', values:'', image:'' }];
+        renderAboutAdminTabs(tabs, 0);
+      } catch(e) { console.error("openAboutPanel", e); }
     };
+
+    function renderAboutAdminTabs(tabs, activeIdx) {
+      const panel = document.getElementById("admin-panel-about");
+      if (!panel) return;
+
+      // Tab button row
+      const tabBtns = tabs.map((t, i) => {
+        const active = i === activeIdx;
+        return '<button onclick="window._switchAboutAdminTab(' + i + ')" style="'
+          + 'padding:5px 14px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;'
+          + 'border:1px solid ' + (active ? '#c9a96e' : '#2a2520') + ';'
+          + 'background:' + (active ? '#c9a96e' : 'transparent') + ';'
+          + 'color:' + (active ? '#0a0a0a' : '#5a5248') + ';'
+          + 'cursor:pointer;border-radius:3px;font-family:\'DM Sans\',sans-serif;transition:all .2s">'
+          + 'Tab ' + (i + 1)
+          + '</button>';
+      }).join('');
+
+      const t = tabs[activeIdx];
+      panel.innerHTML = ''
+        // Hidden count field
+        + '<input type="hidden" id="ab-tab-count" value="' + tabs.length + '">'
+        // Tab nav
+        + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center">'
+        +   tabBtns
+        +   '<button onclick="window._addAboutTab()" style="padding:5px 12px;font-size:.72rem;border:1px dashed #3a332c;background:transparent;color:#5a5248;cursor:pointer;border-radius:3px;font-family:\'DM Sans\',sans-serif">+ New Tab</button>'
+        +   (tabs.length > 1 ? '<button onclick="window._delAboutTab(' + activeIdx + ')" style="padding:5px 10px;font-size:.72rem;border:1px solid #3a332c;background:transparent;color:#d94f4f;cursor:pointer;border-radius:3px;font-family:\'DM Sans\',sans-serif">✕</button>' : '')
+        + '</div>'
+        // Hidden fields for OTHER tabs (so they get saved too)
+        + tabs.map((tb, i) => i === activeIdx ? '' :
+            '<input type="hidden" id="ab-sub-'    + i + '" value="' + (tb.sub    ||'').replace(/"/g,'&quot;') + '">'
+          + '<input type="hidden" id="ab-title-'  + i + '" value="' + (tb.title  ||'').replace(/"/g,'&quot;') + '">'
+          + '<input type="hidden" id="ab-body-'   + i + '" value="' + (tb.body   ||'').replace(/"/g,'&quot;') + '">'
+          + '<input type="hidden" id="ab-values-' + i + '" value="' + (tb.values ||'').replace(/"/g,'&quot;') + '">'
+          + '<input type="hidden" id="ab-image-'  + i + '" value="' + (tb.image  ||'').replace(/"/g,'&quot;') + '">'
+        ).join('')
+        // Active tab fields
+        + '<div class="admin-field-group"><label class="admin-field-label">Section Subtitle</label>'
+        +   '<input type="text" class="admin-input" id="ab-sub-' + activeIdx + '" placeholder="Our Philosophy" value="' + (t.sub||'').replace(/"/g,'&quot;') + '"></div>'
+        + '<div class="admin-field-group"><label class="admin-field-label">Section Title</label>'
+        +   '<input type="text" class="admin-input" id="ab-title-' + activeIdx + '" placeholder="Craft Over Hype." value="' + (t.title||'').replace(/"/g,'&quot;') + '"></div>'
+        + '<div class="admin-field-group"><label class="admin-field-label">Body Text</label>'
+        +   '<textarea class="admin-textarea" id="ab-body-' + activeIdx + '" style="min-height:90px" placeholder="Streetwise PH was built on...">' + (t.body||'') + '</textarea></div>'
+        + '<div class="admin-field-group"><label class="admin-field-label">Value List</label>'
+        +   '<textarea class="admin-textarea" id="ab-values-' + activeIdx + '" style="min-height:90px" placeholder="One item per line...">' + (t.values||'') + '</textarea>'
+        +   '<p class="admin-hint">One item per line — each becomes a bullet point</p></div>'
+        + '<div class="admin-field-group"><label class="admin-field-label">About Image URL</label>'
+        +   '<input type="url" class="admin-input" id="ab-image-' + activeIdx + '" placeholder="https://i.ibb.co/your-image.jpg" value="' + (t.image||'').replace(/"/g,'&quot;') + '"'
+        +     ' oninput="const pv=document.getElementById(\'ab-img-preview\');if(this.value){pv.src=this.value;pv.style.display=\'block\';}else{pv.style.display=\'none\';}">'
+        +   '<img id="ab-img-preview" src="' + (t.image||'') + '" alt="Preview"'
+        +     ' style="' + (t.image ? '' : 'display:none;') + 'width:100%;margin-top:8px;border-radius:6px;object-fit:cover;max-height:140px;border:1px solid #2a2520">'
+        +   '<p class="admin-hint">Paste a direct image link from imgbb.com</p></div>'
+        + '<button class="admin-save-btn" id="save-btn-about" onclick="saveHomepageSection(\'about\')">Save About</button>';
+
+      // Cache for tab switching
+      window._aboutAdminTabs = tabs;
+      window._aboutAdminActiveIdx = activeIdx;
+    }
+
+    window._switchAboutAdminTab = function(idx) {
+      // Capture current field values before switching
+      const tabs  = window._aboutAdminTabs || [];
+      const cur   = window._aboutAdminActiveIdx || 0;
+      if (tabs[cur]) {
+        const g = id => document.getElementById(id)?.value || '';
+        tabs[cur] = {
+          sub:    g('ab-sub-'    + cur),
+          title:  g('ab-title-'  + cur),
+          body:   g('ab-body-'   + cur),
+          values: g('ab-values-' + cur),
+          image:  g('ab-image-'  + cur),
+        };
+      }
+      renderAboutAdminTabs(tabs, idx);
+    };
+
+    window._addAboutTab = function() {
+      const tabs = window._aboutAdminTabs || [];
+      const cur  = window._aboutAdminActiveIdx || 0;
+      // Save current values first
+      const g = id => document.getElementById(id)?.value || '';
+      if (tabs[cur]) {
+        tabs[cur] = { sub: g('ab-sub-'+cur), title: g('ab-title-'+cur), body: g('ab-body-'+cur), values: g('ab-values-'+cur), image: g('ab-image-'+cur) };
+      }
+      tabs.push({ sub:'', title:'', body:'', values:'', image:'' });
+      renderAboutAdminTabs(tabs, tabs.length - 1);
+    };
+
+    window._delAboutTab = function(idx) {
+      const tabs = window._aboutAdminTabs || [];
+      if (tabs.length <= 1) return;
+      tabs.splice(idx, 1);
+      renderAboutAdminTabs(tabs, Math.max(0, idx - 1));
+    };
+
     window.openFooterPanel = async function() {
       openAdminPanel("footer");
       try {
@@ -793,36 +982,9 @@
   </div>
 
   <!-- ABOUT panel -->
+  <!-- ABOUT panel — rendered dynamically by openAboutPanel/renderAboutAdminTabs -->
   <div class="admin-panel" id="admin-panel-about">
-    <div class="admin-field-group">
-      <label class="admin-field-label">Section Subtitle</label>
-      <input type="text" class="admin-input" id="ab-sub" placeholder="Our Philosophy">
-    </div>
-    <div class="admin-field-group">
-      <label class="admin-field-label">Section Title</label>
-      <input type="text" class="admin-input" id="ab-title" placeholder="Craft Over Hype.">
-    </div>
-    <div class="admin-field-group">
-      <label class="admin-field-label">Body Text</label>
-      <textarea class="admin-textarea" id="ab-body" style="min-height:100px" placeholder="Streetwise PH was built on..."></textarea>
-    </div>
-    <div class="admin-field-group">
-      <label class="admin-field-label">Value List</label>
-      <textarea class="admin-textarea" id="ab-values" style="min-height:100px" placeholder="320gsm heavyweight cotton on every tee&#10;Drop-shoulder, oversized silhouettes&#10;Minimal branding, maximum presence&#10;Limited runs — never restocked"></textarea>
-      <p class="admin-hint">One item per line — each becomes a bullet point</p>
-    </div>
-    <div class="admin-field-group">
-      <label class="admin-field-label">About Image URL</label>
-      <input type="url" class="admin-input" id="ab-image" placeholder="https://i.ibb.co/your-image.jpg"
-        oninput="
-          const p=document.getElementById('ab-img-preview');
-          if(this.value){p.src=this.value;p.style.display='block';}
-          else{p.style.display='none';}">
-      <img id="ab-img-preview" src="" alt="Preview"
-        style="display:none;width:100%;margin-top:8px;border-radius:6px;object-fit:cover;max-height:140px;border:1px solid #2a2520">
-      <p class="admin-hint">Paste a direct image link (e.g. from imgbb.com). This appears on the right side of the About section.</p>
-    </div>
-    <button class="admin-save-btn" id="save-btn-about" onclick="saveHomepageSection('about')">Save About</button>
+    <p style="color:#5a5248;font-size:.85rem">Loading...</p>
   </div>
 
   <!-- FOOTER panel -->
