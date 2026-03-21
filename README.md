@@ -9,6 +9,8 @@ if you meet the desired design and function "save this as the new original"
 
 # claude AI
 upload all code files. and type in "here are my codes. And save those as the original."
+review, debug, fix module ....
+ Review the code for bugs or improvements
 
 # supabase 
 db password : MxacRsEwzJe51J0b
