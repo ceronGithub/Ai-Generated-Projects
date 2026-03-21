@@ -5,11 +5,14 @@
 import "./p_main.js";
 import { getProducts, getCategories } from "../firebase/f_products.js";
 import { addToCart } from "../firebase/f_cart.js";
+import { db } from "../firebase/f_config.js";
+import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let allProducts  = [];
 let currentPage  = 1;
 let currentCat   = "";
 let currentSearch = "";
+let stockCache   = {}; // productId → total quantity
 const PAGE_SIZE  = 12;
 
 async function loadCategories() {
@@ -51,6 +54,15 @@ async function loadProducts() {
     }
     grid.innerHTML = paged.map(renderCard).join("");
     renderPagination(Math.ceil(total / PAGE_SIZE));
+
+    // Fetch stock for visible products and re-render with stock info
+    try {
+      await Promise.all(paged.map(async p => {
+        const snap = await getDocs(query(collection(db, 'inventory'), where('productId', '==', p.id)));
+        stockCache[p.id] = snap.empty ? 999 : snap.docs.reduce((s, d) => s + (d.data().quantity || 0), 0);
+      }));
+      grid.innerHTML = paged.map(renderCard).join("");
+    } catch(e) { /* stock check failed — leave cards as-is */ }
   } catch(e) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--danger)">Failed to load products. Check your Firebase connection.</div>';
     console.error(e);
@@ -58,25 +70,45 @@ async function loadProducts() {
 }
 
 function renderCard(p) {
-  const disc = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
-  const img  = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>';
+  const disc       = p.originalPrice ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
+  const stock      = stockCache[p.id] ?? 999;
+  const outOfStock = stock <= 0;
+  const lowStock   = stock > 0 && stock <= 10;
+
+  const imgStyle   = outOfStock ? ' style="filter:blur(3px) brightness(.6)"' : '';
+  const img        = p.imageUrl
+    ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy"${imgStyle}>`
+    : `<div class="product-img-placeholder"${imgStyle}>◈</div>`;
+
+  const outOverlay = outOfStock
+    ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:3;pointer-events:none">
+        <span style="background:rgba(0,0,0,.72);color:#fff;font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:8px 20px;border-radius:4px;border:1px solid rgba(255,255,255,.15)">Out of Stock</span>
+       </div>` : '';
+
+  const stockBadge = lowStock ? `<span class="badge badge-danger">Only ${stock} left</span>` : '';
+  const priceStyle = outOfStock ? ' style="color:var(--text-muted);text-decoration:line-through"' : '';
+
+  const action = outOfStock
+    ? `<div class="product-actions"><button class="product-quick-add" disabled style="opacity:.5;cursor:not-allowed">Out of Stock</button></div>`
+    : `<div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>`;
+
   return `
     <div class="product-card">
-      <div class="product-img-wrap">
+      <div class="product-img-wrap" style="position:relative">
         ${img}
+        ${outOverlay}
         <div class="product-badges">
           ${p.isFeatured ? '<span class="badge badge-accent">Featured</span>' : ""}
           ${disc > 0 ? `<span class="badge badge-danger">-${disc}%</span>` : ""}
+          ${stockBadge}
         </div>
-        <div class="product-actions">
-          <button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button>
-        </div>
+        ${action}
       </div>
       <div class="product-info">
         <p class="product-category">${p.category || ""}</p>
         <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
         <div class="product-price">
-          <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH", {minimumFractionDigits:2})}</span>
+          <span class="price-current"${priceStyle}>₱${parseFloat(p.price).toLocaleString("en-PH", {minimumFractionDigits:2})}</span>
           ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
         </div>
       </div>

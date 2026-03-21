@@ -4,12 +4,30 @@
 import { db } from './f_config.js';
 import {
   collection, doc, addDoc, getDoc, getDocs, updateDoc,
-  query, orderBy, where, limit
+  query, orderBy, where, limit, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { clearCart } from './f_cart.js';
-import { decrementStock, checkCartStock } from './f_inventory.js';
+import { decrementStock } from './f_inventory.js';
 
 const ORDERS = 'orders';
+const INV    = 'inventory';
+
+// ── Inline stock check (no external dependency) ───────────
+async function checkCartStock(cartItems) {
+  const problems = [];
+  for (const item of cartItems) {
+    const pid = item.productId || item.id;
+    if (!pid) continue;
+    try {
+      const snap = await getDocs(query(collection(db, INV), where('productId', '==', pid)));
+      const available = snap.empty ? 999 : snap.docs.reduce((s, d) => s + (d.data().quantity || 0), 0);
+      if (available < item.quantity) {
+        problems.push({ name: item.name || 'Item', requested: item.quantity, available });
+      }
+    } catch(e) { /* if check fails, allow order through */ }
+  }
+  return problems;
+}
 
 // ── Place order ────────────────────────────────────────────
 export async function placeOrder({ cartItems, customerInfo, userId = null, totals = null }) {
