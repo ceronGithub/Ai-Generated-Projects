@@ -28,7 +28,8 @@ function renderCart() {
   // Item count
   const totalQty = items.reduce((s, i) => s + i.quantity, 0);
 
-  // Update page header count
+  // Sync cart badge in navbar
+  window.updateCartBadge?.();
   const countEl = document.getElementById("cart-item-count");
   if (countEl) countEl.textContent = totalQty ? `(${totalQty} item${totalQty !== 1 ? "s" : ""})` : "";
 

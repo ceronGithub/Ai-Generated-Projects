@@ -43,8 +43,14 @@ window.updateCartBadge = function() {
     var count = cart.reduce(function(s, i) { return s + (i.quantity || 0); }, 0);
     var badge = document.getElementById("cart-badge");
     if (!badge) return;
-    badge.textContent = count || "";
-    badge.style.display = count > 0 ? "flex" : "none";
+    badge.textContent = count > 99 ? "99+" : (count || "");
+    if (count > 0) {
+      badge.classList.remove("hidden");
+      badge.style.display = "flex";
+    } else {
+      badge.classList.add("hidden");
+      badge.style.display = "none";
+    }
   } catch(e) {}
 };
 
