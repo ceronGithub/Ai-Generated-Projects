@@ -95,9 +95,17 @@ function renderPagination(pages) {
 
 window.changePage = p => { currentPage = p; loadProducts(); window.scrollTo({ top: 200, behavior: "smooth" }); };
 window.filterCat  = slug => { currentCat = slug; currentPage = 1; loadProducts(); };
-window.quickAdd   = (id, name, price, imageUrl) => {
+window.quickAdd = async (id, name, price, imageUrl) => {
+  try {
+    const { checkStock } = await import('../firebase/f_inventory.js');
+    const available = await checkStock(id, '', '');
+    if (available <= 0) {
+      window.showToast(`"${name}" is out of stock.`, 'error');
+      return;
+    }
+  } catch(e) { /* if check fails, allow add */ }
   addToCart({ id, name, price, imageUrl, size: '', color: '', quantity: 1 });
-  window.showToast("Added to cart!", "success");
+  window.showToast('Added to cart!', 'success');
 };
 
 document.addEventListener("DOMContentLoaded", async () => {

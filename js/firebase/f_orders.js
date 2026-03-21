@@ -7,7 +7,7 @@ import {
   query, orderBy, where, limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { clearCart } from './f_cart.js';
-import { decrementStock } from './f_inventory.js';
+import { decrementStock, checkCartStock } from './f_inventory.js';
 
 const ORDERS = 'orders';
 
@@ -17,6 +17,16 @@ export async function placeOrder({ cartItems, customerInfo, userId = null, total
   const shippingFee = 0; // Depends on Courier
   const total       = subtotal + shippingFee;
   const orderNumber = 'SWP-' + Date.now().toString(36).toUpperCase();
+
+  // ── Stock check BEFORE writing the order ─────────────────
+  // Prevents overselling when multiple users checkout simultaneously
+  const stockProblems = await checkCartStock(cartItems);
+  if (stockProblems.length) {
+    const msg = stockProblems.map(p =>
+      `"${p.name}" — available: ${p.available}, requested: ${p.requested}`
+    ).join('\n');
+    throw new Error('Some items are out of stock:\n' + msg);
+  }
 
   const orderRef = await addDoc(collection(db, ORDERS), {
     orderNumber,
@@ -37,7 +47,7 @@ export async function placeOrder({ cartItems, customerInfo, userId = null, total
     updatedAt:       new Date()
   });
 
-  // Decrement stock — never blocks checkout even if it fails
+  // Decrement stock — throws if insufficient stock, which will block order creation
   for (const item of cartItems) {
     const pid = item.productId || item.id;
     if (pid) {

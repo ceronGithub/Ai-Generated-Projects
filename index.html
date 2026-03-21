@@ -282,7 +282,7 @@
     import { addToCart }           from "./js/firebase/f_cart.js";
     import { loginUser, onAuthChange } from "./js/firebase/f_auth.js";
     import { db } from "./js/firebase/f_config.js";
-    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import "./js/main.js";
 
     const SETTINGS_DOC = doc(db, "settings", "homepage");
@@ -595,30 +595,64 @@
           return;
         }
 
+        // Fetch stock for all products in parallel (using top-level imports)
+        const allToRender = [...pinnedProducts, ...unpinnedProducts];
+        const stockMap = {};
+        await Promise.all(allToRender.map(async p => {
+          try {
+            const snap = await getDocs(query(collection(db, 'inventory'), where('productId', '==', p.id)));
+            stockMap[p.id] = snap.empty ? 999 : snap.docs.reduce((s, d) => s + (d.data().quantity || 0), 0);
+          } catch(e) { stockMap[p.id] = 999; }
+        }));
+
         const cardHtml = (p, pinned) => {
+          const stock     = stockMap[p.id] ?? 999;
+          const outOfStock = stock <= 0;
+          const lowStock   = stock > 0 && stock <= 10;
+
           const wrap  = pinned
             ? 'outline:2px solid var(--accent);outline-offset:3px;border-radius:var(--radius-md)'
             : '';
-          const badge = pinned
+
+          // Badges: pin/featured + low stock
+          const mainBadge = pinned
             ? '<span class="badge badge-accent" style="letter-spacing:.06em">★ Pinned</span>'
             : '<span class="badge" style="background:rgba(255,255,255,.06);color:var(--text-muted)">Featured</span>';
-          const orig  = p.originalPrice
+          const stockBadge = lowStock
+            ? '<span class="badge" style="background:rgba(217,79,79,.85);color:#fff;margin-left:4px">Only ' + stock + ' left</span>'
+            : '';
+
+          const orig = p.originalPrice
             ? '<span class="price-original">₱' + parseFloat(p.originalPrice).toLocaleString('en-PH',{minimumFractionDigits:2}) + '</span>'
             : '';
-          const img   = p.imageUrl
-            ? '<img src="' + p.imageUrl + '" alt="' + p.name + '" loading="lazy">'
-            : '<div class="product-img-placeholder">◈</div>';
+
+          // Image wrap — blur + overlay when out of stock
+          const imgTag = p.imageUrl
+            ? '<img src="' + p.imageUrl + '" alt="' + p.name + '" loading="lazy" style="' + (outOfStock ? 'filter:blur(3px) brightness(.6);' : '') + '">'
+            : '<div class="product-img-placeholder" style="' + (outOfStock ? 'filter:blur(3px) brightness(.6);' : '') + '">◈</div>';
+
+          const outOverlay = outOfStock
+            ? '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:3;pointer-events:none">'
+            +   '<span style="background:rgba(0,0,0,.72);color:#fff;font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:8px 20px;border-radius:4px;border:1px solid rgba(255,255,255,.15)">Out of Stock</span>'
+            + '</div>'
+            : '';
+
+          const action = outOfStock
+            ? '<div class="product-actions"><button class="product-quick-add" disabled style="opacity:.5;cursor:not-allowed">Out of Stock</button></div>'
+            : '<div class="product-actions"><button class="product-quick-add" onclick="quickAdd(\'' + p.id + '\',\'' + p.name.replace(/'/g,"\\'") + '\',' + p.price + ',\'' + (p.imageUrl||'') + '\')">Add to Cart</button></div>';
+
           return '<div class="product-card" style="' + wrap + '">'
-            + '<div class="product-img-wrap">'
-            +   img
-            +   '<div class="product-badges">' + badge + '</div>'
-            +   '<div class="product-actions"><button class="product-quick-add" onclick="quickAdd(\'' + p.id + '\',\'' + p.name.replace(/'/g,"\\'") + '\',' + p.price + ',\'' + (p.imageUrl||'') + '\')">Add to Cart</button></div>'
+            + '<div class="product-img-wrap" style="position:relative">'
+            +   imgTag
+            +   outOverlay
+            +   '<div class="product-badges">' + mainBadge + stockBadge + '</div>'
+            +   action
             + '</div>'
             + '<div class="product-info">'
             +   '<p class="product-category">' + (p.category||'') + '</p>'
             +   '<h3 class="product-name"><a href="product.html?id=' + p.id + '">' + p.name + '</a></h3>'
             +   '<div class="product-price">'
-            +     '<span class="price-current">₱' + parseFloat(p.price).toLocaleString('en-PH',{minimumFractionDigits:2}) + '</span>'
+            +     '<span class="price-current" style="' + (outOfStock ? 'color:var(--text-muted);text-decoration:line-through;' : '') + '">₱' + parseFloat(p.price).toLocaleString('en-PH',{minimumFractionDigits:2}) + '</span>'
             +     orig
             +   '</div>'
             + '</div>'
@@ -832,7 +866,15 @@
     setInterval(() => goTo(cur + 1), 6000);
 
     // ── Quick add to cart ─────────────────────────────────
-    window.quickAdd = (id, name, price, imageUrl) => {
+    window.quickAdd = async (id, name, price, imageUrl) => {
+      try {
+        const { checkStock } = await import("./js/firebase/f_inventory.js");
+        const available = await checkStock(id, '', '');
+        if (available <= 0) {
+          window.showToast('"' + name + '" is out of stock.', "error");
+          return;
+        }
+      } catch(e) { /* if check fails, allow add */ }
       addToCart({ id, name, price, imageUrl }, "", "", 1);
       window.showToast("Added to cart!", "success");
     };
