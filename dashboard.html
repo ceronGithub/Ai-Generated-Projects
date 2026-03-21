@@ -113,6 +113,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         Comments
       </a>
+      <a class="db-sidebar-link" data-tab="contact" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.69 12a19.79 19.79 0 01-3.07-8.67A2 2 0 013.62 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.6a16 16 0 005.45 5.45l.96-.96a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        Contact Info
+      </a>
 
       <div class="db-sidebar-section">Account</div>
       <a class="db-sidebar-link" href="index.html">
@@ -266,6 +270,50 @@
           </div>
         </div>
 
+        <!-- ── CONTACT TAB ─────────────────────────────── -->
+        <div id="tab-contact" class="db-tab">
+          <div class="db-page-header">
+            <h1 class="db-page-title">Contact Info</h1>
+          </div>
+          <div class="db-card" style="max-width:600px">
+            <div class="db-card-header"><span class="db-card-title">Store Contact Information</span></div>
+            <div style="padding:24px">
+              <div class="db-form-group">
+                <label class="db-form-label">Store Name</label>
+                <input type="text" class="db-form-input" id="ci-store-name" placeholder="Streetwise PH">
+              </div>
+              <div class="db-form-group">
+                <label class="db-form-label">Email Address</label>
+                <input type="email" class="db-form-input" id="ci-email" placeholder="hello@streetwiseph.com">
+              </div>
+              <div class="db-form-group">
+                <label class="db-form-label">Phone / Mobile</label>
+                <input type="text" class="db-form-input" id="ci-phone" placeholder="09XX XXX XXXX">
+              </div>
+              <div class="db-form-group">
+                <label class="db-form-label">Facebook</label>
+                <input type="url" class="db-form-input" id="ci-facebook" placeholder="https://facebook.com/streetwiseph">
+              </div>
+              <div class="db-form-group">
+                <label class="db-form-label">Instagram</label>
+                <input type="url" class="db-form-input" id="ci-instagram" placeholder="https://instagram.com/streetwiseph">
+              </div>
+              <div class="db-form-group">
+                <label class="db-form-label">Address</label>
+                <textarea class="db-form-input" id="ci-address" style="min-height:80px" placeholder="Store address..."></textarea>
+              </div>
+              <div class="db-form-group">
+                <label class="db-form-label">Business Hours</label>
+                <input type="text" class="db-form-input" id="ci-hours" placeholder="Mon–Sat 10am–8pm">
+              </div>
+              <div style="display:flex;gap:10px;margin-top:8px;align-items:center">
+                <button class="db-btn db-btn-primary" id="btn-save-contact">Save Contact Info</button>
+                <span id="contact-save-status" style="font-size:.82rem;color:#4caf76;display:none">✓ Saved</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /db-content -->
     </main>
   </div><!-- /db-layout -->
@@ -380,7 +428,7 @@
             <label class="db-form-label">Description</label>
             <textarea class="db-form-input pm-textarea" id="pf-description" placeholder="Product description..."></textarea>
           </div>
-          <div class="pm-row2" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="pm-row2">
             <div class="db-form-group pm-no-mb">
               <label class="db-form-label">Sizes <span class="pm-sublabel">comma separated</span></label>
               <input type="text" class="db-form-input" id="pf-sizes" placeholder="XS,S,M,L,XL">
@@ -388,10 +436,6 @@
             <div class="db-form-group pm-no-mb">
               <label class="db-form-label">Colors <span class="pm-sublabel">comma separated</span></label>
               <input type="text" class="db-form-input" id="pf-colors" placeholder="Black,White,Grey">
-            </div>
-            <div class="db-form-group pm-no-mb">
-              <label class="db-form-label">Stock</label>
-              <input type="number" class="db-form-input" id="pf-stock" min="0" placeholder="How many">
             </div>
           </div>
         </div>
@@ -443,7 +487,10 @@
   <div class="db-modal" style="max-width:580px">
     <div class="db-modal-head">
       <h2 class="db-modal-title">Order Details</h2>
-      <button class="db-modal-close" onclick="closeDbModal('order-modal')">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="db-btn db-btn-outline db-btn-sm" id="btn-create-invoice" onclick="createInvoice()">📄 Create Invoice</button>
+        <button class="db-modal-close" onclick="closeDbModal('order-modal')">✕</button>
+      </div>
     </div>
     <div class="db-modal-body" id="order-detail-body"></div>
   </div>
@@ -453,8 +500,6 @@
      MAIN SCRIPT
 ════════════════════════════════════════════════════════════ -->
 <script type="module">
-import { db } from './js/firebase/f_config.js';
-import { collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { loginUser, logoutUser, onAuthChange }                               from './js/firebase/f_auth.js';
 import { getProductsAdmin, addProduct, updateProduct, deleteProduct }        from './js/firebase/f_products.js';
 import { getAllOrders, getOrder, updateOrderStatus }                          from './js/firebase/f_orders.js';
@@ -515,6 +560,7 @@ function switchTab(name) {
   if (name === 'inventory') loadInventory();
   if (name === 'orders')    loadOrders();
   if (name === 'comments')  loadComments();
+  if (name === 'contact')   loadContact();
 }
 
 document.querySelectorAll('.db-sidebar-link[data-tab]').forEach(link => {
@@ -547,15 +593,6 @@ onAuthChange(state => {
 
   loadOverview();
   loadRecentOrders();
-
-  // Real-time listener: auto-refresh when any guest places an order
-  if (!window._ordersListener) {
-    window._ordersListener = onSnapshot(collection(db, 'orders'), () => {
-      loadOverview();
-      if ($id('tab-overview')?.classList.contains('active')) loadRecentOrders();
-      if ($id('tab-orders')?.classList.contains('active'))   loadOrders();
-    }, err => console.warn('orders listener:', err.message));
-  }
 });
 
 /* ── Login ────────────────────────────────────────────────── */
@@ -728,7 +765,6 @@ window.openAddProductFromGuide = function() {
     $id('pf-id').value = '';
     $id('pf-active').checked = true;
     $id('pf-image').value = '';
-    if ($id('pf-stock')) $id('pf-stock').value = '';
     updateImgPreview('');
     openDbModal('product-modal');
   }, 250);
@@ -751,7 +787,6 @@ window.editProduct = async id => {
   $id('pf-featured').checked     = !!p.isFeatured;
   $id('pf-active').checked       = p.isActive !== false;
   $id('pf-image').value = p.imageUrl || '';
-  if ($id('pf-stock')) $id('pf-stock').value = '';
   updateImgPreview(p.imageUrl || '');
   openDbModal('product-modal');
 };
@@ -775,7 +810,6 @@ $id('product-form').addEventListener('submit', async e => {
   const name   = $id('pf-name').value.trim();
   const sizes  = $id('pf-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
   const colors = $id('pf-colors').value.split(',').map(s=>s.trim()).filter(Boolean);
-  const initialStock = parseInt($id('pf-stock')?.value || '0', 10) || 0;
   const data   = {
     name, sizes, colors,
     category:      $id('pf-category').value.trim(),
@@ -791,11 +825,11 @@ $id('product-form').addEventListener('submit', async e => {
   try {
     if (id) {
       await updateProduct(id, data);
-      await createInventoryForProduct(id, name, sizes, colors, initialStock);
+      await createInventoryForProduct(id, name, sizes, colors);
       toast('Product updated.', 'success');
     } else {
       const ref = await addProduct(data);
-      await createInventoryForProduct(ref.id, name, sizes, colors, initialStock);
+      await createInventoryForProduct(ref.id, name, sizes, colors);
       toast('Product added!', 'success');
     }
     closeDbModal('product-modal');
@@ -859,6 +893,7 @@ window.viewOrder = async id => {
   try {
     const o = await getOrder(id);
     if (!o) return;
+    _currentOrder = o;
     const name    = o.guestName || o.customerInfo?.name || 'Guest';
     const phone   = o.guestPhone || o.customerInfo?.phone || '—';
     const address = o.shippingAddress || o.customerInfo?.address || '—';
@@ -904,26 +939,218 @@ async function loadComments() {
   try {
     const list = await getComments();
     if (!list.length) { wrap.innerHTML = '<p style="text-align:center;color:#5a5248;padding:40px">No comments yet.</p>'; return; }
-    wrap.innerHTML = list.map(c => `
-      <div style="padding:16px 0;border-bottom:1px solid #2a2520;display:flex;justify-content:space-between;align-items:start">
-        <div>
-          <p style="font-weight:500;font-size:.875rem;margin-bottom:4px">
-            ${c.userName||c.guestName||'Guest'}
-            <span style="color:#c9a96e">${'★'.repeat(c.rating||5)}</span>
-          </p>
-          <p style="font-size:.875rem;color:#a09888">${c.content}</p>
-          <p style="font-size:.75rem;color:#5a5248;margin-top:4px">${fdate(c.createdAt)}</p>
+    wrap.innerHTML = list.map(c => {
+      const rating = Math.min(100, Math.max(1, c.rating || 50));
+      const pct    = rating + '%';
+      const col    = rating >= 70 ? '#4caf76' : rating >= 40 ? '#e6a817' : '#d94f4f';
+      const reply  = c.adminReply ? `
+        <div style="margin:8px 0 0;padding:10px 14px;background:#1a1a1a;border-left:2px solid #c9a96e;border-radius:0 4px 4px 0">
+          <p style="font-size:.7rem;color:#c9a96e;font-weight:500;margin:0 0 3px;text-transform:uppercase;letter-spacing:.06em">Owner Reply</p>
+          <p style="font-size:.83rem;color:#a09888;margin:0">${c.adminReply}</p>
+        </div>` : '';
+      return `
+      <div style="padding:16px 0;border-bottom:1px solid #2a2520">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+              <p style="font-weight:500;font-size:.875rem;margin:0">${c.userName||c.guestName||'Guest'}</p>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div style="width:80px;height:5px;background:#2a2520;border-radius:3px;overflow:hidden">
+                  <div style="width:${pct};height:100%;background:${col};border-radius:3px"></div>
+                </div>
+                <span style="font-size:.75rem;color:${col};font-weight:500">${pct}</span>
+              </div>
+            </div>
+            <p style="font-size:.875rem;color:#a09888;margin:0 0 4px">${c.content}</p>
+            <p style="font-size:.75rem;color:#5a5248;margin:0">${fdate(c.createdAt)}</p>
+            ${reply}
+            <div id="reply-form-${c.id}" style="display:none;margin-top:10px">
+              <textarea class="db-form-input" id="reply-input-${c.id}" style="min-height:60px;font-size:.85rem;margin-bottom:6px" placeholder="Type your reply..."></textarea>
+              <div style="display:flex;gap:8px">
+                <button class="db-btn db-btn-primary db-btn-sm" onclick="submitReply('${c.id}')">Send Reply</button>
+                <button class="db-btn db-btn-outline db-btn-sm" onclick="toggleReplyForm('${c.id}')">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+            <button class="db-btn db-btn-outline db-btn-sm" onclick="toggleReplyForm('${c.id}')">${c.adminReply ? 'Edit Reply' : 'Reply'}</button>
+            <button class="db-btn db-btn-danger db-btn-sm" onclick="delComment('${c.id}')">Delete</button>
+          </div>
         </div>
-        <button class="db-btn db-btn-danger db-btn-sm" onclick="delComment('${c.id}')">Delete</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) { console.error('loadComments', e); }
 }
+
+window.toggleReplyForm = id => {
+  const form = $id(`reply-form-${id}`);
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+};
+
+window.submitReply = async id => {
+  const input = $id(`reply-input-${id}`);
+  const text  = input?.value.trim();
+  if (!text) return;
+  try {
+    const { db } = await import('./js/firebase/f_config.js');
+    const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    await updateDoc(doc(db, 'comments', id), { adminReply: text, repliedAt: new Date() });
+    toast('Reply sent.', 'success');
+    loadComments();
+  } catch(e) { toast('Failed to save reply.', 'error'); console.error(e); }
+};
 
 window.delComment = async id => {
   if (!confirm('Delete this comment?')) return;
   await deleteComment(id);
   toast('Comment deleted.', 'success');
   loadComments();
+};
+
+/* ── Contact Info ─────────────────────────────────────────── */
+async function loadContact() {
+  try {
+    const { db } = await import('./js/firebase/f_config.js');
+    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const snap = await getDoc(doc(db, 'settings', 'contact'));
+    if (snap.exists()) {
+      const d = snap.data();
+      const set = (id, val) => { const el = $id(id); if (el) el.value = val || ''; };
+      set('ci-store-name', d.storeName);
+      set('ci-email',      d.email);
+      set('ci-phone',      d.phone);
+      set('ci-facebook',   d.facebook);
+      set('ci-instagram',  d.instagram);
+      set('ci-address',    d.address);
+      set('ci-hours',      d.hours);
+    }
+  } catch(e) { console.error('loadContact', e); }
+}
+
+$id('btn-save-contact')?.addEventListener('click', async () => {
+  const btn = $id('btn-save-contact');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const { db } = await import('./js/firebase/f_config.js');
+    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    const get = id => $id(id)?.value.trim() || '';
+    await setDoc(doc(db, 'settings', 'contact'), {
+      storeName: get('ci-store-name'),
+      email:     get('ci-email'),
+      phone:     get('ci-phone'),
+      facebook:  get('ci-facebook'),
+      instagram: get('ci-instagram'),
+      address:   get('ci-address'),
+      hours:     get('ci-hours'),
+      updatedAt: new Date()
+    });
+    const status = $id('contact-save-status');
+    if (status) { status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 3000); }
+    toast('Contact info saved.', 'success');
+  } catch(e) { toast('Failed to save.', 'error'); console.error(e); }
+  finally { btn.disabled = false; btn.textContent = 'Save Contact Info'; }
+});
+
+/* ── Create Invoice (PDF download) ───────────────────────── */
+let _currentOrder = null;
+
+window.createInvoice = function() {
+  const o = _currentOrder;
+  if (!o) return;
+  const name    = o.guestName || o.customerInfo?.name || 'Guest';
+  const phone   = o.guestPhone || o.customerInfo?.phone || '—';
+  const address = o.shippingAddress || o.customerInfo?.address || '—';
+  const date    = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}) : new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+  const itemsHtml = (o.items||[]).map(i => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${i.productName||i.name||'Item'}${i.size?' ('+i.size+')':''}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:center">${i.quantity}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:right">₱${parseFloat(i.price||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:right">₱${parseFloat((i.price||0)*(i.quantity||1)).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Invoice ${o.orderNumber}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #111; padding: 40px; max-width: 700px; margin: 0 auto; }
+    .logo { font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #c9a96e; margin-bottom: 4px; }
+    .tagline { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 32px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+    .invoice-title { font-size: 28px; font-weight: 300; color: #333; margin: 0 0 6px; }
+    .invoice-meta { font-size: 12px; color: #666; line-height: 1.8; }
+    .section-title { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #888; margin: 24px 0 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .info-block p { margin: 2px 0; font-size: 13px; }
+    .info-block strong { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: #888; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { background: #f5f5f5; padding: 10px 12px; text-align: left; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: #666; }
+    thead th:last-child, thead th:nth-child(3), thead th:nth-child(2) { text-align: right; }
+    thead th:nth-child(2) { text-align: center; }
+    .totals { margin-top: 16px; text-align: right; }
+    .totals p { font-size: 13px; margin: 4px 0; color: #555; }
+    .total-final { font-size: 18px; font-weight: 700; color: #c9a96e; margin-top: 8px; }
+    .status { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; background: #fff8e7; color: #c9a96e; border: 1px solid #c9a96e; }
+    .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #eee; font-size: 11px; color: #aaa; text-align: center; }
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo">STREETWISE PH</div>
+      <div class="tagline">Luxury Streetwear · Philippines</div>
+    </div>
+    <div style="text-align:right">
+      <p class="invoice-title">Invoice</p>
+      <div class="invoice-meta">
+        <strong>Order #:</strong> ${o.orderNumber}<br>
+        <strong>Date:</strong> ${date}<br>
+        <strong>Status:</strong> <span class="status">${o.orderStatus||'pending'}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-block">
+      <strong>Bill To</strong>
+      <p>${name}</p>
+      <p>${phone}</p>
+      <p>${o.customerInfo?.email||''}</p>
+    </div>
+    <div class="info-block">
+      <strong>Ship To</strong>
+      <p>${address}</p>
+    </div>
+  </div>
+
+  <p class="section-title">Order Items</p>
+  <table>
+    <thead><tr>
+      <th>Product</th><th style="text-align:center">Qty</th>
+      <th style="text-align:right">Unit Price</th><th style="text-align:right">Amount</th>
+    </tr></thead>
+    <tbody>${itemsHtml}</tbody>
+  </table>
+
+  <div class="totals">
+    <p>Subtotal: ₱${parseFloat(o.subtotal||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</p>
+    <p>Shipping: ₱${parseFloat(o.shippingFee||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</p>
+    <p class="total-final">Total: ₱${parseFloat(o.total||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</p>
+  </div>
+
+  <p class="section-title">Payment</p>
+  <p style="font-size:13px">Cash on Delivery — Payment upon delivery</p>
+
+  <div class="footer">Thank you for shopping with Streetwise PH · streetwisemigs@gmail.com</div>
+  </body></html>`;
+
+  const blob   = new Blob([html], { type: 'text/html' });
+  const url    = URL.createObjectURL(blob);
+  const link   = document.createElement('a');
+  link.href    = url;
+  link.download = `Invoice-${o.orderNumber}.html`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  toast('Invoice downloaded.', 'success');
 };
 
 /* ── Date pickers init ────────────────────────────────────── */
