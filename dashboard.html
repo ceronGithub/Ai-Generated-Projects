@@ -414,11 +414,13 @@
           <div class="pm-row2">
             <div class="db-form-group">
               <label class="db-form-label">Category</label>
-              <input type="text" class="db-form-input" id="pf-category" placeholder="Men, Women, Unisex">
+              <input type="text" class="db-form-input" id="pf-category" placeholder="Men, Women, Unisex"
+                oninput="const s=$id('pf-cat-slug');if(!s.dataset.manual)s.value=this.value.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')">
             </div>
             <div class="db-form-group">
               <label class="db-form-label">Category Slug</label>
-              <input type="text" class="db-form-input" id="pf-cat-slug" placeholder="men, women, unisex">
+              <input type="text" class="db-form-input" id="pf-cat-slug" placeholder="men, women, unisex"
+                oninput="this.dataset.manual='1'">
             </div>
           </div>
           <div class="pm-row2">
@@ -511,9 +513,11 @@
      MAIN SCRIPT
 ════════════════════════════════════════════════════════════ -->
 <script type="module">
+import { db }                                                                from './js/firebase/f_config.js';
+import { collection, doc, getDoc, setDoc, updateDoc, onSnapshot }           from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { loginUser, logoutUser, onAuthChange }                               from './js/firebase/f_auth.js';
 import { getProductsAdmin, addProduct, updateProduct, deleteProduct }        from './js/firebase/f_products.js';
-import { getAllOrders, getOrder, updateOrderStatus }                          from './js/firebase/f_orders.js';
+import { getAllOrders, getRecentOrders, getOrder, updateOrderStatus }        from './js/firebase/f_orders.js';
 import { getInventory, updateStock, createInventoryForProduct, deleteInventoryForProduct } from './js/firebase/f_inventory.js';
 import { getSalesOverview, getSalesByDate, getSalesByProduct, getSalesByCategory } from './js/firebase/f_sales.js';
 import { getComments, deleteComment }                                        from './js/firebase/f_comments.js';
@@ -521,6 +525,14 @@ import { exportPDF, exportExcel, exportWord, exportPPT }                    from
 
 /* ── Helpers ──────────────────────────────────────────────── */
 function $id(id) { return document.getElementById(id); }
+
+// XSS-safe escape for user-generated content rendered in innerHTML
+function esc(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
 
 function toast(msg, type = 'info') {
   const c = $id('db-toasts');
@@ -604,6 +616,15 @@ onAuthChange(state => {
 
   loadOverview();
   loadRecentOrders();
+
+  // Real-time listener: auto-refresh when any guest places an order
+  if (!window._ordersListener) {
+    window._ordersListener = onSnapshot(collection(db, 'orders'), () => {
+      loadOverview();
+      if ($id('tab-overview')?.classList.contains('active')) loadRecentOrders();
+      if ($id('tab-orders')?.classList.contains('active'))   loadOrders();
+    }, err => console.warn('orders listener:', err.message));
+  }
 });
 
 /* ── Login ────────────────────────────────────────────────── */
@@ -642,7 +663,7 @@ async function loadOverview() {
 async function loadRecentOrders() {
   const tbody = $id('recent-orders-body');
   try {
-    const orders = (await getAllOrders()).slice(0, 10);
+    const orders = await getRecentOrders(10);
     renderOrdersTable(tbody, orders, 6);
   } catch(e) { console.error('loadRecentOrders', e); tbody.innerHTML = emptyRow(6, 'Failed to load orders.'); }
 }
@@ -819,16 +840,28 @@ $id('product-form').addEventListener('submit', async e => {
   const btn = $id('product-form-save');
   btn.disabled = true; btn.textContent = 'Saving...';
 
-  const id     = $id('pf-id').value;
-  const name   = $id('pf-name').value.trim();
+  const id    = $id('pf-id').value;
+  const name  = $id('pf-name').value.trim();
+  const price = parseFloat($id('pf-price').value);
+
+  if (!name) {
+    toast('Product name is required.', 'error');
+    btn.disabled = false; btn.textContent = 'Save Product';
+    return;
+  }
+  if (!price || isNaN(price) || price <= 0) {
+    toast('Please enter a valid price greater than 0.', 'error');
+    btn.disabled = false; btn.textContent = 'Save Product';
+    return;
+  }
   const sizes  = $id('pf-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
   const colors = $id('pf-colors').value.split(',').map(s=>s.trim()).filter(Boolean);
   const initialStock = parseInt($id('pf-stock')?.value || '0', 10) || 0;
   const data   = {
     name, sizes, colors,
     category:      $id('pf-category').value.trim(),
-    categorySlug:  $id('pf-cat-slug').value.trim(),
-    price:         parseFloat($id('pf-price').value),
+    categorySlug:  $id('pf-cat-slug').value.trim() || $id('pf-category').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''),
+    price,
     originalPrice: parseFloat($id('pf-original-price').value) || null,
     description:   $id('pf-description').value.trim(),
     imageUrl:      $id('pf-image').value,
@@ -908,13 +941,13 @@ window.viewOrder = async id => {
     const o = await getOrder(id);
     if (!o) return;
     _currentOrder = o;
-    const name    = o.guestName || o.customerInfo?.name || 'Guest';
-    const phone   = o.guestPhone || o.customerInfo?.phone || '—';
-    const address = o.shippingAddress || o.customerInfo?.address || '—';
+    const name    = esc(o.guestName || o.customerInfo?.name || 'Guest');
+    const phone   = esc(o.guestPhone || o.customerInfo?.phone || '—');
+    const address = esc(o.shippingAddress || o.customerInfo?.address || '—');
     $id('order-detail-body').innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-        <div><p class="db-form-label">Order #</p><p>${o.orderNumber || '—'}</p></div>
-        <div><p class="db-form-label">Status</p><span class="db-badge db-badge-${statusBadge(o.orderStatus)}">${o.orderStatus}</span></div>
+        <div><p class="db-form-label">Order #</p><p>${esc(o.orderNumber || '—')}</p></div>
+        <div><p class="db-form-label">Status</p><span class="db-badge db-badge-${statusBadge(o.orderStatus)}">${esc(o.orderStatus)}</span></div>
         <div><p class="db-form-label">Customer</p><p>${name}</p></div>
         <div><p class="db-form-label">Phone</p><p>${phone}</p></div>
         <div style="grid-column:1/-1"><p class="db-form-label">Address</p><p>${address}</p></div>
@@ -922,7 +955,7 @@ window.viewOrder = async id => {
       <p class="db-form-label" style="margin-bottom:12px">Items</p>
       ${(o.items||[]).map(i=>`
         <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #2a2520;font-size:.875rem">
-          <span>${i.productName||i.name||'Item'} ${i.size?'('+i.size+')':''} × ${i.quantity}</span>
+          <span>${esc(i.productName||i.name||'Item')} ${i.size?'('+esc(i.size)+')':''} × ${i.quantity}</span>
           <span>${price(i.totalPrice || i.price*i.quantity || 0)}</span>
         </div>`).join('')}
       <div style="display:flex;justify-content:space-between;padding:16px 0 0;font-weight:500">
@@ -960,14 +993,14 @@ async function loadComments() {
       const reply  = c.adminReply ? `
         <div style="margin:8px 0 0;padding:10px 14px;background:#1a1a1a;border-left:2px solid #c9a96e;border-radius:0 4px 4px 0">
           <p style="font-size:.7rem;color:#c9a96e;font-weight:500;margin:0 0 3px;text-transform:uppercase;letter-spacing:.06em">Owner Reply</p>
-          <p style="font-size:.83rem;color:#a09888;margin:0">${c.adminReply}</p>
+          <p style="font-size:.83rem;color:#a09888;margin:0">${esc(c.adminReply)}</p>
         </div>` : '';
       return `
       <div style="padding:16px 0;border-bottom:1px solid #2a2520">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
-              <p style="font-weight:500;font-size:.875rem;margin:0">${c.userName||c.guestName||'Guest'}</p>
+              <p style="font-weight:500;font-size:.875rem;margin:0">${esc(c.userName||c.guestName||'Guest')}</p>
               <div style="display:flex;align-items:center;gap:6px">
                 <div style="width:80px;height:5px;background:#2a2520;border-radius:3px;overflow:hidden">
                   <div style="width:${pct};height:100%;background:${col};border-radius:3px"></div>
@@ -975,7 +1008,7 @@ async function loadComments() {
                 <span style="font-size:.75rem;color:${col};font-weight:500">${pct}</span>
               </div>
             </div>
-            <p style="font-size:.875rem;color:#a09888;margin:0 0 4px">${c.content}</p>
+            <p style="font-size:.875rem;color:#a09888;margin:0 0 4px">${esc(c.content)}</p>
             <p style="font-size:.75rem;color:#5a5248;margin:0">${fdate(c.createdAt)}</p>
             ${reply}
             <div id="reply-form-${c.id}" style="display:none;margin-top:10px">
@@ -1006,8 +1039,6 @@ window.submitReply = async id => {
   const text  = input?.value.trim();
   if (!text) return;
   try {
-    const { db } = await import('./js/firebase/f_config.js');
-    const { doc, updateDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
     await updateDoc(doc(db, 'comments', id), { adminReply: text, repliedAt: new Date() });
     toast('Reply sent.', 'success');
     loadComments();
@@ -1024,8 +1055,6 @@ window.delComment = async id => {
 /* ── Contact Info ─────────────────────────────────────────── */
 async function loadContact() {
   try {
-    const { db } = await import('./js/firebase/f_config.js');
-    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
     const snap = await getDoc(doc(db, 'settings', 'contact'));
     if (snap.exists()) {
       const d = snap.data();
@@ -1045,8 +1074,6 @@ $id('btn-save-contact')?.addEventListener('click', async () => {
   const btn = $id('btn-save-contact');
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const { db } = await import('./js/firebase/f_config.js');
-    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
     const get = id => $id(id)?.value.trim() || '';
     await setDoc(doc(db, 'settings', 'contact'), {
       storeName: get('ci-store-name'),

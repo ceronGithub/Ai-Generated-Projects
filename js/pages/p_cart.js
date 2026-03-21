@@ -41,14 +41,15 @@ function renderCart() {
         onmouseover="this.style.background='var(--danger)';this.style.color='#fff';this.style.borderColor='var(--danger)'"
         onmouseout="this.style.background='var(--bg-elevated)';this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">✕</button>
       <div class="cart-item-img">
-        ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.name}">` : '<div style="width:100%;height:100%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-muted)">◈</div>'}
+        ${item.imageUrl ? `<img src="${item.imageUrl}" alt="${item.name.replace(/"/g,'&quot;')}">` : '<div style="width:100%;height:100%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;color:var(--text-muted)">◈</div>'}
       </div>
       <div>
-        <h4 class="cart-item-name">${item.name}</h4>
+        <h4 class="cart-item-name">${item.name.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</h4>
         <p class="cart-item-variant">${[item.size, item.color].filter(Boolean).join(" · ")}</p>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
           <div class="qty-control" style="transform:scale(0.9);transform-origin:left">
-            <button class="qty-btn" onclick="updQty('${item.cartId}',${item.quantity - 1})">−</button>
+            <button class="qty-btn" onclick="updQty('${item.cartId}',${item.quantity - 1})"
+              ${item.quantity <= 1 ? 'disabled style="opacity:.35;cursor:not-allowed"' : ''}>−</button>
             <span style="padding:0 12px;font-size:.875rem">${item.quantity}</span>
             <button class="qty-btn" onclick="updQty('${item.cartId}',${item.quantity + 1})">+</button>
           </div>

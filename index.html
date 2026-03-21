@@ -416,31 +416,54 @@
       const list = document.getElementById("featured-pin-list");
       list.innerHTML = "<p style='color:#5a5248;font-size:.85rem'>Loading products...</p>";
       try {
-        const snap    = await getDoc(SETTINGS_DOC);
-        const pinned  = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
-        // Use getFeaturedProducts first, fall back to getProductsAdmin
-        let products  = [];
-        try {
-          products = await getProductsAdmin();
-        } catch(e) {
-          products = await getFeaturedProducts();
-        }
+        const snap   = await getDoc(SETTINGS_DOC);
+        const pinned = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
+        let products = [];
+        try { products = await getProductsAdmin(); }
+        catch(e) { products = await getFeaturedProducts(); }
         if (!products.length) {
           list.innerHTML = "<p style='color:#5a5248;font-size:.85rem'>No products found. Add products from the dashboard first.</p>";
           return;
         }
-        list.innerHTML = products.map(p => `
-          <label style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1c1814;cursor:pointer">
-            <input type="checkbox" value="${p.id}" ${pinned.includes(p.id) ? "checked" : ""} style="accent-color:#c9a96e;width:15px;height:15px">
-            ${p.imageUrl ? `<img src="${p.imageUrl}" style="width:36px;height:44px;object-fit:cover;border-radius:4px;flex-shrink:0">` : `<div style="width:36px;height:44px;background:#1e1e1e;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#5a5248;font-size:.7rem">◈</div>`}
-            <div>
-              <p style="margin:0;font-size:.875rem;color:#f0ece4">${p.name}</p>
-              <p style="margin:0;font-size:.75rem;color:#5a5248">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})} · ${p.category||"—"} ${p.isActive===false ? '· <span style="color:#d94f4f">Hidden</span>' : ''}</p>
-            </div>
-          </label>`).join("");
+
+        // Pinned first, then unpinned
+        const sorted = [
+          ...products.filter(p =>  pinned.includes(p.id)),
+          ...products.filter(p => !pinned.includes(p.id))
+        ];
+
+        const rows = sorted.map(p => {
+          const isPinned  = pinned.includes(p.id);
+          const border    = isPinned ? '#c9a96e' : '#1c1814';
+          const bg        = isPinned ? 'rgba(201,169,110,.06)' : 'transparent';
+          const nameColor = isPinned ? '#f0ece4' : '#a09888';
+          const nameWeight= isPinned ? '500' : '400';
+          const thumb     = p.imageUrl
+            ? '<img src="' + p.imageUrl + '" style="width:40px;height:50px;object-fit:cover;border-radius:4px;flex-shrink:0">'
+            : '<div style="width:40px;height:50px;background:#1e1e1e;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#5a5248;font-size:.7rem">◈</div>';
+          const badge     = isPinned
+            ? '<span style="font-size:.62rem;color:#c9a96e;background:rgba(201,169,110,.12);border:1px solid rgba(201,169,110,.3);border-radius:20px;padding:2px 8px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0">📌 Pinned</span>'
+            : '<span style="font-size:.62rem;color:#3a332c;border:1px solid #2a2520;border-radius:20px;padding:2px 8px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0">Unpinned</span>';
+          const checked   = isPinned ? 'checked' : '';
+          const price     = '₱' + parseFloat(p.price).toLocaleString('en-PH', {minimumFractionDigits:2});
+          const cat       = p.category || '—';
+
+          return '<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:6px;cursor:pointer;margin-bottom:6px;border:1px solid ' + border + ';background:' + bg + '">'
+            + '<input type="checkbox" value="' + p.id + '" ' + checked + ' style="accent-color:#c9a96e;width:16px;height:16px;flex-shrink:0">'
+            + thumb
+            + '<div style="flex:1;min-width:0">'
+            +   '<p style="margin:0 0 2px;font-size:.875rem;color:' + nameColor + ';font-weight:' + nameWeight + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.name + '</p>'
+            +   '<p style="margin:0;font-size:.72rem;color:#5a5248">' + price + ' · ' + cat + '</p>'
+            + '</div>'
+            + badge
+            + '</label>';
+        });
+
+        list.innerHTML = rows.join('');
+
       } catch(e) {
-        console.error("openFeaturedPanel", e);
-        list.innerHTML = `<p style='color:#d94f4f;font-size:.85rem'>Failed to load products: ${e.message}</p>`;
+        console.error('openFeaturedPanel', e);
+        list.innerHTML = '<p style="color:#d94f4f;font-size:.85rem">Failed to load products: ' + e.message + '</p>';
       }
     };
 
@@ -461,34 +484,55 @@
       const grid = document.getElementById("featured-grid");
       if (!grid) return;
       try {
-        let products;
-        if (pinnedIds && pinnedIds.length) {
-          const all = await getProductsAdmin();
-          products  = pinnedIds.map(id => all.find(p => p.id === id)).filter(Boolean);
-        } else {
-          products = await getFeaturedProducts();
-        }
-        if (!products.length) {
+        let allProducts = [];
+        try { allProducts = await getProductsAdmin(); }
+        catch(e) { allProducts = await getFeaturedProducts(); }
+
+        const pinnedProducts   = pinnedIds && pinnedIds.length
+          ? pinnedIds.map(id => allProducts.find(p => p.id === id)).filter(Boolean)
+          : [];
+        const unpinnedProducts = allProducts.filter(p => !pinnedIds?.includes(p.id) && p.isActive !== false);
+
+        if (!pinnedProducts.length && !unpinnedProducts.length) {
           grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet.</p>';
           return;
         }
-        grid.innerHTML = products.map(p => `
-          <div class="product-card">
-            <div class="product-img-wrap">
-              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
-              <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
-              <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
-            </div>
-            <div class="product-info">
-              <p class="product-category">${p.category || ""}</p>
-              <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-              <div class="product-price">
-                <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
-                ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
-              </div>
-            </div>
-          </div>`).join("");
-      } catch(e) { console.error(e); }
+
+        const cardHtml = (p, pinned) => {
+          const wrap  = pinned
+            ? 'outline:2px solid var(--accent);outline-offset:3px;border-radius:var(--radius-md)'
+            : '';
+          const badge = pinned
+            ? '<span class="badge badge-accent" style="letter-spacing:.06em">★ Pinned</span>'
+            : '<span class="badge" style="background:rgba(255,255,255,.06);color:var(--text-muted)">Featured</span>';
+          const orig  = p.originalPrice
+            ? '<span class="price-original">₱' + parseFloat(p.originalPrice).toLocaleString('en-PH',{minimumFractionDigits:2}) + '</span>'
+            : '';
+          const img   = p.imageUrl
+            ? '<img src="' + p.imageUrl + '" alt="' + p.name + '" loading="lazy">'
+            : '<div class="product-img-placeholder">◈</div>';
+          return '<div class="product-card" style="' + wrap + '">'
+            + '<div class="product-img-wrap">'
+            +   img
+            +   '<div class="product-badges">' + badge + '</div>'
+            +   '<div class="product-actions"><button class="product-quick-add" onclick="quickAdd(\'' + p.id + '\',\'' + p.name.replace(/'/g,"\\'") + '\',' + p.price + ',\'' + (p.imageUrl||'') + '\')">Add to Cart</button></div>'
+            + '</div>'
+            + '<div class="product-info">'
+            +   '<p class="product-category">' + (p.category||'') + '</p>'
+            +   '<h3 class="product-name"><a href="product.html?id=' + p.id + '">' + p.name + '</a></h3>'
+            +   '<div class="product-price">'
+            +     '<span class="price-current">₱' + parseFloat(p.price).toLocaleString('en-PH',{minimumFractionDigits:2}) + '</span>'
+            +     orig
+            +   '</div>'
+            + '</div>'
+            + '</div>';
+        };
+
+        grid.innerHTML =
+          pinnedProducts.map(p => cardHtml(p, true)).join('') +
+          unpinnedProducts.map(p => cardHtml(p, false)).join('');
+
+      } catch(e) { console.error("renderFeaturedGrid", e); }
     }
 
     // Pre-populate admin panel fields when opened
@@ -562,42 +606,17 @@
 
     // ── Featured products initial load ───────────────────
     async function loadFeaturedGrid() {
-      const grid = document.getElementById("featured-grid");
-      if (!grid) return;
       try {
-        let products = [];
+        let pinnedIds = [];
         try {
-          const snap   = await getDoc(SETTINGS_DOC);
-          const pinned = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
-          if (pinned.length) {
-            const all = await getProductsAdmin();
-            products  = pinned.map(id => all.find(p => p.id === id)).filter(Boolean);
-          }
-        } catch(e) { /* settings not available, use isFeatured flag */ }
-        if (!products.length) products = await getFeaturedProducts();
-        if (!products.length) {
-          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet. Add products via the owner dashboard.</p>';
-          return;
-        }
-        grid.innerHTML = products.map(p => `
-          <div class="product-card">
-            <div class="product-img-wrap">
-              ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : '<div class="product-img-placeholder">◈</div>'}
-              <div class="product-badges"><span class="badge badge-accent">Featured</span></div>
-              <div class="product-actions"><button class="product-quick-add" onclick="quickAdd('${p.id}','${p.name.replace(/'/g,"\\'")}',${p.price},'${p.imageUrl||""}')">Add to Cart</button></div>
-            </div>
-            <div class="product-info">
-              <p class="product-category">${p.category || ""}</p>
-              <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-              <div class="product-price">
-                <span class="price-current">₱${parseFloat(p.price).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
-                ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
-              </div>
-            </div>
-          </div>`).join("");
+          const snap = await getDoc(SETTINGS_DOC);
+          pinnedIds  = snap.exists() ? (snap.data().pinnedFeatured || []) : [];
+        } catch(e) { /* settings unavailable */ }
+        await renderFeaturedGrid(pinnedIds);
       } catch(e) {
         console.error("loadFeaturedGrid", e);
-        grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet.</p>';
+        const grid = document.getElementById("featured-grid");
+        if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px">No featured products yet.</p>';
       }
     }
     loadFeaturedGrid();
@@ -768,9 +787,9 @@
 
   <!-- FEATURED panel -->
   <div class="admin-panel" id="admin-panel-featured">
-    <p style="font-size:.82rem;color:#a09888;line-height:1.6;margin:0 0 16px">Select which products appear in the Featured section. Changes take effect immediately.</p>
-    <div id="featured-pin-list" style="margin-bottom:16px"></div>
-    <button class="admin-save-btn" id="save-btn-featured" onclick="savePinnedFeatured()">Save Pinned</button>
+    <p style="font-size:.82rem;color:#a09888;line-height:1.6;margin:0 0 12px">Lagyan ng tsek ang mga produktong gusto mong i-pin. Ang mga naka-pin ay lalabas nang mas malaki sa Featured section. Lahat ng aktibong produkto ay makikita rin sa ibaba.</p>
+    <div id="featured-pin-list" style="margin-bottom:16px;max-height:420px;overflow-y:auto"></div>
+    <button class="admin-save-btn" id="save-btn-featured" onclick="savePinnedFeatured()">I-save ang Pinned</button>
   </div>
 
   <!-- ABOUT panel -->
