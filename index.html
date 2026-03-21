@@ -14,7 +14,8 @@
     .featured-section{padding:96px 0}
     .about-section{padding:96px 0;background:var(--bg-secondary);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
     .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
-    .about-visual{aspect-ratio:4/5;background:linear-gradient(135deg,var(--bg-elevated) 0%,var(--bg-card) 100%);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:6rem;color:var(--border-light);border:1px solid var(--border)}
+    .about-visual{aspect-ratio:4/5;background:linear-gradient(135deg,var(--bg-elevated) 0%,var(--bg-card) 100%);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:6rem;color:var(--border-light);border:1px solid var(--border);overflow:hidden;position:relative}
+    .about-visual img{width:100%;height:100%;object-fit:cover;border-radius:var(--radius-lg);display:block}
     .value-list{list-style:none;margin-top:24px}
     .value-list li{padding:12px 0;border-bottom:1px solid var(--border);font-size:.9375rem;color:var(--text-secondary);display:flex;align-items:center;gap:12px}
     .value-list li::before{content:'—';color:var(--accent)}
@@ -187,7 +188,9 @@
           </ul>
           <a href="shop.html" class="btn btn-primary" style="margin-top:32px">Shop The Collection</a>
         </div>
-        <div class="about-visual">◈</div>
+        <div class="about-visual" id="about-visual-wrap">
+          <span id="about-visual-placeholder">◈</span>
+        </div>
       </div>
     </div>
   </section>
@@ -308,6 +311,28 @@
           const lis   = document.querySelectorAll(".value-list li");
           items.forEach((v, i) => { if (lis[i]) lis[i].textContent = v; });
         }
+        // About image
+        const wrap = document.getElementById("about-visual-wrap");
+        if (wrap) {
+          const existing = wrap.querySelector("img");
+          if (s.aboutImage) {
+            if (existing) {
+              existing.src = s.aboutImage;
+            } else {
+              const img = document.createElement("img");
+              img.src = s.aboutImage;
+              img.alt = "About Streetwise PH";
+              img.loading = "lazy";
+              const ph = document.getElementById("about-visual-placeholder");
+              if (ph) ph.style.display = "none";
+              wrap.appendChild(img);
+            }
+          } else if (existing) {
+            existing.remove();
+            const ph = document.getElementById("about-visual-placeholder");
+            if (ph) ph.style.display = "";
+          }
+        }
 
         // Footer
         if (s.footerDesc) document.querySelector(".footer-desc").textContent = s.footerDesc;
@@ -368,6 +393,7 @@
             aboutTitle:  get("ab-title"),
             aboutBody:   get("ab-body"),
             aboutValues: get("ab-values"),
+            aboutImage:  get("ab-image"),
           };
         } else if (section === "footer") {
           data = {
@@ -507,6 +533,10 @@
         set("ab-title",  s.aboutTitle);
         set("ab-body",   s.aboutBody);
         set("ab-values", s.aboutValues);
+        set("ab-image",  s.aboutImage);
+        // Show preview if image already saved
+        const prev = document.getElementById("ab-img-preview");
+        if (prev && s.aboutImage) { prev.src = s.aboutImage; prev.style.display = "block"; }
       } catch(e) {}
     };
     window.openFooterPanel = async function() {
@@ -761,6 +791,17 @@
       <label class="admin-field-label">Value List</label>
       <textarea class="admin-textarea" id="ab-values" style="min-height:100px" placeholder="320gsm heavyweight cotton on every tee&#10;Drop-shoulder, oversized silhouettes&#10;Minimal branding, maximum presence&#10;Limited runs — never restocked"></textarea>
       <p class="admin-hint">One item per line — each becomes a bullet point</p>
+    </div>
+    <div class="admin-field-group">
+      <label class="admin-field-label">About Image URL</label>
+      <input type="url" class="admin-input" id="ab-image" placeholder="https://i.ibb.co/your-image.jpg"
+        oninput="
+          const p=document.getElementById('ab-img-preview');
+          if(this.value){p.src=this.value;p.style.display='block';}
+          else{p.style.display='none';}">
+      <img id="ab-img-preview" src="" alt="Preview"
+        style="display:none;width:100%;margin-top:8px;border-radius:6px;object-fit:cover;max-height:140px;border:1px solid #2a2520">
+      <p class="admin-hint">Paste a direct image link (e.g. from imgbb.com). This appears on the right side of the About section.</p>
     </div>
     <button class="admin-save-btn" id="save-btn-about" onclick="saveHomepageSection('about')">Save About</button>
   </div>

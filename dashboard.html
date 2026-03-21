@@ -428,7 +428,7 @@
             <label class="db-form-label">Description</label>
             <textarea class="db-form-input pm-textarea" id="pf-description" placeholder="Product description..."></textarea>
           </div>
-          <div class="pm-row2">
+          <div class="pm-row2" style="grid-template-columns:1fr 1fr 1fr">
             <div class="db-form-group pm-no-mb">
               <label class="db-form-label">Sizes <span class="pm-sublabel">comma separated</span></label>
               <input type="text" class="db-form-input" id="pf-sizes" placeholder="XS,S,M,L,XL">
@@ -436,6 +436,10 @@
             <div class="db-form-group pm-no-mb">
               <label class="db-form-label">Colors <span class="pm-sublabel">comma separated</span></label>
               <input type="text" class="db-form-input" id="pf-colors" placeholder="Black,White,Grey">
+            </div>
+            <div class="db-form-group pm-no-mb">
+              <label class="db-form-label">Stock <span class="pm-sublabel">initial qty</span></label>
+              <input type="number" class="db-form-input" id="pf-stock" min="0" placeholder="How many">
             </div>
           </div>
         </div>
@@ -765,6 +769,7 @@ window.openAddProductFromGuide = function() {
     $id('pf-id').value = '';
     $id('pf-active').checked = true;
     $id('pf-image').value = '';
+    if ($id('pf-stock')) $id('pf-stock').value = '';
     updateImgPreview('');
     openDbModal('product-modal');
   }, 250);
@@ -787,6 +792,7 @@ window.editProduct = async id => {
   $id('pf-featured').checked     = !!p.isFeatured;
   $id('pf-active').checked       = p.isActive !== false;
   $id('pf-image').value = p.imageUrl || '';
+  if ($id('pf-stock')) $id('pf-stock').value = '';
   updateImgPreview(p.imageUrl || '');
   openDbModal('product-modal');
 };
@@ -810,6 +816,7 @@ $id('product-form').addEventListener('submit', async e => {
   const name   = $id('pf-name').value.trim();
   const sizes  = $id('pf-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
   const colors = $id('pf-colors').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const initialStock = parseInt($id('pf-stock')?.value || '0', 10) || 0;
   const data   = {
     name, sizes, colors,
     category:      $id('pf-category').value.trim(),
@@ -825,11 +832,11 @@ $id('product-form').addEventListener('submit', async e => {
   try {
     if (id) {
       await updateProduct(id, data);
-      await createInventoryForProduct(id, name, sizes, colors);
+      await createInventoryForProduct(id, name, sizes, colors, initialStock);
       toast('Product updated.', 'success');
     } else {
       const ref = await addProduct(data);
-      await createInventoryForProduct(ref.id, name, sizes, colors);
+      await createInventoryForProduct(ref.id, name, sizes, colors, initialStock);
       toast('Product added!', 'success');
     }
     closeDbModal('product-modal');
@@ -1061,96 +1068,137 @@ window.createInvoice = function() {
   const phone   = o.guestPhone || o.customerInfo?.phone || '—';
   const address = o.shippingAddress || o.customerInfo?.address || '—';
   const date    = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}) : new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
-  const itemsHtml = (o.items||[]).map(i => `
-    <tr>
-      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">${i.productName||i.name||'Item'}${i.size?' ('+i.size+')':''}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:center">${i.quantity}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:right">₱${parseFloat(i.price||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:13px;text-align:right">₱${parseFloat((i.price||0)*(i.quantity||1)).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
-    </tr>`).join('');
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Invoice ${o.orderNumber}</title>
-  <style>
-    body { font-family: Arial, sans-serif; color: #111; padding: 40px; max-width: 700px; margin: 0 auto; }
-    .logo { font-size: 22px; font-weight: 700; letter-spacing: 3px; color: #c9a96e; margin-bottom: 4px; }
-    .tagline { font-size: 11px; color: #888; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 32px; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
-    .invoice-title { font-size: 28px; font-weight: 300; color: #333; margin: 0 0 6px; }
-    .invoice-meta { font-size: 12px; color: #666; line-height: 1.8; }
-    .section-title { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #888; margin: 24px 0 8px; border-bottom: 1px solid #eee; padding-bottom: 4px; }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    .info-block p { margin: 2px 0; font-size: 13px; }
-    .info-block strong { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: #888; }
-    table { width: 100%; border-collapse: collapse; }
-    thead th { background: #f5f5f5; padding: 10px 12px; text-align: left; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: #666; }
-    thead th:last-child, thead th:nth-child(3), thead th:nth-child(2) { text-align: right; }
-    thead th:nth-child(2) { text-align: center; }
-    .totals { margin-top: 16px; text-align: right; }
-    .totals p { font-size: 13px; margin: 4px 0; color: #555; }
-    .total-final { font-size: 18px; font-weight: 700; color: #c9a96e; margin-top: 8px; }
-    .status { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; background: #fff8e7; color: #c9a96e; border: 1px solid #c9a96e; }
-    .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #eee; font-size: 11px; color: #aaa; text-align: center; }
-  </style></head><body>
-  <div class="header">
-    <div>
-      <div class="logo">STREETWISE PH</div>
-      <div class="tagline">Luxury Streetwear · Philippines</div>
-    </div>
-    <div style="text-align:right">
-      <p class="invoice-title">Invoice</p>
-      <div class="invoice-meta">
-        <strong>Order #:</strong> ${o.orderNumber}<br>
-        <strong>Date:</strong> ${date}<br>
-        <strong>Status:</strong> <span class="status">${o.orderStatus||'pending'}</span>
-      </div>
-    </div>
-  </div>
+  // Auto-download as real PDF using jsPDF
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  script.onload = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const W = 210;
+    let y = 20;
 
-  <div class="info-grid">
-    <div class="info-block">
-      <strong>Bill To</strong>
-      <p>${name}</p>
-      <p>${phone}</p>
-      <p>${o.customerInfo?.email||''}</p>
-    </div>
-    <div class="info-block">
-      <strong>Ship To</strong>
-      <p>${address}</p>
-    </div>
-  </div>
+    // Header
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(18);
+    doc.setTextColor(201,169,110);
+    doc.text('STREETWISE PH', 14, y);
+    doc.setFontSize(8);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(120,120,120);
+    doc.text('LUXURY STREETWEAR · PHILIPPINES', 14, y+5);
 
-  <p class="section-title">Order Items</p>
-  <table>
-    <thead><tr>
-      <th>Product</th><th style="text-align:center">Qty</th>
-      <th style="text-align:right">Unit Price</th><th style="text-align:right">Amount</th>
-    </tr></thead>
-    <tbody>${itemsHtml}</tbody>
-  </table>
+    // Invoice title right side
+    doc.setFontSize(22);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(60,60,60);
+    doc.text('Invoice', W-14, y, { align:'right' });
+    doc.setFontSize(9);
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(100,100,100);
+    doc.text(`Order #: ${o.orderNumber}`, W-14, y+7, { align:'right' });
+    doc.text(`Date: ${date}`, W-14, y+12, { align:'right' });
+    doc.text(`Status: ${(o.orderStatus||'pending').toUpperCase()}`, W-14, y+17, { align:'right' });
 
-  <div class="totals">
-    <p>Subtotal: ₱${parseFloat(o.subtotal||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</p>
-    <p>Shipping: ₱${parseFloat(o.shippingFee||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</p>
-    <p class="total-final">Total: ₱${parseFloat(o.total||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</p>
-  </div>
+    // Divider
+    y += 26;
+    doc.setDrawColor(220,220,220);
+    doc.setLineWidth(0.4);
+    doc.line(14, y, W-14, y);
 
-  <p class="section-title">Payment</p>
-  <p style="font-size:13px">Cash on Delivery — Payment upon delivery</p>
+    // Bill to / Ship to
+    y += 8;
+    doc.setFontSize(8);
+    doc.setTextColor(150,150,150);
+    doc.setFont('helvetica','bold');
+    doc.text('BILL TO', 14, y);
+    doc.text('SHIP TO', W/2+5, y);
+    y += 5;
+    doc.setFont('helvetica','normal');
+    doc.setTextColor(50,50,50);
+    doc.setFontSize(10);
+    doc.text(name, 14, y);
+    doc.text(address, W/2+5, y, { maxWidth: 85 });
+    y += 5;
+    doc.setFontSize(9);
+    doc.setTextColor(100,100,100);
+    doc.text(phone, 14, y);
+    if (o.customerInfo?.email) { y+=5; doc.text(o.customerInfo.email, 14, y); }
 
-  <div class="footer">Thank you for shopping with Streetwise PH · streetwisemigs@gmail.com</div>
-  </body></html>`;
+    // Items table
+    y += 12;
+    doc.setDrawColor(220,220,220);
+    doc.line(14, y, W-14, y);
+    y += 6;
+    doc.setFontSize(8);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(130,130,130);
+    doc.text('PRODUCT', 14, y);
+    doc.text('QTY', 120, y, { align:'right' });
+    doc.text('UNIT PRICE', 155, y, { align:'right' });
+    doc.text('AMOUNT', W-14, y, { align:'right' });
+    y += 3;
+    doc.setDrawColor(220,220,220);
+    doc.line(14, y, W-14, y);
 
-  const blob   = new Blob([html], { type: 'text/html' });
-  const url    = URL.createObjectURL(blob);
-  const link   = document.createElement('a');
-  link.href    = url;
-  link.download = `Invoice-${o.orderNumber}.html`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  toast('Invoice downloaded.', 'success');
+    (o.items||[]).forEach(i => {
+      y += 7;
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(10);
+      doc.setTextColor(50,50,50);
+      const itemName = `${i.productName||i.name||'Item'}${i.size?' ('+i.size+')':''}`;
+      doc.text(itemName, 14, y, { maxWidth:90 });
+      doc.text(String(i.quantity), 120, y, { align:'right' });
+      doc.text('₱'+parseFloat(i.price||0).toLocaleString('en-PH',{minimumFractionDigits:2}), 155, y, { align:'right' });
+      doc.text('₱'+parseFloat((i.price||0)*(i.quantity||1)).toLocaleString('en-PH',{minimumFractionDigits:2}), W-14, y, { align:'right' });
+      doc.setDrawColor(240,240,240);
+      doc.line(14, y+2, W-14, y+2);
+    });
+
+    // Totals
+    y += 12;
+    doc.setFontSize(9);
+    doc.setTextColor(100,100,100);
+    doc.text('Subtotal:', 140, y);
+    doc.text('₱'+parseFloat(o.subtotal||0).toLocaleString('en-PH',{minimumFractionDigits:2}), W-14, y, { align:'right' });
+    y += 6;
+    doc.text('Shipping:', 140, y);
+    doc.text('₱'+parseFloat(o.shippingFee||0).toLocaleString('en-PH',{minimumFractionDigits:2}), W-14, y, { align:'right' });
+    y += 6;
+    doc.setDrawColor(200,200,200);
+    doc.line(130, y, W-14, y);
+    y += 6;
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(12);
+    doc.setTextColor(201,169,110);
+    doc.text('TOTAL', 140, y);
+    doc.text('₱'+parseFloat(o.total||0).toLocaleString('en-PH',{minimumFractionDigits:2}), W-14, y, { align:'right' });
+
+    // Payment
+    y += 12;
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(150,150,150);
+    doc.text('PAYMENT METHOD', 14, y);
+    y += 5;
+    doc.setFontSize(10);
+    doc.setTextColor(60,60,60);
+    doc.text('Cash on Delivery — Payment upon delivery', 14, y);
+
+    // Footer
+    y = 280;
+    doc.setDrawColor(220,220,220);
+    doc.line(14, y, W-14, y);
+    y += 5;
+    doc.setFontSize(8);
+    doc.setTextColor(160,160,160);
+    doc.text('Thank you for shopping with Streetwise PH · streetwisemigs@gmail.com', W/2, y, { align:'center' });
+
+    doc.save(`Invoice-${o.orderNumber}.pdf`);
+    toast('Invoice downloaded.', 'success');
+  };
+  script.onerror = () => toast('Failed to load PDF library.', 'error');
+  document.head.appendChild(script);
 };
 
 /* ── Date pickers init ────────────────────────────────────── */
