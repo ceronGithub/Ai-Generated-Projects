@@ -12,8 +12,13 @@ let allProducts  = [];
 let currentPage  = 1;
 let currentCat   = "";
 let currentSearch = "";
-let stockCache   = {}; // productId → total quantity
+let stockCache   = {}; // productId → total quantity — cleared on filter/page change
 const PAGE_SIZE  = 12;
+
+// XSS-safe escape for product data rendered in innerHTML
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 async function loadCategories() {
   try {
@@ -30,6 +35,7 @@ async function loadProducts() {
   const grid = document.getElementById("products-grid");
   if (!grid) return;
   grid.innerHTML = '<div class="flex-center" style="grid-column:1/-1;padding:60px"><div class="spinner"></div></div>';
+  stockCache = {}; // clear stale stock data on each load
   try {
     const result = await getProducts({ category: currentCat, search: currentSearch });
     // getProducts returns {products, total, pages} — extract the array
@@ -77,7 +83,7 @@ function renderCard(p) {
 
   const imgStyle   = outOfStock ? ' style="filter:blur(3px) brightness(.6)"' : '';
   const img        = p.imageUrl
-    ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy"${imgStyle}>`
+    ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy"${imgStyle}>`
     : `<div class="product-img-placeholder"${imgStyle}>◈</div>`;
 
   const outOverlay = outOfStock
@@ -105,8 +111,8 @@ function renderCard(p) {
         ${action}
       </div>
       <div class="product-info">
-        <p class="product-category">${p.category || ""}</p>
-        <h3 class="product-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+        <p class="product-category">${esc(p.category || "")}</p>
+        <h3 class="product-name"><a href="product.html?id=${esc(p.id)}">${esc(p.name)}</a></h3>
         <div class="product-price">
           <span class="price-current"${priceStyle}>₱${parseFloat(p.price).toLocaleString("en-PH", {minimumFractionDigits:2})}</span>
           ${p.originalPrice ? `<span class="price-original">₱${parseFloat(p.originalPrice).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>` : ""}
