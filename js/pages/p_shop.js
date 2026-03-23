@@ -7,6 +7,7 @@ import { getProducts, getCategories } from "../firebase/f_products.js";
 import { addToCart } from "../firebase/f_cart.js";
 import { db } from "../firebase/f_config.js";
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getProductImages, encodeImages, initSlideshows } from "../utils/slideshow.js";
 
 let allProducts  = [];
 let currentPage  = 1;
@@ -69,6 +70,7 @@ async function loadProducts() {
 
     grid.innerHTML = paged.map(renderCard).join("");
     renderPagination(Math.ceil(total / PAGE_SIZE));
+    initSlideshows(grid);
   } catch(e) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--danger)">Failed to load products. Check your Firebase connection.</div>';
     console.error(e);
@@ -100,7 +102,7 @@ function renderCard(p) {
 
   return `
     <div class="product-card">
-      <div class="product-img-wrap" style="position:relative">
+      <div class="product-img-wrap" style="position:relative"${_dataImg}>
         ${img}
         ${outOverlay}
         <div class="product-badges">

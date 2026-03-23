@@ -279,6 +279,7 @@
 
   <script type="module">
     import { getFeaturedProducts, getProductsAdmin } from "./js/firebase/f_products.js";
+    import { getProductImages, encodeImages, initSlideshows } from "./js/utils/slideshow.js";
     import { addToCart }           from "./js/firebase/f_cart.js";
     import { loginUser, onAuthChange } from "./js/firebase/f_auth.js";
     import { db } from "./js/firebase/f_config.js";
@@ -627,8 +628,11 @@
             : '';
 
           // Image wrap — blur + overlay when out of stock
-          const imgTag = p.imageUrl
-            ? '<img src="' + p.imageUrl + '" alt="' + p.name + '" loading="lazy" style="' + (outOfStock ? 'filter:blur(3px) brightness(.6);' : '') + '">'
+          const _imgs   = getProductImages(p);
+          const _dAttr  = _imgs.length > 1 ? ' data-images="' + encodeImages(_imgs) + '"' : '';
+          const _imgSrc = _imgs[0] || '';
+          const imgTag = _imgSrc
+            ? '<img src="' + _imgSrc + '" alt="' + p.name + '" loading="lazy" style="transition:opacity 0.35s ease;' + (outOfStock ? 'filter:blur(3px) brightness(.6);' : '') + '">'
             : '<div class="product-img-placeholder" style="' + (outOfStock ? 'filter:blur(3px) brightness(.6);' : '') + '">◈</div>';
 
           const outOverlay = outOfStock
@@ -642,7 +646,7 @@
             : '<div class="product-actions"><button class="product-quick-add" onclick="quickAdd(\'' + p.id + '\',\'' + p.name.replace(/'/g,"\\'") + '\',' + p.price + ',\'' + (p.imageUrl||'') + '\')">Add to Cart</button></div>';
 
           return '<div class="product-card" style="' + wrap + '">'
-            + '<div class="product-img-wrap" style="position:relative">'
+            + '<div class="product-img-wrap" style="position:relative"' + _dAttr + '>'
             +   imgTag
             +   outOverlay
             +   '<div class="product-badges">' + mainBadge + stockBadge + '</div>'
@@ -662,6 +666,7 @@
         grid.innerHTML =
           pinnedProducts.map(p => cardHtml(p, true)).join('') +
           unpinnedProducts.map(p => cardHtml(p, false)).join('');
+        initSlideshows(grid);
 
       } catch(e) { console.error("renderFeaturedGrid", e); }
     }
