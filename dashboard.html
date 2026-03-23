@@ -455,15 +455,27 @@
 
         <!-- RIGHT -->
         <div class="pm-right">
-          <p class="pm-section-label">Product Image</p>
+          <p class="pm-section-label">Product Images</p>
+
+          <!-- Image gallery strip -->
+          <div class="pm-img-gallery" id="pm-img-gallery">
+            <!-- thumbnails injected by JS -->
+          </div>
+
+          <!-- Selected image preview -->
           <div class="pm-img-box">
             <img id="img-preview" src="" alt="" class="pm-img-preview">
             <span id="img-placeholder" class="pm-img-placeholder">◈</span>
           </div>
-          <input type="url" class="db-form-input pm-img-input" id="pf-image"
-            placeholder="https://i.ibb.co/..."
-            oninput="updateImgPreview(this.value)">
-          <p class="pm-img-hint">Upload to <a href="https://imgbb.com" target="_blank" class="guide-link">imgbb.com</a> → copy Direct link</p>
+
+          <!-- Add image row -->
+          <div class="pm-img-add-row">
+            <input type="url" class="db-form-input pm-img-input" id="pf-image-new"
+              placeholder="https://i.ibb.co/... (paste URL then click +)">
+            <button type="button" class="db-btn db-btn-primary pm-img-add-btn" onclick="pmAddImage()">+</button>
+          </div>
+          <p class="pm-img-hint">Upload to <a href="https://imgbb.com" target="_blank" class="guide-link">imgbb.com</a> → copy Direct link. First image = main display.</p>
+
           <div class="pm-divider"></div>
           <p class="pm-section-label">Visibility</p>
           <div class="pm-toggles">
@@ -475,7 +487,7 @@
               </div>
             </label>
             <label class="pm-toggle">
-              <input type="checkbox" id="pf-active" checked class="pm-checkbox">
+              <input type="checkbox" id="pf-active" class="pm-checkbox">
               <div>
                 <p class="pm-toggle-title">Active</p>
                 <p class="pm-toggle-sub">Visible in shop</p>
@@ -796,7 +808,9 @@ window.openAddProductFromGuide = function() {
     $id('product-form').reset();
     $id('pf-id').value = '';
     $id('pf-active').checked = true;
-    $id('pf-image').value = '';
+    $id('pf-featured').checked = false;
+    $id('pf-image-new').value = '';
+    pmSetImages([]);
     const stockEl = $id('pf-stock');
     if (stockEl) {
       stockEl.value = '';
@@ -804,7 +818,6 @@ window.openAddProductFromGuide = function() {
       stockEl.disabled = false;
       stockEl.title = '';
     }
-    updateImgPreview('');
     openDbModal('product-modal');
   }, 250);
 };
@@ -825,7 +838,12 @@ window.editProduct = async id => {
   $id('pf-colors').value         = (p.colors||[]).join(',');
   $id('pf-featured').checked     = !!p.isFeatured;
   $id('pf-active').checked       = p.isActive !== false;
-  $id('pf-image').value = p.imageUrl || '';
+  $id('pf-image-new').value      = '';
+  // Load images array (support legacy single imageUrl)
+  const imgs = Array.isArray(p.images) && p.images.length
+    ? p.images
+    : (p.imageUrl ? [p.imageUrl] : []);
+  pmSetImages(imgs);
   // Stock field: clear and show hint that stock is managed in Inventory tab
   const stockEl = $id('pf-stock');
   if (stockEl) {
@@ -834,7 +852,6 @@ window.editProduct = async id => {
     stockEl.disabled = true;
     stockEl.title = 'Stock is managed per variant in the Inventory tab';
   }
-  updateImgPreview(p.imageUrl || '');
   openDbModal('product-modal');
 };
 
@@ -870,6 +887,7 @@ $id('product-form').addEventListener('submit', async e => {
   const sizes  = $id('pf-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
   const colors = $id('pf-colors').value.split(',').map(s=>s.trim()).filter(Boolean);
   const initialStock = parseInt($id('pf-stock')?.value || '0', 10) || 0;
+  const images = pmGetImages();
   const data   = {
     name, sizes, colors,
     category:      $id('pf-category').value.trim(),
@@ -877,7 +895,8 @@ $id('product-form').addEventListener('submit', async e => {
     price,
     originalPrice: parseFloat($id('pf-original-price').value) || null,
     description:   $id('pf-description').value.trim(),
-    imageUrl:      $id('pf-image').value,
+    images:        images,
+    imageUrl:      images[0] || '',   // legacy compat — keep first image as imageUrl
     isFeatured:    $id('pf-featured').checked,
     isActive:      $id('pf-active').checked,
   };
@@ -1255,25 +1274,75 @@ if ($id('date-from')) $id('date-from').value = first;
 if ($id('date-to'))   $id('date-to').value   = today;
 </script>
 
-<!-- IMAGE PREVIEW SCRIPT -->
+<!-- IMAGE MANAGER SCRIPT -->
 <script>
-function updateImgPreview(url) {
+// ── Multi-image state ──────────────────────────────────────
+let _pmImages = [];   // array of URL strings
+
+function pmGetImages() { return [..._pmImages]; }
+
+function pmSetImages(arr) {
+  _pmImages = arr.filter(u => u && u.trim());
+  pmRenderGallery();
+}
+
+function pmAddImage() {
+  const input = $id('pf-image-new');
+  const url   = (input.value || '').trim();
+  if (!url) return;
+  if (_pmImages.includes(url)) { toast('Image already added.', 'error'); return; }
+  _pmImages.push(url);
+  input.value = '';
+  pmRenderGallery();
+}
+
+function pmRemoveImage(idx) {
+  _pmImages.splice(idx, 1);
+  pmRenderGallery();
+}
+
+function pmSelectImage(idx) {
+  // Swap selected to first position (main image)
+  if (idx === 0) return;
+  const url = _pmImages.splice(idx, 1)[0];
+  _pmImages.unshift(url);
+  pmRenderGallery();
+}
+
+function pmRenderGallery() {
+  const gallery     = document.getElementById('pm-img-gallery');
   const preview     = document.getElementById('img-preview');
   const placeholder = document.getElementById('img-placeholder');
-  if (url && url.trim()) {
-    preview.src = url.trim();
-    preview.style.display = 'block';
-    if (placeholder) placeholder.style.display = 'none';
-    preview.onerror = () => {
-      preview.style.display = 'none';
-      if (placeholder) placeholder.style.display = 'block';
-    };
-  } else {
+
+  if (!_pmImages.length) {
+    gallery.innerHTML = '';
     preview.src = '';
     preview.style.display = 'none';
     if (placeholder) placeholder.style.display = 'block';
+    return;
   }
+
+  // Show first image as main preview
+  const mainUrl = _pmImages[0];
+  preview.src = mainUrl;
+  preview.style.display = 'block';
+  preview.onerror = () => { preview.style.display = 'none'; if (placeholder) placeholder.style.display = 'block'; };
+  if (placeholder) placeholder.style.display = 'none';
+
+  // Render thumbnails
+  gallery.innerHTML = _pmImages.map((url, i) => `
+    <div class="pm-thumb ${i === 0 ? 'pm-thumb-active' : ''}" title="${i === 0 ? 'Main image' : 'Click to set as main'}">
+      <img src="${url}" onerror="this.parentElement.style.opacity='.4'" onclick="pmSelectImage(${i})">
+      <button type="button" class="pm-thumb-del" onclick="pmRemoveImage(${i})" title="Remove">✕</button>
+      ${i === 0 ? '<span class="pm-thumb-badge">Main</span>' : ''}
+    </div>`).join('');
 }
+
+// Allow pressing Enter in the URL input to add image
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('pf-image-new');
+  if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pmAddImage(); } });
+});
 </script>
 
 </body>
