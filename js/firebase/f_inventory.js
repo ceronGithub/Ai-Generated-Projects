@@ -54,16 +54,29 @@ export async function createInventoryForProduct(productId, productName, sizes = 
   const writes = [];
   for (const size of effectiveSizes) {
     for (const color of effectiveColors) {
-      const id = invId(productId, size, color);
-      writes.push(setDoc(doc(db, INV, id), {
-        productId,
-        productName,
-        size:  size  || '',
-        color: color || '',
-        quantity: initialStock > 0 ? initialStock : 0,
-        lowStockThreshold: 5,
-        updatedAt: new Date()
-      }, { merge: true }));
+      const id    = invId(productId, size, color);
+      const ref   = doc(db, INV, id);
+      const snap  = await getDoc(ref);
+      if (snap.exists()) {
+        // Doc already exists — only update metadata, NEVER overwrite existing stock
+        writes.push(updateDoc(ref, {
+          productName,
+          size:  size  || '',
+          color: color || '',
+          updatedAt: new Date()
+        }));
+      } else {
+        // New doc — set with initial stock
+        writes.push(setDoc(ref, {
+          productId,
+          productName,
+          size:  size  || '',
+          color: color || '',
+          quantity: initialStock > 0 ? initialStock : 0,
+          lowStockThreshold: 5,
+          updatedAt: new Date()
+        }));
+      }
     }
   }
   await Promise.all(writes);

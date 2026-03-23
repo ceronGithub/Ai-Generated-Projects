@@ -471,7 +471,7 @@
               <input type="checkbox" id="pf-featured" class="pm-checkbox">
               <div>
                 <p class="pm-toggle-title">Featured</p>
-                <p class="pm-toggle-sub">Show on homepage</p>
+                <p class="pm-toggle-sub">✓ Checked = shows on homepage. Unchecked = hidden from homepage.</p>
               </div>
             </label>
             <label class="pm-toggle">
@@ -797,7 +797,13 @@ window.openAddProductFromGuide = function() {
     $id('pf-id').value = '';
     $id('pf-active').checked = true;
     $id('pf-image').value = '';
-    if ($id('pf-stock')) $id('pf-stock').value = '';
+    const stockEl = $id('pf-stock');
+    if (stockEl) {
+      stockEl.value = '';
+      stockEl.placeholder = 'How many';
+      stockEl.disabled = false;
+      stockEl.title = '';
+    }
     updateImgPreview('');
     openDbModal('product-modal');
   }, 250);
@@ -820,7 +826,14 @@ window.editProduct = async id => {
   $id('pf-featured').checked     = !!p.isFeatured;
   $id('pf-active').checked       = p.isActive !== false;
   $id('pf-image').value = p.imageUrl || '';
-  if ($id('pf-stock')) $id('pf-stock').value = '';
+  // Stock field: clear and show hint that stock is managed in Inventory tab
+  const stockEl = $id('pf-stock');
+  if (stockEl) {
+    stockEl.value = '';
+    stockEl.placeholder = 'Edit in Inventory tab';
+    stockEl.disabled = true;
+    stockEl.title = 'Stock is managed per variant in the Inventory tab';
+  }
   updateImgPreview(p.imageUrl || '');
   openDbModal('product-modal');
 };
