@@ -447,7 +447,7 @@
               <input type="text" class="db-form-input" id="pf-colors" placeholder="Black,White,Grey">
             </div>
             <div class="db-form-group pm-no-mb">
-              <label class="db-form-label">Stock <span class="pm-sublabel">initial qty</span></label>
+              <label class="db-form-label" id="pf-stock-label">Stock <span class="pm-sublabel" id="pf-stock-sublabel">initial qty</span></label>
               <input type="number" class="db-form-input" id="pf-stock" min="0" placeholder="How many">
             </div>
           </div>
@@ -530,7 +530,7 @@ import { collection, doc, getDoc, setDoc, updateDoc, onSnapshot }           from
 import { loginUser, logoutUser, onAuthChange }                               from './js/firebase/f_auth.js';
 import { getProductsAdmin, addProduct, updateProduct, deleteProduct }        from './js/firebase/f_products.js';
 import { getAllOrders, getRecentOrders, getOrder, updateOrderStatus }        from './js/firebase/f_orders.js';
-import { getInventory, updateStock, createInventoryForProduct, deleteInventoryForProduct } from './js/firebase/f_inventory.js';
+import { getInventory, updateStock, createInventoryForProduct, deleteInventoryForProduct, getProductInventory } from './js/firebase/f_inventory.js';
 import { getSalesOverview, getSalesByDate, getSalesByProduct, getSalesByCategory } from './js/firebase/f_sales.js';
 import { getComments, deleteComment }                                        from './js/firebase/f_comments.js';
 import { exportPDF, exportExcel, exportWord, exportPPT }                    from './js/firebase/f_export.js';
@@ -818,6 +818,8 @@ window.openAddProductFromGuide = function() {
       stockEl.disabled = false;
       stockEl.title = '';
     }
+    const sublabel = $id('pf-stock-sublabel');
+    if (sublabel) sublabel.textContent = 'initial qty';
     openDbModal('product-modal');
   }, 250);
 };
@@ -844,13 +846,23 @@ window.editProduct = async id => {
     ? p.images
     : (p.imageUrl ? [p.imageUrl] : []);
   pmSetImages(imgs);
-  // Stock field: clear and show hint that stock is managed in Inventory tab
+  // Stock field: show current total stock, disabled (managed in Inventory tab)
   const stockEl = $id('pf-stock');
+  const sublabel = $id('pf-stock-sublabel');
+  if (sublabel) sublabel.textContent = 'total (read-only)';
   if (stockEl) {
-    stockEl.value = '';
-    stockEl.placeholder = 'Edit in Inventory tab';
     stockEl.disabled = true;
-    stockEl.title = 'Stock is managed per variant in the Inventory tab';
+    stockEl.value = '';
+    stockEl.placeholder = 'Loading...';
+    stockEl.title = 'Total stock across all variants. Edit per-variant in the Inventory tab.';
+    // Fetch total stock async and show it
+    getProductInventory(p.id).then(rows => {
+      const total = rows.reduce((sum, r) => sum + (r.quantity || 0), 0);
+      stockEl.placeholder = '';
+      stockEl.value = total;
+    }).catch(() => {
+      stockEl.placeholder = 'See Inventory tab';
+    });
   }
   openDbModal('product-modal');
 };
@@ -1272,23 +1284,21 @@ const today = new Date().toISOString().split('T')[0];
 const first = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
 if ($id('date-from')) $id('date-from').value = first;
 if ($id('date-to'))   $id('date-to').value   = today;
-</script>
 
-<!-- IMAGE MANAGER SCRIPT -->
-<script>
-// ── Multi-image state ──────────────────────────────────────
-let _pmImages = [];   // array of URL strings
+/* ── Multi-image manager (window-exposed so inline onclick can reach them) ── */
+let _pmImages = [];
 
 function pmGetImages() { return [..._pmImages]; }
 
 function pmSetImages(arr) {
-  _pmImages = arr.filter(u => u && u.trim());
+  _pmImages = (arr || []).filter(u => u && u.trim());
   pmRenderGallery();
 }
 
 function pmAddImage() {
   const input = $id('pf-image-new');
-  const url   = (input.value || '').trim();
+  if (!input) return;
+  const url = input.value.trim();
   if (!url) return;
   if (_pmImages.includes(url)) { toast('Image already added.', 'error'); return; }
   _pmImages.push(url);
@@ -1302,7 +1312,6 @@ function pmRemoveImage(idx) {
 }
 
 function pmSelectImage(idx) {
-  // Swap selected to first position (main image)
   if (idx === 0) return;
   const url = _pmImages.splice(idx, 1)[0];
   _pmImages.unshift(url);
@@ -1310,9 +1319,10 @@ function pmSelectImage(idx) {
 }
 
 function pmRenderGallery() {
-  const gallery     = document.getElementById('pm-img-gallery');
-  const preview     = document.getElementById('img-preview');
-  const placeholder = document.getElementById('img-placeholder');
+  const gallery     = $id('pm-img-gallery');
+  const preview     = $id('img-preview');
+  const placeholder = $id('img-placeholder');
+  if (!gallery || !preview) return;
 
   if (!_pmImages.length) {
     gallery.innerHTML = '';
@@ -1322,27 +1332,35 @@ function pmRenderGallery() {
     return;
   }
 
-  // Show first image as main preview
   const mainUrl = _pmImages[0];
   preview.src = mainUrl;
   preview.style.display = 'block';
-  preview.onerror = () => { preview.style.display = 'none'; if (placeholder) placeholder.style.display = 'block'; };
+  preview.onerror = () => {
+    preview.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'block';
+  };
   if (placeholder) placeholder.style.display = 'none';
 
-  // Render thumbnails
-  gallery.innerHTML = _pmImages.map((url, i) => `
-    <div class="pm-thumb ${i === 0 ? 'pm-thumb-active' : ''}" title="${i === 0 ? 'Main image' : 'Click to set as main'}">
-      <img src="${url}" onerror="this.parentElement.style.opacity='.4'" onclick="pmSelectImage(${i})">
-      <button type="button" class="pm-thumb-del" onclick="pmRemoveImage(${i})" title="Remove">✕</button>
-      ${i === 0 ? '<span class="pm-thumb-badge">Main</span>' : ''}
-    </div>`).join('');
+  gallery.innerHTML = _pmImages.map((url, i) => {
+    const isMain = i === 0;
+    return `<div class="pm-thumb${isMain ? ' pm-thumb-active' : ''}" title="${isMain ? 'Main image' : 'Click to set as main'}">`
+      + `<img src="${url}" onerror="this.parentElement.style.opacity='.4'" onclick="window.pmSelectImage(${i})">`
+      + `<button type="button" class="pm-thumb-del" onclick="window.pmRemoveImage(${i})" title="Remove">✕</button>`
+      + (isMain ? '<span class="pm-thumb-badge">Main</span>' : '')
+      + `</div>`;
+  }).join('');
 }
 
-// Allow pressing Enter in the URL input to add image
-document.addEventListener('DOMContentLoaded', () => {
-  const inp = document.getElementById('pf-image-new');
-  if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pmAddImage(); } });
+// Expose to window so inline onclick attributes work
+window.pmAddImage    = pmAddImage;
+window.pmRemoveImage = pmRemoveImage;
+window.pmSelectImage = pmSelectImage;
+
+// Enter key on URL input
+$id('pf-image-new')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); pmAddImage(); }
 });
+
 </script>
 
 </body>

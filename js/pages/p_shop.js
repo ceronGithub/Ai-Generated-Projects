@@ -58,17 +58,17 @@ async function loadProducts() {
       if (pg) pg.innerHTML = "";
       return;
     }
-    grid.innerHTML = paged.map(renderCard).join("");
-    renderPagination(Math.ceil(total / PAGE_SIZE));
 
-    // Fetch stock for visible products and re-render with stock info
+    // Fetch stock for all visible products FIRST, then render once
     try {
       await Promise.all(paged.map(async p => {
         const snap = await getDocs(query(collection(db, 'inventory'), where('productId', '==', p.id)));
         stockCache[p.id] = snap.empty ? 999 : snap.docs.reduce((s, d) => s + (d.data().quantity || 0), 0);
       }));
-      grid.innerHTML = paged.map(renderCard).join("");
-    } catch(e) { /* stock check failed — leave cards as-is */ }
+    } catch(e) { /* stock check failed — render without stock info */ }
+
+    grid.innerHTML = paged.map(renderCard).join("");
+    renderPagination(Math.ceil(total / PAGE_SIZE));
   } catch(e) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--danger)">Failed to load products. Check your Firebase connection.</div>';
     console.error(e);

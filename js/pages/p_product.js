@@ -39,12 +39,46 @@ async function loadProduct() {
     const descEl = document.getElementById("product-desc");
     if (descEl) descEl.textContent = product.description || "";
 
-    // ── Image ─────────────────────────────────────────────
+    // ── Image gallery ─────────────────────────────────────
     const imgWrap = document.getElementById("product-main-img");
+    const thumbsWrap = document.getElementById("product-thumbnails");
+
+    // Build images list: prefer images[] array, fall back to imageUrl
+    const imgList = (Array.isArray(product.images) && product.images.length)
+      ? product.images
+      : (product.imageUrl ? [product.imageUrl] : []);
+
     if (imgWrap) {
-      imgWrap.innerHTML = product.imageUrl
-        ? `<img src="${product.imageUrl}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover;">`
-        : `<div style="width:100%;height:100%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:4rem;color:var(--text-muted)">◈</div>`;
+      if (imgList.length) {
+        imgWrap.innerHTML = `<img src="${imgList[0]}" alt="${product.name}" style="width:100%;height:100%;object-fit:cover;" id="product-main-img-el">`;
+      } else {
+        imgWrap.innerHTML = `<div style="width:100%;height:100%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:4rem;color:var(--text-muted)">◈</div>`;
+      }
+    }
+
+    // Render thumbnails if more than one image
+    if (thumbsWrap) {
+      if (imgList.length > 1) {
+        thumbsWrap.innerHTML = imgList.map((url, i) =>
+          `<div class="product-thumb${i === 0 ? ' active' : ''}" data-idx="${i}" style="cursor:pointer">
+            <img src="${url}" alt="${product.name} ${i + 1}" loading="lazy">
+          </div>`
+        ).join("");
+        thumbsWrap.style.display = "";
+        // Thumbnail click handler — swap main image, no cycling
+        thumbsWrap.querySelectorAll(".product-thumb").forEach(thumb => {
+          thumb.addEventListener("click", () => {
+            const idx = parseInt(thumb.dataset.idx);
+            const mainImg = document.getElementById("product-main-img-el");
+            if (mainImg) mainImg.src = imgList[idx];
+            thumbsWrap.querySelectorAll(".product-thumb").forEach(t => t.classList.remove("active"));
+            thumb.classList.add("active");
+          });
+        });
+      } else {
+        thumbsWrap.innerHTML = "";
+        thumbsWrap.style.display = "none";
+      }
     }
 
     // ── Price ─────────────────────────────────────────────
