@@ -102,7 +102,7 @@ function renderCard(p) {
 
   return `
     <div class="product-card">
-      <div class="product-img-wrap" style="position:relative"${_dataImg}>
+      <div class="product-img-wrap" style="position:relative">
         ${img}
         ${outOverlay}
         <div class="product-badges">
