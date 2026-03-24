@@ -1,150 +1,419 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contact — Streetwise PH</title>
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/navbar.css">
-  <style>
-    main { padding-top: 100px; padding-bottom: 80px; min-height: 100vh; }
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start; margin-top: 56px; }
-    .contact-info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 32px; margin-bottom: 20px; }
-    .contact-info-icon { font-size: 1.5rem; margin-bottom: 12px; }
-    .contact-info-label { font-size: .75rem; letter-spacing: .15em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-    .contact-info-value { font-size: 1rem; color: var(--text-primary); }
-    .contact-info-sub { font-size: .875rem; color: var(--text-muted); margin-top: 4px; }
-    .social-links { display: flex; gap: 12px; margin-top: 20px; }
-    .social-btn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-muted); transition: var(--transition); font-size: 1rem; }
-    .social-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .comment-section { margin-top: 80px; padding-top: 56px; border-top: 1px solid var(--border); }
-    @media(max-width:768px){ .contact-grid{grid-template-columns:1fr} }
-  </style>
-  <link rel="stylesheet" href="css/media-queries.css">
-</head>
-<body>
-  <div id="page-loader" class="page-loader"><div style="text-align:center"><p style="font-family:var(--font-display);font-size:2rem;color:var(--accent);letter-spacing:.3em">STREETWISE PH</p><div class="spinner" style="margin:16px auto"></div></div></div>
-  <div id="toast-container"></div>
-  <nav class="navbar" id="navbar">
-    <div style="display:flex;align-items:center;gap:48px">
-      <a href="index.html" class="nav-brand">STREETWISE PH</a>
-      <div class="nav-links">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="shop.html" class="nav-link">Shop</a>
-        <a href="contact.html" class="nav-link active">Contact</a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact — Streetwise PH</title>
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/navbar.css" />
+    <style>
+      main {
+        padding-top: 100px;
+        padding-bottom: 80px;
+        min-height: 100vh;
+      }
+      .contact-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: start;
+        margin-top: 56px;
+      }
+      .contact-info-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 32px;
+        margin-bottom: 20px;
+      }
+      .contact-info-icon {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+      }
+      .contact-info-label {
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+      }
+      .contact-info-value {
+        font-size: 1rem;
+        color: var(--text-primary);
+      }
+      .contact-info-sub {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .social-links {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .social-btn {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        color: var(--text-muted);
+        transition: var(--transition);
+        font-size: 1rem;
+      }
+      .social-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .comment-section {
+        margin-top: 80px;
+        padding-top: 56px;
+        border-top: 1px solid var(--border);
+      }
+      @media (max-width: 768px) {
+        .contact-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="css/media-queries.css" />
+  </head>
+  <body>
+    <div id="page-loader" class="page-loader">
+      <div style="text-align: center">
+        <p
+          style="
+            font-family: var(--font-display);
+            font-size: 2rem;
+            color: var(--accent);
+            letter-spacing: 0.3em;
+          "
+        >
+          STREETWISE PH
+        </p>
+        <div class="spinner" style="margin: 16px auto"></div>
       </div>
     </div>
-    <div class="nav-actions">
-      <a href="cart.html" class="nav-cart-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="cart-badge hidden" id="cart-badge">0</span></a>
-      <a href="#" id="nav-login-btn" class="nav-login-btn" onclick="openModal('login-modal');return false;">Sign In</a>
-      <div class="nav-user hidden" id="nav-user"><div class="nav-user-avatar">O</div><span class="nav-user-name"></span><a href="dashboard.html" id="nav-owner-link" class="nav-login-btn hidden">Dashboard</a><button class="nav-logout" id="nav-logout">Logout</button></div>
-            <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
-    </div>
-  </nav>
-
-  <div class="mobile-menu" id="mobile-menu">
-    <a href="index.html" class="nav-link">Home</a>
-    <a href="shop.html" class="nav-link">Shop</a>
-    <a href="contact.html" class="nav-link active">Contact</a>
-    <a href="cart.html" class="nav-link">Cart</a>
-  </div>
-
-  <main>
-    <div class="container">
-      <div style="max-width:600px">
-        <p class="section-subtitle">Get In Touch</p>
-        <h1 class="section-title">Contact Us</h1>
-        <div class="divider" style="margin:16px 0 0"></div>
-        <p style="color:var(--text-secondary);margin-top:16px;line-height:1.8">Have questions about an order, sizing, or anything else? We're here to help. Reach out through any of the channels below.</p>
+    <div id="toast-container"></div>
+    <nav class="navbar" id="navbar">
+      <div style="display: flex; align-items: center; gap: 48px">
+        <a href="index.html" class="nav-brand">STREETWISE PH</a>
+        <div class="nav-links">
+          <a href="index.html" class="nav-link">Home</a>
+          <a href="shop.html" class="nav-link">Shop</a>
+          <a href="contact.html" class="nav-link active">Contact</a>
+        </div>
       </div>
+      <div class="nav-actions">
+        <a href="cart.html" class="nav-cart-btn"
+          ><svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 01-8 0" /></svg
+          ><span class="cart-badge hidden" id="cart-badge">0</span></a
+        >
+        <a
+          href="#"
+          id="nav-login-btn"
+          class="nav-login-btn"
+          onclick="
+            openModal('login-modal');
+            return false;
+          "
+          >Sign In</a
+        >
+        <div class="nav-user hidden" id="nav-user">
+          <div class="nav-user-avatar">O</div>
+          <span class="nav-user-name"></span
+          ><a
+            href="dashboard.html"
+            id="nav-owner-link"
+            class="nav-login-btn hidden"
+            >Dashboard</a
+          ><button class="nav-logout" id="nav-logout">Logout</button>
+        </div>
+        <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </nav>
 
-      <div class="contact-grid">
-        <!-- OWNER CONTACT INFO -->
-        <div>
-          <div class="contact-info-card">
-            <div class="contact-info-icon">📱</div>
-            <p class="contact-info-label">Phone / WhatsApp</p>
-            <p class="contact-info-value">+63 912 345 6789</p>
-            <p class="contact-info-sub">Mon – Sat, 9:00 AM – 7:00 PM</p>
-          </div>
-          <div class="contact-info-card">
-            <div class="contact-info-icon">✉️</div>
-            <p class="contact-info-label">Email</p>
-            <p class="contact-info-value">hello@streetwise_ph.com</p>
-            <p class="contact-info-sub">We respond within 24 hours</p>
-          </div>
-          <div class="contact-info-card">
-            <div class="contact-info-icon">📍</div>
-            <p class="contact-info-label">Location</p>
-            <p class="contact-info-value">Metro Manila, Philippines</p>
-            <p class="contact-info-sub">Nationwide shipping via Cash on Delivery</p>
-          </div>
-          <div class="contact-info-card">
-            <div class="contact-info-icon">⏱</div>
-            <p class="contact-info-label">Processing Time</p>
-            <p class="contact-info-value">1–2 Business Days</p>
-            <p class="contact-info-sub">Orders are packed and dispatched quickly</p>
-          </div>
+    <div class="mobile-menu" id="mobile-menu">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="shop.html" class="nav-link">Shop</a>
+      <a href="contact.html" class="nav-link active">Contact</a>
+      <a href="cart.html" class="nav-link">Cart</a>
+    </div>
+
+    <main>
+      <div class="container">
+        <div style="max-width: 600px">
+          <p class="section-subtitle">Get In Touch</p>
+          <h1 class="section-title">Contact Us</h1>
+          <div class="divider" style="margin: 16px 0 0"></div>
+          <p
+            style="
+              color: var(--text-secondary);
+              margin-top: 16px;
+              line-height: 1.8;
+            "
+          >
+            Have questions about an order, sizing, or anything else? We're here
+            to help. Reach out through any of the channels below.
+          </p>
+        </div>
+
+        <div class="contact-grid">
+          <!-- OWNER CONTACT INFO -->
           <div>
-            <p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:12px;letter-spacing:.1em;text-transform:uppercase">Follow Us</p>
-            <div class="social-links">
-              <a href="#" class="social-btn" title="Instagram">📸</a>
-              <a href="#" class="social-btn" title="Facebook">👤</a>
-              <a href="#" class="social-btn" title="TikTok">🎵</a>
-              <a href="#" class="social-btn" title="Shopee">🛍</a>
+            <div class="contact-info-card">
+              <div class="contact-info-icon">📱</div>
+              <p class="contact-info-label">Phone / WhatsApp</p>
+              <p class="contact-info-value">+63 912 345 6789</p>
+              <p class="contact-info-sub">Mon – Sat, 9:00 AM – 7:00 PM</p>
+            </div>
+            <div class="contact-info-card">
+              <div class="contact-info-icon">✉️</div>
+              <p class="contact-info-label">Email</p>
+              <p class="contact-info-value">hello@streetwise_ph.com</p>
+              <p class="contact-info-sub">We respond within 24 hours</p>
+            </div>
+            <div class="contact-info-card">
+              <div class="contact-info-icon">📍</div>
+              <p class="contact-info-label">Location</p>
+              <p class="contact-info-value">Metro Manila, Philippines</p>
+              <p class="contact-info-sub">
+                Nationwide shipping via Cash on Delivery
+              </p>
+            </div>
+            <div class="contact-info-card">
+              <div class="contact-info-icon">⏱</div>
+              <p class="contact-info-label">Processing Time</p>
+              <p class="contact-info-value">1–2 Business Days</p>
+              <p class="contact-info-sub">
+                Orders are packed and dispatched quickly
+              </p>
+            </div>
+          </div>
+
+          <!-- COMMENT / MESSAGE SECTION -->
+          <div>
+            <h2
+              style="
+                font-family: var(--font-display);
+                font-size: 1.75rem;
+                font-weight: 300;
+                margin-bottom: 8px;
+              "
+            >
+              Leave a Message
+            </h2>
+            <p
+              style="
+                color: var(--text-secondary);
+                font-size: 0.9375rem;
+                margin-bottom: 28px;
+              "
+            >
+              Questions, feedback, or just want to say hi — leave it here.
+            </p>
+
+            <!-- PUBLIC COMMENTS FEED -->
+            <div
+              id="contact-comments"
+              style="margin-bottom: 32px; max-height: 320px; overflow-y: auto"
+            >
+              <div class="flex-center" style="padding: 32px">
+                <div class="spinner"></div>
+              </div>
+            </div>
+
+            <!-- COMMENT FORM -->
+            <div
+              style="
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-md);
+                padding: 24px;
+              "
+            >
+              <form id="contact-comment-form">
+                <div class="form-group">
+                  <label class="form-label">Your Name</label
+                  ><input
+                    type="text"
+                    name="guest_name"
+                    class="form-input"
+                    placeholder="How should we call you?"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Message</label
+                  ><textarea
+                    name="content"
+                    class="form-input"
+                    placeholder="Write your message here..."
+                    required
+                    style="min-height: 100px"
+                  ></textarea>
+                </div>
+                <div class="form-group">
+                  <label
+                    class="form-label"
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span>Rating</span>
+                    <span
+                      id="rating-val"
+                      style="
+                        font-weight: 500;
+                        font-size: 0.875rem;
+                        color: #e6a817;
+                      "
+                      >50%</span
+                    >
+                  </label>
+                  <input
+                    type="range"
+                    name="rating"
+                    id="rating-slider"
+                    min="1"
+                    max="100"
+                    value="50"
+                    style="
+                      width: 100%;
+                      accent-color: var(--accent);
+                      cursor: pointer;
+                      margin-bottom: 8px;
+                      display: block;
+                    "
+                    oninput="
+                      var v = +this.value,
+                        c =
+                          v >= 70 ? '#4caf76' : v >= 40 ? '#e6a817' : '#d94f4f';
+                      document.getElementById('rating-val').textContent =
+                        v + '%';
+                      document.getElementById('rating-val').style.color = c;
+                      document.getElementById('rating-fill').style.width =
+                        v + '%';
+                      document.getElementById('rating-fill').style.background =
+                        c;
+                    "
+                  />
+                  <div
+                    style="
+                      height: 5px;
+                      background: var(--border);
+                      border-radius: 3px;
+                      overflow: hidden;
+                      margin-bottom: 6px;
+                    "
+                  >
+                    <div
+                      id="rating-fill"
+                      style="
+                        height: 100%;
+                        width: 50%;
+                        background: #e6a817;
+                        border-radius: 3px;
+                        transition:
+                          width 0.15s,
+                          background 0.15s;
+                      "
+                    ></div>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      font-size: 0.7rem;
+                      color: var(--text-muted);
+                    "
+                  >
+                    <span>1% — Poor</span>
+                    <span>50% — Okay</span>
+                    <span>100% — Excellent</span>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                  Send Message
+                </button>
+              </form>
             </div>
           </div>
         </div>
+      </div>
+    </main>
 
-        <!-- COMMENT / MESSAGE SECTION -->
-        <div>
-          <h2 style="font-family:var(--font-display);font-size:1.75rem;font-weight:300;margin-bottom:8px">Leave a Message</h2>
-          <p style="color:var(--text-secondary);font-size:.9375rem;margin-bottom:28px">Questions, feedback, or just want to say hi — leave it here.</p>
-
-          <!-- PUBLIC COMMENTS FEED -->
-          <div id="contact-comments" style="margin-bottom:32px;max-height:320px;overflow-y:auto">
-            <div class="flex-center" style="padding:32px"><div class="spinner"></div></div>
-          </div>
-
-          <!-- COMMENT FORM -->
-          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:24px">
-            <form id="contact-comment-form">
-              <div class="form-group"><label class="form-label">Your Name</label><input type="text" name="guest_name" class="form-input" placeholder="How should we call you?" required></div>
-              <div class="form-group"><label class="form-label">Message</label><textarea name="content" class="form-input" placeholder="Write your message here..." required style="min-height:100px"></textarea></div>
-              <div class="form-group">
-                <label class="form-label" style="display:flex;justify-content:space-between;align-items:center">
-                  <span>Rating</span>
-                  <span id="rating-val" style="font-weight:500;font-size:.875rem;color:#e6a817">50%</span>
-                </label>
-                <input type="range" name="rating" id="rating-slider" min="1" max="100" value="50"
-                  style="width:100%;accent-color:var(--accent);cursor:pointer;margin-bottom:8px;display:block"
-                  oninput="
-                    var v=+this.value,
-                        c=v>=70?'#4caf76':v>=40?'#e6a817':'#d94f4f';
-                    document.getElementById('rating-val').textContent=v+'%';
-                    document.getElementById('rating-val').style.color=c;
-                    document.getElementById('rating-fill').style.width=v+'%';
-                    document.getElementById('rating-fill').style.background=c;
-                  ">
-                <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px">
-                  <div id="rating-fill" style="height:100%;width:50%;background:#e6a817;border-radius:3px;transition:width .15s,background .15s"></div>
-                </div>
-                <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted)">
-                  <span>1% — Poor</span>
-                  <span>50% — Okay</span>
-                  <span>100% — Excellent</span>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-primary">Send Message</button>
-            </form>
-          </div>
+    <div class="modal-overlay" id="login-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 class="modal-title">Sign In</h2>
+          <button class="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p
+            style="
+              font-size: 0.8125rem;
+              color: var(--text-muted);
+              margin-bottom: 20px;
+              padding: 10px 14px;
+              background: rgba(201, 169, 110, 0.06);
+              border-radius: var(--radius-sm);
+              border-left: 3px solid var(--accent);
+            "
+          >
+            🔐 For owner only.
+          </p>
+          <form id="signin-form">
+            <div class="form-group">
+              <label class="form-label">Email</label
+              ><input
+                type="email"
+                class="form-input"
+                id="si-email"
+                required
+                autocomplete="email"
+                placeholder="owner@streetwiseph.com"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label
+              ><input
+                type="password"
+                class="form-input"
+                id="si-password"
+                required
+                autocomplete="current-password"
+                placeholder="••••••••"
+              />
+            </div>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              style="width: 100%; justify-content: center"
+            >
+              Sign In
+            </button>
+          </form>
         </div>
       </div>
     </div>
-  </main>
 
-  <div class="modal-overlay" id="login-modal"><div class="modal"><div class="modal-header"><h2 class="modal-title">Sign In</h2><button class="modal-close">✕</button></div><div class="modal-body"><p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:20px;padding:10px 14px;background:rgba(201,169,110,0.06);border-radius:var(--radius-sm);border-left:3px solid var(--accent)">🔐 For owner only.</p><form id="signin-form"><div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="si-email" required autocomplete="email" placeholder="owner@streetwiseph.com"></div><div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="si-password" required autocomplete="current-password" placeholder="••••••••"></div><button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">Sign In</button></form></div></div></div>
-
-  <script type="module" src="js/pages/p_contact.js"></script>
-</body>
+    <script type="module" src="js/pages/p_contact.js"></script>
+  </body>
 </html>

@@ -3,6 +3,7 @@
 // Used by: shop.html, cart.html, product.html, contact.html
 // ============================================================
 import { logoutUser, loginUser, onAuthChange } from "../firebase/f_auth.js";
+import "../utils/floating_badge.js";
 
 // ── Globals ────────────────────────────────────────────────
 window.showToast = function(msg, type, ms) {
