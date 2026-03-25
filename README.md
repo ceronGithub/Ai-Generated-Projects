@@ -49,6 +49,9 @@ for achitect and civil : https://archivil-estimation.netlify.app/
 Streetwise ph : miguelito
 - facebookceron@gmail.com (claude ai project.)
 
+lovable projects
+ceroncalsena@gmail.com - CV builder
+
 # E-Com
 https://endorse-2txk.onrender.com
 
