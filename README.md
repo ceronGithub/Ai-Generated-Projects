@@ -51,6 +51,7 @@ Streetwise ph : miguelito
 
 # lovable projects
 ceroncalsena@gmail.com - CV builder
+roza1221.business@gmail.com - laravel tutorial
 
 # E-Com
 https://endorse-2txk.onrender.com
