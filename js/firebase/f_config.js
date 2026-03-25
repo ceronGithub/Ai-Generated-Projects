@@ -11,13 +11,12 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-s
 
 // ✏️ PASTE YOUR FIREBASE CONFIG HERE ──────────────────────
 const firebaseConfig = {
-  apiKey: "AIzaSyBK2OCIjgBolmwPo8qUfQjmDRVFIzzZ4IM",
-  authDomain: "streetwise-migs.firebaseapp.com",
-  databaseURL: "https://streetwise-migs-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "streetwise-migs",
-  storageBucket: "streetwise-migs.firebasestorage.app",
-  messagingSenderId: "150651729107",
-  appId: "1:150651729107:web:9a30da9f7129203054d026"
+  apiKey: "AIzaSyApXwj06EXN59jMiDcSb8bT3kOQuBdOiMA",
+  authDomain: "streetwiseph-backup-f4daf.firebaseapp.com",
+  projectId: "streetwiseph-backup-f4daf",
+  storageBucket: "streetwiseph-backup-f4daf.firebasestorage.app",
+  messagingSenderId: "727265220414",
+  appId: "1:727265220414:web:75b79754d1b8e7fcfabe6f"
 };
 // ─────────────────────────────────────────────────────────
 

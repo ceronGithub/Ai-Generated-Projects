@@ -4,29 +4,61 @@
   <meta charset="UTF-8">
   <title>Streetwise PH — Seed Database</title>
   <style>
-    body { background: #0a0a0a; color: #f0ece4; font-family: monospace; padding: 40px; }
+    body { background: #0a0a0a; color: #f0ece4; font-family: monospace; padding: 40px; max-width: 780px; }
     h1 { color: #c9a96e; margin-bottom: 24px; }
     button { background: #c9a96e; color: #0a0a0a; border: none; padding: 12px 28px; font-size: 1rem; cursor: pointer; border-radius: 4px; font-weight: 700; margin-bottom: 24px; }
     button:disabled { opacity: .5; cursor: not-allowed; }
+    button.secondary { background: transparent; color: #c9a96e; border: 1px solid #c9a96e; margin-left: 10px; }
     #log { background: #111; border: 1px solid #2a2520; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-size: .875rem; line-height: 1.8; max-height: 500px; overflow-y: auto; }
-    .ok  { color: #4caf76; }
-    .err { color: #d94f4f; }
-    .info{ color: #c9a96e; }
+    .ok   { color: #4caf76; }
+    .err  { color: #d94f4f; }
+    .info { color: #c9a96e; }
     p { color: #a09888; margin-bottom: 16px; line-height: 1.7; }
     .warn { background: rgba(230,168,23,.1); border: 1px solid rgba(230,168,23,.3); padding: 14px 18px; border-radius: 6px; color: #e6a817; margin-bottom: 24px; font-size: .875rem; }
+    #login-box { background: #111; border: 1px solid #2a2520; border-radius: 8px; padding: 28px; margin-bottom: 28px; }
+    #login-box h2 { color: #c9a96e; font-size: 1rem; margin: 0 0 18px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: .8rem; color: #a09888; margin-bottom: 6px; }
+    .field input { width: 100%; box-sizing: border-box; background: #1a1a1a; border: 1px solid #3a3530; color: #f0ece4; padding: 10px 14px; border-radius: 4px; font-size: .9rem; font-family: monospace; }
+    .field input:focus { outline: none; border-color: #c9a96e; }
+    #login-error { color: #d94f4f; font-size: .85rem; margin-bottom: 12px; display: none; }
+    #auth-status { font-size: .85rem; padding: 10px 14px; border-radius: 4px; margin-bottom: 20px; display: none; }
+    #auth-status.logged-in  { background: rgba(76,175,118,.1); border: 1px solid rgba(76,175,118,.3); color: #4caf76; display: block; }
+    #auth-status.logged-out { background: rgba(217,79,79,.1);  border: 1px solid rgba(217,79,79,.3);  color: #d94f4f; display: block; }
   </style>
 </head>
 <body>
   <h1>🌱 Streetwise PH — Seed Database</h1>
   <p>This script populates your Firebase Firestore with sample categories, products, and inventory. Run it <strong>once</strong> after setting up your Firebase project.</p>
-  <div class="warn">⚠️ Make sure you have updated <code>js/firebase/config.js</code> with your Firebase credentials before running this.</div>
-  <p>You must also be logged in as the <strong>owner</strong> account before seeding (Firestore rules require owner role to write products).</p>
-  <button id="seed-btn" onclick="runSeed()">🚀 Run Seed Data</button>
-  <div id="log">Ready. Click "Run Seed Data" to begin...\n</div>
+  <div class="warn">⚠️ Make sure you have updated <code>js/firebase/f_config.js</code> with your Firebase credentials before running this.</div>
+
+  <div id="auth-status"></div>
+
+  <!-- Step 1: Login -->
+  <div id="login-box">
+    <h2>Step 1 — Log in as Owner</h2>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="owner@streetwiseph.com" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Your password" />
+    </div>
+    <div id="login-error"></div>
+    <button id="login-btn" onclick="handleLogin()">🔑 Log In</button>
+    <button class="secondary" id="logout-btn" onclick="handleLogout()" style="display:none">Log Out</button>
+  </div>
+
+  <!-- Step 2: Seed -->
+  <p>Step 2 — Once logged in as owner, click the button below to seed the database.</p>
+  <button id="seed-btn" onclick="runSeed()" disabled>🚀 Run Seed Data</button>
+  <div id="log">Waiting for login...\n</div>
 
   <script type="module">
-    import { db, auth } from "./js/firebase/config.js";
-    import { collection, addDoc, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { db, auth } from "./js/firebase/f_config.js";
+    import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { collection, addDoc, setDoc, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const log = (msg, cls = "") => {
       const el = document.getElementById("log");
@@ -34,6 +66,67 @@
       el.scrollTop = el.scrollHeight;
     };
 
+    // ── Watch login state ────────────────────────────────────
+    onAuthStateChanged(auth, async (user) => {
+      const status    = document.getElementById("auth-status");
+      const seedBtn   = document.getElementById("seed-btn");
+      const loginBtn  = document.getElementById("login-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const role = userDoc.exists() ? userDoc.data().role : null;
+
+        if (role === "owner") {
+          status.className = "logged-in";
+          status.textContent = `✓ Logged in as owner: ${user.email}`;
+          seedBtn.disabled = false;
+          loginBtn.style.display = "none";
+          logoutBtn.style.display = "inline-block";
+          document.getElementById("log").innerHTML = "Ready. Click \"Run Seed Data\" to begin...\n";
+        } else {
+          status.className = "logged-out";
+          status.textContent = `✗ Logged in as ${user.email} but this account is not the owner. Please use the owner account.`;
+          seedBtn.disabled = true;
+        }
+      } else {
+        status.className = "logged-out";
+        status.textContent = "✗ Not logged in. Please log in as owner first (Step 1).";
+        seedBtn.disabled = true;
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+      }
+    });
+
+    // ── Login ────────────────────────────────────────────────
+    window.handleLogin = async function() {
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const errEl    = document.getElementById("login-error");
+      const btn      = document.getElementById("login-btn");
+
+      errEl.style.display = "none";
+      btn.disabled = true;
+      btn.textContent = "Logging in...";
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch(err) {
+        errEl.textContent = "Login failed: " + err.message;
+        errEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "🔑 Log In";
+      }
+    };
+
+    // ── Logout ───────────────────────────────────────────────
+    window.handleLogout = async function() {
+      await signOut(auth);
+      document.getElementById("login-btn").textContent = "🔑 Log In";
+      document.getElementById("login-btn").disabled = false;
+    };
+
+    // ── Seed ─────────────────────────────────────────────────
     window.runSeed = async function() {
       const btn = document.getElementById("seed-btn");
       btn.disabled = true;
@@ -41,28 +134,28 @@
       log("Starting seed...\n", "info");
 
       try {
-        // ── Categories ─────────────────────────────────────
+        // ── Categories ───────────────────────────────────────
         log("📁 Seeding categories...", "info");
         const categories = [
-          { id: "men",        name: "Men",        slug: "men",        description: "Men's apparel collection" },
-          { id: "women",      name: "Women",      slug: "women",      description: "Women's apparel collection" },
-          { id: "unisex",     name: "Unisex",     slug: "unisex",     description: "Unisex styles for everyone" },
-          { id: "accessories",name: "Accessories",slug: "accessories",description: "Caps, bags, and more" },
+          { id: "men",         name: "Men",         slug: "men",         description: "Men's apparel collection" },
+          { id: "women",       name: "Women",       slug: "women",       description: "Women's apparel collection" },
+          { id: "unisex",      name: "Unisex",      slug: "unisex",      description: "Unisex styles for everyone" },
+          { id: "accessories", name: "Accessories", slug: "accessories", description: "Caps, bags, and more" },
         ];
         for (const cat of categories) {
           await setDoc(doc(db, "categories", cat.id), { ...cat, createdAt: serverTimestamp() });
           log(`  ✓ Category: ${cat.name}`, "ok");
         }
 
-        // ── Products ────────────────────────────────────────
+        // ── Products ─────────────────────────────────────────
         log("\n📦 Seeding products...", "info");
         const products = [
-          { name:"Obsidian Oversized Tee",   category:"Unisex",      categorySlug:"unisex",      price:1299, originalPrice:1599, description:"Premium heavyweight cotton oversized tee. 320gsm drop-shoulder cut.", sizes:["XS","S","M","L","XL","XXL"], colors:["Black","White","Charcoal"], isFeatured:true,  isActive:true, imageUrl:"" },
-          { name:"Noir Cargo Pants",          category:"Men",         categorySlug:"men",         price:2499, originalPrice:2999, description:"Tactical cargo pants with utility pockets. Relaxed fit.",            sizes:["28","30","32","34","36"],    colors:["Black","Olive","Grey"],     isFeatured:true,  isActive:true, imageUrl:"" },
-          { name:"Velvet Crop Hoodie",        category:"Women",       categorySlug:"women",       price:1899, originalPrice:null, description:"Cropped hoodie in ultra-soft fleece. Relaxed silhouette.",          sizes:["XS","S","M","L"],            colors:["Black","Dusty Rose","Cream"],isFeatured:true,  isActive:true, imageUrl:"" },
-          { name:"Phantom Zip Jacket",        category:"Unisex",      categorySlug:"unisex",      price:3299, originalPrice:3999, description:"Water-resistant shell jacket. Minimal branding, maximum style.",     sizes:["S","M","L","XL","XXL"],      colors:["Black","Midnight Blue"],    isFeatured:false, isActive:true, imageUrl:"" },
-          { name:"Shadow Cap",                category:"Accessories",  categorySlug:"accessories", price:799,  originalPrice:null, description:"Structured 6-panel cap with embroidered logo.",                     sizes:["One Size"],                  colors:["Black","White","Tan"],      isFeatured:false, isActive:true, imageUrl:"" },
-          { name:"Silk Touch Slip Dress",     category:"Women",       categorySlug:"women",       price:1699, originalPrice:2199, description:"Satin-finish slip dress. Elegant and minimal.",                      sizes:["XS","S","M","L"],            colors:["Black","Champagne","Ivory"],isFeatured:true,  isActive:true, imageUrl:"" },
+          { name:"Obsidian Oversized Tee",  category:"Unisex",      categorySlug:"unisex",      price:1299, originalPrice:1599, description:"Premium heavyweight cotton oversized tee. 320gsm drop-shoulder cut.", sizes:["XS","S","M","L","XL","XXL"], colors:["Black","White","Charcoal"],    isFeatured:true,  isActive:true, imageUrl:"" },
+          { name:"Noir Cargo Pants",         category:"Men",         categorySlug:"men",         price:2499, originalPrice:2999, description:"Tactical cargo pants with utility pockets. Relaxed fit.",            sizes:["28","30","32","34","36"],    colors:["Black","Olive","Grey"],        isFeatured:true,  isActive:true, imageUrl:"" },
+          { name:"Velvet Crop Hoodie",       category:"Women",       categorySlug:"women",       price:1899, originalPrice:null, description:"Cropped hoodie in ultra-soft fleece. Relaxed silhouette.",          sizes:["XS","S","M","L"],            colors:["Black","Dusty Rose","Cream"], isFeatured:true,  isActive:true, imageUrl:"" },
+          { name:"Phantom Zip Jacket",       category:"Unisex",      categorySlug:"unisex",      price:3299, originalPrice:3999, description:"Water-resistant shell jacket. Minimal branding, maximum style.",     sizes:["S","M","L","XL","XXL"],      colors:["Black","Midnight Blue"],      isFeatured:false, isActive:true, imageUrl:"" },
+          { name:"Shadow Cap",               category:"Accessories", categorySlug:"accessories", price:799,  originalPrice:null, description:"Structured 6-panel cap with embroidered logo.",                     sizes:["One Size"],                  colors:["Black","White","Tan"],        isFeatured:false, isActive:true, imageUrl:"" },
+          { name:"Silk Touch Slip Dress",    category:"Women",       categorySlug:"women",       price:1699, originalPrice:2199, description:"Satin-finish slip dress. Elegant and minimal.",                      sizes:["XS","S","M","L"],            colors:["Black","Champagne","Ivory"],  isFeatured:true,  isActive:true, imageUrl:"" },
         ];
         const productIds = [];
         for (const p of products) {
