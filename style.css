@@ -219,6 +219,7 @@ body {
   transition: var(--transition);
   position: relative;
   text-align: left;
+  text-decoration: none;
 }
 
 .nav-item:hover {
