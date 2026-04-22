@@ -2,7 +2,7 @@
 (function () {
 
   // ── State ──
-  let selectedTour = '';   // 'Day tour' | 'Night tour' | 'Over Night'
+  let selectedTour = '';   // 'Day tour' | 'Night tour' | 'Over Night' | '3D 2N'
   let selectedHrs  = 0;    // 21 | 10
   let selectedMop  = '';   // 'GCash' | 'Maya' | 'Bank Transfer' | 'Cash'
 
@@ -35,7 +35,18 @@
       document.querySelectorAll('.tour-btn[data-tour]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedTour = btn.dataset.tour;
+
+      // Auto-select hours based on tour type
+      // Day tour / Night tour → 10 hrs
+      // Overnight / 3D 2N    → 21 hrs
+      const autoHrs = (selectedTour === 'Day tour' || selectedTour === 'Night tour') ? 10 : 21;
+      selectedHrs = autoHrs;
+      document.querySelectorAll('.tour-btn[data-hrs]').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.hrs) === autoHrs);
+      });
+
       updateDateDisplay();
+      updateCheckout();
     });
   });
 
@@ -45,6 +56,7 @@
       document.querySelectorAll('.tour-btn[data-hrs]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedHrs = parseInt(btn.dataset.hrs);
+      updateDateDisplay();
       updateCheckout();
     });
   });
@@ -58,24 +70,45 @@
     });
   });
 
-  // ── Date display ──
-  inp.checkinDate.addEventListener('change', updateDateDisplay);
+  // ── Date + Time listeners ──
+  inp.checkinDate.addEventListener('change', () => { updateDateDisplay(); updateCheckout(); });
+  inp.checkinTime.addEventListener('change', () => { updateDateDisplay(); updateCheckout(); });
 
+  // ── Returns effective total hours for checkout calculation ──
+  function getEffectiveHrs() {
+    if (selectedTour === '3D 2N') return 42; // 21 + 21
+    return selectedHrs;
+  }
+
+  // ── Date display ──
   function updateDateDisplay() {
     const d = inp.checkinDate.value;
+    const t = inp.checkinTime.value;
+
     if (!d || !selectedTour) {
       dateDisplay.textContent = !d ? 'Select a date and tour type' : 'Select a tour type';
       return;
     }
+
     const start = new Date(d + 'T00:00:00');
-    const end   = new Date(start);
 
     if (selectedTour === 'Day tour') {
-      // Same day
       dateDisplay.textContent = formatDateRange(start, start, selectedTour);
+      return;
+    }
+
+    // Compute end date from actual check-in time + hours so it's always accurate
+    if (t && selectedHrs) {
+      const [hh, mm]  = t.split(':').map(Number);
+      const totalMins = hh * 60 + mm + getEffectiveHrs() * 60;
+      const daysOver  = Math.floor(totalMins / (24 * 60));
+      const end       = new Date(start);
+      end.setDate(end.getDate() + daysOver);
+      dateDisplay.textContent = formatDateRange(start, end, selectedTour);
     } else {
-      // Night tour or Overnight → end is next day
-      end.setDate(end.getDate() + 1);
+      // Fallback when time not yet selected — use safe default offsets
+      const end = new Date(start);
+      end.setDate(end.getDate() + (selectedTour === '3D 2N' ? 2 : 1));
       dateDisplay.textContent = formatDateRange(start, end, selectedTour);
     }
   }
@@ -83,15 +116,10 @@
   function formatDateRange(start, end, label) {
     const s = `${MONTHS[start.getMonth()]} ${start.getDate()}`;
     const e = `${MONTHS[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
-    if (start.toDateString() === end.toDateString()) {
-      return `${s} - ${e} (${label})`;
-    }
     return `${s} - ${e} (${label})`;
   }
 
   // ── Check-out time ──
-  inp.checkinTime.addEventListener('change', updateCheckout);
-
   function updateCheckout() {
     const t = inp.checkinTime.value;
     if (!t || !selectedHrs) {
@@ -99,15 +127,17 @@
       return;
     }
     const [hh, mm] = t.split(':').map(Number);
-    const total = hh * 60 + mm + selectedHrs * 60;
-    const outH  = Math.floor(total / 60) % 24;
-    const outM  = total % 60;
-    const fmt   = (h, m) => {
+    const fmt = (h, m) => {
       const period = h >= 12 ? 'PM' : 'AM';
       const h12    = h % 12 === 0 ? 12 : h % 12;
       return `${h12}:${String(m).padStart(2,'0')} ${period}`;
     };
-    checkoutDis.textContent = `Check-out: ${fmt(outH, outM)} (${selectedHrs} hrs from ${fmt(hh, mm)})`;
+
+    const totalMins = hh * 60 + mm + getEffectiveHrs() * 60;
+    const outH = Math.floor(totalMins / 60) % 24;
+    const outM = totalMins % 60;
+    const label = selectedTour === '3D 2N' ? '21 hrs + 21 hrs' : `${selectedHrs} hrs`;
+    checkoutDis.textContent = `Check-out: ${fmt(outH, outM)} (${label} from ${fmt(hh, mm)})`;
   }
 
   // ── Proceed button ──
@@ -118,7 +148,7 @@
     const missing = [];
     if (!inp.guestName.value.trim())   missing.push('Guest Name');
     if (!inp.checkinDate.value)        missing.push('Date of Booking');
-    if (!selectedTour)                 missing.push('Tour Type (Day/Night/Overnight)');
+    if (!selectedTour)                 missing.push('Tour Type (Day/Night/Overnight/3D 2N)');
     if (!inp.checkinTime.value)        missing.push('Check-in Time');
     if (!selectedHrs)                  missing.push('Duration (21 hrs or 10 hrs)');
     if (!inp.downPayment.value)        missing.push('Down Payment');
@@ -129,40 +159,44 @@
     if (!inp.emailTo.value.trim())     missing.push('Recipient Email');
 
     if (missing.length > 0) {
-      errorEl.textContent = '⚠ Please fill in: ' + missing.join(', ');
+      errorEl.textContent = '\u26a0 Please fill in: ' + missing.join(', ');
       return;
     }
     if (!isValidEmail(inp.emailTo.value.trim())) {
-      errorEl.textContent = '⚠ Please enter a valid email address';
+      errorEl.textContent = '\u26a0 Please enter a valid email address';
       return;
     }
 
     // ── Build values ──
     const guestName  = inp.guestName.value.trim();
-    const down       = '₱' + Number(inp.downPayment.value).toLocaleString('en-PH', {minimumFractionDigits: 2});
-    const balance    = '₱' + Number(inp.balance.value).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const down       = '\u20b1' + Number(inp.downPayment.value).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    const balance    = '\u20b1' + Number(inp.balance.value).toLocaleString('en-PH', {minimumFractionDigits: 2});
     const datePay    = formatDisplayDate(inp.datePayment.value);
     const refNum     = inp.refNumber.value.trim();
 
     // Check-in / check-out times
     const [hh, mm]   = inp.checkinTime.value.split(':').map(Number);
-    const totalMins  = hh * 60 + mm + selectedHrs * 60;
+    const totalMins  = hh * 60 + mm + getEffectiveHrs() * 60;
     const outH       = Math.floor(totalMins / 60) % 24;
     const outM       = totalMins % 60;
     const checkinStr  = fmt12(hh, mm);
     const checkoutStr = fmt12(outH, outM);
 
-    // Date of booking string
+    // Date of booking string — computed from actual time, same logic as updateDateDisplay
     const start = new Date(inp.checkinDate.value + 'T00:00:00');
-    const end   = new Date(start);
-    if (selectedTour !== 'Day tour') end.setDate(end.getDate() + 1);
+    let end;
+    if (selectedTour === 'Day tour') {
+      end = new Date(start);
+    } else {
+      const daysOver = Math.floor(totalMins / (24 * 60));
+      end = new Date(start);
+      end.setDate(end.getDate() + daysOver);
+    }
     const dateBooking = formatDateRange(start, end, selectedTour);
 
     // ── Build the email body message ──
-    // Use only the first word of the guest name for the greeting
     const guestFirstName = guestName.split(' ')[0];
 
-    // Store booking details for email.js to use in HTML bold formatting
     window._bookingDetails = {
       guestName, guestFirstName, checkinStr, checkoutStr, dateBooking,
       down, balance, datePay, mop: selectedMop, refNum
@@ -189,6 +223,7 @@ Reference Number: ${refNum}`;
 
 
 
+
 We kindly request an acknowledgment of this transaction.
 
 
@@ -205,14 +240,12 @@ Victoria's Haven
     document.getElementById('emailTo').value   = inp.emailTo.value.trim();
     document.getElementById('emailBody').value = message;
 
-    // Store closing for email.js to append after images
     window._emailClosing = closing;
 
     // ── Switch to compose step ──
     form.style.display    = 'none';
     compose.style.display = '';
     window.scrollTo(0, 0);
-    // Open preview automatically
     setTimeout(() => {
       if (typeof window.refreshEmailPreview === 'function') window.refreshEmailPreview();
     }, 100);
@@ -232,7 +265,7 @@ Victoria's Haven
   }
 
   function formatDisplayDate(val) {
-    if (!val) return '—';
+    if (!val) return '\u2014';
     const d = new Date(val + 'T00:00:00');
     return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
   }
