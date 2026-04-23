@@ -96,7 +96,7 @@ function getVal(id) {
 function getTourConfig(tourType) {
   switch (tourType) {
     case 'Day Tour':   return { mins: 10 * 60, daysOffset: 0 };
-    case 'Night Tour': return { mins: 10 * 60, daysOffset: 0 }; // checkout 22:00 same day
+    case 'Night Tour': return { mins: 10 * 60, daysOffset: 0 }; // checkout = checkin + 10hrs
     case 'Over-Night': return { mins: 21 * 60, daysOffset: 1 };
     case '3D2N':       return { mins: 42 * 60, daysOffset: 2 }; // 21+21 hrs, checkout day 3
     case 'Half Day':   return { mins:  5 * 60, daysOffset: 0 };
@@ -631,21 +631,24 @@ function calcCheckout() {
   const ci  = getVal('bkCheckinTime');
   const cfg = getTourConfig(_tourType);
 
-  // Night Tour: fixed checkout at 22:00 same day regardless of check-in time
+  // Night Tour: checkin + 10hrs, checkout date wraps to next day if needed
   if (_tourType === 'Night Tour') {
-    const NIGHT_CHECKOUT = '22:00';
-    document.getElementById('bkCheckoutDisplay').textContent =
-      formatDateLabel(_bkYear, _bkMonth, _bkDay);
+    const NIGHT_DURATION = 10 * 60; // always 10 hrs
     if (ci) {
+      const co = addMinutesToTime(ci, NIGHT_DURATION);
       const [ch, cm] = ci.split(':').map(Number);
-      const durationMins = (22 * 60) - (ch * 60 + cm);
-      const durHrs = (durationMins / 60).toFixed(1).replace(/\.0$/, '');
-      document.getElementById('bkCheckoutTime').textContent = to12hr(NIGHT_CHECKOUT);
+      const coMins = (ch * 60 + cm) + NIGHT_DURATION;
+      const isNextDay = coMins >= 24 * 60;
+      const coDate = isNextDay ? addDays(1) : { label: formatDateLabel(_bkYear, _bkMonth, _bkDay) };
+      document.getElementById('bkCheckoutDisplay').textContent = coDate.label;
+      document.getElementById('bkCheckoutTime').textContent = to12hr(co);
       document.getElementById('bkDuration').textContent =
-        `${durHrs} hrs (${to12hr(ci)} → ${to12hr(NIGHT_CHECKOUT)})`;
+        `10 hrs (${to12hr(ci)} → ${to12hr(co)})` + (isNextDay ? ' +1 day' : '');
     } else {
-      document.getElementById('bkCheckoutTime').textContent = '10:00 PM';
-      document.getElementById('bkDuration').textContent = 'up to 10 hrs (ends 10:00 PM)';
+      document.getElementById('bkCheckoutDisplay').textContent =
+        formatDateLabel(_bkYear, _bkMonth, _bkDay);
+      document.getElementById('bkCheckoutTime').textContent = '(+10 hrs from check-in)';
+      document.getElementById('bkDuration').textContent = '10 hrs';
     }
     return;
   }
@@ -765,10 +768,17 @@ function applyTourTimeConstraints(tourType) {
   }
   if (tourType === 'Night Tour') {
     renderCustomTimePicker({ minH: 12, maxH: 22, allowAM: false, allowPM: true, defaultH: 12, defaultM: 0 });
-    _insertTimeHint('🌙 Night Tour: 12:00 PM – 10:00 PM only');
+    _insertTimeHint('🌙 Night Tour: 12:00 PM – 10:00 PM only (check-out = check-in + 10 hrs)');
     calcCheckout(); return;
   }
-  renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 8, defaultM: 0 });
+  // Over-Night and 3D2N default to 12:00 PM
+  if (tourType === 'Over-Night' || tourType === '3D2N') {
+    renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 12, defaultM: 0 });
+    _insertTimeHint('🌙 ' + tourType + ': Check-in from 12:00 PM');
+  } else {
+    renderCustomTimePicker({ minH: 0, maxH: 22, allowAM: true, allowPM: true, defaultH: 8, defaultM: 0 });
+  }
+  calcCheckout();
 }
 
 function _insertTimeHint(msg) {
@@ -878,16 +888,11 @@ async function saveBooking() {
     let coTime;
 
     if (savedTour === 'Night Tour') {
-      // Night Tour: always checkout at 22:00 same day
-      const NIGHT_CHECKOUT = '22:00';
-      coTime = NIGHT_CHECKOUT;
-      daysOffset = 0;
-      if (ciTime) {
-        const [ch, cm] = ciTime.split(':').map(Number);
-        durationMins = (22 * 60) - (ch * 60 + cm);
-      } else {
-        durationMins = 10 * 60; // default 10hrs if no time
-      }
+      // Night Tour: always checkin + 10hrs, date wraps if needed
+      durationMins = 10 * 60;
+      coTime = addMinutesToTime(ciTime, durationMins);
+      const [_ch, _cm] = ciTime.split(':').map(Number);
+      daysOffset = ((_ch * 60 + _cm) + durationMins) >= 24 * 60 ? 1 : 0;
     } else {
       coTime = addMinutesToTime(ciTime, durationMins);
     }
