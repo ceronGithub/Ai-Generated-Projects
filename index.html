@@ -92,13 +92,106 @@
 
             <!-- Guest Name -->
             <div class="booking-field">
-              <label class="booking-label">Guest Name</label>
+              <label class="booking-label">Guest Name (Mandatory)</label>
               <input type="text" class="booking-input" id="bGuestName" placeholder="Full name of guest"/>
+            </div>
+
+            <!-- Pax Details -->
+            <div class="booking-field">
+              <div class="booking-pax-grid">
+                <div class="pax-cell pax-label">Total Pax (Mandatory)</div>
+                <div class="pax-cell pax-label">Extra Pax (Optional)</div>
+                <div class="pax-cell pax-label">How Much Per Head (Optional)</div>
+                <div class="pax-cell">
+                  <input type="number" class="booking-input pax-input" id="bTotalPax" placeholder="0" min="0"/>
+                </div>
+                <div class="pax-cell">
+                  <input type="number" class="booking-input pax-input" id="bExtraPax" placeholder="0" min="0"/>
+                </div>
+                <div class="pax-cell">
+                  <div class="booking-prefix-wrap">
+                    <span class="booking-prefix">₱</span>
+                    <input type="number" class="booking-input booking-prefixed pax-input" id="bPerHead" placeholder="0.00" min="0"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pet Details -->
+            <div class="booking-field">
+              <div class="booking-pet-grid">
+                <div class="pet-row-header">
+                  <div class="pet-cell pet-label"> Small Pet (Optional)</div>
+                  <div class="pet-cell pet-label">Big Pet (Optional)</div>
+                </div>
+                <div class="pet-row">
+                  <div class="pet-cell">
+                    <input type="number" class="booking-input pet-input" id="bSmallPetQty" placeholder="0" min="0"/>
+                  </div>
+                  <div class="pet-cell">
+                    <input type="number" class="booking-input pet-input" id="bBigPetQty" placeholder="0" min="0"/>
+                  </div>
+                </div>
+                <div class="pet-row-price">
+                  <div class="pet-label-price">Small Pet Price (Optional)</div>
+                  <div class="pet-label-price">Big Pet Price (Optional)</div>
+                </div>
+                <div class="pet-row">                  
+                  <div class="pet-cell">
+                    <div class="booking-prefix-wrap">
+                      <span class="booking-prefix">₱</span>
+                      <input type="number" style="padding-right: 20vw;" class="booking-input booking-prefixed pet-input" id="bSmallPetPrice" placeholder="0" min="0"/>
+                    </div>                   
+                  </div>
+                  <div class="pet-cell">
+                    <div class="booking-prefix-wrap">
+                      <span class="booking-prefix">₱</span>
+                      <input type="number" style="padding-right: 20vw;" class="booking-input booking-prefixed pet-input" id="bBigPetPrice" placeholder="0" min="0"/>
+                    </div>
+                    
+                  </div>
+                </div>
+                <div class="pet-row-result">
+                  <div class="pet-label">Small Pet Result (Auto-calculate)</div>
+                  <div class="pet-label">Big Pet Result (Auto-calculate)</div>
+                </div>
+                <div class="pet-row">
+                  <div class="pet-cell">
+                    <div class="booking-prefix-wrap">
+                      <span class="booking-prefix">₱</span>
+                      <input type="number" style="padding-right: 20vw;" class="booking-input booking-prefixed" id="bSmallPetResult" placeholder="0" disabled/>                      
+                    </div>                    
+                  </div>
+                  <div class="pet-cell">
+                    <div class="booking-prefix-wrap">
+                      <span class="booking-prefix">₱</span>
+                      <input type="number" style="padding-right: 20vw;" class="booking-input booking-prefixed" id="bBigPetResult" placeholder="0" disabled/>                     
+                    </div>                    
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pet & Extra Time Extension -->
+            <div class="booking-field">
+              <div class="booking-pet-extension-grid">
+                <div class="pax-cell pax-label">Price Per hour (Optional)</div>
+                <div class="pax-cell pax-label">Extra Time Extension (Optional)</div>
+                <div class="pax-cell">
+                  <div class="booking-prefix-wrap">
+                      <span class="booking-prefix">₱</span>
+                      <input type="text" style="padding-right: 20vw;" class="booking-input booking-prefixed" id="bPricePerHour" placeholder="Price Per Hour" min="0"/>
+                    </div>                    
+                </div>
+                <div class="pax-cell">
+                  <input type="number" class="booking-input" id="bExtraTimeExt" placeholder="Hours" min="0"/>
+                </div>
+              </div>
             </div>
 
             <!-- Date of Booking -->
             <div class="booking-field">
-              <label class="booking-label">Date of Booking</label>
+              <label class="booking-label">Date of Booking (Mandatory)</label>
               <div class="booking-row">
                 <input type="date" class="booking-input booking-date" id="bCheckinDate"/>
                 <div class="booking-tour-group">
@@ -113,7 +206,7 @@
 
             <!-- Check-in Time -->
             <div class="booking-field">
-              <label class="booking-label">Check-in Time</label>
+              <label class="booking-label">Check-in Time (Mandatory)</label>
               <div class="booking-row">
                 <input type="time" class="booking-input booking-time" id="bCheckinTime" value="16:00"/>
                 <div class="booking-tour-group">
@@ -124,9 +217,18 @@
               <div class="booking-derived" id="bCheckoutDisplay">Check-out: —</div>
             </div>
 
+            <!-- Extra Chargers -->
+            <div class="booking-field">
+              <label class="booking-label">Extra Chargers (Auto-calculate)</label>
+              <div class="booking-prefix-wrap">
+                <span class="booking-prefix">₱</span>
+                <input type="number" class="booking-input booking-prefixed" id="bExtraChargers" placeholder="0.00" min="0" disabled/>
+              </div>
+            </div>
+
             <!-- Down Payment -->
             <div class="booking-field">
-              <label class="booking-label">Down Payment</label>
+              <label class="booking-label">Down Payment (Mandatory)</label>
               <div class="booking-prefix-wrap">
                 <span class="booking-prefix">₱</span>
                 <input type="number" class="booking-input booking-prefixed" id="bDownPayment" placeholder="0.00" min="0"/>
@@ -135,12 +237,42 @@
 
             <!-- Balance -->
             <div class="booking-field">
-              <label class="booking-label">Balance</label>
+              <label class="booking-label">Balance (Mandatory)</label>
               <div class="booking-prefix-wrap">
                 <span class="booking-prefix">₱</span>
                 <input type="number" class="booking-input booking-prefixed" id="bBalance" placeholder="0.00" min="0"/>
               </div>
             </div>
+
+            <!-- Summary Row for Totals -->
+            <div class="booking-summary-row">
+              <!-- Package Total -->
+              <div class="booking-field booking-summary-field">
+                <label class="booking-label">Package Total (auto-calculated)</label>
+                <div class="booking-prefix-wrap">
+                  <span class="booking-prefix">₱</span>
+                  <input type="number" class="booking-input booking-prefixed" id="bPackageTotal" placeholder="0.00" min="0" disabled/>
+                </div>
+              </div>
+
+              <!-- Final Total -->
+              <div class="booking-field booking-summary-field">
+                <label class="booking-label">Final Total (auto-calculated)</label>
+                <div class="booking-prefix-wrap">
+                  <span class="booking-prefix">₱</span>
+                  <input type="number" class="booking-input booking-prefixed" id="bFinalTotal" placeholder="0.00" min="0" disabled/>
+                </div>
+              </div>
+
+              <!-- Final Balance -->
+              <div class="booking-field booking-summary-field">
+                <label class="booking-label">Final Balance (auto-calculated)</label>
+                <div class="booking-prefix-wrap">
+                  <span class="booking-prefix">₱</span>
+                  <input type="number" class="booking-input booking-prefixed" id="bFinalBalance" placeholder="0.00" min="0" disabled/>
+                </div>
+              </div>
+            </div>            
 
             <!-- Date of Payment -->
             <div class="booking-field">
@@ -161,13 +293,13 @@
 
             <!-- Reference Number -->
             <div class="booking-field">
-              <label class="booking-label">Reference Number</label>
+              <label class="booking-label">Reference Number (Mandatory)</label>
               <input type="text" class="booking-input" id="bRefNumber" placeholder="Transaction / reference number"/>
             </div>
 
             <!-- Recipient Email -->
             <div class="booking-field">
-              <label class="booking-label">Send To (Email)</label>
+              <label class="booking-label">Send To (Email | Mandatory)</label>
               <input type="email" class="booking-input" id="bEmailTo" placeholder="guest@email.com"/>
             </div>
 

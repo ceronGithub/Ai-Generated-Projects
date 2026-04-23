@@ -936,7 +936,7 @@ body {
   border: 1px solid var(--border2);
   border-radius: var(--radius);
   padding: 28px 28px 24px;
-  max-width: 700px;
+  max-width: 80vw;
 }
 
 .booking-field {
@@ -977,7 +977,7 @@ body {
 .booking-input[type="date"],
 .booking-input[type="time"] {
   color-scheme: dark;
-  width: auto;
+  width: auto !important;
   min-width: 160px;
 }
 
@@ -1115,6 +1115,118 @@ body {
 .btn-back:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* Pax Grid */
+.booking-pax-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.pax-cell {
+  display: flex;
+}
+
+.pax-label {
+  align-items: center;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  padding: 8px 0;
+}
+
+.pax-input {
+  width: 100%;
+}
+
+/* Pet Grid */
+.booking-pet-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.pet-cell {
+  display: flex;
+}
+
+.pet-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  align-items: center;
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+
+.pet-label-price {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+
+.pet-row-header {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  grid-column: 1 / -1;
+}
+
+.pet-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  grid-column: 1 / -1;
+}
+
+.pet-row-price {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  grid-column: 1 / -1;
+  margin-top: 12px;
+}
+
+.pet-row-result {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  grid-column: 1 / -1;
+  margin-top: 12px;
+}
+
+.pet-input {
+  width: 100%;
+}
+
+/* Summary Row for Totals */
+.booking-summary-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.booking-summary-field {
+  margin-bottom: 0;
+}
+
+/* Pet & Extra Time Extension Grid */
+.booking-pet-extension-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 @media (max-width: 600px) {
