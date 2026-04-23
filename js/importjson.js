@@ -102,6 +102,30 @@ function handleImportDrop(event) {
   handleImportFile(file);
 }
 
+
+/* ────────────────────────────────────────
+   HELPERS
+──────────────────────────────────────── */
+// Normalise any time string to "HH:MM" 24-hr format.
+// Handles: "16:00", "4:00 PM", "4:00PM", "16:00:00"
+function _normTime(t) {
+  if (!t || typeof t !== 'string') return t;
+  t = t.trim();
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) {
+    const parts = t.split(':');
+    return parts[0].padStart(2,'0') + ':' + parts[1];
+  }
+  const m = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (m) {
+    let h = parseInt(m[1], 10);
+    const min = m[2];
+    const isPM = m[3].toUpperCase() === 'PM';
+    if (isPM && h !== 12) h += 12;
+    if (!isPM && h === 12) h = 0;
+    return String(h).padStart(2,'0') + ':' + min;
+  }
+  return t;
+}
 /* ────────────────────────────────────────
    FLATTEN — normalise any JSON shape
    Returns array of flat booking objects
@@ -158,8 +182,8 @@ function _normaliseEntry(raw, idx) {
     checkoutDate:      b.checkoutDate      || raw.checkoutDate || raw.checkout_date|| '',
     checkinDateLabel:  b.checkinDateLabel  || raw.checkinDateLabel  || '',
     checkoutDateLabel: b.checkoutDateLabel || raw.checkoutDateLabel || '',
-    checkinTime:       b.checkinTime       || raw.checkinTime  || raw.checkin_time || '',
-    checkoutTime:      b.checkoutTime      || raw.checkoutTime || raw.checkout_time|| '',
+    checkinTime:       _normTime(b.checkinTime  || raw.checkinTime  || raw.checkin_time  || ''),
+    checkoutTime:      _normTime(b.checkoutTime || raw.checkoutTime || raw.checkout_time || ''),
 
     // Payment
     total:       p.total       ?? raw.total       ?? 0,

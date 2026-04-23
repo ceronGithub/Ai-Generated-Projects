@@ -167,6 +167,29 @@ async function manualRetry() {
 /* ─────────────────────────────────────────
    FLATTEN Firebase row → booking object
 ───────────────────────────────────────── */
+
+/* -----------------------------------------
+   HELPER - normalise any time to "HH:MM" 24-hr
+----------------------------------------- */
+function _fbNormTime(t) {
+  if (!t || typeof t !== 'string') return t || '';
+  t = t.trim();
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) {
+    const parts = t.split(':');
+    return parts[0].padStart(2,'0') + ':' + parts[1];
+  }
+  const m = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (m) {
+    let h = parseInt(m[1], 10);
+    const min = m[2];
+    const isPM = m[3].toUpperCase() === 'PM';
+    if (isPM && h !== 12) h += 12;
+    if (!isPM && h === 12) h = 0;
+    return String(h).padStart(2,'0') + ':' + min;
+  }
+  return t;
+}
+
 function flattenRow(row) {
   const b = row.booking  || {};
   const g = row.guest    || {};
@@ -198,8 +221,8 @@ function flattenRow(row) {
     checkoutDate:     b.checkoutDate || '',
     checkinDateLabel: b.checkinDateLabel  || '',
     checkoutDateLabel:b.checkoutDateLabel || '',
-    checkinTime:      b.checkinTime  || '',
-    checkoutTime:     b.checkoutTime || '',
+    checkinTime:      _fbNormTime(b.checkinTime  || ''),
+    checkoutTime:     _fbNormTime(b.checkoutTime || ''),
   };
 }
 

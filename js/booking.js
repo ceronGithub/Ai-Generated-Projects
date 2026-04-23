@@ -29,6 +29,30 @@ function to12hr(hhmm) {
   return `${h % 12 || 12}:${pad2(m)} ${h >= 12 ? 'PM' : 'AM'}`;
 }
 
+/* Normalise any time string to "HH:MM" 24-hr format.
+   Handles: "16:00", "4:00 PM", "12:00 PM", "4:00PM" */
+function _normTo24hr(t) {
+  if (!t || typeof t !== 'string') return t || '';
+  t = t.trim();
+  // Already HH:MM 24-hr (no am/pm suffix) e.g. "16:00" or "08:00"
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(t)) {
+    const parts = t.split(':');
+    return parts[0].padStart(2, '0') + ':' + parts[1];
+  }
+  // 12-hr with AM/PM  e.g. "4:00 PM", "12:00 PM", "4:00PM"
+  const m = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (m) {
+    let h = parseInt(m[1], 10);
+    const min = m[2];
+    const isPM = m[3].toUpperCase() === 'PM';
+    if (isPM && h !== 12) h += 12;
+    if (!isPM && h === 12) h = 0;
+    return String(h).padStart(2, '0') + ':' + min;
+  }
+  return t; // return as-is if unrecognised
+}
+
+
 function nextDay(year, month, day) {
   const d = new Date(year, month, day + 1);
   return {
@@ -156,7 +180,7 @@ function getCheckoutConstraintForDate(dateKey) {
   Object.keys(Bookings).forEach(checkinKey => {
     (Bookings[checkinKey] || []).forEach(b => {
       const coDate = (b.booking && b.booking.checkoutDate) || b.checkoutDate || '';
-      const coTime = (b.booking && b.booking.checkoutTime) || b.checkoutTime || '';
+      const coTime = _normTo24hr((b.booking && b.booking.checkoutTime) || b.checkoutTime || '');
       if (coDate !== dateKey || !coTime) return;
 
       const [h, m] = coTime.split(':').map(Number);
@@ -172,7 +196,7 @@ function getCheckoutConstraintForDate(dateKey) {
   });
 
   if (latestMins < 0) return null;
-  return { time: latestTime, time12: to12hr(latestTime), mins: latestMins, sources };
+  return { time: latestTime, time12: to12hr(_normTo24hr(latestTime)), mins: latestMins, sources };
 }
 
 /* ── State: constraint for currently open form ── */
@@ -952,8 +976,8 @@ function buildStayoverCard(b, checkinKey, color, viewingKey) {
   const ciLabel  = b.booking?.checkinDateLabel  || checkinKey || '—';
   const coLabel  = b.booking?.checkoutDateLabel || '—';
   const coDate   = b.booking?.checkoutDate || b.checkoutDate || '';
-  const ciTime   = b.booking?.checkinTime  || b.checkinTime  || '';
-  const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
+  const ciTime   = _normTo24hr(b.booking?.checkinTime  || b.checkinTime  || '');
+  const coTime   = _normTo24hr(b.booking?.checkoutTime || b.checkoutTime || '');
   const durationHrs = b.booking?.durationHrs ?? '—';
 
   // ── Compute which day of the stay we are viewing ──
@@ -1228,8 +1252,8 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
   const total    = b.payment?.total    ?? b.total           ?? 0;
   const balance  = b.payment?.balance  ?? b.balance         ?? 0;
   const tourType = b.booking?.tourType || b.tourType        || '—';
-  const ciTime   = b.booking?.checkinTime  || b.checkinTime  || '';
-  const coTime   = b.booking?.checkoutTime || b.checkoutTime || '';
+  const ciTime   = _normTo24hr(b.booking?.checkinTime  || b.checkinTime  || '');
+  const coTime   = _normTo24hr(b.booking?.checkoutTime || b.checkoutTime || '');
   const coLabel  = b.booking?.checkoutDateLabel || b.checkoutDateLabel || '—';
   const fbKey    = b.fbKey || null;
 
@@ -1363,9 +1387,21 @@ function openViewModal(b, color) {
   const tourType= b.booking?.tourType || '—';
   const ciLabel = b.booking?.checkinDateLabel  || b.dateKey || '—';
   const coLabel = b.booking?.checkoutDateLabel || '—';
-  const ciTime  = b.booking?.checkinTime12  || to12hr(b.booking?.checkinTime  || '');
-  const coTime  = b.booking?.checkoutTime12 || to12hr(b.booking?.checkoutTime || '');
-  const dur     = b.booking?.durationHrs ?? '—';
+  const ciTime  = b.booking?.checkinTime12  || to12hr(_normTo24hr(b.booking?.checkinTime  || ''));
+  const coTime  = b.booking?.checkoutTime12 || to12hr(_normTo24hr(b.booking?.checkoutTime || ''));
+  // Compute duration on-the-fly if not stored
+  let dur = b.booking?.durationHrs ?? '—';
+  if (dur === '—' || dur == null) {
+    const _ci = _normTo24hr(b.booking?.checkinTime  || '');
+    const _co = _normTo24hr(b.booking?.checkoutTime || '');
+    if (_ci && _co) {
+      const [ch, cm] = _ci.split(':').map(Number);
+      let [oh, om]   = _co.split(':').map(Number);
+      let mins = (oh * 60 + om) - (ch * 60 + cm);
+      if (mins < 0) mins += 24 * 60; // overnight wrap
+      dur = mins / 60 % 1 === 0 ? mins / 60 : (mins / 60).toFixed(1);
+    }
+  }
 
   document.getElementById('bkViewTitle').textContent = name;
   document.getElementById('bkViewColorPill').style.background =
@@ -1434,7 +1470,7 @@ function openEditForm(b, key, color) {
   fill('bkTotal',       b.payment?.baseTotal ?? b.payment?.total);
   fill('bkDownpayment', b.payment?.downpayment);
   fill('bkPaymentDate', b.payment?.date);
-  fill('bkCheckinTime', b.booking?.checkinTime);
+  fill('bkCheckinTime', _normTo24hr(b.booking?.checkinTime || ''));
 
   const tour = b.booking?.tourType || b.tourType || '';
   document.querySelectorAll('.bk-tour-btn').forEach(btn => {
@@ -1443,7 +1479,7 @@ function openEditForm(b, key, color) {
   _tourType = tour;
 
   calcTotalPax(); calcBalance(); calcCheckout();
-  applyTimeSlotToForm(b.booking?.checkinTime || '');
+  applyTimeSlotToForm(_normTo24hr(b.booking?.checkinTime || ''));
 
   const saveBtn      = document.getElementById('bkBtnSave');
   saveBtn._editFbKey = b.fbKey || null;
@@ -1594,8 +1630,8 @@ async function confirmReschedule() {
     updated.booking.checkoutDate      = coKey;
     updated.booking.checkoutDateLabel = formatDateLabel(cy, cm - 1, cd2);
     // Recalculate 12hr labels from existing times
-    if (updated.booking.checkinTime)  updated.booking.checkinTime12  = to12hr(updated.booking.checkinTime);
-    if (updated.booking.checkoutTime) updated.booking.checkoutTime12 = to12hr(updated.booking.checkoutTime);
+    if (updated.booking.checkinTime)  updated.booking.checkinTime12  = to12hr(_normTo24hr(updated.booking.checkinTime));
+    if (updated.booking.checkoutTime) updated.booking.checkoutTime12 = to12hr(_normTo24hr(updated.booking.checkoutTime));
   }
   updated.dayInfo = getDateEventInfo(ny, nm - 1, nd);
 
@@ -1700,7 +1736,7 @@ function applyBookingIndicators() {
   Object.keys(Bookings).forEach(checkinKey => {
     (Bookings[checkinKey] || []).forEach(b => {
       const coDate = (b.booking && b.booking.checkoutDate) || b.checkoutDate || '';
-      const coTime = (b.booking && b.booking.checkoutTime) || b.checkoutTime || '';
+      const coTime = _normTo24hr((b.booking && b.booking.checkoutTime) || b.checkoutTime || '');
       if (!coDate || !coTime) return;
       // Only mark if checkout date differs from checkin date (multi-day booking)
       if (coDate === checkinKey) return;
@@ -1710,7 +1746,8 @@ function applyBookingIndicators() {
         // Keep the latest checkout time
         const existing = checkoutConstraintMap[coDate];
         const [eh, em] = existing.split(':').map(Number);
-        const [nh, nm] = coTime.split(':').map(Number);
+        const _coNorm = _normTo24hr(coTime);
+        const [nh, nm] = _coNorm.split(':').map(Number);
         if (nh * 60 + nm > eh * 60 + em) checkoutConstraintMap[coDate] = coTime;
       }
     });
@@ -1756,7 +1793,7 @@ function applyBookingIndicators() {
         !cell.classList.contains('slot-stayover-red') &&
         !cell.classList.contains('slot-morning-taken')) {
       cell.classList.add('slot-checkout-pending');
-      cell.dataset.checkoutTime = to12hr(constraintTime);
+      cell.dataset.checkoutTime = to12hr(_normTo24hr(constraintTime));
     } else {
       delete cell.dataset.checkoutTime;
     }
