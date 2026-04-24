@@ -10,13 +10,15 @@
                   'July','August','September','October','November','December'];
 
   // ── Elements ──
-  const form        = document.getElementById('bookingForm');
-  const compose     = document.getElementById('composeStep');
-  const btnProceed  = document.getElementById('btnProceed');
-  const btnBack     = document.getElementById('btnBack');
-  const errorEl     = document.getElementById('bookingError');
-  const dateDisplay = document.getElementById('bDateDisplay');
-  const checkoutDis = document.getElementById('bCheckoutDisplay');
+  const form          = document.getElementById('bookingForm');
+  const compose       = document.getElementById('composeStep');
+  const btnProceed    = document.getElementById('btnProceed');
+  const btnBack       = document.getElementById('btnBack');
+  const errorEl       = document.getElementById('bookingError');
+  const dateDisplay   = document.getElementById('bDateDisplay');
+  const checkoutDis   = document.getElementById('bCheckoutDisplay');
+  const tourTypeGroup = document.getElementById('tourTypeGroup');
+  const btnDayTour    = document.getElementById('btnDayTour');
 
   const inp = {
     guestName:   document.getElementById('bGuestName'),
@@ -55,9 +57,56 @@
     }
   });
 
+  // ── Tour button visibility + Day Tour enable/disable based on date & time ──
+  // ── Tracks checkout time forced by an existing Firebase booking (null = free date) ──
+  let _forcedCheckinMins = null; // set by autoSetCheckinFromExistingBooking, cleared on date change
+
+  function updateTourButtons() {
+    const dateVal = inp.checkinDate.value;
+
+    // Show tour buttons only once a date is selected
+    if (!dateVal) {
+      tourTypeGroup.style.display = 'none';
+      return;
+    }
+    tourTypeGroup.style.display = '';
+
+    // Day Tour disable rule:
+    // ONLY disable if an existing booking forces the check-in into PM (hour >= 12)
+    // Never disable based on the tour's own default time — user must be free to switch tours
+    if (_forcedCheckinMins !== null) {
+      const forcedHour = Math.floor(_forcedCheckinMins / 60) % 24;
+      if (forcedHour >= 12) {
+        btnDayTour.classList.add('tour-disabled');
+        btnDayTour.classList.remove('active');
+        if (selectedTour === 'Day tour') {
+          selectedTour = '';
+          selectedHrs  = 0;
+          document.querySelectorAll('.tour-btn[data-hrs]').forEach(b => b.classList.remove('active'));
+        }
+      } else {
+        btnDayTour.classList.remove('tour-disabled');
+      }
+    } else {
+      // Free date (no existing booking) — all tour types enabled
+      btnDayTour.classList.remove('tour-disabled');
+    }
+  }
+
+  // ── Default check-in times per tour type ──
+  const TOUR_DEFAULT_TIME = {
+    'Day tour':   '08:00',   // 8:00 AM
+    'Night tour': '12:00',   // 12:00 PM
+    'Over Night': '14:00',   // 2:00 PM
+    '3D 2N':      '14:00',   // 2:00 PM
+  };
+
   // ── Tour type buttons ──
   document.querySelectorAll('.tour-btn[data-tour]').forEach(btn => {
     btn.addEventListener('click', () => {
+      // Ignore if disabled
+      if (btn.classList.contains('tour-disabled')) return;
+
       document.querySelectorAll('.tour-btn[data-tour]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       selectedTour = btn.dataset.tour;
@@ -71,6 +120,14 @@
         b.classList.toggle('active', parseInt(b.dataset.hrs) === autoHrs);
       });
 
+      // Auto-set check-in time default for the selected tour
+      // Only set if no time is already set OR if it came from a previous tour selection
+      const defaultTime = TOUR_DEFAULT_TIME[selectedTour];
+      if (defaultTime) {
+        inp.checkinTime.value = defaultTime;
+      }
+
+      updateTourButtons();
       updateDateDisplay();
       updateCheckout();
     });
@@ -110,11 +167,21 @@
 
   // ── Date + Time listeners ──
   inp.checkinDate.addEventListener('change', () => {
+    _forcedCheckinMins = null; // reset forced time — new date, fresh state
+    selectedTour = '';
+    selectedHrs  = 0;
+    document.querySelectorAll('.tour-btn[data-tour]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tour-btn[data-hrs]').forEach(b => b.classList.remove('active'));
+    updateTourButtons();
     updateDateDisplay();
     updateCheckout();
     autoSetCheckinFromExistingBooking(inp.checkinDate.value);
   });
-  inp.checkinTime.addEventListener('change', () => { updateDateDisplay(); updateCheckout(); });
+  inp.checkinTime.addEventListener('change', () => {
+    updateTourButtons();
+    updateDateDisplay();
+    updateCheckout();
+  });
 
   /* ── Firebase config (same DB as firebase-booking.js) ─────────────────── */
   const FB_DB_URL   = 'https://official-victorias-haven-book-default-rtdb.asia-southeast1.firebasedatabase.app';
@@ -200,11 +267,16 @@
       const data = await res.json();
 
       if (!data || typeof data !== 'object') {
+        // No data at all — clear time and notice
+        inp.checkinTime.value = '';
+        updateDateDisplay();
+        updateCheckout();
         showAutoCheckinNotice('');
         return;
       }
 
-      // Filter client-side: checkinDate === dateStr OR checkoutDate === dateStr
+      // Filter client-side: checkinDate OR checkoutDate matches selected date
+      // This catches both: guests checking IN today, and overnight guests checking OUT today
       const allBookings = [];
       Object.values(data).forEach(row => {
         if (!row || typeof row !== 'object') return;
@@ -219,13 +291,21 @@
       });
 
       if (allBookings.length === 0) {
-        showAutoCheckinNotice('');
+        // No existing bookings — free date, all tour types enabled
+        _forcedCheckinMins = null;
+        inp.checkinTime.value = '';
+        updateTourButtons();
+        updateDateDisplay();
+        updateCheckout();
+        showAutoCheckinNotice('✅ No existing bookings on this date — select a check-in time');
+        setTimeout(() => showAutoCheckinNotice(''), 3000);
         return;
       }
 
       // Find the latest checkout time across all matching bookings
       let latestCheckoutMins = null;
       let latestCheckoutLabel = '';
+      let bookingCount = allBookings.length;
 
       allBookings.forEach(b => {
         let coMins = getCheckoutMins(b);
@@ -238,28 +318,38 @@
       });
 
       if (latestCheckoutMins === null) {
+        _forcedCheckinMins = null;
+        inp.checkinTime.value = '';
+        updateTourButtons();
+        updateDateDisplay();
+        updateCheckout();
         showAutoCheckinNotice('');
         return;
       }
 
-      // Add 1 hour gap, wrap around midnight if needed
+      // Add 1 hour gap after latest checkout, wrap midnight if needed
       const newCheckinMins  = (latestCheckoutMins + 60) % (24 * 60);
       const newCheckinValue = minsTo24hrInput(newCheckinMins);
 
-      // Pre-fill the check-in time input and refresh displays
+      // Store forced mins so updateTourButtons knows this is DB-driven, not user-driven
+      _forcedCheckinMins = newCheckinMins;
+
+      // Pre-fill the check-in time input and refresh all displays
       inp.checkinTime.value = newCheckinValue;
+      updateTourButtons();
       updateDateDisplay();
       updateCheckout();
 
       const h = Math.floor(newCheckinMins / 60);
       const m = newCheckinMins % 60;
+      const countLabel = bookingCount === 1 ? '1 existing booking' : `${bookingCount} existing bookings`;
       showAutoCheckinNotice(
-        `📅 Existing booking checks out at ${latestCheckoutLabel} — check-in auto-set to ${fmt12(h, m)} (+1 hr gap)`
+        `📅 ${countLabel} found — latest checkout at ${latestCheckoutLabel} — check-in auto-set to ${fmt12(h, m)} (+1 hr gap)`
       );
 
     } catch (err) {
       console.warn('[booking] autoSetCheckin error:', err.message);
-      showAutoCheckinNotice('⚠️ Could not check existing bookings');
+      showAutoCheckinNotice('⚠️ Could not reach database — please set check-in time manually');
     }
   }
 
@@ -478,6 +568,9 @@ Victoria's Haven
       if (typeof window.refreshEmailPreview === 'function') window.refreshEmailPreview();
     }, 100);
   });
+
+  // ── Init ──
+  updateTourButtons();
 
   // ── Back button ──
   btnBack.addEventListener('click', () => {

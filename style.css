@@ -1053,6 +1053,14 @@ body {
   color: var(--accent);
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.15);
 }
+.tour-btn.tour-disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: var(--border2);
+  color: var(--muted2);
+  text-decoration: line-through;
+}
 
 /* derived display */
 .booking-derived {
