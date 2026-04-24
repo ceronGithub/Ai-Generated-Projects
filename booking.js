@@ -20,6 +20,7 @@
 
   const inp = {
     guestName:   document.getElementById('bGuestName'),
+    phoneNumber: document.getElementById('bPhoneNumber'),
     totalPax:    document.getElementById('bTotalPax'),
     extraPax:    document.getElementById('bExtraPax'),
     perHead:     document.getElementById('bPerHead'),
@@ -42,7 +43,17 @@
     datePayment: document.getElementById('bDatePayment'),
     refNumber:   document.getElementById('bRefNumber'),
     emailTo:     document.getElementById('bEmailTo'),
+    phoneNumber: document.getElementById('bPhoneNumber'),
   };
+
+  // -- Guest Name: block @ symbol (email entered by mistake) --
+  inp.guestName.addEventListener('input', function () {
+    if (this.value.includes('@')) {
+      this.value = '';
+      this.placeholder = '⚠ Email detected — please enter a name';
+      setTimeout(() => { this.placeholder = 'Full name of guest'; }, 3000);
+    }
+  });
 
   // ── Tour type buttons ──
   document.querySelectorAll('.tour-btn[data-tour]').forEach(btn => {
@@ -211,6 +222,7 @@
     // Validate all fields
     const missing = [];
     if (!inp.guestName.value.trim())   missing.push('Guest Name');
+    if (!inp.phoneNumber.value.trim())   missing.push('Phone Number');
     if (!inp.totalPax.value)           missing.push('Total Pax');    
     if (!inp.checkinDate.value)        missing.push('Date of Booking');
     if (!selectedTour)                 missing.push('Tour Type (Day/Night/Overnight/3D 2N)');

@@ -19,6 +19,7 @@
    FIELD ALIGNMENT  (mailer → calendar DB schema):
      bGuestName   → guest.name
      bEmailTo     → guest.email
+     bPhoneNumber → guest.phone
      bTotalPax    → guest.totalPax
      bExtraPax    → guest.extraPax
      bSmallPetQty → combined into guest.pets (small + big)
@@ -122,6 +123,7 @@
     return {
       guestName:   (g('bGuestName')?.value   || '').trim(),
       email:       (g('bEmailTo')?.value      || '').trim(),
+      phone:       (g('bPhoneNumber')?.value   || '').trim(),
       totalPax:    parseInt(g('bTotalPax')?.value)    || 0,
       extraPax:    parseInt(g('bExtraPax')?.value)    || 0,
       smallPets:   parseInt(g('bSmallPetQty')?.value) || 0,
@@ -159,7 +161,7 @@
       guest: {
         name:     v.guestName,
         email:    v.email,
-        phone:    '',               // not collected in mailer form
+        phone:    v.phone,
         pax,
         extraPax,
         totalPax,

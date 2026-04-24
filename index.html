@@ -90,10 +90,18 @@
           </div>
           <div class="booking-card">
 
-            <!-- Guest Name -->
+            <!-- Guest Name + Phone -->
             <div class="booking-field">
-              <label class="booking-label">Guest Name (Mandatory)</label>
-              <input type="text" class="booking-input" id="bGuestName" placeholder="Full name of guest"/>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <div style="flex:1;min-width:160px;">
+                  <label class="booking-label">Guest Name (Mandatory)</label>
+                  <input type="text" class="booking-input" id="bGuestName" placeholder="Full name of guest"/>
+                </div>
+                <div style="flex:1;min-width:140px;">
+                  <label class="booking-label">Phone Number (Mandatory)</label>
+                  <input type="tel" class="booking-input" id="bPhoneNumber" placeholder="e.g. 09171234567"/>
+                </div>
+              </div>
             </div>
 
             <!-- Pax Details -->
