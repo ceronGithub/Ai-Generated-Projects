@@ -109,8 +109,159 @@
   inp.balance.addEventListener('input', () => updateCalculations());
 
   // ── Date + Time listeners ──
-  inp.checkinDate.addEventListener('change', () => { updateDateDisplay(); updateCheckout(); });
+  inp.checkinDate.addEventListener('change', () => {
+    updateDateDisplay();
+    updateCheckout();
+    autoSetCheckinFromExistingBooking(inp.checkinDate.value);
+  });
   inp.checkinTime.addEventListener('change', () => { updateDateDisplay(); updateCheckout(); });
+
+  /* ── Firebase config (same DB as firebase-booking.js) ─────────────────── */
+  const FB_DB_URL   = 'https://official-victorias-haven-book-default-rtdb.asia-southeast1.firebasedatabase.app';
+  const FB_BOOKINGS = '/bookings';
+
+  /* ── Tour hours map (mirrors firebase-booking.js) ──────────────────────── */
+  const TOUR_HRS_MAP = {
+    'Day tour':   10,
+    'Night tour': 10,
+    'Over Night': 21,
+    'Over-Night': 21,
+    '3D 2N':      42,
+  };
+
+  /* ── Convert 12hr string "4:00 PM" → total minutes since midnight ──────── */
+  function time12ToMins(str) {
+    if (!str) return null;
+    // Handle 24hr format "HH:MM" stored by the calendar app
+    const m24 = str.match(/^(\d{1,2}):(\d{2})$/);
+    if (m24) return parseInt(m24[1]) * 60 + parseInt(m24[2]);
+    // Handle 12hr format "H:MM AM/PM" stored by the mailer
+    const m12 = str.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m12) return null;
+    let h = parseInt(m12[1]), mins = parseInt(m12[2]);
+    const period = m12[3].toUpperCase();
+    if (period === 'AM' && h === 12) h = 0;
+    if (period === 'PM' && h !== 12) h += 12;
+    return h * 60 + mins;
+  }
+
+  /* ── Convert total minutes → 24hr "HH:MM" for <input type="time"> ─────── */
+  function minsTo24hrInput(totalMins) {
+    const h = Math.floor(totalMins / 60) % 24;
+    const m = totalMins % 60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+
+  /* ── Compute checkout minutes for a booking record ──────────────────────── */
+  function getCheckoutMins(booking) {
+    // Try using stored checkoutTime first
+    if (booking.checkoutTime) {
+      const m = time12ToMins(booking.checkoutTime);
+      if (m !== null) return m;
+    }
+    // Fallback: compute from checkinTime + tourType hours
+    const checkinMins = time12ToMins(booking.checkinTime);
+    if (checkinMins === null) return null;
+    const hrs = TOUR_HRS_MAP[booking.tourType] || 10;
+    return checkinMins + hrs * 60; // may exceed 1440 — that's fine, we mod later
+  }
+
+  /* ── Show/hide auto-checkin notice ─────────────────────────────────────── */
+  let _autoCheckinNotice = null;
+  function showAutoCheckinNotice(msg) {
+    if (!_autoCheckinNotice) {
+      _autoCheckinNotice = document.createElement('div');
+      _autoCheckinNotice.id = 'autoCheckinNotice';
+      _autoCheckinNotice.style.cssText = [
+        'margin-top:6px', 'padding:6px 10px', 'border-radius:6px',
+        'font-size:0.78rem', 'background:rgba(52,199,89,0.12)',
+        'border:1px solid rgba(52,199,89,0.35)', 'color:#22c55e',
+        'display:none'
+      ].join(';');
+      inp.checkinTime.parentNode.insertBefore(_autoCheckinNotice, inp.checkinTime.nextSibling);
+    }
+    if (msg) {
+      _autoCheckinNotice.textContent = msg;
+      _autoCheckinNotice.style.display = 'block';
+    } else {
+      _autoCheckinNotice.style.display = 'none';
+    }
+  }
+
+  /* ── Main: fetch ALL bookings, filter client-side for date, find latest checkout +1hr ── */
+  async function autoSetCheckinFromExistingBooking(dateStr) {
+    if (!dateStr) return;
+    showAutoCheckinNotice('🔍 Checking existing bookings...');
+
+    try {
+      // Fetch ALL bookings without orderBy (no Firebase index rules needed)
+      const res = await fetch(`${FB_DB_URL}${FB_BOOKINGS}.json`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (!data || typeof data !== 'object') {
+        showAutoCheckinNotice('');
+        return;
+      }
+
+      // Filter client-side: checkinDate === dateStr OR checkoutDate === dateStr
+      const allBookings = [];
+      Object.values(data).forEach(row => {
+        if (!row || typeof row !== 'object') return;
+        const b = row.booking || {};
+        const checkinDate  = b.checkinDate  || row.dateKey || '';
+        const checkoutDate = b.checkoutDate || '';
+        if (checkinDate === dateStr || checkoutDate === dateStr) {
+          if (b.checkinTime || b.checkoutTime) {
+            allBookings.push(b);
+          }
+        }
+      });
+
+      if (allBookings.length === 0) {
+        showAutoCheckinNotice('');
+        return;
+      }
+
+      // Find the latest checkout time across all matching bookings
+      let latestCheckoutMins = null;
+      let latestCheckoutLabel = '';
+
+      allBookings.forEach(b => {
+        let coMins = getCheckoutMins(b);
+        if (coMins === null) return;
+        coMins = coMins % (24 * 60);
+        if (latestCheckoutMins === null || coMins > latestCheckoutMins) {
+          latestCheckoutMins = coMins;
+          latestCheckoutLabel = fmt12(Math.floor(coMins / 60), coMins % 60); // always 12hr display
+        }
+      });
+
+      if (latestCheckoutMins === null) {
+        showAutoCheckinNotice('');
+        return;
+      }
+
+      // Add 1 hour gap, wrap around midnight if needed
+      const newCheckinMins  = (latestCheckoutMins + 60) % (24 * 60);
+      const newCheckinValue = minsTo24hrInput(newCheckinMins);
+
+      // Pre-fill the check-in time input and refresh displays
+      inp.checkinTime.value = newCheckinValue;
+      updateDateDisplay();
+      updateCheckout();
+
+      const h = Math.floor(newCheckinMins / 60);
+      const m = newCheckinMins % 60;
+      showAutoCheckinNotice(
+        `📅 Existing booking checks out at ${latestCheckoutLabel} — check-in auto-set to ${fmt12(h, m)} (+1 hr gap)`
+      );
+
+    } catch (err) {
+      console.warn('[booking] autoSetCheckin error:', err.message);
+      showAutoCheckinNotice('⚠️ Could not check existing bookings');
+    }
+  }
 
   // ── Update all calculations ──
   function updateCalculations() {

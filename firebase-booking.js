@@ -54,8 +54,38 @@
     'Day tour':   10,
     'Night tour': 10,
     'Over Night': 21,
+    'Over-Night': 21,
     '3D 2N':      42,   // 21 + 21
   };
+
+  /* ── Normalize tourType variants to canonical form ───────────────────── */
+  function normalizeTourType(t) {
+    if (!t) return t;
+    const map = {
+      'over night':       'Over Night',
+      'overnight':        'Over Night',
+      'over-night':       'Over Night',
+      'day tour':         'Day tour',
+      'night tour':       'Night tour',
+      '3d2n':             '3D 2N',
+      '3 days 2 nights':  '3D 2N',
+      '3d 2n':            '3D 2N',
+    };
+    return map[t.toLowerCase().trim()] || t;
+  }
+
+  /* ── Convert 12hr "4:00 PM" → 24hr "HH:MM" for consistent storage ───── */
+  function to24hr(t) {
+    if (!t) return t;
+    if (/^\d{2}:\d{2}$/.test(t)) return t;          // already HH:MM
+    const m = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!m) return t;
+    let h = parseInt(m[1]);
+    const period = m[3].toUpperCase();
+    if (period === 'AM' && h === 12) h = 0;
+    if (period === 'PM' && h !== 12) h += 12;
+    return `${String(h).padStart(2,'0')}:${m[2]}`;
+  }
 
   /* ── dayInfo resolver (mirrors calendar project's logic) ─────────────── */
   function resolveDayInfo(dateObj) {
@@ -96,14 +126,17 @@
 
   /* ── Compute checkout date from check-in + hours ─────────────────────── */
   function computeCheckout(checkinDateStr, checkinTimeStr, tourType) {
-    const hrs      = TOUR_HRS[tourType] || 10;
-    const start    = new Date(checkinDateStr + 'T00:00:00');
-    const [hh, mm] = checkinTimeStr.split(':').map(Number);
-    const totalMin = hh * 60 + mm + hrs * 60;
-    const daysOver = Math.floor(totalMin / (24 * 60));
-    const outH     = Math.floor(totalMin / 60) % 24;
-    const outM     = totalMin % 60;
-    const checkout = new Date(start);
+    const normalType = normalizeTourType(tourType);
+    const hrs        = TOUR_HRS[normalType] || 10;
+    const start      = new Date(checkinDateStr + 'T00:00:00');
+    // Normalize time to 24hr before splitting (handles "4:00 PM" from older records)
+    const time24     = to24hr(checkinTimeStr) || checkinTimeStr;
+    const [hh, mm]   = time24.split(':').map(Number);
+    const totalMin   = hh * 60 + mm + hrs * 60;
+    const daysOver   = Math.floor(totalMin / (24 * 60));
+    const outH       = Math.floor(totalMin / 60) % 24;
+    const outM       = totalMin % 60;
+    const checkout   = new Date(start);
     checkout.setDate(checkout.getDate() + daysOver);
     return { checkout, checkoutTime: fmt12(outH, outM), checkinTime: fmt12(hh, mm) };
   }
@@ -143,8 +176,9 @@
   /* ── Build the Firebase record  (matches calendar schema exactly) ─────── */
   function buildRecord(v) {
     const checkinDateObj  = new Date(v.checkinDate + 'T00:00:00');
+    const canonicalTour   = normalizeTourType(v.tourType);
     const { checkout, checkoutTime, checkinTime } = computeCheckout(
-      v.checkinDate, v.checkinTime, v.tourType
+      v.checkinDate, v.checkinTime, canonicalTour
     );
 
     const pax        = v.totalPax;
@@ -169,7 +203,7 @@
       },
 
       booking: {
-        tourType:           v.tourType,
+        tourType:           canonicalTour,
         checkinDate:        dateKey,
         checkoutDate:       toKey(checkout),
         checkinDateLabel:   formatDateLabel(checkinDateObj),
