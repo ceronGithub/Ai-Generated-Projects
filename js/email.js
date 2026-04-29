@@ -215,7 +215,14 @@
           ['bGuestName','bCheckinDate','bCheckinTime','bDownPayment','bBalance',
            'bDatePayment','bRefNumber','bEmailTo'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.value = id === 'bCheckinTime' ? '16:00' : '';
+            if (!el) return;
+            if (id === 'bCheckinTime') { el.value = '16:00'; return; }
+            if (id === 'bDatePayment') {
+              const t = new Date();
+              el.value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+              return;
+            }
+            el.value = '';
           });
           document.querySelectorAll('.tour-btn').forEach(b => b.classList.remove('active'));
           document.getElementById('bDateDisplay').textContent = 'Select a date and tour type';
