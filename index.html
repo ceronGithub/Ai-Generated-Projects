@@ -296,11 +296,26 @@
               <div class="booking-field">
                 <label class="booking-label">Date of Booking (Mandatory)</label>
                 <div class="booking-row">
-                  <input
-                    type="date"
-                    class="booking-input booking-date"
-                    id="bCheckinDate"
-                  />
+                  <!-- Hidden value holder — booking.js reads .value from this -->
+                  <input type="hidden" id="bCheckinDate" />
+                  <!-- Custom calendar trigger button -->
+                  <button type="button" class="mainCalTrigger" id="mainCalTrigger">
+                    <span id="mainCalTriggerLabel">Pick a date</span>
+                    <span class="mainCalTriggerIcon">📅</span>
+                  </button>
+                  <!-- Custom calendar dropdown -->
+                  <div class="mainCalDropdown" id="mainCalDropdown" style="display:none;">
+                    <div class="mainCalNav">
+                      <button type="button" class="mainCalNavBtn" id="mainCalPrev">&#x2039;</button>
+                      <span class="mainCalMonthLabel" id="mainCalMonthLabel"></span>
+                      <button type="button" class="mainCalNavBtn" id="mainCalNext">&#x203a;</button>
+                    </div>
+                    <div class="mainCalDayNames">
+                      <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
+                      <span>Th</span><span>Fr</span><span>Sa</span>
+                    </div>
+                    <div class="mainCalGrid" id="mainCalGrid"></div>
+                  </div>
                   <div
                     class="booking-tour-group"
                     id="tourTypeGroup"

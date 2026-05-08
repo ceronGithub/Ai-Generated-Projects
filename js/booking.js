@@ -943,6 +943,7 @@ Victoria's Haven
 
   // ── Init ──
   updateTourButtons();
+  initMainCalendar();
 
   // Default Date of Payment to today
   const today = new Date();
@@ -958,6 +959,169 @@ Victoria's Haven
     compose.style.display = 'none';
     form.style.display    = '';
   });
+
+  /* ── Main booking form calendar ────────────────────────────────────────────
+     Replaces the native <input type="date"> with a custom dropdown calendar.
+     Fetches all booked dates from Firebase on init and blocks them.
+     Syncs selected value to the hidden #bCheckinDate input and fires 'change'
+     so all existing listeners (tour buttons, auto-checkin, etc.) still work.
+  ─────────────────────────────────────────────────────────────────────────── */
+  function initMainCalendar() {
+    const trigger      = document.getElementById('mainCalTrigger');
+    const dropdown     = document.getElementById('mainCalDropdown');
+    const triggerLabel = document.getElementById('mainCalTriggerLabel');
+    const grid         = document.getElementById('mainCalGrid');
+    const monthLabel   = document.getElementById('mainCalMonthLabel');
+    const btnPrev      = document.getElementById('mainCalPrev');
+    const btnNext      = document.getElementById('mainCalNext');
+    if (!trigger || !dropdown || !grid) return;
+
+    const MONTH_NAMES_MC = ['January','February','March','April','May','June',
+                             'July','August','September','October','November','December'];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let calYear      = today.getFullYear();
+    let calMonth     = today.getMonth();
+    let selectedDate = null;       // YYYY-MM-DD
+    let bookedDates  = new Set();  // filled async from Firebase
+
+    /* Pad to YYYY-MM-DD */
+    function toYMD(y, m, d) {
+      return `${y}-${String(m + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    }
+
+    /* Format YYYY-MM-DD → display label e.g. "May 24, 2026" */
+    function toDisplayLabel(ymd) {
+      const [y, m, d] = ymd.split('-').map(Number);
+      return `${MONTH_NAMES_MC[m - 1]} ${d}, ${y}`;
+    }
+
+    /* Render the calendar grid for the current calYear / calMonth */
+    function renderGrid() {
+      monthLabel.textContent = `${MONTH_NAMES_MC[calMonth]} ${calYear}`;
+
+      const firstDay = new Date(calYear, calMonth, 1).getDay();
+      const daysInMo = new Date(calYear, calMonth + 1, 0).getDate();
+      const todayYMD = toYMD(today.getFullYear(), today.getMonth(), today.getDate());
+
+      let html = '';
+
+      // Leading blank cells
+      for (let i = 0; i < firstDay; i++) {
+        html += `<span class="mainCalCell mainCalEmpty"></span>`;
+      }
+
+      for (let day = 1; day <= daysInMo; day++) {
+        const ymd      = toYMD(calYear, calMonth, day);
+        const dateObj  = new Date(ymd + 'T00:00:00');
+        const isPast   = dateObj < today;
+        const isBooked = bookedDates.has(ymd);
+        const isSel    = ymd === selectedDate;
+        const isToday  = ymd === todayYMD;
+
+        let cls = 'mainCalCell';
+        if (isPast || isBooked) {
+          cls += ' mainCalDisabled';
+          if (isBooked) cls += ' mainCalBooked';
+        } else {
+          cls += ' mainCalAvailable';
+        }
+        if (isSel)             cls += ' mainCalSelectedDay';
+        if (isToday && !isSel) cls += ' mainCalToday';
+
+        const title = isBooked ? 'Already booked' : isPast ? 'Past date' : '';
+        html += `<span class="${cls}" data-date="${ymd}" title="${title}">${day}</span>`;
+      }
+
+      grid.innerHTML = html;
+
+      // Attach click handlers to available cells
+      grid.querySelectorAll('.mainCalAvailable').forEach(cell => {
+        cell.addEventListener('click', () => {
+          selectedDate = cell.dataset.date;
+
+          // Sync hidden input and fire change so booking.js listeners react
+          inp.checkinDate.value = selectedDate;
+          inp.checkinDate.dispatchEvent(new Event('change'));
+
+          // Update trigger label
+          triggerLabel.textContent = toDisplayLabel(selectedDate);
+          trigger.classList.add('mainCalTriggerActive');
+
+          closeCalendar();
+        });
+      });
+    }
+
+    function openCalendar() {
+      dropdown.style.display = 'block';
+      trigger.classList.add('mainCalOpen');
+      renderGrid();
+    }
+
+    function closeCalendar() {
+      dropdown.style.display = 'none';
+      trigger.classList.remove('mainCalOpen');
+    }
+
+    // Toggle open/close on trigger button click
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      dropdown.style.display === 'none' ? openCalendar() : closeCalendar();
+    });
+
+    // Close when clicking outside
+    document.addEventListener('click', e => {
+      if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+        closeCalendar();
+      }
+    });
+
+    // Month navigation
+    btnPrev.addEventListener('click', e => {
+      e.stopPropagation();
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderGrid();
+    });
+    btnNext.addEventListener('click', e => {
+      e.stopPropagation();
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderGrid();
+    });
+
+    /* Fetch all booked dates from Firebase and mark them — runs once on init.
+       Walks checkinDate → checkoutDate for every booking so multi-day stays
+       block every night of the stay, not just the check-in day.              */
+    async function fetchBookedDates() {
+      try {
+        const res  = await fetch(`${FB_DB_URL}${FB_BOOKINGS}.json`);
+        const data = await res.json();
+        if (!data || typeof data !== 'object') return;
+
+        Object.values(data).forEach(row => {
+          if (!row || typeof row !== 'object') return;
+          const b  = row.booking || {};
+          const ci = b.checkinDate  || row.dateKey || '';
+          const co = b.checkoutDate || ci;
+          if (!ci) return;
+          const cur = new Date(ci + 'T00:00:00');
+          const end = new Date(co + 'T00:00:00');
+          while (cur <= end) {
+            bookedDates.add(cur.toISOString().split('T')[0]);
+            cur.setDate(cur.getDate() + 1);
+          }
+        });
+
+        // Re-render if calendar is already open
+        if (dropdown.style.display !== 'none') renderGrid();
+      } catch (_) { /* fail silently — calendar works without blocked dates */ }
+    }
+
+    fetchBookedDates();
+  }
 
   // ── Helpers ──
   function fmt12(h, m) {
