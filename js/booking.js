@@ -255,6 +255,363 @@
     }
   }
 
+  /* ── Conflict Modal: show existing bookings on selected date ─────────────
+     Renders a modal listing all conflicting bookings. Each card has two
+     actions: Delete (removes record from Firebase) and Rebook (pre-fills
+     the booking form with that guest's details for editing).
+  ─────────────────────────────────────────────────────────────────────────── */
+  /* ── Convert any time string (24hr "HH:MM" or 12hr "H:MM AM/PM") → 12hr display ── */
+  function displayAs12hr(timeStr) {
+    if (!timeStr || timeStr === '—') return timeStr;
+    // Already 12hr format e.g. "4:00 PM"
+    if (/\b(AM|PM)\b/i.test(timeStr)) return timeStr;
+    // 24hr format "HH:MM"
+    const m = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return timeStr;
+    let h = parseInt(m[1]);
+    const mins = m[2];
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${mins} ${period}`;
+  }
+
+  /* ── Format YYYY-MM-DD → "Mon DD, YYYY" for date display in modal ─────── */
+  function formatModalDate(dateStr) {
+    if (!dateStr) return '—';
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun',
+                         'Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${MONTH_SHORT[mo - 1]} ${d}, ${y}`;
+  }
+
+  function buildConflictModal(dateStr, conflictRows) {
+    // Remove any previous instance
+    const prev = document.getElementById('conflictModal');
+    if (prev) prev.remove();
+
+    // Format display date  e.g. "May 24, 2026"
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    const MONTH_NAMES = ['January','February','March','April','May','June',
+                         'July','August','September','October','November','December'];
+    const displayDate = `${MONTH_NAMES[mo - 1]} ${d}, ${y}`;
+
+    // Build a card per conflicting booking
+    const cardsHtml = conflictRows.map(({ fbKey, row }) => {
+      const b = row.booking  || {};
+      const g = row.guest    || {};
+      const p = row.payment  || {};
+
+      const name         = g.name      || '—';
+      const email        = g.email     || '—';
+      const phone        = g.phone     || '—';
+      const pax          = g.totalPax  || g.pax || '—';
+      const tourType     = b.tourType  || '—';
+      // Times: convert 24hr stored values to 12hr display
+      const checkinTime  = displayAs12hr(b.checkinTime  || '—');
+      const checkoutTime = displayAs12hr(b.checkoutTime || '—');
+      // Dates: use stored labels if available, else format from YYYY-MM-DD keys
+      const checkinDate  = b.checkinDateLabel  || formatModalDate(b.checkinDate  || row.dateKey || '');
+      const checkoutDate = b.checkoutDateLabel || formatModalDate(b.checkoutDate || '');
+      const total        = p.total       != null ? `₱${Number(p.total).toLocaleString('en-PH',       { minimumFractionDigits: 2 })}` : '—';
+      const dp           = p.downpayment != null ? `₱${Number(p.downpayment).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '—';
+      const bal          = p.balance     != null ? `₱${Number(p.balance).toLocaleString('en-PH',     { minimumFractionDigits: 2 })}` : '—';
+
+      return `
+        <div class="conflictCard" data-fbkey="${fbKey}">
+          <div class="conflictCardHeader">
+            <span class="conflictGuestName">${name}</span>
+            <span class="conflictTourBadge">${tourType}</span>
+          </div>
+          <div class="conflictCardBody">
+            <div class="conflictRow"><span class="conflictLabel">✉</span><span>${email}</span></div>
+            <div class="conflictRow"><span class="conflictLabel">📞</span><span>${phone}</span></div>
+            <div class="conflictRow"><span class="conflictLabel">👥</span><span>${pax} Pax</span></div>
+            <div class="conflictRow conflictRowDates">
+              <span class="conflictLabel">📅</span>
+              <span>
+                <span class="conflictDateChip">${checkinDate}</span>
+                <span class="conflictTimePill">${checkinTime}</span>
+                <span class="conflictArrow">→</span>
+                <span class="conflictDateChip">${checkoutDate}</span>
+                <span class="conflictTimePill">${checkoutTime}</span>
+              </span>
+            </div>
+            <div class="conflictRow"><span class="conflictLabel">💰</span><span>${total} &nbsp;|&nbsp; DP: ${dp} &nbsp;|&nbsp; Bal: ${bal}</span></div>
+          </div>
+          <div class="conflictCardActions">
+            <button class="conflictBtnDelete" data-fbkey="${fbKey}">🗑 Delete</button>
+            <button class="conflictBtnRebook" data-fbkey="${fbKey}">🔁 Rebook</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    const modal = document.createElement('div');
+    modal.id = 'conflictModal';
+    modal.className = 'conflictModalOverlay';
+    modal.innerHTML = `
+      <div class="conflictModalBox">
+        <div class="conflictModalHeader">
+          <span class="conflictModalTitle">📅 ${displayDate}</span>
+          <span class="conflictModalSub">${conflictRows.length} existing booking${conflictRows.length > 1 ? 's' : ''} on this date</span>
+        </div>
+        <div class="conflictModalScroll">
+          ${cardsHtml}
+        </div>
+        <button class="conflictBtnClose" id="conflictBtnClose">✕ Close</button>
+      </div>`;
+
+    document.body.appendChild(modal);
+
+    // Close button
+    document.getElementById('conflictBtnClose').addEventListener('click', () => modal.remove());
+
+    // Overlay click closes modal
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+    // ── Delete handler ──
+    modal.querySelectorAll('.conflictBtnDelete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const key = btn.dataset.fbkey;
+        if (!key) return;
+        const confirmed = confirm('Delete this booking permanently from the database?');
+        if (!confirmed) return;
+
+        btn.disabled = true;
+        btn.textContent = '⏳ Deleting...';
+
+        try {
+          const res = await fetch(`${FB_DB_URL}${FB_BOOKINGS}/${key}.json`, { method: 'DELETE' });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+          // Remove the card from the modal
+          const card = modal.querySelector(`.conflictCard[data-fbkey="${key}"]`);
+          if (card) card.remove();
+
+          // If no more cards remain, close modal and re-run checkin check
+          const remaining = modal.querySelectorAll('.conflictCard');
+          if (remaining.length === 0) {
+            modal.remove();
+            autoSetCheckinFromExistingBooking(dateStr);
+          }
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = '🗑 Delete';
+          alert(`Delete failed: ${err.message}`);
+        }
+      });
+    });
+
+    // ── Rebook handler: guided sub-modal with custom calendar — booked dates are disabled ──
+    modal.querySelectorAll('.conflictBtnRebook').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const key   = btn.dataset.fbkey;
+        const found = conflictRows.find(r => r.fbKey === key);
+        if (!found) return;
+
+        const { row } = found;
+        const g = row.guest    || {};
+        const p = row.payment  || {};
+        const b = row.booking  || {};
+
+        // ── Fetch all booked date ranges from Firebase to block in calendar ──
+        // Each booking may span multiple days (overnight / 3D2N), so we collect
+        // every date from checkinDate through checkoutDate inclusive.
+        let bookedDates = new Set();
+        try {
+          const res  = await fetch(`${FB_DB_URL}${FB_BOOKINGS}.json`);
+          const data = await res.json();
+          if (data && typeof data === 'object') {
+            Object.values(data).forEach(r => {
+              if (!r || typeof r !== 'object') return;
+              const bk = r.booking || {};
+              const ci = bk.checkinDate  || r.dateKey || '';
+              const co = bk.checkoutDate || ci;
+              if (!ci) return;
+              // Walk from checkin to checkout and mark every date as booked
+              const cur = new Date(ci + 'T00:00:00');
+              const end = new Date(co + 'T00:00:00');
+              while (cur <= end) {
+                bookedDates.add(cur.toISOString().split('T')[0]);
+                cur.setDate(cur.getDate() + 1);
+              }
+            });
+          }
+        } catch (_) { /* fail silently — calendar still works, no dates blocked */ }
+
+        // ── Build sub-modal summary ──
+        const summaryItems = [
+          { icon: '👤', label: 'Guest',   val: g.name  || '—' },
+          { icon: '📞', label: 'Phone',   val: g.phone || '—' },
+          { icon: '✉',  label: 'Email',   val: g.email || '—' },
+          { icon: '👥', label: 'Pax',     val: `${g.totalPax || g.pax || '—'}` },
+          { icon: '🗺',  label: 'Tour',    val: b.tourType || '—' },
+          { icon: '💰', label: 'DP',      val: p.downpayment != null ? `₱${Number(p.downpayment).toLocaleString('en-PH', { minimumFractionDigits: 2 })}` : '—' },
+          { icon: '💳', label: 'Balance', val: p.balance     != null ? `₱${Number(p.balance).toLocaleString('en-PH',     { minimumFractionDigits: 2 })}` : '—' },
+        ].map(i => `
+          <div class="rebookSummaryRow">
+            <span class="rebookSummaryIcon">${i.icon}</span>
+            <span class="rebookSummaryLabel">${i.label}</span>
+            <span class="rebookSummaryVal">${i.val}</span>
+          </div>`).join('');
+
+        const subModal = document.createElement('div');
+        subModal.id = 'rebookSubModal';
+        subModal.className = 'rebookSubOverlay';
+        subModal.innerHTML = `
+          <div class="rebookSubBox">
+            <div class="rebookSubHeader">
+              <span class="rebookSubTitle">🔁 Rebook — ${g.name || 'Guest'}</span>
+              <span class="rebookSubSub">Details carried over. Pick an available date.</span>
+            </div>
+            <div class="rebookSummary">${summaryItems}</div>
+            <div class="rebookDateRow">
+              <label class="rebookDateLabel">📅 New Check-in Date</label>
+              <div class="rebookCalWrap">
+                <div class="rebookCalNav">
+                  <button class="rebookCalNavBtn" id="rebookCalPrev">‹</button>
+                  <span class="rebookCalMonthLabel" id="rebookCalMonthLabel"></span>
+                  <button class="rebookCalNavBtn" id="rebookCalNext">›</button>
+                </div>
+                <div class="rebookCalDayNames">
+                  <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
+                  <span>Th</span><span>Fr</span><span>Sa</span>
+                </div>
+                <div class="rebookCalGrid" id="rebookCalGrid"></div>
+                <div class="rebookCalSelected" id="rebookCalSelected">No date selected</div>
+              </div>
+            </div>
+            <div class="rebookSubActions">
+              <button class="rebookSubBtnCancel" id="rebookSubBtnCancel">Cancel</button>
+              <button class="rebookSubBtnConfirm" id="rebookSubBtnConfirm" disabled>Confirm Rebook →</button>
+            </div>
+          </div>`;
+
+        document.body.appendChild(subModal);
+
+        // ── Calendar state ──
+        const today        = new Date();
+        today.setHours(0,0,0,0);
+        let   calYear      = today.getFullYear();
+        let   calMonth     = today.getMonth();
+        let   selectedDate = null; // YYYY-MM-DD string
+
+        const MONTH_NAMES_CAL = ['January','February','March','April','May','June',
+                                  'July','August','September','October','November','December'];
+
+        /* Pad date parts to YYYY-MM-DD */
+        function toYMD(y, m, d) {
+          return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        }
+
+        /* Render the calendar grid for calYear / calMonth */
+        function renderCalendar() {
+          const label    = document.getElementById('rebookCalMonthLabel');
+          const grid     = document.getElementById('rebookCalGrid');
+          const selLabel = document.getElementById('rebookCalSelected');
+          const confirmBtn = document.getElementById('rebookSubBtnConfirm');
+
+          label.textContent = `${MONTH_NAMES_CAL[calMonth]} ${calYear}`;
+
+          const firstDay  = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+          const daysInMo  = new Date(calYear, calMonth + 1, 0).getDate();
+
+          let html = '';
+
+          // Leading empty cells
+          for (let i = 0; i < firstDay; i++) {
+            html += `<span class="rebookCalCell rebookCalEmpty"></span>`;
+          }
+
+          for (let day = 1; day <= daysInMo; day++) {
+            const ymd      = toYMD(calYear, calMonth, day);
+            const dateObj  = new Date(ymd + 'T00:00:00');
+            const isPast   = dateObj < today;
+            const isBooked = bookedDates.has(ymd);
+            const isSel    = ymd === selectedDate;
+            const isToday  = ymd === toYMD(today.getFullYear(), today.getMonth(), today.getDate());
+
+            let cls = 'rebookCalCell';
+            if (isPast || isBooked) cls += ' rebookCalDisabled';
+            else                    cls += ' rebookCalAvailable';
+            if (isSel)              cls += ' rebookCalSelected';
+            if (isToday && !isSel)  cls += ' rebookCalToday';
+            if (isBooked)           cls += ' rebookCalBooked';
+
+            const title = isBooked ? 'Already booked' : isPast ? 'Past date' : '';
+            html += `<span class="${cls}" data-date="${ymd}" title="${title}">${day}</span>`;
+          }
+
+          grid.innerHTML = html;
+
+          // Update selected label + confirm button
+          if (selectedDate) {
+            const [sy, sm, sd] = selectedDate.split('-').map(Number);
+            selLabel.textContent = `✅ ${MONTH_NAMES_CAL[sm-1]} ${sd}, ${sy}`;
+            selLabel.className   = 'rebookCalSelected rebookCalSelectedActive';
+            confirmBtn.disabled  = false;
+          } else {
+            selLabel.textContent = 'No date selected';
+            selLabel.className   = 'rebookCalSelected';
+            confirmBtn.disabled  = true;
+          }
+
+          // Click handler on available day cells
+          grid.querySelectorAll('.rebookCalAvailable').forEach(cell => {
+            cell.addEventListener('click', () => {
+              selectedDate = cell.dataset.date;
+              renderCalendar();
+            });
+          });
+        }
+
+        renderCalendar();
+
+        // Month navigation
+        document.getElementById('rebookCalPrev').addEventListener('click', () => {
+          calMonth--;
+          if (calMonth < 0) { calMonth = 11; calYear--; }
+          renderCalendar();
+        });
+        document.getElementById('rebookCalNext').addEventListener('click', () => {
+          calMonth++;
+          if (calMonth > 11) { calMonth = 0; calYear++; }
+          renderCalendar();
+        });
+
+        // Cancel — remove sub-modal, leave conflict modal open
+        document.getElementById('rebookSubBtnCancel').addEventListener('click', () => subModal.remove());
+        subModal.addEventListener('click', e => { if (e.target === subModal) subModal.remove(); });
+
+        // Confirm — pre-fill booking form and close both modals
+        document.getElementById('rebookSubBtnConfirm').addEventListener('click', () => {
+          if (!selectedDate) return;
+
+          // ── Pre-fill ALL guest + payment fields from the existing booking ──
+          if (inp.guestName   && g.name)               inp.guestName.value   = g.name;
+          if (inp.phoneNumber && g.phone)               inp.phoneNumber.value = g.phone;
+          if (inp.totalPax    && (g.totalPax || g.pax)) inp.totalPax.value    = g.totalPax || g.pax;
+          if (inp.emailTo     && g.email)               inp.emailTo.value     = g.email;
+          if (inp.downPayment && p.downpayment != null) inp.downPayment.value = p.downpayment;
+          if (inp.balance     && p.balance     != null) inp.balance.value     = p.balance;
+
+          // Set the new check-in date and fire change so tour buttons + auto-checkin refresh
+          inp.checkinDate.value = selectedDate;
+          inp.checkinDate.dispatchEvent(new Event('change'));
+
+          subModal.remove();
+          modal.remove();
+          updateCalculations();
+
+          // Scroll to form and highlight the date field briefly
+          const formEl = document.getElementById('bookingForm');
+          if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          inp.checkinDate.style.outline = '2px solid #34d399';
+          setTimeout(() => { inp.checkinDate.style.outline = ''; }, 2500);
+        });
+      });
+    });
+  }
+
   /* ── Main: fetch ALL bookings, filter client-side for date, find latest checkout +1hr ── */
   async function autoSetCheckinFromExistingBooking(dateStr) {
     if (!dateStr) return;
@@ -277,8 +634,10 @@
 
       // Filter client-side: checkinDate OR checkoutDate matches selected date
       // This catches both: guests checking IN today, and overnight guests checking OUT today
-      const allBookings = [];
-      Object.values(data).forEach(row => {
+      // Also store the Firebase key (fbKey) so Delete works
+      const allBookings  = [];
+      const conflictRows = [];
+      Object.entries(data).forEach(([fbKey, row]) => {
         if (!row || typeof row !== 'object') return;
         const b = row.booking || {};
         const checkinDate  = b.checkinDate  || row.dateKey || '';
@@ -286,6 +645,7 @@
         if (checkinDate === dateStr || checkoutDate === dateStr) {
           if (b.checkinTime || b.checkoutTime) {
             allBookings.push(b);
+            conflictRows.push({ fbKey, row });
           }
         }
       });
@@ -302,18 +662,21 @@
         return;
       }
 
+      // Show conflict modal with all existing bookings on this date
+      buildConflictModal(dateStr, conflictRows);
+
       // Find the latest checkout time across all matching bookings
-      let latestCheckoutMins = null;
+      let latestCheckoutMins  = null;
       let latestCheckoutLabel = '';
-      let bookingCount = allBookings.length;
+      let bookingCount        = allBookings.length;
 
       allBookings.forEach(b => {
         let coMins = getCheckoutMins(b);
         if (coMins === null) return;
         coMins = coMins % (24 * 60);
         if (latestCheckoutMins === null || coMins > latestCheckoutMins) {
-          latestCheckoutMins = coMins;
-          latestCheckoutLabel = fmt12(Math.floor(coMins / 60), coMins % 60); // always 12hr display
+          latestCheckoutMins  = coMins;
+          latestCheckoutLabel = fmt12(Math.floor(coMins / 60), coMins % 60);
         }
       });
 

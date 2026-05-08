@@ -1396,3 +1396,494 @@ body {
 .footer-copy {
   color: var(--muted);
 }
+/* ══════════════════════════════════════════════════════════════════════════
+   Conflict Modal — shown when selected date has existing bookings
+   Displays each booking as a card with Delete and Rebook action buttons.
+══════════════════════════════════════════════════════════════════════════ */
+.conflictModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(8, 10, 15, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: conflictFadeIn 0.22s ease;
+}
+
+@keyframes conflictFadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+
+.conflictModalBox {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.conflictModalHeader {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conflictModalTitle {
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+.conflictModalSub {
+  font-size: 0.75rem;
+  color: var(--muted2);
+  font-family: var(--mono);
+}
+
+.conflictModalScroll {
+  overflow-y: auto;
+  flex: 1;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+.conflictCard {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.conflictCard:hover {
+  border-color: rgba(0, 229, 255, 0.22);
+}
+
+.conflictCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+  gap: 8px;
+}
+
+.conflictGuestName {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.conflictTourBadge {
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.conflictCardBody {
+  padding: 0 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.conflictRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  color: var(--muted2);
+  line-height: 1.4;
+}
+
+.conflictLabel {
+  font-size: 0.82rem;
+  min-width: 16px;
+  text-align: center;
+}
+
+.conflictCardActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--border);
+}
+
+.conflictBtnDelete,
+.conflictBtnRebook {
+  padding: 10px 0;
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: background 0.18s, color 0.18s;
+  letter-spacing: 0.02em;
+}
+
+.conflictBtnDelete {
+  color: #f87171;
+  border-right: 1px solid var(--border);
+}
+
+.conflictBtnDelete:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+}
+
+.conflictBtnDelete:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.conflictBtnRebook {
+  color: #34d399;
+}
+
+.conflictBtnRebook:hover {
+  background: rgba(52, 211, 153, 0.1);
+  color: #6ee7b7;
+}
+
+.conflictBtnClose {
+  margin: 0;
+  padding: 12px;
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted2);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  letter-spacing: 0.03em;
+}
+
+.conflictBtnClose:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Conflict Modal — date/time chip styles
+══════════════════════════════════════════════════════════════════════════ */
+.conflictRowDates {
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  align-items: center;
+}
+
+.conflictDateChip {
+  font-size: 0.73rem;
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.conflictTimePill {
+  font-size: 0.72rem;
+  color: var(--accent);
+  background: rgba(0,229,255,0.07);
+  border: 1px solid rgba(0,229,255,0.18);
+  border-radius: 5px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.conflictArrow {
+  color: var(--muted2);
+  font-size: 0.78rem;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Rebook Sub-Modal — guided rebook flow overlaid on the conflict modal
+   Shows a summary of all carried-over fields + new date picker.
+══════════════════════════════════════════════════════════════════════════ */
+.rebookSubOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(8, 10, 15, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: conflictFadeIn 0.18s ease;
+}
+
+.rebookSubBox {
+  background: var(--surface);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+.rebookSubHeader {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rebookSubTitle {
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.rebookSubSub {
+  font-size: 0.73rem;
+  color: var(--muted2);
+  font-family: var(--mono);
+}
+
+/* Summary rows: carried-over booking details */
+.rebookSummary {
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rebookSummaryRow {
+  display: grid;
+  grid-template-columns: 20px 64px 1fr;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.77rem;
+  font-family: var(--mono);
+}
+
+.rebookSummaryIcon {
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.rebookSummaryLabel {
+  color: var(--muted2);
+}
+
+.rebookSummaryVal {
+  color: var(--text);
+}
+
+/* New date picker row */
+.rebookDateRow {
+  padding: 14px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rebookDateLabel {
+  font-size: 0.75rem;
+  font-family: var(--mono);
+  color: var(--muted2);
+  letter-spacing: 0.03em;
+}
+
+/* Custom calendar wrapper */
+.rebookCalWrap {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Month nav row */
+.rebookCalNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rebookCalNavBtn {
+  background: transparent;
+  border: none;
+  color: var(--muted2);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 5px;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+}
+
+.rebookCalNavBtn:hover {
+  background: var(--border2);
+  color: var(--text);
+}
+
+.rebookCalMonthLabel {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Day-name header row */
+.rebookCalDayNames {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 6px 8px 2px;
+}
+
+.rebookCalDayNames span {
+  text-align: center;
+  font-size: 0.67rem;
+  font-family: var(--mono);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Calendar day grid */
+.rebookCalGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 2px 8px 8px;
+  gap: 2px;
+}
+
+.rebookCalCell {
+  text-align: center;
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  padding: 5px 0;
+  border-radius: 5px;
+  user-select: none;
+  line-height: 1.3;
+}
+
+.rebookCalEmpty {
+  /* spacer cells before day 1 */
+}
+
+/* Available date — clickable */
+.rebookCalAvailable {
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.rebookCalAvailable:hover {
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--accent);
+}
+
+/* Today highlight */
+.rebookCalToday {
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: var(--accent);
+}
+
+/* Selected date */
+.rebookCalCell.rebookCalSelected {
+  background: var(--accent);
+  color: #080a0f;
+  font-weight: 700;
+}
+
+/* Booked date — blocked, red tint with strikethrough */
+.rebookCalBooked {
+  color: rgba(248, 113, 113, 0.45);
+  text-decoration: line-through;
+  cursor: not-allowed;
+  background: rgba(248, 113, 113, 0.06);
+}
+
+/* Past date — grayed out */
+.rebookCalDisabled:not(.rebookCalBooked) {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+/* Selected date label below the grid */
+.rebookCalSelected {
+  text-align: center;
+  font-size: 0.75rem;
+  font-family: var(--mono);
+  color: var(--muted2);
+  padding: 6px 8px 8px;
+  border-top: 1px solid var(--border);
+}
+
+.rebookCalSelectedActive {
+  color: #34d399;
+}
+
+/* Confirm / Cancel buttons */
+.rebookSubActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.rebookSubBtnCancel,
+.rebookSubBtnConfirm {
+  padding: 12px 0;
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: background 0.18s, color 0.18s;
+  letter-spacing: 0.02em;
+}
+
+.rebookSubBtnCancel {
+  color: var(--muted2);
+  border-right: 1px solid var(--border);
+}
+
+.rebookSubBtnCancel:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.rebookSubBtnConfirm {
+  color: #34d399;
+}
+
+.rebookSubBtnConfirm:hover {
+  background: rgba(52, 211, 153, 0.1);
+  color: #6ee7b7;
+}
