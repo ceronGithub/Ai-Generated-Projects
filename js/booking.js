@@ -981,10 +981,13 @@ Victoria's Haven
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let calYear      = today.getFullYear();
-    let calMonth     = today.getMonth();
-    let selectedDate = null;       // YYYY-MM-DD
-    let bookedDates  = new Set();  // filled async from Firebase
+    let calYear           = today.getFullYear();
+    let calMonth          = today.getMonth();
+    let selectedDate      = null;       // YYYY-MM-DD
+    // fullyBookedDates: red — not clickable (checkout after 10 PM, or intermediate overnight day)
+    // partialDates:     yellow — clickable (checkout ≤ 11 AM, afternoon slot still open)
+    let fullyBookedDates  = new Set();
+    let partialDates      = new Set();
 
     /* Pad to YYYY-MM-DD */
     function toYMD(y, m, d) {
@@ -997,7 +1000,16 @@ Victoria's Haven
       return `${MONTH_NAMES_MC[m - 1]} ${d}, ${y}`;
     }
 
-    /* Render the calendar grid for the current calYear / calMonth */
+    /* Render the calendar grid for the current calYear / calMonth.
+       Three date states:
+       — Red   (mainCalBooked):   fully occupied, not clickable.
+                                  Covers check-in days whose checkout > 10 PM
+                                  and any intermediate day of a multi-night stay.
+       — Yellow (mainCalPartial): checkout date whose checkout time ≤ 11 AM;
+                                  afternoon slot (2 PM onward) is still open —
+                                  clickable, no booking details shown.
+       — White (mainCalAvailable): fully free, clickable.
+    */
     function renderGrid() {
       monthLabel.textContent = `${MONTH_NAMES_MC[calMonth]} ${calYear}`;
 
@@ -1013,30 +1025,36 @@ Victoria's Haven
       }
 
       for (let day = 1; day <= daysInMo; day++) {
-        const ymd      = toYMD(calYear, calMonth, day);
-        const dateObj  = new Date(ymd + 'T00:00:00');
-        const isPast   = dateObj < today;
-        const isBooked = bookedDates.has(ymd);
-        const isSel    = ymd === selectedDate;
-        const isToday  = ymd === todayYMD;
+        const ymd     = toYMD(calYear, calMonth, day);
+        const dateObj = new Date(ymd + 'T00:00:00');
+        const isPast  = dateObj < today;
+        const isFull  = fullyBookedDates.has(ymd);
+        const isPartial = !isFull && partialDates.has(ymd);
+        const isSel   = ymd === selectedDate;
+        const isToday = ymd === todayYMD;
 
         let cls = 'mainCalCell';
-        if (isPast || isBooked) {
+        if (isPast) {
           cls += ' mainCalDisabled';
-          if (isBooked) cls += ' mainCalBooked';
+        } else if (isFull) {
+          // Fully occupied — red, not clickable
+          cls += ' mainCalDisabled mainCalBooked';
+        } else if (isPartial) {
+          // Checkout by 11 AM — yellow, still selectable
+          cls += ' mainCalAvailable mainCalPartial';
         } else {
           cls += ' mainCalAvailable';
         }
         if (isSel)             cls += ' mainCalSelectedDay';
         if (isToday && !isSel) cls += ' mainCalToday';
 
-        const title = isBooked ? 'Already booked' : isPast ? 'Past date' : '';
+        const title = isFull ? 'Fully booked' : isPartial ? 'Available after 2 PM' : isPast ? 'Past date' : '';
         html += `<span class="${cls}" data-date="${ymd}" title="${title}">${day}</span>`;
       }
 
       grid.innerHTML = html;
 
-      // Attach click handlers to available cells
+      // Attach click handlers to available cells (includes partial/yellow dates)
       grid.querySelectorAll('.mainCalAvailable').forEach(cell => {
         cell.addEventListener('click', () => {
           selectedDate = cell.dataset.date;
@@ -1092,14 +1110,40 @@ Victoria's Haven
       renderGrid();
     });
 
-    /* Fetch all booked dates from Firebase and mark them — runs once on init.
-       Walks checkinDate → checkoutDate for every booking so multi-day stays
-       block every night of the stay, not just the check-in day.              */
+    /* Fetch all bookings from Firebase and classify each date:
+       — fullyBookedDates: check-in day + all intermediate days of multi-night stay
+                           PLUS checkout date when checkout time > 10 PM (22:00).
+       — partialDates:     checkout date when checkout time ≤ 11 AM (660 mins);
+                           an afternoon check-in is still possible that day.
+       Rule of thumb matching the business standard:
+         Check-in 2 PM, overnight checkout next day 11 AM.
+         The checkout date (next day) is "partial/yellow" — open after 11 AM.
+         The check-in date itself is "red" because that slot (2 PM–11 AM) is taken. */
     async function fetchBookedDates() {
       try {
         const res  = await fetch(`${FB_DB_URL}${FB_BOOKINGS}.json`);
         const data = await res.json();
         if (!data || typeof data !== 'object') return;
+
+        // Helper: parse any stored time string → total minutes since midnight (null if unparseable)
+        function parseStoredTimeMins(timeStr) {
+          if (!timeStr) return null;
+          // 24hr "HH:MM"
+          const m24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+          if (m24) return parseInt(m24[1]) * 60 + parseInt(m24[2]);
+          // 12hr "H:MM AM/PM"
+          const m12 = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+          if (!m12) return null;
+          let h = parseInt(m12[1]);
+          const mins = parseInt(m12[2]);
+          const period = m12[3].toUpperCase();
+          if (period === 'AM' && h === 12) h = 0;
+          if (period === 'PM' && h !== 12) h += 12;
+          return h * 60 + mins;
+        }
+
+        const CHECKOUT_LATE_THRESHOLD = 22 * 60;   // 10:00 PM — after this, date is fully blocked
+        const CHECKOUT_MORNING_LIMIT  = 11 * 60;   // 11:00 AM — checkout by this time → partial/yellow
 
         Object.values(data).forEach(row => {
           if (!row || typeof row !== 'object') return;
@@ -1107,10 +1151,48 @@ Victoria's Haven
           const ci = b.checkinDate  || row.dateKey || '';
           const co = b.checkoutDate || ci;
           if (!ci) return;
-          const cur = new Date(ci + 'T00:00:00');
-          const end = new Date(co + 'T00:00:00');
-          while (cur <= end) {
-            bookedDates.add(cur.toISOString().split('T')[0]);
+
+          // Compute checkout time in minutes; fall back to tour-hours calculation if not stored
+          let checkoutMins = parseStoredTimeMins(b.checkoutTime);
+          if (checkoutMins === null) {
+            const checkinMins = parseStoredTimeMins(b.checkinTime);
+            if (checkinMins !== null) {
+              const hrs = TOUR_HRS_MAP[b.tourType] || 10;
+              checkoutMins = (checkinMins + hrs * 60) % (24 * 60);
+            }
+          }
+
+          const checkinDateObj  = new Date(ci + 'T00:00:00');
+          const checkoutDateObj = new Date(co + 'T00:00:00');
+
+          // Walk every calendar day spanned by this booking
+          const cur = new Date(checkinDateObj);
+          while (cur <= checkoutDateObj) {
+            const ymd         = cur.toISOString().split('T')[0];
+            const isCheckinDay  = ymd === ci;
+            const isCheckoutDay = ymd === co;
+
+            if (isCheckinDay && isCheckoutDay && ci === co) {
+              // Same-day booking (day tour / night tour) — mark fully occupied
+              fullyBookedDates.add(ymd);
+            } else if (isCheckoutDay && !isCheckinDay) {
+              // This is the checkout date of a multi-day booking
+              // Partial (yellow) if checkout ≤ 11 AM — afternoon slot still open
+              // Fully blocked (red) if checkout > 10 PM — no room left that day
+              if (checkoutMins !== null && checkoutMins <= CHECKOUT_MORNING_LIMIT) {
+                // Only add to partial if not already fully booked by another booking
+                if (!fullyBookedDates.has(ymd)) partialDates.add(ymd);
+              } else {
+                // Late checkout OR unknown time — treat as fully occupied
+                fullyBookedDates.add(ymd);
+                partialDates.delete(ymd);
+              }
+            } else {
+              // Check-in day or intermediate day of multi-night stay — always fully blocked
+              fullyBookedDates.add(ymd);
+              partialDates.delete(ymd);
+            }
+
             cur.setDate(cur.getDate() + 1);
           }
         });

@@ -2040,6 +2040,19 @@ body {
   background: rgba(248, 113, 113, 0.06);
 }
 
+/* Partial dates — checkout ≤ 11 AM, afternoon slot open — yellow, clickable */
+.mainCalPartial {
+  color: #ca8a04;
+  background: rgba(234, 179, 8, 0.10);
+  border: 1px solid rgba(234, 179, 8, 0.30);
+  cursor: pointer;
+}
+
+.mainCalPartial:hover {
+  background: rgba(234, 179, 8, 0.22);
+  color: #fbbf24;
+}
+
 /* Past dates — faded, not clickable */
 .mainCalDisabled:not(.mainCalBooked) {
   color: var(--muted);
