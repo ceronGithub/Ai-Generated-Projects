@@ -190,7 +190,9 @@ function getCheckoutConstraintForDate(dateKey) {
         latestTime = coTime;
       }
       const guestName = (b.guest && b.guest.name) || b.guestName || 'Guest';
-      const tour      = (b.booking && b.booking.tourType) || b.tourType || '';
+      let tour      = (b.booking && b.booking.tourType) || b.tourType || '';
+      if (tour === 'Over Night' || tour === 'Overnight') tour = 'Over-Night';
+      if (tour === '3D 2N' || tour === '3 Days 2 Nights') tour = '3D2N';
       sources.push(`${guestName} (${tour} check-out)`);
     });
   });
@@ -347,9 +349,19 @@ function applyTimeSlotsToCell(key, cellEl) {
   let hasEvening = false, hasAfternoon = false, hasMorning = false;
   let hasMultiNight = false;
 
+  // Normalize tourType to handle legacy variants stored before naming was standardised
+  // "Over Night" → "Over-Night" | "3D 2N" → "3D2N"
+  function normTourType(t) {
+    if (!t) return '';
+    const s = t.trim();
+    if (s === 'Over Night' || s === 'Overnight') return 'Over-Night';
+    if (s === '3D 2N' || s === '3 Days 2 Nights') return '3D2N';
+    return s;
+  }
+
   list.forEach(b => {
     const ci   = (b.booking && b.booking.checkinTime) || b.checkinTime || '';
-    const tour = (b.booking && b.booking.tourType)    || b.tourType    || '';
+    const tour = normTourType((b.booking && b.booking.tourType) || b.tourType || '');
     const slot = getTimeSlot(ci);
     if (slot) {
       if (slot.slot === 'evening')   hasEvening   = true;
@@ -395,7 +407,11 @@ function buildStayoverMap() {
   Object.keys(src).forEach(checkinKey => {
     const list = src[checkinKey] || [];
     list.forEach(b => {
-      const tour   = (b.booking && b.booking.tourType) || b.tourType || '';
+      let tour = (b.booking && b.booking.tourType) || b.tourType || '';
+      // Normalise legacy variants stored before naming was standardised
+      if (tour === 'Over Night' || tour === 'Overnight') tour = 'Over-Night';
+      if (tour === '3D 2N' || tour === '3 Days 2 Nights') tour = '3D2N';
+
       const offset = (b.booking && b.booking.checkoutDaysOffset != null)
                       ? b.booking.checkoutDaysOffset
                       : getTourConfig(tour).daysOffset;
@@ -1793,7 +1809,8 @@ function applyBookingIndicators() {
     }
 
     // 4. Checkout-constraint day: partial availability (previous guest still checking out)
-    //    Only apply if no stronger indicator already shown (slot-full, slot-stayover-red)
+    //    Only apply if no stronger indicator already shown
+    //    slot-full and slot-stayover-red both outrank slot-checkout-pending
     cell.classList.remove('slot-checkout-pending');
     const constraintTime = checkoutConstraintMap[key];
     if (constraintTime &&
