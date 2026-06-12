@@ -1360,7 +1360,6 @@ function buildSummaryCard(b, key, idx, color, onDelete) {
     showToast('🗑 Booking deleted.');
     onDelete();
     applyBookingIndicators();
-    location.reload();
   });
 
   actions.append(viewBtn, editBtn, delBtn);
@@ -1482,6 +1481,10 @@ function openEditForm(b, key, color) {
     btn.classList.toggle('selected', btn.dataset.type === tour);
   });
   _tourType = tour;
+
+  // Re-render time picker constrained to the tour type AFTER checkin time is
+  // already set — ensures picker selects show the saved hour, not the default
+  if (tour) applyTourTimeConstraints(tour);
 
   calcTotalPax(); calcBalance(); calcCheckout();
   applyTimeSlotToForm(_normTo24hr(b.booking?.checkinTime || ''));
