@@ -39,37 +39,39 @@
   'use strict';
 
   /* ── Config ─────────────────────────────────────────────────────────── */
-  const DB_URL      = 'https://official-victorias-haven-book-default-rtdb.asia-southeast1.firebasedatabase.app';
-  const BOOKINGS    = '/bookings';
-  const POLL_MS     = 60 * 1000; // 60 seconds
+  const DB_URL = 'https://official-victorias-haven-book-default-rtdb.asia-southeast1.firebasedatabase.app';
+  const BOOKINGS = '/bookings';
+  const POLL_MS = 60 * 1000; // 60 seconds
 
   const MONTHS_FULL = [
-    'January','February','March','April','May','June',
-    'July','August','September','October','November','December'
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const DAY_NAMES   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   /* ── Tour type hour map (same logic as booking.js) ───────────────────── */
   const TOUR_HRS = {
-    'Day tour':   10,
+    'Day tour': 10,
     'Night tour': 10,
-    'Over Night': 21,
     'Over-Night': 21,
-    '3D 2N':      42,   // 21 + 21
+    '3D2N': 42,   // 21 + 21
   };
 
   /* ── Normalize tourType variants to canonical form ───────────────────── */
+  /* Canonical names must match bookkeeping project exactly:               */
+  /*   Over-Night  (hyphen, no space)                                      */
+  /*   3D2N        (no space)                                              */
   function normalizeTourType(t) {
     if (!t) return t;
     const map = {
-      'over night':       'Over Night',
-      'overnight':        'Over Night',
-      'over-night':       'Over Night',
-      'day tour':         'Day tour',
-      'night tour':       'Night tour',
-      '3d2n':             '3D 2N',
-      '3 days 2 nights':  '3D 2N',
-      '3d 2n':            '3D 2N',
+      'over night': 'Over-Night',
+      'overnight': 'Over-Night',
+      'over-night': 'Over-Night',
+      'day tour': 'Day tour',
+      'night tour': 'Night tour',
+      '3d2n': '3D2N',
+      '3 days 2 nights': '3D2N',
+      '3d 2n': '3D2N',
     };
     return map[t.toLowerCase().trim()] || t;
   }
@@ -84,22 +86,22 @@
     const period = m[3].toUpperCase();
     if (period === 'AM' && h === 12) h = 0;
     if (period === 'PM' && h !== 12) h += 12;
-    return `${String(h).padStart(2,'0')}:${m[2]}`;
+    return `${String(h).padStart(2, '0')}:${m[2]}`;
   }
 
   /* ── dayInfo resolver (mirrors calendar project's logic) ─────────────── */
   function resolveDayInfo(dateObj) {
     const dow = dateObj.getDay();
     const HOLIDAYS_PH = [
-      [0,1],[1,25],[3,9],[4,1],[5,12],[7,21],[7,26],[10,1],[10,30],[11,25],[11,30]
+      [0, 1], [1, 25], [3, 9], [4, 1], [5, 12], [7, 21], [7, 26], [10, 1], [10, 30], [11, 25], [11, 30]
     ];
     const isHoliday = HOLIDAYS_PH.some(([m, d]) =>
       m === dateObj.getMonth() && d === dateObj.getDate()
     );
-    if (isHoliday) return { type: 'holiday',  icon: '🎉', label: 'Holiday' };
-    if (dow === 0) return { type: 'sunday',   icon: '☀️', label: 'Sunday'  };
+    if (isHoliday) return { type: 'holiday', icon: '🎉', label: 'Holiday' };
+    if (dow === 0) return { type: 'sunday', icon: '☀️', label: 'Sunday' };
     if (dow === 6) return { type: 'saturday', icon: '🌿', label: 'Saturday' };
-    return       { type: 'weekday',   icon: '📅', label: '' };
+    return { type: 'weekday', icon: '📅', label: '' };
   }
 
   /* ── Format date label  e.g. "Thursday, Apr 24, 2026" ───────────────── */
@@ -120,23 +122,23 @@
   /* ── 12-hr time format ───────────────────────────────────────────────── */
   function fmt12(h, m) {
     const period = h >= 12 ? 'PM' : 'AM';
-    const h12    = h % 12 === 0 ? 12 : h % 12;
+    const h12 = h % 12 === 0 ? 12 : h % 12;
     return `${h12}:${String(m).padStart(2, '0')} ${period}`;
   }
 
   /* ── Compute checkout date from check-in + hours ─────────────────────── */
   function computeCheckout(checkinDateStr, checkinTimeStr, tourType) {
     const normalType = normalizeTourType(tourType);
-    const hrs        = TOUR_HRS[normalType] || 10;
-    const start      = new Date(checkinDateStr + 'T00:00:00');
+    const hrs = TOUR_HRS[normalType] || 10;
+    const start = new Date(checkinDateStr + 'T00:00:00');
     // Normalize time to 24hr before splitting (handles "4:00 PM" from older records)
-    const time24     = to24hr(checkinTimeStr) || checkinTimeStr;
-    const [hh, mm]   = time24.split(':').map(Number);
-    const totalMin   = hh * 60 + mm + hrs * 60;
-    const daysOver   = Math.floor(totalMin / (24 * 60));
-    const outH       = Math.floor(totalMin / 60) % 24;
-    const outM       = totalMin % 60;
-    const checkout   = new Date(start);
+    const time24 = to24hr(checkinTimeStr) || checkinTimeStr;
+    const [hh, mm] = time24.split(':').map(Number);
+    const totalMin = hh * 60 + mm + hrs * 60;
+    const daysOver = Math.floor(totalMin / (24 * 60));
+    const outH = Math.floor(totalMin / 60) % 24;
+    const outM = totalMin % 60;
+    const checkout = new Date(start);
     checkout.setDate(checkout.getDate() + daysOver);
     return { checkout, checkoutTime: fmt12(outH, outM), checkinTime: fmt12(hh, mm) };
   }
@@ -151,23 +153,23 @@
 
     // Mode of payment — active .tour-btn[data-mop]
     const mopBtn = document.querySelector('.tour-btn[data-mop].active');
-    const mop    = mopBtn ? mopBtn.dataset.mop : '';
+    const mop = mopBtn ? mopBtn.dataset.mop : '';
 
     return {
-      guestName:   (g('bGuestName')?.value   || '').trim(),
-      email:       (g('bEmailTo')?.value      || '').trim(),
-      phone:       (g('bPhoneNumber')?.value   || '').trim(),
-      totalPax:    parseInt(g('bTotalPax')?.value)    || 0,
-      extraPax:    parseInt(g('bExtraPax')?.value)    || 0,
-      smallPets:   parseInt(g('bSmallPetQty')?.value) || 0,
-      bigPets:     parseInt(g('bBigPetQty')?.value)   || 0,
-      checkinDate: g('bCheckinDate')?.value   || '',
-      checkinTime: g('bCheckinTime')?.value   || '',
-      downPayment: parseFloat(g('bDownPayment')?.value)  || 0,
-      balance:     parseFloat(g('bBalance')?.value)      || 0,
-      finalTotal:  parseFloat(g('bFinalTotal')?.value)   || 0,
-      datePayment: g('bDatePayment')?.value   || '',
-      refNumber:   (g('bRefNumber')?.value    || '').trim(),
+      guestName: (g('bGuestName')?.value || '').trim(),
+      email: (g('bEmailTo')?.value || '').trim(),
+      phone: (g('bPhoneNumber')?.value || '').trim(),
+      totalPax: parseInt(g('bTotalPax')?.value) || 0,
+      extraPax: parseInt(g('bExtraPax')?.value) || 0,
+      smallPets: parseInt(g('bSmallPetQty')?.value) || 0,
+      bigPets: parseInt(g('bBigPetQty')?.value) || 0,
+      checkinDate: g('bCheckinDate')?.value || '',
+      checkinTime: g('bCheckinTime')?.value || '',
+      downPayment: parseFloat(g('bDownPayment')?.value) || 0,
+      balance: parseFloat(g('bBalance')?.value) || 0,
+      finalTotal: parseFloat(g('bFinalTotal')?.value) || 0,
+      datePayment: g('bDatePayment')?.value || '',
+      refNumber: (g('bRefNumber')?.value || '').trim(),
       tourType,
       mop,
     };
@@ -175,27 +177,27 @@
 
   /* ── Build the Firebase record  (matches calendar schema exactly) ─────── */
   function buildRecord(v) {
-    const checkinDateObj  = new Date(v.checkinDate + 'T00:00:00');
-    const canonicalTour   = normalizeTourType(v.tourType);
+    const checkinDateObj = new Date(v.checkinDate + 'T00:00:00');
+    const canonicalTour = normalizeTourType(v.tourType);
     const { checkout, checkoutTime, checkinTime } = computeCheckout(
       v.checkinDate, v.checkinTime, canonicalTour
     );
 
-    const pax        = v.totalPax;
-    const extraPax   = v.extraPax;
-    const totalPax   = pax + extraPax;
-    const pets       = v.smallPets + v.bigPets;
-    const total      = v.finalTotal || (v.downPayment + v.balance);
-    const dateKey    = toKey(checkinDateObj);
+    const pax = v.totalPax;
+    const extraPax = v.extraPax;
+    const totalPax = pax + extraPax;
+    const pets = v.smallPets + v.bigPets;
+    const total = v.finalTotal || (v.downPayment + v.balance);
+    const dateKey = toKey(checkinDateObj);
 
     return {
       dateKey,
       createdAt: new Date().toISOString(),
 
       guest: {
-        name:     v.guestName,
-        email:    v.email,
-        phone:    v.phone,
+        name: v.guestName,
+        email: v.email,
+        phone: v.phone,
         pax,
         extraPax,
         totalPax,
@@ -203,22 +205,22 @@
       },
 
       booking: {
-        tourType:           canonicalTour,
-        checkinDate:        dateKey,
-        checkoutDate:       toKey(checkout),
-        checkinDateLabel:   formatDateLabel(checkinDateObj),
-        checkoutDateLabel:  formatDateLabel(checkout),
+        tourType: canonicalTour,
+        checkinDate: dateKey,
+        checkoutDate: toKey(checkout),
+        checkinDateLabel: formatDateLabel(checkinDateObj),
+        checkoutDateLabel: formatDateLabel(checkout),
         checkinTime,
         checkoutTime,
       },
 
       payment: {
-        date:        v.datePayment,
-        mode:        v.mop,
+        date: v.datePayment,
+        mode: v.mop,
         total,
         downpayment: v.downPayment,
-        balance:     v.balance,
-        refNumber:   v.refNumber,
+        balance: v.balance,
+        refNumber: v.refNumber,
       },
 
       dayInfo: resolveDayInfo(checkinDateObj),
@@ -230,10 +232,10 @@
 
   /* ── POST record to Firebase REST API ───────────────────────────────── */
   async function pushToFirebase(record) {
-    const res  = await fetch(`${DB_URL}${BOOKINGS}.json`, {
-      method:  'POST',
+    const res = await fetch(`${DB_URL}${BOOKINGS}.json`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(record),
+      body: JSON.stringify(record),
     });
     const json = await res.json();
     if (!res.ok || json.error) throw new Error(json.error || `HTTP ${res.status}`);
@@ -242,7 +244,7 @@
 
   /* ── GET all bookings count for polling change detection ────────────── */
   async function fetchBookingCount() {
-    const res  = await fetch(`${DB_URL}${BOOKINGS}.json?shallow=true`);
+    const res = await fetch(`${DB_URL}${BOOKINGS}.json?shallow=true`);
     const json = await res.json();
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return json ? Object.keys(json).length : 0;
@@ -255,10 +257,10 @@
     if (!toast) return;
     // Save and restore the toast's current text so we don't clobber email toast
     const prev = toast.textContent;
-    toast.textContent       = msg;
-    toast.style.background  = isError ? 'rgba(239,68,68,0.1)'  : 'rgba(52,199,89,0.1)';
-    toast.style.borderColor = isError ? 'rgba(239,68,68,0.3)'  : 'rgba(52,199,89,0.3)';
-    toast.style.color       = isError ? '#ef4444' : '#22c55e';
+    toast.textContent = msg;
+    toast.style.background = isError ? 'rgba(239,68,68,0.1)' : 'rgba(52,199,89,0.1)';
+    toast.style.borderColor = isError ? 'rgba(239,68,68,0.3)' : 'rgba(52,199,89,0.3)';
+    toast.style.color = isError ? '#ef4444' : '#22c55e';
     toast.classList.add('show');
     setTimeout(() => {
       toast.textContent = prev;
@@ -292,7 +294,7 @@
 
       try {
         const record = buildRecord(v);
-        const fbKey  = await pushToFirebase(record);
+        const fbKey = await pushToFirebase(record);
         showStatus(`✅ Booking saved to calendar DB (${fbKey})`, false);
         console.log('[firebase-booking] Record pushed:', fbKey, record);
       } catch (err) {
@@ -305,8 +307,8 @@
   }
 
   /* ── 60-second poller  ───────────────────────────────────────────────── */
-  let _lastCount  = -1;
-  let _pollTimer  = null;
+  let _lastCount = -1;
+  let _pollTimer = null;
 
   async function poll() {
     try {
