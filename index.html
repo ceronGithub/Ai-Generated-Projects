@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PDF Extract — Cosmic</title>
+    <title>PDFExtract — Document Intelligence Tool</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico" />
     <link rel="icon" type="image/png" sizes="48x48" href="images/icon48.png" />
     <link rel="apple-touch-icon" href="images/icon.png" />
@@ -14,18 +14,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   </head>
   <body>
-    <!-- Star Field Canvas -->
-    <canvas id="starCanvas"></canvas>
-
-    <!-- Nebula atmosphere wisps -->
-    <div class="nebula-wisp"></div>
-    <div class="nebula-wisp"></div>
-    <div class="nebula-wisp"></div>
-    <div class="nebula-wisp"></div>
-
-    <!-- Cursor glow follower -->
-    <div class="cursor-glow" id="cursorGlow"></div>
-
     <!-- ============ HEADER ============ -->
     <header class="site-header">
       <div class="logo">
@@ -33,7 +21,7 @@
         <span class="logo-text">PDF<strong>Extract</strong></span>
       </div>
       <p class="tagline">
-        Extract · Search · Export · Traverse the cosmos of your documents
+        Built for her · PDF tools, right in your browser
       </p>
       <button class="help-btn" id="helpBtn" title="How to use PDFExtract">
         <span class="help-btn-icon">?</span>
@@ -71,6 +59,14 @@
       </div>
       <!-- ── /Live Widgets ── -->
     </header>
+
+    <!-- ============ VERSE TICKER ============ -->
+    <div class="verse-ticker-wrap">
+      <div class="verse-ticker-inner" id="verseTicker">
+        <p class="verse-ticker-text" id="verseTickerText"></p>
+        <span class="verse-ticker-source" id="verseTickerSource"></span>
+      </div>
+    </div>
 
     <!-- Session Restore Banner -->
     <div id="sessionBanner" class="session-banner" style="display:none">
@@ -357,9 +353,9 @@
     <footer class="site-footer">
       ⬡ PDF Extract — all processing is local. No files leave your browser.
       <span class="footer-divider">·</span>
-      Created by <span class="footer-author">Ceron Matthew Calsena</span>
+      Made with love for <span class="footer-liza">Soon — Liza D. Calsena</span>
       <span class="footer-divider">·</span>
-      Powered by <span class="footer-powered">Claude AI</span>
+      By <span class="footer-author">Ceron Matthew Calsena</span>
     </footer>
 
     <!-- ============ HELP MODAL ============ -->
@@ -844,6 +840,7 @@
     <script src="js/ui/datetime-widget.js"></script>
     <script src="js/ui/pdf-viewer.js"></script>
     <script src="js/core/app.js"></script>
+    <script src="js/ui/verse-ticker.js"></script>
     <script src="js/ui/help.js"></script>
 
     <!-- ── Table-detected modal ── -->

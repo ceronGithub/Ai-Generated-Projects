@@ -174,7 +174,7 @@
     letter-spacing: 0.18em;
     flex-basis: 100%;           /* push tagline to its own line */
     order: 3;
-    color: var(--text-mid);
+    color: rgba(245, 230, 200, 0.5);
   }
 
   .logo { font-size: 1.15rem; gap: 0.6rem; }
