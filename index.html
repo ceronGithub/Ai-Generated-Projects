@@ -112,81 +112,119 @@
         </p>
 
         <div class="mode-buttons" id="modeButtons">
-          <button class="mode-btn" id="modeMultiple" data-mode="multiple">
-            <span class="mode-icon">🔑</span>
-            <span class="mode-name">Multiple Keywords</span>
-            <span class="mode-desc">Finds values next to specific labels — great for invoices &amp; forms. Not suited for large tables or transaction rows.</span>
-          </button>
-          <button class="mode-btn" id="modeSingle" data-mode="single">
-            <span class="mode-icon">🔍</span>
-            <span class="mode-name">Single Keyword</span>
-            <span class="mode-desc">Search one keyword &amp; rename files by result</span>
-          </button>
-          <button class="mode-btn" id="modeExtractAll" data-mode="extractall">
-            <span class="mode-icon">📋</span>
-            <span class="mode-name">Extract All</span>
-            <span class="mode-desc">Dump all text from every uploaded PDF</span>
-          </button>
-          <!-- ── NEW: Table Mode ── -->
-          <button class="mode-btn mode-btn--table" id="modeTable" data-mode="tablemode">
-            <span class="mode-icon">🗂️</span>
-            <span class="mode-name">Table Mode</span>
-            <span class="mode-desc">Designed for large tables — parses every row automatically and captures Tag, Zone, Entry, Exit &amp; Toll Fee without any keywords.</span>
-          </button>
-          <!-- ── NEW: Compress PDF ── -->
-          <button class="mode-btn mode-btn--compress" id="modeCompress" data-mode="compressmode">
-            <span class="mode-icon">🗜️</span>
-            <span class="mode-name">Compress PDF</span>
-            <span class="mode-desc">Reduce the file size of your PDFs. No keywords needed — just run and download.</span>
-          </button>
-          <!-- ── NEW: Split PDF ── -->
-          <button class="mode-btn mode-btn--split" id="modeSplit" data-mode="splitmode">
-            <span class="mode-icon">✂️</span>
-            <span class="mode-name">Split PDF</span>
-            <span class="mode-desc">Split one large PDF into multiple files — by page count or custom page ranges.</span>
-          </button>
-          <!-- ── NEW: Convert to Excel ── -->
-          <button class="mode-btn mode-btn--excel" id="modeToExcel" data-mode="toexcel">
-            <span class="mode-icon">📊</span>
-            <span class="mode-name">Convert to Excel</span>
-            <span class="mode-desc">Extract all text from your PDFs into structured Excel spreadsheets (.xlsx).</span>
-          </button>
-          <!-- ── NEW: Convert to Word ── -->
-          <button class="mode-btn mode-btn--word" id="modeToWord" data-mode="toword">
-            <span class="mode-icon">📝</span>
-            <span class="mode-name">Convert to Word</span>
-            <span class="mode-desc">Export all PDF text into editable Word documents (.docx).</span>
-          </button>
-          <!-- ── NEW: Convert to PPT ── -->
-          <button class="mode-btn mode-btn--ppt" id="modeToPPT" data-mode="toppt">
-            <span class="mode-icon">📽️</span>
-            <span class="mode-name">Convert to PPT</span>
-            <span class="mode-desc">Turn each PDF page into a PowerPoint slide (.pptx).</span>
-          </button>
-          <!-- ── NEW: Convert to JPG ── -->
-          <button class="mode-btn mode-btn--jpg" id="modeToJPG" data-mode="tojpg">
-            <span class="mode-icon">🖼️</span>
-            <span class="mode-name">Convert to JPG</span>
-            <span class="mode-desc">Render each PDF page as a high-resolution JPG image.</span>
-          </button>
-          <!-- ── NEW: Enhance PDF ── -->
-          <button class="mode-btn mode-btn--enhance" id="modeEnhance" data-mode="enhancemode">
-            <span class="mode-icon">✨</span>
-            <span class="mode-name">Enhance PDF</span>
-            <span class="mode-desc">Re-render your PDF at higher resolution for a sharper, cleaner output.</span>
-          </button>
-          <!-- ── NEW: Lock PDF ── -->
-          <button class="mode-btn mode-btn--lock" id="modeLock" data-mode="lockmode">
-            <span class="mode-icon">🔒</span>
-            <span class="mode-name">Lock PDF</span>
-            <span class="mode-desc">Password-protect your PDF files. Set a password before downloading.</span>
-          </button>
-          <!-- ── NEW: Merge PDF ── -->
-          <button class="mode-btn mode-btn--merge" id="modeMerge" data-mode="mergemode">
-            <span class="mode-icon">🔗</span>
-            <span class="mode-name">Merge PDF</span>
-            <span class="mode-desc">Combine multiple PDFs into one file. Drag to reorder before merging.</span>
-          </button>
+
+          <!-- ── CATEGORY: Extract ── -->
+          <div class="mode-category">
+            <span class="mode-category-label">
+              <span class="mode-category-icon">🔎</span> Extract
+            </span>
+            <div class="mode-category-grid">
+              <button class="mode-btn" id="modeMultiple" data-mode="multiple">
+                <span class="mode-icon">🔑</span>
+                <span class="mode-name">Multiple Keywords</span>
+                <span class="mode-desc">Finds values next to specific labels — great for invoices &amp; forms.</span>
+              </button>
+              <button class="mode-btn" id="modeSingle" data-mode="single">
+                <span class="mode-icon">🔍</span>
+                <span class="mode-name">Single Keyword</span>
+                <span class="mode-desc">Search one keyword &amp; rename files by result.</span>
+              </button>
+              <button class="mode-btn" id="modeExtractAll" data-mode="extractall">
+                <span class="mode-icon">📋</span>
+                <span class="mode-name">Extract All</span>
+                <span class="mode-desc">Dump all text from every uploaded PDF.</span>
+              </button>
+              <button class="mode-btn mode-btn--table" id="modeTable" data-mode="tablemode">
+                <span class="mode-icon">🗂️</span>
+                <span class="mode-name">Table Mode</span>
+                <span class="mode-desc">Parses every row automatically — captures Tag, Zone, Entry, Exit &amp; Toll Fee.</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ── CATEGORY: Convert ── -->
+          <div class="mode-category">
+            <span class="mode-category-label">
+              <span class="mode-category-icon">🔄</span> Convert
+            </span>
+            <div class="mode-category-grid">
+              <button class="mode-btn mode-btn--excel" id="modeToExcel" data-mode="toexcel">
+                <span class="mode-icon">📊</span>
+                <span class="mode-name">PDF to Excel</span>
+                <span class="mode-desc">Extract all text from PDFs into structured Excel spreadsheets (.xlsx).</span>
+              </button>
+              <button class="mode-btn mode-btn--word" id="modeToWord" data-mode="toword">
+                <span class="mode-icon">📝</span>
+                <span class="mode-name">PDF to Word</span>
+                <span class="mode-desc">Export all PDF text into editable Word documents (.docx).</span>
+              </button>
+              <button class="mode-btn mode-btn--ppt" id="modeToPPT" data-mode="toppt">
+                <span class="mode-icon">📽️</span>
+                <span class="mode-name">PDF to PPT</span>
+                <span class="mode-desc">Turn each PDF page into a PowerPoint slide (.pptx).</span>
+              </button>
+              <button class="mode-btn mode-btn--jpg" id="modeToJPG" data-mode="tojpg">
+                <span class="mode-icon">🖼️</span>
+                <span class="mode-name">PDF to JPG</span>
+                <span class="mode-desc">Render each PDF page as a high-resolution JPG image.</span>
+              </button>
+              <button class="mode-btn mode-btn--word2pdf" id="modeWordToPDF" data-mode="wordtopdf">
+                <span class="mode-icon">📄</span>
+                <span class="mode-name">Word to PDF</span>
+                <span class="mode-desc">Convert .docx Word documents into PDF files.</span>
+              </button>
+              <button class="mode-btn mode-btn--excel2pdf" id="modeExcelToPDF" data-mode="exceltopdf">
+                <span class="mode-icon">📄</span>
+                <span class="mode-name">Excel to PDF</span>
+                <span class="mode-desc">Convert .xlsx Excel spreadsheets into PDF files.</span>
+              </button>
+              <button class="mode-btn mode-btn--ppt2pdf" id="modePPTToPDF" data-mode="ppttopdf">
+                <span class="mode-icon">📄</span>
+                <span class="mode-name">PPT to PDF</span>
+                <span class="mode-desc">Convert .pptx PowerPoint presentations into PDF files.</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ── CATEGORY: PDF Tools ── -->
+          <div class="mode-category">
+            <span class="mode-category-label">
+              <span class="mode-category-icon">🛠️</span> PDF Tools
+            </span>
+            <div class="mode-category-grid">
+              <button class="mode-btn mode-btn--compress" id="modeCompress" data-mode="compressmode">
+                <span class="mode-icon">🗜️</span>
+                <span class="mode-name">Compress PDF</span>
+                <span class="mode-desc">Reduce the file size of your PDFs. Just run and download.</span>
+              </button>
+              <button class="mode-btn mode-btn--split" id="modeSplit" data-mode="splitmode">
+                <span class="mode-icon">✂️</span>
+                <span class="mode-name">Split PDF</span>
+                <span class="mode-desc">Split one large PDF into multiple files — by page count or custom ranges.</span>
+              </button>
+              <button class="mode-btn mode-btn--merge" id="modeMerge" data-mode="mergemode">
+                <span class="mode-icon">🔗</span>
+                <span class="mode-name">Merge PDF</span>
+                <span class="mode-desc">Combine multiple PDFs into one file. Drag to reorder before merging.</span>
+              </button>
+              <button class="mode-btn mode-btn--watermark" id="modeWatermark" data-mode="watermarkmode">
+                <span class="mode-icon">💧</span>
+                <span class="mode-name">Watermark PDF</span>
+                <span class="mode-desc">Stamp "Liza O. De Vyra" as a watermark on every page of your PDFs.</span>
+              </button>
+              <button class="mode-btn mode-btn--enhance" id="modeEnhance" data-mode="enhancemode">
+                <span class="mode-icon">✨</span>
+                <span class="mode-name">Enhance PDF</span>
+                <span class="mode-desc">Re-render your PDF at higher resolution for a sharper, cleaner output.</span>
+              </button>
+              <button class="mode-btn mode-btn--lock" id="modeLock" data-mode="lockmode">
+                <span class="mode-icon">🔒</span>
+                <span class="mode-name">Lock PDF</span>
+                <span class="mode-desc">Password-protect your PDF files. Set a password before downloading.</span>
+              </button>
+            </div>
+          </div>
+
         </div>
 
         <div class="mode-display" id="modeDisplay" style="display: none">
@@ -839,6 +877,10 @@
     <script src="js/ui/stars.js"></script>
     <script src="js/ui/datetime-widget.js"></script>
     <script src="js/ui/pdf-viewer.js"></script>
+    <script src="js/pdf-tools/pdf-watermark.js"></script>
+    <script src="js/converters/word-to-pdf.js"></script>
+    <script src="js/converters/excel-to-pdf.js"></script>
+    <script src="js/converters/ppt-to-pdf.js"></script>
     <script src="js/core/app.js"></script>
     <script src="js/ui/verse-ticker.js"></script>
     <script src="js/ui/help.js"></script>

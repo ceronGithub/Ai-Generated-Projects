@@ -75,7 +75,20 @@
   const MAX_FILES = 2000;
 
   function addFiles(incoming) {
-    const pdfs      = incoming.filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+    // Determine accepted file types based on current mode
+    const officeToModesMap = {
+      wordtopdf:  ['.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      exceltopdf: ['.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+      ppttopdf:   ['.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+    };
+    const officeMode = officeToModesMap[state.mode];
+    let accepted_files;
+    if (officeMode) {
+      accepted_files = incoming.filter(f => officeMode.some(t => f.name.toLowerCase().endsWith(t.replace(/^.*\./,'.')) || f.type === t));
+    } else {
+      accepted_files = incoming.filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+    }
+    const pdfs      = accepted_files;
     const existing  = new Set(state.files.map(f => f.name + f.size));
     const newFiles  = pdfs.filter(f => !existing.has(f.name + f.size));
     const available = MAX_FILES - state.files.length;
@@ -184,6 +197,9 @@
       document.querySelector('.mode-buttons').style.display = 'grid';
     }, 480);
     if (window.SessionStore) SessionStore.saveMode(null);
+    fileInput.accept = '.pdf';
+    const uploadNote = document.getElementById('uploadNote');
+    if (uploadNote) uploadNote.textContent = '⚠ Max upload is 2,000 PDF files per batch.';
   });
 
   function selectMode(mode) {
@@ -192,6 +208,22 @@
     UIManager.setModeButtonsVisible(false);
     document.getElementById('modeDisplay').style.display = 'flex';
     document.querySelector('.mode-buttons').style.display = 'none';
+
+    // Update file input accept and drop zone hint based on mode
+    const officeAccept = {
+      wordtopdf:  '.docx',
+      exceltopdf: '.xlsx',
+      ppttopdf:   '.pptx',
+    };
+    const uploadNote = document.getElementById('uploadNote');
+    if (officeAccept[mode]) {
+      fileInput.accept = officeAccept[mode];
+      const ext = officeAccept[mode];
+      if (uploadNote) uploadNote.textContent = `⚠ Upload ${ext.toUpperCase()} files for this mode.`;
+    } else {
+      fileInput.accept = '.pdf';
+      if (uploadNote) uploadNote.textContent = '⚠ Max upload is 2,000 PDF files per batch.';
+    }
 
     const stepSplit = document.getElementById('step-split');
     if (mode === 'splitmode') {
@@ -282,7 +314,8 @@
   function updateRunBtn() {
     if (!state.mode || state.files.length === 0) { UIManager.setRunEnabled(false); return; }
     const noKwModes = ['extractall','tablemode','compressmode','splitmode','toexcel','toword',
-                       'toppt','tojpg','enhancemode','lockmode','mergemode'];
+                       'toppt','tojpg','enhancemode','lockmode','mergemode',
+                       'watermarkmode','wordtopdf','exceltopdf','ppttopdf'];
     if (noKwModes.includes(state.mode)) {
       UIManager.setRunEnabled(state.mode === 'mergemode' ? state.files.length >= 2 : true);
       return;
@@ -372,7 +405,9 @@
       toexcel:'Preparing Excel conversion…', toword:'Preparing Word conversion…',
       toppt:'Preparing PowerPoint conversion…', tojpg:'Preparing JPG conversion…',
       enhancemode:'Preparing enhancement…', lockmode:'Preparing PDF lock…',
-      mergemode:'Preparing merge…',
+      mergemode:'Preparing merge…', watermarkmode:'Applying watermark…',
+      wordtopdf:'Converting Word to PDF…', exceltopdf:'Converting Excel to PDF…',
+      ppttopdf:'Converting PPT to PDF…',
     };
     UIManager.setRunning(true);
     UIManager.setProgress(0, labels[state.mode] || 'Phase 1 · Pre-reading PDFs…');
@@ -494,6 +529,58 @@
         }));
         UIManager.setProgress(100, 'Done! Set passwords below.');
         UIManager.renderLockResults(lockResults);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Watermark ─────────────────────────────────────────────────────────
+      if (state.mode === 'watermarkmode') {
+        UIManager.setProgress(20, 'Applying watermark to PDFs…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PDFWatermark.apply(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done/total)*75), `Watermarking — ${done}/${total}…`);
+          UIManager.setPerFileStatus(state.files, done - 1, 'done');
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderConversionResults(res, 'watermarkmode');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Word to PDF ───────────────────────────────────────────────────────
+      if (state.mode === 'wordtopdf') {
+        UIManager.setProgress(20, 'Converting Word to PDF…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await WordToPDF.convert(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done/total)*75), `Converting — ${done}/${total}…`);
+          UIManager.setPerFileStatus(state.files, done - 1, 'done');
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderConversionResults(res, 'wordtopdf');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Excel to PDF ──────────────────────────────────────────────────────
+      if (state.mode === 'exceltopdf') {
+        UIManager.setProgress(20, 'Converting Excel to PDF…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await ExcelToPDF.convert(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done/total)*75), `Converting — ${done}/${total}…`);
+          UIManager.setPerFileStatus(state.files, done - 1, 'done');
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderConversionResults(res, 'exceltopdf');
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── PPT to PDF ────────────────────────────────────────────────────────
+      if (state.mode === 'ppttopdf') {
+        UIManager.setProgress(20, 'Converting PPT to PDF…');
+        await new Promise(r => setTimeout(r, 30));
+        const res = await PPTToPDF.convert(state.files, (done, total) => {
+          UIManager.setProgress(20 + Math.round((done/total)*75), `Converting — ${done}/${total}…`);
+          UIManager.setPerFileStatus(state.files, done - 1, 'done');
+        });
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderConversionResults(res, 'ppttopdf');
         setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
       }
 
@@ -714,7 +801,8 @@
     const banner = document.getElementById('sessionBanner');
     if (banner && age) {
       const noKwModes = ['extractall','tablemode','compressmode','splitmode','toexcel',
-                         'toword','toppt','tojpg','enhancemode','lockmode','mergemode'];
+                         'toword','toppt','tojpg','enhancemode','lockmode','mergemode',
+                         'watermarkmode','wordtopdf','exceltopdf','ppttopdf'];
       const kwInfo = savedKws?.length && !noKwModes.includes(savedMode)
         ? ` · ${savedKws.length} keyword(s)`
         : '';

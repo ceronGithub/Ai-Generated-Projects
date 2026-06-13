@@ -68,19 +68,23 @@ const UIManager = (() => {
     });
 
     const labels = {
-      multiple:     'Multiple Keywords',
-      single:       'Single Keyword',
-      extractall:   'Extract All',
-      tablemode:    'Table Mode',
-      compressmode: 'Compress PDF',
-      splitmode:    'Split PDF',
-      toexcel:      'Convert to Excel',
-      toword:       'Convert to Word',
-      toppt:        'Convert to PPT',
-      tojpg:        'Convert to JPG',
-      enhancemode:  'Enhance PDF',
-      lockmode:     'Lock PDF',
-      mergemode:    'Merge PDF',
+      multiple:      'Multiple Keywords',
+      single:        'Single Keyword',
+      extractall:    'Extract All',
+      tablemode:     'Table Mode',
+      compressmode:  'Compress PDF',
+      splitmode:     'Split PDF',
+      toexcel:       'PDF to Excel',
+      toword:        'PDF to Word',
+      toppt:         'PDF to PPT',
+      tojpg:         'PDF to JPG',
+      enhancemode:   'Enhance PDF',
+      lockmode:      'Lock PDF',
+      mergemode:     'Merge PDF',
+      watermarkmode: 'Watermark PDF',
+      wordtopdf:     'Word to PDF',
+      exceltopdf:    'Excel to PDF',
+      ppttopdf:      'PPT to PDF',
     };
 
     const display = document.getElementById('modeDisplay');
@@ -129,17 +133,22 @@ const UIManager = (() => {
       document.getElementById('keywordChips').innerHTML = '';
       hint.textContent = 'Configure your split settings in Step 03.1 below.';
       if (splitPanel) splitPanel.style.display = 'none';
-    } else if (['toexcel','toword','toppt','tojpg','enhancemode','lockmode','mergemode'].includes(mode)) {
+    } else if (['toexcel','toword','toppt','tojpg','enhancemode','lockmode','mergemode',
+                'watermarkmode','wordtopdf','exceltopdf','ppttopdf'].includes(mode)) {
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       const modeHints = {
-        toexcel:     'No keywords needed — PDF text will be extracted to Excel.',
-        toword:      'No keywords needed — PDF text will be exported to Word.',
-        toppt:       'No keywords needed — each PDF page becomes a slide.',
-        tojpg:       'No keywords needed — each PDF page will be rendered as a JPG.',
-        enhancemode: 'No keywords needed — your PDF will be re-rendered at higher quality.',
-        lockmode:    'No keywords needed — you will set passwords in the results panel.',
-        mergemode:   'No keywords needed — set the merge order in Step 03.1 below.',
+        toexcel:       'No keywords needed — PDF text will be extracted to Excel.',
+        toword:        'No keywords needed — PDF text will be exported to Word.',
+        toppt:         'No keywords needed — each PDF page becomes a slide.',
+        tojpg:         'No keywords needed — each PDF page will be rendered as a JPG.',
+        enhancemode:   'No keywords needed — your PDF will be re-rendered at higher quality.',
+        lockmode:      'No keywords needed — you will set passwords in the results panel.',
+        mergemode:     'No keywords needed — set the merge order in Step 03.1 below.',
+        watermarkmode: 'No keywords needed — "Liza O. De Vyra" will be stamped on every page.',
+        wordtopdf:     'No keywords needed — upload .docx files and run to convert to PDF.',
+        exceltopdf:    'No keywords needed — upload .xlsx files and run to convert to PDF.',
+        ppttopdf:      'No keywords needed — upload .pptx files and run to convert to PDF.',
       };
       hint.textContent = modeHints[mode] || '';
       if (splitPanel) splitPanel.style.display = 'none';
@@ -1407,10 +1416,14 @@ const UIManager = (() => {
   // =============================================
 
   const CONV_CONFIG = {
-    toexcel: { icon: '📊', label: 'Excel',       color: 'var(--green)',  rgb: '57,255,160',  ext: '.xlsx' },
-    toword:  { icon: '📝', label: 'Word',        color: '#2B6CB0',       rgb: '43,108,176',  ext: '.docx' },
-    toppt:   { icon: '📽️', label: 'PowerPoint', color: 'var(--gold)',   rgb: '255,201,77',  ext: '.pptx' },
-    tojpg:   { icon: '🖼️', label: 'JPG',        color: 'var(--violet)', rgb: '159,111,255', ext: '.jpg'  },
+    toexcel:       { icon: '📊', label: 'Excel',       color: '#22a06b',  rgb: '34,160,107',   ext: '.xlsx' },
+    toword:        { icon: '📝', label: 'Word',        color: '#2B6CB0',  rgb: '43,108,176',   ext: '.docx' },
+    toppt:         { icon: '📽️', label: 'PowerPoint', color: '#c8a96e',  rgb: '200,169,110',  ext: '.pptx' },
+    tojpg:         { icon: '🖼️', label: 'JPG',        color: '#8b7ab8',  rgb: '139,122,184',  ext: '.jpg'  },
+    watermarkmode: { icon: '💧', label: 'Watermark',  color: '#c8a96e',  rgb: '200,169,110',  ext: '.pdf'  },
+    wordtopdf:     { icon: '📄', label: 'PDF',        color: '#c0392b',  rgb: '192,57,43',    ext: '.pdf'  },
+    exceltopdf:    { icon: '📄', label: 'PDF',        color: '#22a06b',  rgb: '34,160,107',   ext: '.pdf'  },
+    ppttopdf:      { icon: '📄', label: 'PDF',        color: '#c8a96e',  rgb: '200,169,110',  ext: '.pdf'  },
   };
 
   function renderConversionResults(results, mode) {
