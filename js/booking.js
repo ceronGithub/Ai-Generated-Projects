@@ -924,7 +924,7 @@ Kind regards,
 
 
 Victoria's Haven
-+63 954 184 3179`;
++63 917 857 6858`;
 
     // ── Push to email fields ──
     document.getElementById('emailTo').value   = inp.emailTo.value.trim();
