@@ -6,6 +6,11 @@
   let selectedHrs  = 0;    // 21 | 10
   let selectedMop  = '';   // 'GCash' | 'Maya' | 'Bank Transfer' | 'Cash'
 
+  // ── Calendar refresh hook ──
+  // Set by initMainCalendar() so the delete handler can trigger a re-fetch
+  // of booked dates after a booking is removed, clearing stale red/yellow tags.
+  let _refreshCalendarDates = null;
+
   const MONTHS = ['January','February','March','April','May','June',
                   'July','August','September','October','November','December'];
 
@@ -386,6 +391,11 @@
           // Remove the card from the modal
           const card = modal.querySelector(`.conflictCard[data-fbkey="${key}"]`);
           if (card) card.remove();
+
+          // Refresh the main calendar so deleted booking's dates are unblocked immediately —
+          // without this, Jun 25 and Jun 26 (intermediate/checkout days of the deleted 3D2N
+          // booking) would remain red/tagged until the page reloads.
+          if (typeof _refreshCalendarDates === 'function') _refreshCalendarDates();
 
           // If no more cards remain, close modal and re-run checkin check
           const remaining = modal.querySelectorAll('.conflictCard');
@@ -1121,9 +1131,18 @@ Victoria's Haven
          The check-in date itself is "red" because that slot (2 PM–11 AM) is taken. */
     async function fetchBookedDates() {
       try {
+        // Clear stale sets before re-populating so deleted bookings
+        // no longer block their dates on the calendar.
+        fullyBookedDates.clear();
+        partialDates.clear();
+
         const res  = await fetch(`${FB_DB_URL}${FB_BOOKINGS}.json`);
         const data = await res.json();
-        if (!data || typeof data !== 'object') return;
+        if (!data || typeof data !== 'object') {
+          // DB returned null (all records deleted) — re-render calendar as fully open
+          if (dropdown.style.display !== 'none') renderGrid();
+          return;
+        }
 
         // Helper: parse any stored time string → total minutes since midnight (null if unparseable)
         function parseStoredTimeMins(timeStr) {
@@ -1203,6 +1222,10 @@ Victoria's Haven
     }
 
     fetchBookedDates();
+
+    // Expose so the delete handler (buildConflictModal) can refresh calendar
+    // state after a booking is removed without reloading the page.
+    _refreshCalendarDates = fetchBookedDates;
   }
 
   // ── Helpers ──
