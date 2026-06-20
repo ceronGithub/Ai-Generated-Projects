@@ -238,6 +238,64 @@
     return checkinMins + hrs * 60; // may exceed 1440 — that's fine, we mod later
   }
 
+  /* ── Convert a booking's checkinDate + checkinTime + duration hours into
+     an absolute [startMs, endMs] window — lets us compare ANY two bookings
+     for true time-range overlap, not just "same date string" matching.
+     This catches cases the old same-date check could miss, e.g. a 3D2N
+     booking that spans into a date without that date being its literal
+     checkinDate/checkoutDate field. ─────────────────────────────────────── */
+  function bookingToWindow(checkinDateStr, checkinTimeMins, hrs) {
+    const startMs = new Date(checkinDateStr + 'T00:00:00').getTime() + checkinTimeMins * 60000;
+    const endMs   = startMs + hrs * 60 * 60000;
+    return { startMs, endMs };
+  }
+
+  /* ── THE double-booking guard ────────────────────────────────────────────
+     Re-fetches the live bookings list and checks the candidate booking's
+     full check-in→checkout window against every existing booking's window
+     for a true time overlap (with the same 1-hour turnover gap the rest of
+     the app already uses). Returns an array of conflicting {fbKey, row}
+     pairs — empty array means the slot is genuinely free RIGHT NOW, not
+     just "looked free when the calendar last loaded".
+     This is called a second time, right before the booking is actually
+     submitted, specifically to close the race-condition window where the
+     calendar could have gone stale between page load and Proceed click. */
+  async function checkForDoubleBooking(checkinDateStr, checkinTimeStr, hrs) {
+    const res  = await fetch(`${FB_DB_URL}${FB_BOOKINGS}.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data || typeof data !== 'object') return [];
+
+    const candidateMins = time12ToMins(checkinTimeStr);
+    if (candidateMins === null) return [];
+
+    const TURNOVER_GAP_MS = 60 * 60000; // 1 hour — same gap used elsewhere in the app
+    const candidate = bookingToWindow(checkinDateStr, candidateMins, hrs);
+    // Widen the candidate's busy window by the turnover gap on both ends so
+    // a booking ending less than 1hr before/after this one still counts as a conflict.
+    const candidateStart = candidate.startMs - TURNOVER_GAP_MS;
+    const candidateEnd   = candidate.endMs   + TURNOVER_GAP_MS;
+
+    const conflicts = [];
+    Object.entries(data).forEach(([fbKey, row]) => {
+      if (!row || typeof row !== 'object') return;
+      const b = row.booking || {};
+      const existingDate = b.checkinDate || row.dateKey || '';
+      if (!existingDate || !b.checkinTime) return;
+
+      const existingMins = time12ToMins(b.checkinTime);
+      if (existingMins === null) return;
+      const existingHrs = TOUR_HRS_MAP[b.tourType] || 10;
+      const existing = bookingToWindow(existingDate, existingMins, existingHrs);
+
+      // True overlap test: the two windows intersect at all
+      const overlaps = existing.startMs < candidateEnd && existing.endMs > candidateStart;
+      if (overlaps) conflicts.push({ fbKey, row });
+    });
+
+    return conflicts;
+  }
+
   /* ── Show/hide auto-checkin notice ─────────────────────────────────────── */
   let _autoCheckinNotice = null;
   function showAutoCheckinNotice(msg) {
@@ -838,7 +896,7 @@
   }
 
   // ── Proceed button ──
-  btnProceed.addEventListener('click', () => {
+  btnProceed.addEventListener('click', async () => {
     errorEl.textContent = '';
 
     // Validate all fields
@@ -864,6 +922,39 @@
     if (!isValidEmail(inp.emailTo.value.trim())) {
       errorEl.textContent = '\u26a0 Please enter a valid email address';
       return;
+    }
+
+    // ── Final live double-booking check ──────────────────────────────────
+    // The calendar's red/yellow state was fetched when it last opened — it
+    // can go stale if this tab was left open, or if someone else booked
+    // the same slot in the meantime. Re-check against the database RIGHT
+    // NOW, at the actual moment of submission, using the real check-in
+    // and checkout window (not just a same-date string match) so it also
+    // catches overlapping multi-night bookings.
+    btnProceed.disabled = true;
+    const originalProceedLabel = btnProceed.textContent;
+    btnProceed.textContent = 'Checking availability...';
+
+    try {
+      const conflicts = await checkForDoubleBooking(
+        inp.checkinDate.value,
+        inp.checkinTime.value,
+        getEffectiveHrs() + (parseFloat(inp.extraTimeExt.value) || 0)
+      );
+
+      if (conflicts.length > 0) {
+        errorEl.textContent =
+          '\u26a0 This slot was just booked by someone else — showing the conflicting booking(s) below.';
+        buildConflictModal(inp.checkinDate.value, conflicts);
+        return; // stop here — do not proceed to compose with a double-booked slot
+      }
+    } catch (err) {
+      console.warn('[booking] Double-booking check failed:', err.message);
+      errorEl.textContent = '\u26a0 Could not verify availability — please check your connection and try again.';
+      return;
+    } finally {
+      btnProceed.disabled = false;
+      btnProceed.textContent = originalProceedLabel;
     }
 
     // ── Build values ──

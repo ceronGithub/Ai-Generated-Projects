@@ -250,6 +250,45 @@
     return json ? Object.keys(json).length : 0;
   }
 
+  /* ── Final double-booking guard (last line of defense) ───────────────
+     booking.js already re-checks availability right when "Proceed" is
+     clicked, but there's still a real gap after that: the email actually
+     sends (a few seconds), THEN this script waits another 3.2s before
+     writing to Firebase at all. In that combined window, someone else's
+     booking could land first. This re-checks the EXACT window the record
+     is about to claim, one more time, immediately before the write. */
+  async function hasDoubleBookingConflict(record) {
+    const res  = await fetch(`${DB_URL}${BOOKINGS}.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data || typeof data !== 'object') return false;
+
+    const TURNOVER_GAP_MIN = 60; // same 1-hour turnover gap used everywhere else
+
+    function toWindow(dateStr, timeStr, tourType) {
+      const time24 = to24hr(timeStr) || timeStr;
+      const [hh, mm] = time24.split(':').map(Number);
+      const hrs = TOUR_HRS[normalizeTourType(tourType)] || 10;
+      const startMs = new Date(dateStr + 'T00:00:00').getTime() + (hh * 60 + mm) * 60000;
+      const endMs   = startMs + hrs * 60 * 60000;
+      return { startMs, endMs };
+    }
+
+    const candidate = toWindow(record.booking.checkinDate, record.booking.checkinTime, record.booking.tourType);
+    const candidateStart = candidate.startMs - TURNOVER_GAP_MIN * 60000;
+    const candidateEnd   = candidate.endMs   + TURNOVER_GAP_MIN * 60000;
+
+    return Object.values(data).some(row => {
+      if (!row || typeof row !== 'object') return false;
+      const b = row.booking || {};
+      const existingDate = b.checkinDate || row.dateKey || '';
+      if (!existingDate || !b.checkinTime) return false;
+
+      const existing = toWindow(existingDate, b.checkinTime, b.tourType);
+      return existing.startMs < candidateEnd && existing.endMs > candidateStart;
+    });
+  }
+
   /* ── Show status toast (reuses mailer's #sentToast if available) ─────── */
   function showStatus(msg, isError = false) {
     console[isError ? 'error' : 'log'](`[firebase-booking] ${msg}`);
@@ -294,6 +333,17 @@
 
       try {
         const record = buildRecord(v);
+
+        // Final guard: re-check one more time, immediately before writing.
+        // This is the closest possible check to the actual database write,
+        // closing the race window left open by the email-send delay above.
+        const conflictExists = await hasDoubleBookingConflict(record);
+        if (conflictExists) {
+          showStatus('⛔ Not saved — this slot was just booked by someone else. Please check the calendar and re-book.', true);
+          console.warn('[firebase-booking] Double-booking conflict detected — write aborted', record.booking);
+          return;
+        }
+
         const fbKey = await pushToFirebase(record);
         showStatus(`✅ Booking saved to calendar DB (${fbKey})`, false);
         console.log('[firebase-booking] Record pushed:', fbKey, record);
