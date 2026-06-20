@@ -582,6 +582,55 @@ body {
   line-height: 1.2;
 }
 
+/* .attach-replace-btn
+   Small circular "replace image" control shown in the bottom-left corner
+   of each house-rules card. Hidden by default, fades in on hover/focus so
+   the grid stays clean. Clicking it opens the hidden file input for that
+   card only — never affects sibling cards. */
+.attach-replace-btn {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(8, 10, 15, 0.75);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 0.2s ease,
+    transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.2s ease;
+  z-index: 2;
+}
+.attach-item:hover .attach-replace-btn,
+.attach-replace-btn:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+.attach-replace-btn:hover {
+  background: var(--accent);
+  color: #080a0f;
+}
+
+/* Briefly shown on the card after a successful image swap — confirms the
+   new picture was applied without needing a toast or page reload. */
+.attach-item.replaced {
+  animation: attachReplacedPulse 0.6s ease;
+}
+@keyframes attachReplacedPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.6); }
+  100% { box-shadow: 0 0 0 8px rgba(0, 229, 255, 0); }
+}
+
 .attach-summary {
   font-size: 10px;
   color: var(--muted);

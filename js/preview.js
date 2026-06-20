@@ -36,6 +36,13 @@
     }
   };
 
+  // Soft refresh — updates the preview content only if it's already open.
+  // Used after minor in-place changes (like replacing a house-rules image)
+  // where we never want to force the preview panel open on its own.
+  window.refreshEmailPreviewIfOpen = function () {
+    if (isOpen) renderPreview();
+  };
+
   function renderPreview() {
     const bd      = window._bookingDetails || {};
     const closing = window._emailClosing   || '';

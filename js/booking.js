@@ -1226,6 +1226,10 @@ Victoria's Haven
     // Expose so the delete handler (buildConflictModal) can refresh calendar
     // state after a booking is removed without reloading the page.
     _refreshCalendarDates = fetchBookedDates;
+
+    // Also expose on window so firebase-booking.js (separate script/IIFE) can
+    // trigger the same refresh right after a new booking is successfully saved.
+    window.refreshMainCalendarDates = fetchBookedDates;
   }
 
   // ── Helpers ──

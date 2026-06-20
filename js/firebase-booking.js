@@ -297,6 +297,12 @@
         const fbKey = await pushToFirebase(record);
         showStatus(`✅ Booking saved to calendar DB (${fbKey})`, false);
         console.log('[firebase-booking] Record pushed:', fbKey, record);
+
+        // Refresh the main booking calendar immediately so the newly booked
+        // date(s) show as blocked/partial right away — no page reload needed.
+        if (typeof window.refreshMainCalendarDates === 'function') {
+          window.refreshMainCalendarDates();
+        }
       } catch (err) {
         showStatus(`⚠️ DB booking failed: ${err.message}`, true);
         console.error('[firebase-booking] Push error:', err);
@@ -322,6 +328,12 @@
         console.log(`[firebase-booking] 🔄 DB changed: ${_lastCount} → ${count} bookings`);
         showStatus(`📅 Calendar DB updated (${count} bookings)`, false);
         _lastCount = count;
+
+        // Keep the on-screen calendar in sync with bookings created elsewhere
+        // (another tab, another device) — not just the ones made on this page.
+        if (typeof window.refreshMainCalendarDates === 'function') {
+          window.refreshMainCalendarDates();
+        }
       }
     } catch (e) {
       console.warn('[firebase-booking] Poll error:', e.message);
