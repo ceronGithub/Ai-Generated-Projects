@@ -22,8 +22,19 @@
     }
   }
 
-  // Toggle on click
+  // Single click handler for the grid — checks the replace button FIRST and
+  // returns early so clicking it never also toggles the card's selection.
+  // (Two separate listeners on the same element both still run on stopPropagation;
+  // only an early return here reliably prevents the selection toggle below.)
   grid.addEventListener('click', function(e) {
+    var replaceBtn = e.target.closest('.attach-replace-btn');
+    if (replaceBtn) {
+      var replaceItem = replaceBtn.closest('.attach-item');
+      var fileInput = replaceItem.querySelector('.attach-replace-input');
+      if (fileInput) fileInput.click();
+      return; // do not fall through to selection toggle
+    }
+
     var item = e.target.closest('.attach-item');
     if (!item) return;
     item.classList.toggle('selected');
@@ -54,22 +65,14 @@
 
   /* ── Replace image (simple upload, stays in place) ─────────────────────
      Each .attach-item has its own hidden <input type="file"> + a small
-     replace button. Clicking the button opens that card's own file picker
-     (never a shared/global one, so the right card always gets the right
-     file). Once a file is chosen, it's read as a base64 data URL and
-     swapped directly into that card's <img src> — the card stays exactly
-     where it is in the grid, selection state is untouched, and the live
-     email preview (if open) picks up the new image automatically since
-     preview.js reads straight from the DOM img.src at send/preview time. */
-  grid.addEventListener('click', function (e) {
-    var replaceBtn = e.target.closest('.attach-replace-btn');
-    if (!replaceBtn) return;
-    e.stopPropagation(); // don't toggle selection when clicking the replace icon
-    var item = replaceBtn.closest('.attach-item');
-    var fileInput = item.querySelector('.attach-replace-input');
-    if (fileInput) fileInput.click();
-  });
-
+     replace button (handled in the click listener above, which opens that
+     card's own file picker — never a shared/global one, so the right card
+     always gets the right file). Once a file is chosen here, it's read as
+     a base64 data URL and swapped directly into that card's <img src> —
+     the card stays exactly where it is in the grid, selection state is
+     untouched, and the live email preview (if open) picks up the new
+     image automatically since preview.js reads straight from the DOM
+     img.src at send/preview time. */
   grid.addEventListener('change', function (e) {
     var fileInput = e.target.closest('.attach-replace-input');
     if (!fileInput || !fileInput.files || !fileInput.files[0]) return;

@@ -129,7 +129,9 @@
         ${imagesSection}
         ${closingHtml}
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0 10px;" />
-        <p style="font-size:11px;color:#aaa;margin:0;">Sent via Victoria's Haven · official.victoriashaven@gmail.com</p>
+        <p style="font-size:11px;color:#999;margin:0 0 4px;">Victoria's Haven Resort</p>
+        <p style="font-size:11px;color:#999;margin:0 0 4px;">official.victoriashaven@gmail.com</p>
+        <p style="font-size:10px;color:#bbb;margin:0;">This is a booking confirmation you requested. If this wasn't you, please disregard this message.</p>
       </div>`;
   }
 

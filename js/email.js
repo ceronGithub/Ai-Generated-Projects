@@ -153,7 +153,7 @@
     // Build bold booking details block (all bold, each on new line)
     const boldDetails = bd.guestName ? `
 <table cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
-  <tr><td style="padding:0 0 6px;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>IMPORTANT:</strong></td></tr>
+  <tr><td style="padding:0 0 6px;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>Booking Details:</strong></td></tr>
   <tr><td style="padding:0 0 4px;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>Your Check-in time is ${bd.checkinStr} and Check-out is ${bd.checkoutStr}.</strong></td></tr>
   <tr><td style="padding:0 0 4px;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>Date of booking: ${bd.dateBooking}</strong></td></tr>
   <tr><td style="padding:0 0 0;font-family:Arial,sans-serif;font-size:15px;color:#1a1a1a;"><strong>Upon check-in, please provide one valid ID and settle the balance.</strong></td></tr>
@@ -180,8 +180,12 @@
       imagesSection +
       closingSection +
       `<hr style="border:none;border-top:1px solid #eee;margin:24px 0 10px;" />` +
-      `<p style="font-size:11px;color:#aaa;margin:0;">` +
-      `Sent via Victoria&#39;s Haven &bull; official.victoriashaven@gmail.com</p>` +
+      `<p style="font-size:11px;color:#999;margin:0 0 4px;">` +
+      `Victoria&#39;s Haven Resort</p>` +
+      `<p style="font-size:11px;color:#999;margin:0 0 4px;">` +
+      `official.victoriashaven@gmail.com</p>` +
+      `<p style="font-size:10px;color:#bbb;margin:0;">` +
+      `This is a booking confirmation you requested. If this wasn&#39;t you, please disregard this message.</p>` +
       `</div>`;
 
     // ── Step 5: Send via EmailJS ──
