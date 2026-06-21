@@ -1,15 +1,16 @@
-/* email.js — Compose email with real sending via EmailJS + ImgBB image hosting */
+/* email.js — Compose email with real sending via EmailJS + Cloudflare R2 image hosting */
 (function () {
 
   const EMAILJS_PUBLIC_KEY  = 'cUR1LKEI711O_10So';
   const EMAILJS_SERVICE_ID  = 'service_vixkwte';
   const EMAILJS_TEMPLATE_ID = 'template_myq5r3j';
 
-  // ── ImgBB free API key — get yours free at https://api.imgbb.com ──
-  // 1. Go to https://api.imgbb.com
-  // 2. Sign up free
-  // 3. Copy your API key and paste it below
-  const IMGBB_API_KEY = 'cfdf8e00fe53e07fdd4d498d23a65c74';
+  // ── Cloudflare R2 Worker endpoint ──────────────────────────────────────
+  // Paste the URL of your deployed Cloudflare Worker here after setup.
+  // The Worker proxies uploads to R2 so credentials never touch the browser.
+  // Setup instructions: see r2-worker/index.js delivered alongside this file.
+  // Format: https://your-worker-name.your-subdomain.workers.dev
+  const R2_WORKER_URL = 'https://vh-r2-upload.official-victoriashaven.workers.dev';
 
   const sdk = document.createElement('script');
   sdk.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
@@ -44,16 +45,36 @@
     });
   }
 
-  // ── Upload base64 image to ImgBB, returns a public https:// URL ──
-  async function uploadToImgBB(base64, name) {
+  // ── Upload base64 image to Cloudflare R2 via Worker, returns a public CDN URL ──
+  // The Worker (r2-worker/index.js) receives the file, writes it to the R2 bucket,
+  // and returns the public CDN URL. Credentials never leave the Worker — safe for browser.
+  async function uploadToR2(base64, name) {
+    // Convert base64 to a binary Blob so the Worker receives a real image file
+    const byteString = atob(base64);
+    const byteArray  = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+      byteArray[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+    // Send the file as multipart/form-data to the Worker endpoint
     const form = new FormData();
-    form.append('key', IMGBB_API_KEY);
-    form.append('image', base64);
-    form.append('name', name);
-    const res  = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: form });
+    form.append('file', blob, name + '.jpg');
+
+    const res = await fetch(R2_WORKER_URL + '/upload', {
+      method: 'POST',
+      body:   form,
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error('R2 upload failed: ' + errText);
+    }
+
     const json = await res.json();
-    if (!json.success) throw new Error('ImgBB upload failed: ' + JSON.stringify(json.error));
-    return json.data.url; // real https:// URL
+    // Worker returns { success: true, url: https://... }
+    if (!json.success || !json.url) throw new Error('R2 Worker returned no URL');
+    return json.url;
   }
 
   btnSend.addEventListener('click', async () => {
@@ -65,9 +86,9 @@
     if (!to)               { shakeField(fields.to); return; }
     if (!isValidEmail(to)) { shakeField(fields.to); return; }
 
-    // Guard: ImgBB key not set
-    if (IMGBB_API_KEY === 'YOUR_IMGBB_API_KEY') {
-      showToast('Add your ImgBB API key in email.js to send images', true);
+    // Guard: R2 Worker URL not configured yet
+    if (R2_WORKER_URL === 'YOUR_WORKER_URL_HERE') {
+      showToast('R2 Worker URL not set — see r2-worker/index.js setup instructions', true);
       return;
     }
 
@@ -96,14 +117,14 @@
       compressed.push({ ...item, b64 });
     }
 
-    // ── Step 2: Upload to ImgBB ──
+    // ── Step 2: Upload to Cloudflare R2 via Worker ──
     btnSend.innerHTML = `Uploading <span style="opacity:.6">(0 / ${compressed.length})</span>`;
     const imgBlocks = [];
     for (let i = 0; i < compressed.length; i++) {
       const item = compressed[i];
       btnSend.innerHTML = `Uploading <span style="opacity:.6">(${i + 1} / ${compressed.length})</span>`;
       try {
-        const url = await uploadToImgBB(item.b64, `house-rule-${item.index}-${item.title}`);
+        const url = await uploadToR2(item.b64, `house-rule-${item.index}-${item.title}`);
         imgBlocks.push(
           `<td style="padding:6px;text-align:center;vertical-align:top;width:25%;">` +
           `<img src="${url}" alt="${item.title}" width="200" ` +
