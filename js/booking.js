@@ -730,8 +730,17 @@
         return;
       }
 
-      // Show conflict modal with all existing bookings on this date
-      buildConflictModal(dateStr, conflictRows);
+      // Bug fix: only show the conflict modal when the selected date is an actual
+      // CHECK-IN date of an existing booking. If it only appears as a checkout date
+      // (partial/yellow day), the slot is still bookable — no conflict modal needed.
+      const hasCheckinOnDate = conflictRows.some(({ row }) => {
+        const b  = row.booking || {};
+        const ci = b.checkinDate || row.dateKey || '';
+        return ci === dateStr;
+      });
+      if (hasCheckinOnDate) {
+        buildConflictModal(dateStr, conflictRows);
+      }
 
       // Find the latest checkout time across all matching bookings
       let latestCheckoutMins  = null;
@@ -977,7 +986,12 @@
     const start = new Date(inp.checkinDate.value + 'T00:00:00');
     let end;
     if (selectedTour === 'Day tour') {
+      // Bug fix: compute the actual end date from totalMins so a late-start Day tour
+      // that crosses midnight (e.g. 11 PM + 10 hrs) shows the correct checkout date
+      // instead of always forcing same-day regardless of time.
+      const daysOver = Math.floor(totalMins / (24 * 60));
       end = new Date(start);
+      end.setDate(end.getDate() + daysOver);
     } else {
       const daysOver = Math.floor(totalMins / (24 * 60));
       end = new Date(start);
@@ -1059,6 +1073,11 @@ Victoria's Haven
   btnBack.addEventListener('click', () => {
     compose.style.display = 'none';
     form.style.display    = '';
+    // Bug fix: clear the calendar's selected date highlight and label so
+    // returning to the form doesn't show the previous booking's date as still selected.
+    if (typeof window.resetMainCalendarSelection === 'function') {
+      window.resetMainCalendarSelection();
+    }
   });
 
   /* ── Main booking form calendar ────────────────────────────────────────────
@@ -1079,11 +1098,17 @@ Victoria's Haven
 
     const MONTH_NAMES_MC = ['January','February','March','April','May','June',
                              'July','August','September','October','November','December'];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
-    let calYear           = today.getFullYear();
-    let calMonth          = today.getMonth();
+    // Bug fix: getToday() is called fresh on every renderGrid() so the calendar
+    // never uses a stale "today" when the tab stays open past midnight.
+    function getToday() {
+      const t = new Date();
+      t.setHours(0, 0, 0, 0);
+      return t;
+    }
+
+    let calYear           = getToday().getFullYear();
+    let calMonth          = getToday().getMonth();
     let selectedDate      = null;       // YYYY-MM-DD
     // fullyBookedDates: red — not clickable (checkout after 10 PM, or intermediate overnight day)
     // partialDates:     yellow — clickable (checkout ≤ 11 AM, afternoon slot still open)
@@ -1114,6 +1139,8 @@ Victoria's Haven
     function renderGrid() {
       monthLabel.textContent = `${MONTH_NAMES_MC[calMonth]} ${calYear}`;
 
+      // Refresh today on every render so dates are always accurate
+      const today    = getToday();
       const firstDay = new Date(calYear, calMonth, 1).getDay();
       const daysInMo = new Date(calYear, calMonth + 1, 0).getDate();
       const todayYMD = toYMD(today.getFullYear(), today.getMonth(), today.getDate());
@@ -1200,6 +1227,11 @@ Victoria's Haven
     // Month navigation
     btnPrev.addEventListener('click', e => {
       e.stopPropagation();
+      // Bug fix: block navigating to any month before the current calendar month
+      // so users cannot browse into past months where all dates are disabled.
+      const now = getToday();
+      const isCurrentMonth = calYear === now.getFullYear() && calMonth === now.getMonth();
+      if (isCurrentMonth) return; // already at the earliest allowed month
       calMonth--;
       if (calMonth < 0) { calMonth = 11; calYear--; }
       renderGrid();
@@ -1321,6 +1353,18 @@ Victoria's Haven
     // Also expose on window so firebase-booking.js (separate script/IIFE) can
     // trigger the same refresh right after a new booking is successfully saved.
     window.refreshMainCalendarDates = fetchBookedDates;
+
+    // Bug fix: expose a reset function so the Back button and post-send flow
+    // can clear the selected date highlight and restore the trigger label to
+    // its default "Pick a date" state — prevents stale selection showing on re-open.
+    window.resetMainCalendarSelection = function () {
+      selectedDate = null;
+      triggerLabel.textContent = 'Pick a date';
+      trigger.classList.remove('mainCalTriggerActive', 'mainCalOpen');
+      dropdown.style.display = 'none';
+      // Re-render if dropdown is somehow still visible
+      renderGrid();
+    };
   }
 
   // ── Helpers ──

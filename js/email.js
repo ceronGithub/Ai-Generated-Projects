@@ -234,6 +234,11 @@
           document.getElementById('bookingError').textContent = '';
           window._bookingDetails = null;
           window._emailClosing = null;
+          // Bug fix: reset the calendar trigger label and clear the selected date
+          // highlight so the next booking starts with a clean "Pick a date" state.
+          if (typeof window.resetMainCalendarSelection === 'function') {
+            window.resetMainCalendarSelection();
+          }
         }
       }, 2000);
     } catch (err) {

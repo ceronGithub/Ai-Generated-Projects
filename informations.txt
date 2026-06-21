@@ -1,3 +1,8 @@
 official.victoriashaven@gmail.com
+email js
+firebase
 localstorage
 VH0701
+
+developerceron@gmail.com
+github
