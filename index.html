@@ -299,20 +299,44 @@
                   <!-- Hidden value holder — booking.js reads .value from this -->
                   <input type="hidden" id="bCheckinDate" />
                   <!-- Custom calendar trigger button -->
-                  <button type="button" class="mainCalTrigger" id="mainCalTrigger">
+                  <button
+                    type="button"
+                    class="mainCalTrigger"
+                    id="mainCalTrigger"
+                  >
                     <span id="mainCalTriggerLabel">Pick a date</span>
                     <span class="mainCalTriggerIcon">📅</span>
                   </button>
                   <!-- Custom calendar dropdown -->
-                  <div class="mainCalDropdown" id="mainCalDropdown" style="display:none;">
+                  <div
+                    class="mainCalDropdown"
+                    id="mainCalDropdown"
+                    style="display: none"
+                  >
                     <div class="mainCalNav">
-                      <button type="button" class="mainCalNavBtn" id="mainCalPrev">&#x2039;</button>
-                      <span class="mainCalMonthLabel" id="mainCalMonthLabel"></span>
-                      <button type="button" class="mainCalNavBtn" id="mainCalNext">&#x203a;</button>
+                      <button
+                        type="button"
+                        class="mainCalNavBtn"
+                        id="mainCalPrev"
+                      >
+                        &#x2039;
+                      </button>
+                      <span
+                        class="mainCalMonthLabel"
+                        id="mainCalMonthLabel"
+                      ></span>
+                      <button
+                        type="button"
+                        class="mainCalNavBtn"
+                        id="mainCalNext"
+                      >
+                        &#x203a;
+                      </button>
                     </div>
                     <div class="mainCalDayNames">
-                      <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
-                      <span>Th</span><span>Fr</span><span>Sa</span>
+                      <span>Su</span><span>Mo</span><span>Tu</span
+                      ><span>We</span> <span>Th</span><span>Fr</span
+                      ><span>Sa</span>
                     </div>
                     <div class="mainCalGrid" id="mainCalGrid"></div>
                   </div>
@@ -592,10 +616,20 @@
                            live from Cloudflare R2 — no base64 baked into this
                            file anymore. The Add Photo card below always stays
                            last; new/loaded cards are inserted before it. -->
-                      <div class="attach-item attach-add-item" id="attachAddCard" title="Add new photo">
+                      <div
+                        class="attach-item attach-add-item"
+                        id="attachAddCard"
+                        title="Add new photo"
+                      >
                         <span class="attach-add-icon">+</span>
                         <span class="attach-add-label">Add Photo</span>
-                        <input type="file" class="attach-add-input" id="attachAddInput" accept="image/*" hidden />
+                        <input
+                          type="file"
+                          class="attach-add-input"
+                          id="attachAddInput"
+                          accept="image/*"
+                          hidden
+                        />
                       </div>
                     </div>
                     <div class="attach-status" id="attachStatus"></div>
@@ -745,13 +779,20 @@
          a successful EmailJS send. Shows the recipient address and a done
          button that continues the existing auto-return-to-booking flow.
     ═══════════════════════════════════════════════════════════════════ -->
-    <div class="successModalOverlay" id="successModalOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="successModalTitle">
+    <div
+      class="successModalOverlay"
+      id="successModalOverlay"
+      style="display: none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="successModalTitle"
+    >
       <div class="successModalBox">
         <div class="successModalIcon">✓</div>
         <h2 class="successModalTitle" id="successModalTitle">Email Sent!</h2>
         <div class="successModalRecipient" id="successModalRecipient"></div>
         <p class="successModalNote">
-          The confirmation receipt has been delivered.<br/>
+          The confirmation receipt has been delivered.<br />
           The form will reset automatically.
         </p>
         <button class="successModalBtn" id="successModalDoneBtn">Done ✓</button>
@@ -762,7 +803,12 @@
          Sits fixed to the bottom-right corner over all content.
          Opens the error report modal on click.
     ═══════════════════════════════════════════════════════════════════ -->
-    <button class="floatingErrorBtn" id="floatingErrorBtn" title="Report Issue" aria-label="Report an issue">
+    <button
+      class="floatingErrorBtn"
+      id="floatingErrorBtn"
+      title="Report Issue"
+      aria-label="Report an issue"
+    >
       ⚠
     </button>
 
@@ -773,21 +819,32 @@
          BODY: user-editable textarea
          ATTACHMENTS: file picker + paste screenshots from clipboard
     ═══════════════════════════════════════════════════════════════════ -->
-    <div class="errorModalOverlay" id="errorModalOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="errorModalTitle">
+    <div
+      class="errorModalOverlay"
+      id="errorModalOverlay"
+      style="display: none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="errorModalTitle"
+    >
       <div class="errorModalBox">
-
         <!-- Header -->
         <div class="errorModalHeader">
           <div class="errorModalTitle" id="errorModalTitle">
             <span class="errorModalTitleIcon">⚠</span>
             Report an Issue
           </div>
-          <button class="errorModalCloseBtn" id="errorModalCloseBtn" aria-label="Close">✕</button>
+          <button
+            class="errorModalCloseBtn"
+            id="errorModalCloseBtn"
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
 
         <!-- Scrollable body -->
         <div class="errorModalBody">
-
           <!-- FROM — locked to the VH mailer address -->
           <div class="errorModalField">
             <label class="errorModalLabel">From</label>
@@ -832,7 +889,10 @@
               id="errorModalDescription"
               placeholder="Describe the issue or request… (you can also paste a screenshot below)"
             ></textarea>
-            <span class="errorModalPasteHint">💡 Tip — paste a screenshot anywhere in this modal (Ctrl+V / ⌘V)</span>
+            <span class="errorModalPasteHint"
+              >💡 Tip — paste a screenshot anywhere in this modal (Ctrl+V /
+              ⌘V)</span
+            >
           </div>
 
           <!-- ATTACHMENTS — thumbnails of added images -->
@@ -840,23 +900,70 @@
             <label class="errorModalLabel">Attachments</label>
             <div class="errorModalAttachStrip" id="errorModalAttachStrip"></div>
             <div class="errorModalAttachRow">
-              <button class="errorModalAttachBtn" id="errorModalAttachBtn">+ Attach File</button>
-              <span class="errorModalAttachCount" id="errorModalAttachCount"></span>
+              <button class="errorModalAttachBtn" id="errorModalAttachBtn">
+                + Attach File
+              </button>
+              <span
+                class="errorModalAttachCount"
+                id="errorModalAttachCount"
+              ></span>
               <!-- Hidden file input — triggered by the Attach File button -->
-              <input type="file" id="errorModalFileInput" accept="image/*,.pdf,.txt,.doc,.docx" multiple hidden />
+              <input
+                type="file"
+                id="errorModalFileInput"
+                accept="image/*,.pdf,.txt,.doc,.docx"
+                multiple
+                hidden
+              />
             </div>
           </div>
-
-        </div><!-- /errorModalBody -->
+        </div>
+        <!-- /errorModalBody -->
 
         <!-- Footer actions -->
         <div class="errorModalFooter">
-          <button class="errorModalCancelBtn" id="errorModalCancelBtn">Cancel</button>
-          <button class="errorModalSendBtn" id="errorModalSendBtn">Send Report →</button>
+          <button class="errorModalCancelBtn" id="errorModalCancelBtn">
+            Cancel
+          </button>
+          <button class="errorModalSendBtn" id="errorModalSendBtn">
+            Send Report →
+          </button>
         </div>
-
       </div>
     </div>
+    <!-- Floating "Ongoing Development" watermark icon — bottom-right corner.
+         Visible on all pages as a reminder that this tool is actively being developed.
+         Click expands a tooltip; auto-collapses after 3 seconds. -->
+    <div class="devWatermark" id="devWatermark" title="Ongoing Development">
+      <div class="devWatermarkIcon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M12 2L2 7l10 5 10-5-10-5z"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M2 17l10 5 10-5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M2 12l10 5 10-5"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+      <div class="devWatermarkBadge">DEV</div>
+      <div class="devWatermarkTooltip">
+        <span class="devWatermarkTooltipDot"></span>
+        Ongoing Development
+      </div>
+    </div>
+
     <script src="js/matrix.js"></script>
     <script src="js/booking.js"></script>
     <script src="js/preview.js"></script>

@@ -115,7 +115,8 @@ export default {
    * fetch
    * Entry point for every request hitting this Worker.
    * Routes: OPTIONS (CORS preflight), GET /list (gallery images),
-   * POST /upload (image upload), everything else → 404.
+   * DELETE /delete (remove image by key), POST /upload (image upload),
+   * everything else → 404.
    *
    * @param {Request}     request  - Incoming HTTP request
    * @param {Object}      env      - Worker environment (contains R2_BUCKET binding)
@@ -257,21 +258,29 @@ function deriveTitleFromKey(key) {
 // user clicks the trash icon on a house-rules card in the browser.
 // Returns { success: true } on success so attachments.js can remove the card.
 async function handleDelete(origin, env, url) {
-  const key = url.searchParams.get('key');
+  // url.searchParams.get() already decodes percent-encoding (e.g. %20 → space),
+  // so the key arrives as the original R2 object key string here.
+  const rawKey = url.searchParams.get('key');
 
   // Reject the request if no key was provided
-  if (!key || !key.trim()) {
+  if (!rawKey || !rawKey.trim()) {
     return errorResponse(origin, 400, 'Missing "key" query parameter.');
   }
 
+  // Normalize: trim whitespace so a trailing %20 or stray space never blocks the safety check
+  const key = rawKey.trim();
+
   // Safety check: only allow deletion of objects inside the HOUSE RULES folder
   // so a crafted request cannot delete arbitrary objects in the bucket.
-  if (!key.startsWith(UPLOAD_FOLDER + '/')) {
+  // Compare both with and without space encoding to handle any encoding variation.
+  const normalizedKey    = key.replace(/%20/g, ' ');
+  const normalizedFolder = UPLOAD_FOLDER + '/';
+  if (!normalizedKey.startsWith(normalizedFolder)) {
     return errorResponse(origin, 403, 'Key is outside the permitted folder.');
   }
 
   try {
-    await env.R2_BUCKET.delete(key);
+    await env.R2_BUCKET.delete(normalizedKey);
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } }

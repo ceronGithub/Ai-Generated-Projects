@@ -2739,3 +2739,140 @@ textarea:focus-visible,
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ══════════════════════════════════════════════════════════
+ * FLOATING DEV WATERMARK
+ * Fixed bottom-right corner badge indicating the tool is
+ * still in active development. Click to expand a tooltip;
+ * auto-collapses after 3 seconds. SVG icon + pulsing DEV
+ * badge + slide-in tooltip label.
+ * ══════════════════════════════════════════════════════════ */
+
+.devWatermark {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Hexagonal icon container with glowing border */
+.devWatermarkIcon {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 20, 0.92);
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.12),
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(139, 92, 246, 0.08);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.devWatermark:hover .devWatermarkIcon {
+  border-color: rgba(139, 92, 246, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.25),
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 28px rgba(139, 92, 246, 0.18);
+  transform: translateY(-2px);
+}
+
+/* SVG layers icon inside the badge */
+.devWatermarkIcon svg {
+  width: 20px;
+  height: 20px;
+  color: rgba(139, 92, 246, 0.85);
+  transition: color var(--transition-fast);
+}
+
+.devWatermark:hover .devWatermarkIcon svg {
+  color: #a78bfa;
+}
+
+/* Pulsing "DEV" text badge — top-right corner of the icon */
+.devWatermarkBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: rgba(139, 92, 246, 0.9);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  animation: devBadgePulse 2.4s ease-in-out infinite;
+}
+
+@keyframes devBadgePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.6); }
+  50%       { opacity: 0.85; box-shadow: 0 0 0 4px rgba(139, 92, 246, 0); }
+}
+
+/* Slide-in tooltip — hidden by default, shown via .devWatermark.expanded */
+.devWatermarkTooltip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(15, 15, 20, 0.92);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  backdrop-filter: blur(8px);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: rgba(167, 139, 250, 0.9);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  /* Hidden state — slides in from the right when expanded */
+  opacity: 0;
+  transform: translateX(8px);
+  pointer-events: none;
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+/* Pulsing green dot inside tooltip — "live" indicator */
+.devWatermarkTooltipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a78bfa;
+  flex-shrink: 0;
+  animation: devDotPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes devDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Expanded state — tooltip slides in */
+.devWatermark.devExpanded .devWatermarkTooltip {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* Reorder children so tooltip appears to the LEFT of the icon */
+.devWatermark {
+  flex-direction: row-reverse;
+}

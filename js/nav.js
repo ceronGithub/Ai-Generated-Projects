@@ -64,3 +64,42 @@
     if (window.innerWidth > 768) closeSidebar();
   });
 })();
+
+
+/* ── Dev Watermark toggle ──────────────────────────────────────────────────
+   Clicking the floating watermark icon expands the tooltip label.
+   Auto-collapses after 3 seconds of no interaction. */
+(function () {
+  const watermark = document.getElementById('devWatermark');
+  if (!watermark) return;
+
+  let collapseTimer = null;
+
+  /* expandWatermark
+     Adds the expanded class to show the tooltip, then sets a 3-second
+     timer to auto-collapse so it never permanently blocks the UI. */
+  function expandWatermark() {
+    watermark.classList.add('devExpanded');
+    clearTimeout(collapseTimer);
+    // Auto-collapse after 3 seconds of no further clicks
+    collapseTimer = setTimeout(function () {
+      watermark.classList.remove('devExpanded');
+    }, 3000);
+  }
+
+  /* collapseWatermark
+     Immediately hides the tooltip and clears the timer. */
+  function collapseWatermark() {
+    watermark.classList.remove('devExpanded');
+    clearTimeout(collapseTimer);
+  }
+
+  // Toggle on click: if already expanded, collapse it; otherwise expand
+  watermark.addEventListener('click', function () {
+    if (watermark.classList.contains('devExpanded')) {
+      collapseWatermark();
+    } else {
+      expandWatermark();
+    }
+  });
+})();
