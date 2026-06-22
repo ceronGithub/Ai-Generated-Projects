@@ -104,7 +104,7 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin':  '*',  // tighten to your domain in production
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 }
@@ -138,6 +138,12 @@ export default {
     // instead of embedded base64.
     if (request.method === 'GET' && url.pathname === '/list') {
       return handleList(origin, env);
+    }
+
+    // Route: delete a single image from R2 by its object key —
+    // used by attachments.js when the user clicks the trash icon on a card.
+    if (request.method === 'DELETE' && url.pathname === '/delete') {
+      return handleDelete(origin, env, url);
     }
 
     // Only accept POST to /upload — reject everything else
@@ -243,6 +249,36 @@ function deriveTitleFromKey(key) {
   // than just the bare number.
   if (/^\d+$/.test(spaced)) return `House Rule ${spaced}`;
   return spaced.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+// ── handleDelete ─────────────────────────────────────────────────────────
+// Permanently deletes a single object from R2 by the key supplied in the
+// query parameter (?key=HOUSE+RULES/timestamp-name.jpg). Called when the
+// user clicks the trash icon on a house-rules card in the browser.
+// Returns { success: true } on success so attachments.js can remove the card.
+async function handleDelete(origin, env, url) {
+  const key = url.searchParams.get('key');
+
+  // Reject the request if no key was provided
+  if (!key || !key.trim()) {
+    return errorResponse(origin, 400, 'Missing "key" query parameter.');
+  }
+
+  // Safety check: only allow deletion of objects inside the HOUSE RULES folder
+  // so a crafted request cannot delete arbitrary objects in the bucket.
+  if (!key.startsWith(UPLOAD_FOLDER + '/')) {
+    return errorResponse(origin, 403, 'Key is outside the permitted folder.');
+  }
+
+  try {
+    await env.R2_BUCKET.delete(key);
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } }
+    );
+  } catch (err) {
+    return errorResponse(origin, 500, 'R2 delete failed: ' + err.message);
+  }
 }
 
 // ── handleList ───────────────────────────────────────────────────────────

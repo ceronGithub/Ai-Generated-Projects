@@ -107,9 +107,12 @@
     grid.querySelectorAll('.attach-item.skeleton').forEach(el => el.remove());
   }
 
-  // Single click handler for the grid — checks the replace button FIRST and
-  // returns early so clicking it never also toggles the card's selection.
+  // Single click handler for the grid — checks the replace and delete buttons
+  // FIRST and returns early so clicking them never also toggles card selection.
   grid.addEventListener('click', function(e) {
+    // Short-circuit for the delete button — its own listener handles the action
+    if (e.target.closest('.attach-delete-btn')) return;
+
     var replaceBtn = e.target.closest('.attach-replace-btn');
     if (replaceBtn) {
       var replaceItem = replaceBtn.closest('.attach-item');
@@ -272,6 +275,19 @@
     });
   }
 
+  /* ── deleteFromR2 ───────────────────────────────────────────────────────
+     Calls the Worker's DELETE /delete?key={key} endpoint to permanently
+     remove the image from the R2 bucket. Throws on failure so the caller
+     can handle the error state without leaving the card in a broken state. */
+  async function deleteFromR2(key) {
+    var res = await fetch(window.R2_WORKER_URL + '/delete?key=' + encodeURIComponent(key), {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Delete failed: ' + (await res.text()));
+    var json = await res.json();
+    if (!json.success) throw new Error(json.message || 'R2 delete returned failure');
+  }
+
   /* ── Build a new .attach-item card element from an R2 image ───────────── */
   function buildAttachItem(key, title, url, selected) {
     var div = document.createElement('div');
@@ -288,6 +304,46 @@
     check.className = 'attach-check';
     check.innerHTML = '&#10003;';
     div.appendChild(check);
+
+    // ── Delete button (top-left corner, red trash icon) ────────────────
+    // Calls deleteFromR2() to remove the image from the bucket permanently,
+    // then animates and removes the card from the DOM on success.
+    var deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'attach-delete-btn';
+    deleteBtn.title = 'Delete image';
+    deleteBtn.innerHTML = '&#128465;'; // 🗑 trash icon
+    deleteBtn.addEventListener('click', function (e) {
+      e.stopPropagation(); // Prevent card selection toggle when clicking delete
+
+      var cardKey   = div.dataset.key;
+      var cardTitle = div.dataset.title;
+
+      if (!window.confirm('Delete "' + cardTitle + '" from house rules? This cannot be undone.')) return;
+
+      div.classList.add('deleting');
+
+      deleteFromR2(cardKey)
+        .then(function () {
+          setTimeout(function () {
+            div.remove();
+            updateSummary();
+            var remaining = document.querySelectorAll('.attach-item[data-key]').length;
+            if (remaining === 0) {
+              setStatus('No house rule images yet — click "+ Add Photo" to upload the first one.');
+            }
+            if (typeof window.refreshEmailPreviewIfOpen === 'function') {
+              window.refreshEmailPreviewIfOpen();
+            }
+          }, 300); // Wait for the CSS deletion animation to finish
+        })
+        .catch(function (err) {
+          div.classList.remove('deleting');
+          setStatus('Delete failed — please try again.', true);
+          setTimeout(function () { setStatus(''); }, 4000);
+        });
+    });
+    div.appendChild(deleteBtn);
 
     var replaceBtn = document.createElement('button');
     replaceBtn.type = 'button';

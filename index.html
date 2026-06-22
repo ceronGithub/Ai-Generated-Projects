@@ -739,6 +739,124 @@
       document.getElementById("footerYear").textContent =
         new Date().getFullYear();
     </script>
+
+    <!-- ══ Task 1: Email Success Modal ══════════════════════════════════
+         Hidden by default. email.js removes the 'hidden' attribute after
+         a successful EmailJS send. Shows the recipient address and a done
+         button that continues the existing auto-return-to-booking flow.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="successModalOverlay" id="successModalOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="successModalTitle">
+      <div class="successModalBox">
+        <div class="successModalIcon">✓</div>
+        <h2 class="successModalTitle" id="successModalTitle">Email Sent!</h2>
+        <div class="successModalRecipient" id="successModalRecipient"></div>
+        <p class="successModalNote">
+          The confirmation receipt has been delivered.<br/>
+          The form will reset automatically.
+        </p>
+        <button class="successModalBtn" id="successModalDoneBtn">Done ✓</button>
+      </div>
+    </div>
+
+    <!-- ══ Task 3: Floating "Send Error Report" button ════════════════
+         Sits fixed to the bottom-right corner over all content.
+         Opens the error report modal on click.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <button class="floatingErrorBtn" id="floatingErrorBtn" title="Report Issue" aria-label="Report an issue">
+      ⚠
+    </button>
+
+    <!-- ══ Task 3: Error Report Modal ════════════════════════════════
+         FROM: official.victoriashaven@gmail.com (locked)
+         TO:   developerceron@gmail.com (locked)
+         SUBJECT: "Emailer automation request" (locked)
+         BODY: user-editable textarea
+         ATTACHMENTS: file picker + paste screenshots from clipboard
+    ═══════════════════════════════════════════════════════════════════ -->
+    <div class="errorModalOverlay" id="errorModalOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="errorModalTitle">
+      <div class="errorModalBox">
+
+        <!-- Header -->
+        <div class="errorModalHeader">
+          <div class="errorModalTitle" id="errorModalTitle">
+            <span class="errorModalTitleIcon">⚠</span>
+            Report an Issue
+          </div>
+          <button class="errorModalCloseBtn" id="errorModalCloseBtn" aria-label="Close">✕</button>
+        </div>
+
+        <!-- Scrollable body -->
+        <div class="errorModalBody">
+
+          <!-- FROM — locked to the VH mailer address -->
+          <div class="errorModalField">
+            <label class="errorModalLabel">From</label>
+            <input
+              class="errorModalInput"
+              type="email"
+              value="official.victoriashaven@gmail.com"
+              readonly
+              tabindex="-1"
+            />
+          </div>
+
+          <!-- TO — locked to the developer address -->
+          <div class="errorModalField">
+            <label class="errorModalLabel">To</label>
+            <input
+              class="errorModalInput"
+              type="email"
+              value="developerceron@gmail.com"
+              readonly
+              tabindex="-1"
+            />
+          </div>
+
+          <!-- SUBJECT — locked title -->
+          <div class="errorModalField">
+            <label class="errorModalLabel">Subject</label>
+            <input
+              class="errorModalInput"
+              type="text"
+              value="Emailer automation request"
+              readonly
+              tabindex="-1"
+            />
+          </div>
+
+          <!-- DESCRIPTION — editable body text -->
+          <div class="errorModalField">
+            <label class="errorModalLabel">Description</label>
+            <textarea
+              class="errorModalTextarea"
+              id="errorModalDescription"
+              placeholder="Describe the issue or request… (you can also paste a screenshot below)"
+            ></textarea>
+            <span class="errorModalPasteHint">💡 Tip — paste a screenshot anywhere in this modal (Ctrl+V / ⌘V)</span>
+          </div>
+
+          <!-- ATTACHMENTS — thumbnails of added images -->
+          <div class="errorModalField">
+            <label class="errorModalLabel">Attachments</label>
+            <div class="errorModalAttachStrip" id="errorModalAttachStrip"></div>
+            <div class="errorModalAttachRow">
+              <button class="errorModalAttachBtn" id="errorModalAttachBtn">+ Attach File</button>
+              <span class="errorModalAttachCount" id="errorModalAttachCount"></span>
+              <!-- Hidden file input — triggered by the Attach File button -->
+              <input type="file" id="errorModalFileInput" accept="image/*,.pdf,.txt,.doc,.docx" multiple hidden />
+            </div>
+          </div>
+
+        </div><!-- /errorModalBody -->
+
+        <!-- Footer actions -->
+        <div class="errorModalFooter">
+          <button class="errorModalCancelBtn" id="errorModalCancelBtn">Cancel</button>
+          <button class="errorModalSendBtn" id="errorModalSendBtn">Send Report →</button>
+        </div>
+
+      </div>
+    </div>
     <script src="js/matrix.js"></script>
     <script src="js/booking.js"></script>
     <script src="js/preview.js"></script>
