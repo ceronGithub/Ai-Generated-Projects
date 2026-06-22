@@ -84,8 +84,7 @@
     if (selected.length > 0) {
       let cells = '';
       selected.forEach(item => {
-        const imgEl = document.querySelector(`.attach-item[data-index="${item.index}"] img`);
-        const src   = imgEl ? imgEl.src : '';
+        const src = item.url || '';
         cells += `<td style="padding:4px;text-align:center;vertical-align:top;width:25%;">
           <img src="${src}" style="width:140px;height:140px;object-fit:cover;border-radius:6px;display:block;margin:0 auto;" />
           <div style="font-size:9px;color:#777;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;">${item.title}</div>

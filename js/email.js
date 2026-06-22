@@ -1,16 +1,13 @@
-/* email.js — Compose email with real sending via EmailJS + Cloudflare R2 image hosting */
+/* email.js — Compose email with real sending via EmailJS, images served from Cloudflare R2 */
 (function () {
 
   const EMAILJS_PUBLIC_KEY  = 'cUR1LKEI711O_10So';
   const EMAILJS_SERVICE_ID  = 'service_vixkwte';
   const EMAILJS_TEMPLATE_ID = 'template_myq5r3j';
 
-  // ── Cloudflare R2 Worker endpoint ──────────────────────────────────────
-  // Paste the URL of your deployed Cloudflare Worker here after setup.
-  // The Worker proxies uploads to R2 so credentials never touch the browser.
-  // Setup instructions: see r2-worker/index.js delivered alongside this file.
-  // Format: https://your-worker-name.your-subdomain.workers.dev
-  const R2_WORKER_URL = 'https://vh-r2-upload.official-victoriashaven.workers.dev';
+  // R2 Worker URL lives in js/r2-config.js (loaded before this file) so
+  // attachments.js and email.js never drift out of sync on which Worker
+  // they're pointed at.
 
   const sdk = document.createElement('script');
   sdk.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
@@ -31,52 +28,6 @@
   let toastTimer = null;
   let isSending  = false;
 
-  // ── Compress image to tiny JPEG via Canvas ──
-  function compressImage(imgEl, maxPx, quality) {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ratio  = Math.min(maxPx / imgEl.naturalWidth, maxPx / imgEl.naturalHeight, 1);
-      canvas.width  = Math.round(imgEl.naturalWidth  * ratio);
-      canvas.height = Math.round(imgEl.naturalHeight * ratio);
-      canvas.getContext('2d').drawImage(imgEl, 0, 0, canvas.width, canvas.height);
-      // return raw base64 without the data:image/jpeg;base64, prefix
-      const dataUrl = canvas.toDataURL('image/jpeg', quality);
-      resolve(dataUrl.split(',')[1]);
-    });
-  }
-
-  // ── Upload base64 image to Cloudflare R2 via Worker, returns a public CDN URL ──
-  // The Worker (r2-worker/index.js) receives the file, writes it to the R2 bucket,
-  // and returns the public CDN URL. Credentials never leave the Worker — safe for browser.
-  async function uploadToR2(base64, name) {
-    // Convert base64 to a binary Blob so the Worker receives a real image file
-    const byteString = atob(base64);
-    const byteArray  = new Uint8Array(byteString.length);
-    for (let i = 0; i < byteString.length; i++) {
-      byteArray[i] = byteString.charCodeAt(i);
-    }
-    const blob = new Blob([byteArray], { type: 'image/jpeg' });
-
-    // Send the file as multipart/form-data to the Worker endpoint
-    const form = new FormData();
-    form.append('file', blob, name + '.jpg');
-
-    const res = await fetch(R2_WORKER_URL + '/upload', {
-      method: 'POST',
-      body:   form,
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error('R2 upload failed: ' + errText);
-    }
-
-    const json = await res.json();
-    // Worker returns { success: true, url: https://... }
-    if (!json.success || !json.url) throw new Error('R2 Worker returned no URL');
-    return json.url;
-  }
-
   btnSend.addEventListener('click', async () => {
     if (isSending) return;
 
@@ -87,8 +38,8 @@
     if (!isValidEmail(to)) { shakeField(fields.to); return; }
 
     // Guard: R2 Worker URL not configured yet
-    if (R2_WORKER_URL === 'YOUR_WORKER_URL_HERE') {
-      showToast('R2 Worker URL not set — see r2-worker/index.js setup instructions', true);
+    if (window.R2_WORKER_URL === 'YOUR_WORKER_URL_HERE') {
+      showToast('R2 Worker URL not set — see js/r2-config.js setup instructions', true);
       return;
     }
 
@@ -101,44 +52,30 @@
       ? window.getSelectedImages() : [];
 
     if (selected.length === 0) {
-      selected = [...document.querySelectorAll('.attach-item')].map(el => ({
-        index: el.dataset.index,
+      selected = [...document.querySelectorAll('.attach-item[data-key]')].map(el => ({
+        key:   el.dataset.key,
         title: el.dataset.title,
+        url:   el.querySelector('img').src,
       }));
     }
 
-    // ── Step 1: Compress ──
-    btnSend.innerHTML = `Compressing <span style="opacity:.6">(${selected.length} images)</span>`;
-    const compressed = [];
-    for (const item of selected) {
-      const imgEl = document.querySelector(`.attach-item[data-index="${item.index}"] img`);
-      if (!imgEl) continue;
-      const b64 = await compressImage(imgEl, 800, 0.75);
-      compressed.push({ ...item, b64 });
-    }
+    // ── Step 1: Build image blocks straight from each card's R2 URL ──
+    // Images are already hosted on Cloudflare R2 — uploaded the moment they
+    // were added/replaced in the House Rules gallery — so sending no longer
+    // compresses or re-uploads anything here, it just references the URLs.
+    btnSend.innerHTML = `Preparing <span style="opacity:.6">(${selected.length} images)</span>`;
+    const imgBlocks = selected
+      .filter(item => item.url)
+      .map(item =>
+        `<td style="padding:6px;text-align:center;vertical-align:top;width:25%;">` +
+        `<img src="${item.url}" alt="${item.title}" width="200" ` +
+        `style="width:200px;max-width:200px;border-radius:8px;display:block;margin:0 auto;" /><br/>` +
+        `<span style="font-size:10px;color:#666;text-transform:uppercase;` +
+        `letter-spacing:0.06em;font-family:Arial,sans-serif;">${item.title}</span>` +
+        `</td>`
+      );
 
-    // ── Step 2: Upload to Cloudflare R2 via Worker ──
-    btnSend.innerHTML = `Uploading <span style="opacity:.6">(0 / ${compressed.length})</span>`;
-    const imgBlocks = [];
-    for (let i = 0; i < compressed.length; i++) {
-      const item = compressed[i];
-      btnSend.innerHTML = `Uploading <span style="opacity:.6">(${i + 1} / ${compressed.length})</span>`;
-      try {
-        const url = await uploadToR2(item.b64, `house-rule-${item.index}-${item.title}`);
-        imgBlocks.push(
-          `<td style="padding:6px;text-align:center;vertical-align:top;width:25%;">` +
-          `<img src="${url}" alt="${item.title}" width="200" ` +
-          `style="width:200px;max-width:200px;border-radius:8px;display:block;margin:0 auto;" /><br/>` +
-          `<span style="font-size:10px;color:#666;text-transform:uppercase;` +
-          `letter-spacing:0.06em;font-family:Arial,sans-serif;">${item.title}</span>` +
-          `</td>`
-        );
-      } catch(e) {
-        console.warn('Upload failed for', item.title, e);
-      }
-    }
-
-    // ── Step 3: Build HTML rows (3 per row) ──
+    // ── Step 2: Build HTML rows (3 per row) ──
     let tableRows = '';
     for (let i = 0; i < imgBlocks.length; i += 3) {
       const row = imgBlocks.slice(i, i + 3);
@@ -159,7 +96,7 @@
   ${tableRows}
 </table>` : '';
 
-    // ── Step 3b: Closing text (set by booking.js) ──
+    // ── Step 3: Closing text (set by booking.js) ──
     // Parse closing: make "We kindly request..." bold, preserve newlines as <br/>
     const rawClosing = (window._emailClosing || '');
     const closingHtml = rawClosing
@@ -221,7 +158,7 @@
       message:    htmlBody,
     };
 
-    console.log(`Sending: ${imgBlocks.length} images uploaded | body: ${(htmlBody.length/1024).toFixed(1)}KB`);
+    console.log(`Sending: ${imgBlocks.length} images referenced from R2 | body: ${(htmlBody.length/1024).toFixed(1)}KB`);
 
     try {
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, params);
