@@ -730,17 +730,12 @@
         return;
       }
 
-      // Bug fix: only show the conflict modal when the selected date is an actual
-      // CHECK-IN date of an existing booking. If it only appears as a checkout date
-      // (partial/yellow day), the slot is still bookable — no conflict modal needed.
-      const hasCheckinOnDate = conflictRows.some(({ row }) => {
-        const b  = row.booking || {};
-        const ci = b.checkinDate || row.dateKey || '';
-        return ci === dateStr;
-      });
-      if (hasCheckinOnDate) {
-        buildConflictModal(dateStr, conflictRows);
-      }
+      // Show the conflict modal for ALL dates that have existing bookings —
+      // both check-in dates (red/fully blocked) and checkout dates (yellow/partial).
+      // For partial/yellow dates, the modal lets the user see WHO is checking out
+      // and at WHAT time, so they can decide if the afternoon slot is right for
+      // the next guest. Previously, partial dates showed no info which was confusing.
+      buildConflictModal(dateStr, conflictRows);
 
       // Find the latest checkout time across all matching bookings
       let latestCheckoutMins  = null;

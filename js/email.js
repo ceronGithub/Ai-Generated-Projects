@@ -149,13 +149,24 @@
     // ── Step 5: Send via EmailJS ──
     btnSend.innerHTML = 'Sending...';
 
+    // Spam deliverability — key rules:
+    //   from_name  : must match the verified Gmail sender configured in EmailJS.
+    //                Mismatched names trigger spam filters.
+    //   reply_to   : must be the resort's own address — setting reply_to to the
+    //                *recipient's* address is a spam signal that ISPs penalise.
+    //   from_email : must exactly match the Gmail account authorised in the
+    //                EmailJS service (service_vixkwte). Any mismatch → spam.
+    //   message_text: plain-text fallback — emails without a text/plain part are
+    //                 flagged as suspicious by many spam filters (Gmail, Outlook).
+    const plainText = (body || '(no message)') + '\n\n---\nVictoria\'s Haven Resort\nofficial.victoriashaven@gmail.com';
     const params = {
-      to_email:   to,
-      from_email: fields.from.value,
-      from_name:  "Victoria's Haven",
-      reply_to:   fields.from.value,
-      subject:    fields.subject.value,
-      message:    htmlBody,
+      to_email:     to,
+      from_email:   fields.from.value,
+      from_name:    "Victoria's Haven Resort",
+      reply_to:     fields.from.value,   // resort address — NOT the recipient
+      subject:      fields.subject.value,
+      message:      htmlBody,
+      message_text: plainText,           // plain-text body — reduces spam score
     };
 
     console.log(`Sending: ${imgBlocks.length} images referenced from R2 | body: ${(htmlBody.length/1024).toFixed(1)}KB`);
@@ -424,7 +435,7 @@
     for (const file of Array.from(fileInput.files)) {
       if (file.type.startsWith('image/')) {
         // Compress images before adding
-        const dataUrl = await compressToDataUrl(file, 800, 0.78);
+        const dataUrl = await compressToDataUrl(file, 480, 0.45);
         addAttachment(dataUrl, file.name);
       } else {
         // Non-image file — show as a named placeholder tile, not a thumbnail
@@ -447,7 +458,7 @@
       if (!item.type.startsWith('image/')) continue;
       e.preventDefault(); // Prevent the image data from appearing in the textarea
       const file   = item.getAsFile();
-      const dataUrl = await compressToDataUrl(file, 800, 0.78);
+      const dataUrl = await compressToDataUrl(file, 480, 0.45);
       addAttachment(dataUrl, 'screenshot-' + Date.now() + '.jpg');
     }
   });
@@ -460,6 +471,24 @@
       description.focus();
       description.style.borderColor = 'rgba(239,68,68,0.6)';
       setTimeout(() => { description.style.borderColor = ''; }, 2000);
+      return;
+    }
+
+    // Guard: check total payload size before sending.
+    // EmailJS rejects requests over ~50KB of base64 image data (HTTP 413).
+    // Each base64 char ≈ 0.75 bytes; warn and abort if total exceeds 45KB.
+    const totalBase64Bytes = errorAttachments
+      .filter(a => a.dataUrl.startsWith('data:image/'))
+      .reduce((sum, a) => sum + Math.round(a.dataUrl.length * 0.75), 0);
+    const EMAILJS_SAFE_LIMIT_BYTES = 45 * 1024; // 45KB safe threshold
+    if (totalBase64Bytes > EMAILJS_SAFE_LIMIT_BYTES) {
+      description.style.borderColor = 'rgba(239,68,68,0.6)';
+      sendBtn.textContent = 'Images too large — remove some and retry';
+      sendBtn.disabled = false;
+      setTimeout(() => {
+        description.style.borderColor = '';
+        sendBtn.textContent = 'Send Report →';
+      }, 4000);
       return;
     }
 
@@ -507,10 +536,28 @@
       `<p style="font-size:11px;color:#999;margin:0;">Victoria's Haven Resort — VH-Mailer Automation System</p>` +
       `</div>`;
 
-    // Ensure EmailJS is initialised before sending (the SDK loads async)
-    if (typeof emailjs !== 'undefined') {
-      emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+    // Wait for the EmailJS SDK to finish loading before attempting to send.
+    // The SDK is injected as a dynamic <script> tag by the first IIFE and may
+    // not be ready yet if the user opens the error modal very quickly after
+    // the page loads. We poll every 200ms for up to 8 seconds before giving up.
+    let sdkWaitMs = 0;
+    while (typeof emailjs === 'undefined' && sdkWaitMs < 8000) {
+      await new Promise(r => setTimeout(r, 200));
+      sdkWaitMs += 200;
     }
+    if (typeof emailjs === 'undefined') {
+      description.style.borderColor = 'rgba(239,68,68,0.6)';
+      sendBtn.textContent = 'SDK not ready — try again';
+      sendBtn.disabled = false;
+      setTimeout(() => {
+        description.style.borderColor = '';
+        sendBtn.textContent = 'Send Report →';
+      }, 3000);
+      return;
+    }
+
+    // Re-initialize with the public key each time to be safe (idempotent in EmailJS v4)
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
     try {
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
