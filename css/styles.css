@@ -547,6 +547,7 @@ body {
 .mode-btn--word2pdf:hover   { background: #faf5f5; }
 .mode-btn--excel2pdf:hover  { background: #f5faf5; }
 .mode-btn--ppt2pdf:hover    { background: #faf7f0; }
+.mode-btn--sortmerge:hover  { background: #fdf8f0; }
 
 .mode-display {
   display: flex;
@@ -851,6 +852,136 @@ body {
   transition: background 0.15s;
 }
 .merge-order-btns button:hover { background: var(--surface3); }
+
+/* === SORT & MERGE PANEL === */
+.sort-merge-card { background: var(--surface); }
+
+.sm-toggle-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+.sm-toggle-btn {
+  flex: 1;
+  padding: 0.55rem 0.9rem;
+  background: var(--surface2);
+  border: var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--ink-mid);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+.sm-toggle-btn:hover { border-color: var(--gold); }
+.sm-toggle-btn--active {
+  border-color: var(--gold);
+  background: #fdf5e4;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.sm-pane { display: none; }
+.sm-pane--active { display: block; }
+.sm-pane-hint {
+  font-size: 0.7rem;
+  color: var(--ink-mid);
+  line-height: 1.5;
+  margin-bottom: 0.6rem;
+}
+
+.sm-manual-input-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+/* Shared group list — populated for both Auto-Detect and Manual groups */
+.sm-groups-wrap { margin-top: 1rem; }
+.sm-groups-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.6rem;
+}
+.sm-groups-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.sm-groups-subtitle {
+  font-size: 0.66rem;
+  color: var(--ink-dim);
+}
+.sm-groups-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.sm-group-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.85rem;
+  background: var(--surface2);
+  border: var(--border-light);
+  border-radius: var(--radius-sm);
+}
+.sm-group-item--selected { border-color: var(--gold); background: #fdf5e4; }
+.sm-group-checkbox { flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; accent-color: var(--gold); }
+.sm-group-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sm-group-label:focus { text-decoration: underline dotted var(--gold-border); }
+.sm-group-count {
+  flex-shrink: 0;
+  font-size: 0.66rem;
+  color: var(--ink-dim);
+  background: var(--surface3);
+  border-radius: 40px;
+  padding: 0.15rem 0.55rem;
+}
+.sm-group-mode-tag {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.4rem;
+}
+.sm-group-remove {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  transition: color 0.15s;
+}
+.sm-group-remove:hover { color: var(--danger); }
+
+.sm-empty-hint {
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  margin-top: 0.8rem;
+  text-align: center;
+}
+.sm-rename-wrap { margin-top: 1.1rem; padding-top: 1rem; border-top: var(--border-light); }
 
 /* === RUN ROW === */
 .run-row {

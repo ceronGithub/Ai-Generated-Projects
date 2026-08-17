@@ -134,7 +134,7 @@ const UIManager = (() => {
       hint.textContent = 'Configure your split settings in Step 03.1 below.';
       if (splitPanel) splitPanel.style.display = 'none';
     } else if (['toexcel','toword','toppt','tojpg','enhancemode','lockmode','mergemode',
-                'watermarkmode','wordtopdf','exceltopdf','ppttopdf'].includes(mode)) {
+                'watermarkmode','wordtopdf','exceltopdf','ppttopdf','sortmergemode'].includes(mode)) {
       area.style.display = 'none';
       document.getElementById('keywordChips').innerHTML = '';
       const modeHints = {
@@ -149,6 +149,7 @@ const UIManager = (() => {
         wordtopdf:     'No keywords needed — upload .docx files and run to convert to PDF.',
         exceltopdf:    'No keywords needed — upload .xlsx files and run to convert to PDF.',
         ppttopdf:      'No keywords needed — upload .pptx files and run to convert to PDF.',
+        sortmergemode: 'No keywords needed here — sort your PDFs into types in Step 03.2 below.',
       };
       hint.textContent = modeHints[mode] || '';
       if (splitPanel) splitPanel.style.display = 'none';
@@ -1887,6 +1888,142 @@ const UIManager = (() => {
     capResultsHeight(list);
   }
 
+  // =============================================
+  // SORT & MERGE — group checklist + final results
+  // =============================================
+
+  /**
+   * renderSortMergeGroups
+   * Renders the shared group list (both auto-detected and manual groups
+   * appear here together). Each row has: a checkbox to mark the group
+   * for merging, an editable label, a mode tag ("AUTO"/"MANUAL"), a
+   * file-count pill, and a remove button.
+   *
+   * @param {Array<{id,label,mode,files:File[]}>} groups
+   * @param {Set<string>} selectedIds - group ids currently checked for merge
+   * @param {{onToggle:Function, onRename:Function, onRemove:Function}} handlers
+   */
+  function renderSortMergeGroups(groups, selectedIds, handlers) {
+    const wrap = document.getElementById('smGroupsWrap');
+    const list = document.getElementById('smGroupsList');
+    const empty = document.getElementById('smEmptyHint');
+    const renameWrap = document.getElementById('smRenameWrap');
+    if (!wrap || !list) return;
+
+    if (!groups || groups.length === 0) {
+      wrap.style.display = 'none';
+      if (renameWrap) renameWrap.style.display = 'none';
+      if (empty) { empty.style.display = 'block'; empty.textContent = 'No types yet — use Auto-Detect or add a Manual group above.'; }
+      return;
+    }
+
+    wrap.style.display = 'block';
+    if (renameWrap) renameWrap.style.display = 'block';
+    if (empty) empty.style.display = 'none';
+    list.innerHTML = '';
+
+    groups.forEach(group => {
+      const row = document.createElement('div');
+      row.className = 'sm-group-item' + (selectedIds.has(group.id) ? ' sm-group-item--selected' : '');
+      row.dataset.groupId = group.id;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'sm-group-checkbox';
+      checkbox.checked = selectedIds.has(group.id);
+      checkbox.title = 'Select this type to merge into one PDF';
+      checkbox.addEventListener('change', () => handlers.onToggle(group.id, checkbox.checked));
+
+      const labelInput = document.createElement('input');
+      labelInput.type = 'text';
+      labelInput.className = 'sm-group-label';
+      labelInput.value = group.label;
+      labelInput.title = 'Click to rename this type';
+      labelInput.addEventListener('change', () => handlers.onRename(group.id, labelInput.value));
+
+      const modeTag = document.createElement('span');
+      modeTag.className = 'sm-group-mode-tag';
+      modeTag.textContent = group.mode === 'manual' ? 'MANUAL' : 'AUTO';
+
+      const countPill = document.createElement('span');
+      countPill.className = 'sm-group-count';
+      countPill.textContent = `${group.files.length} file${group.files.length !== 1 ? 's' : ''}`;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'sm-group-remove';
+      removeBtn.title = 'Remove this type';
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => handlers.onRemove(group.id));
+
+      row.append(checkbox, labelInput, modeTag, countPill, removeBtn);
+      list.appendChild(row);
+    });
+  }
+
+  /**
+   * renderSortMergeResult
+   * Shows the final output after running Sort & Merge: one download
+   * card per merged group PDF, plus a card for the renamed-remainder
+   * ZIP (if any files were left unassigned).
+   *
+   * @param {Array<{groupLabel:string, blob:Blob, filename:string, totalPages:number}>} mergedOutputs
+   * @param {{count:number, onDownload:Function}|null} renameInfo - null if nothing was left to rename
+   */
+  function renderSortMergeResult(mergedOutputs, renameInfo) {
+    const container = document.getElementById('resultsContainer');
+    const list       = document.getElementById('resultsList');
+    const actions    = document.getElementById('resultsActions');
+    container.style.display = 'block';
+    list.innerHTML    = '';
+    actions.innerHTML = '';
+
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'results-actions-row';
+    actionsRow.appendChild(makeClearAllBtn(list));
+    actions.appendChild(actionsRow);
+
+    const summaryCard = document.createElement('div');
+    summaryCard.className = 'tm-summary-card merge-summary-card';
+    summaryCard.innerHTML = `
+      <div class="tm-summary-grid">
+        <div class="tm-stat"><span class="tm-stat-val">${mergedOutputs.length}</span><span class="tm-stat-lbl">Types Merged</span></div>
+        <div class="tm-stat"><span class="tm-stat-val">${renameInfo ? renameInfo.count : 0}</span><span class="tm-stat-lbl">Files Renamed</span></div>
+      </div>
+    `;
+    list.appendChild(summaryCard);
+
+    mergedOutputs.forEach(out => {
+      const card = document.createElement('div');
+      card.className = 'result-item merge-out-card';
+      card.innerHTML = `
+        <div class="result-meta">
+          <span class="page-badge merge-out-badge">${escapeHtml(out.groupLabel)}</span>
+          <span class="result-filename">${escapeHtml(out.filename)}</span>
+          <span class="merge-file-size">${out.totalPages} page${out.totalPages !== 1 ? 's' : ''} · ${formatBytes(out.blob.size)}</span>
+        </div>
+        <button class="cm-dl-btn btn btn-accent merge-dl-card-btn">⬇ Download</button>
+      `;
+      card.querySelector('.merge-dl-card-btn').addEventListener('click', () => _downloadBlob(out.blob, out.filename));
+      list.appendChild(card);
+    });
+
+    if (renameInfo && renameInfo.count > 0) {
+      const renameCard = document.createElement('div');
+      renameCard.className = 'result-item merge-out-card';
+      renameCard.innerHTML = `
+        <div class="result-meta">
+          <span class="page-badge merge-out-badge">REST</span>
+          <span class="result-filename">${renameInfo.count} renamed file${renameInfo.count !== 1 ? 's' : ''} (ZIP)</span>
+        </div>
+        <button class="cm-dl-btn btn btn-accent merge-dl-card-btn">⬇ Download ZIP</button>
+      `;
+      renameCard.querySelector('.merge-dl-card-btn').addEventListener('click', renameInfo.onDownload);
+      list.appendChild(renameCard);
+    }
+
+    capResultsHeight(list);
+  }
+
   return {
     renderFileList,
     setModeSelected,
@@ -1912,6 +2049,8 @@ const UIManager = (() => {
     renderEnhanceResults,
     renderLockResults,
     renderMergeResult,
+    renderSortMergeGroups,
+    renderSortMergeResult,
     setPerFileStatus,
     clearPerFileStatus,
     escapeHtml,

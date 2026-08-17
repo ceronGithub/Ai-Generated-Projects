@@ -16,6 +16,9 @@
     ocrEnabled:  false,   // OCR fallback toggle
     mergeOrder:  [],      // file indices for merge mode
     detectedLabels: [],   // auto-detected label words (Single Keyword mode)
+    sortGroups:      [],  // Sort & Merge: detected/manual groups (TypeSorter.Group[])
+    sortSelectedIds: new Set(), // Sort & Merge: group ids checked for merging
+    sortMode:        'auto', // Sort & Merge: 'auto' | 'manual' toggle
   };
   let labelDetectGen = 0; // guards against out-of-order async label detection results
 
@@ -50,6 +53,7 @@
   function resetToEmpty() {
     state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null;
     state.mergeOrder = []; state.detectedLabels = [];
+    state.sortGroups = []; state.sortSelectedIds = new Set(); state.sortMode = 'auto';
     UIManager.hideDetectedLabels();
     UIManager.deactivateStep('step-mode');
     UIManager.deactivateStep('step-keywords');
@@ -71,6 +75,9 @@
     // Hide merge order panel
     const mp = document.getElementById('mergeOrderPanel');
     if (mp) mp.style.display = 'none';
+    // Hide Sort & Merge panel
+    const smp = document.getElementById('sortMergePanel');
+    if (smp) smp.style.display = 'none';
   }
 
   deleteAllBtn.addEventListener('click', () => { state.files = []; refreshFileList(); resetToEmpty(); });
@@ -133,11 +140,17 @@
   }
 
   function removeFile(idx) {
+    const removed = state.files[idx];
     state.files.splice(idx, 1);
     // Fix merge order after removal
     state.mergeOrder = state.mergeOrder
       .filter(i => i !== idx)
       .map(i => i > idx ? i - 1 : i);
+    // Purge the removed file from any Sort & Merge groups it belonged to
+    if (removed && state.sortGroups.length > 0) {
+      state.sortGroups = state.sortGroups.map(g => ({ ...g, files: g.files.filter(f => f !== removed) }));
+      if (state.mode === 'sortmergemode') renderSortMergeGroups();
+    }
     refreshFileList();
     if (state.files.length === 0) resetToEmpty();
     else if (state.mode === 'mergemode') renderMergeOrder();
@@ -153,6 +166,7 @@
   changeModeBtn.addEventListener('click', () => {
     state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null; state.mergeOrder = [];
     state.detectedLabels = [];
+    state.sortGroups = []; state.sortSelectedIds = new Set(); state.sortMode = 'auto';
     UIManager.hideDetectedLabels();
 
     const chips = document.querySelectorAll('.keyword-chip');
@@ -176,6 +190,9 @@
     // Hide merge panel
     const mp = document.getElementById('mergeOrderPanel');
     if (mp) mp.style.display = 'none';
+    // Hide Sort & Merge panel
+    const smp = document.getElementById('sortMergePanel');
+    if (smp) smp.style.display = 'none';
 
     stepResults.classList.add('step-folding');
     stepResults.addEventListener('animationend', () => {
@@ -255,6 +272,14 @@
       if (mp) { mp.style.display = 'block'; renderMergeOrder(); }
     } else {
       if (mp) mp.style.display = 'none';
+    }
+
+    // Show/hide Sort & Merge panel
+    const smp = document.getElementById('sortMergePanel');
+    if (mode === 'sortmergemode') {
+      if (smp) { smp.style.display = 'block'; renderSortMergeGroups(); }
+    } else {
+      if (smp) smp.style.display = 'none';
     }
 
     UIManager.activateStep('step-keywords');
@@ -395,7 +420,7 @@
     if (!state.mode || state.files.length === 0) { UIManager.setRunEnabled(false); return; }
     const noKwModes = ['extractall','tablemode','compressmode','splitmode','toexcel','toword',
                        'toppt','tojpg','enhancemode','lockmode','mergemode',
-                       'watermarkmode','wordtopdf','exceltopdf','ppttopdf'];
+                       'watermarkmode','wordtopdf','exceltopdf','ppttopdf','sortmergemode'];
     if (noKwModes.includes(state.mode)) {
       UIManager.setRunEnabled(state.mode === 'mergemode' ? state.files.length >= 2 : true);
       return;
@@ -486,6 +511,101 @@
     });
   }
 
+  // ===== SORT & MERGE PANEL =====
+
+  const smToggleAuto   = document.getElementById('smToggleAuto');
+  const smToggleManual = document.getElementById('smToggleManual');
+  const smPaneAuto      = document.getElementById('smPaneAuto');
+  const smPaneManual    = document.getElementById('smPaneManual');
+  const smScanBtn       = document.getElementById('smScanBtn');
+  const smAddManualBtn  = document.getElementById('smAddManualGroupBtn');
+  const smManualInput   = document.getElementById('smManualKeywordInput');
+
+  // Toggle between Auto-Detect and Manual panes — purely visual, does not
+  // clear any groups already found, so switching back and forth keeps
+  // everything the user has built up so far.
+  function setSortMergeToggle(mode) {
+    state.sortMode = mode;
+    if (smToggleAuto)   smToggleAuto.classList.toggle('sm-toggle-btn--active', mode === 'auto');
+    if (smToggleManual) smToggleManual.classList.toggle('sm-toggle-btn--active', mode === 'manual');
+    if (smPaneAuto)      smPaneAuto.classList.toggle('sm-pane--active', mode === 'auto');
+    if (smPaneManual)    smPaneManual.classList.toggle('sm-pane--active', mode === 'manual');
+  }
+  if (smToggleAuto)   smToggleAuto.addEventListener('click', () => setSortMergeToggle('auto'));
+  if (smToggleManual) smToggleManual.addEventListener('click', () => setSortMergeToggle('manual'));
+
+  // Re-renders the shared group checklist from current state — called
+  // after every scan, add, rename, remove, or checkbox toggle.
+  function renderSortMergeGroups() {
+    UIManager.renderSortMergeGroups(state.sortGroups, state.sortSelectedIds, {
+      onToggle: (groupId, checked) => {
+        if (checked) state.sortSelectedIds.add(groupId);
+        else state.sortSelectedIds.delete(groupId);
+        renderSortMergeGroups();
+      },
+      onRename: (groupId, newLabel) => {
+        state.sortGroups = TypeSorter.renameGroup(state.sortGroups, groupId, newLabel);
+        renderSortMergeGroups();
+      },
+      onRemove: (groupId) => {
+        state.sortGroups = TypeSorter.removeGroup(state.sortGroups, groupId);
+        state.sortSelectedIds.delete(groupId);
+        renderSortMergeGroups();
+      },
+    });
+  }
+
+  // Scans every uploaded PDF and replaces any existing AUTO groups with
+  // freshly detected ones. Manual groups the user already added are left
+  // untouched — re-scanning is meant to refresh auto-detection only.
+  if (smScanBtn) smScanBtn.addEventListener('click', async () => {
+    if (state.files.length === 0) { showUploadNote('⚠ Upload PDFs first before scanning.', 'warn'); return; }
+    smScanBtn.disabled = true;
+    const originalText = smScanBtn.textContent;
+    smScanBtn.textContent = '⬡ Scanning…';
+    try {
+      const pdfData = await PDFProcessor.extractAll(state.files);
+      const autoGroups = TypeSorter.autoDetectGroups(pdfData);
+      const manualGroups = state.sortGroups.filter(g => g.mode === 'manual');
+      state.sortGroups = [...autoGroups, ...manualGroups];
+      // Keep prior selections only for groups that still exist after rescan
+      const stillExists = new Set(state.sortGroups.map(g => g.id));
+      state.sortSelectedIds = new Set([...state.sortSelectedIds].filter(id => stillExists.has(id)));
+      renderSortMergeGroups();
+      updateRunBtn();
+    } catch (e) {
+      console.error('[Sort & Merge] Scan failed:', e.message);
+      showUploadNote('⚠ Scan failed — see console for details.', 'error');
+    } finally {
+      smScanBtn.disabled = false;
+      smScanBtn.textContent = originalText;
+    }
+  });
+
+  // Adds one manual group from the keyword textfield. Re-scans every
+  // uploaded file's already-cached text is not needed here — TypeSorter
+  // re-extracts pages itself so this works even before Auto-Detect ran.
+  async function addManualSortGroup() {
+    const keyword = (smManualInput?.value || '').trim();
+    if (!keyword) return;
+    if (state.files.length === 0) { showUploadNote('⚠ Upload PDFs first.', 'warn'); return; }
+    if (smAddManualBtn) smAddManualBtn.disabled = true;
+    try {
+      const pdfData = await PDFProcessor.extractAll(state.files);
+      state.sortGroups = TypeSorter.addManualGroup(state.sortGroups, keyword, pdfData);
+      if (smManualInput) smManualInput.value = '';
+      renderSortMergeGroups();
+      updateRunBtn();
+    } catch (e) {
+      console.error('[Sort & Merge] Add manual group failed:', e.message);
+      showUploadNote('⚠ Could not add group — see console for details.', 'error');
+    } finally {
+      if (smAddManualBtn) smAddManualBtn.disabled = false;
+    }
+  }
+  if (smAddManualBtn) smAddManualBtn.addEventListener('click', addManualSortGroup);
+  if (smManualInput) smManualInput.addEventListener('keydown', e => { if (e.key === 'Enter') addManualSortGroup(); });
+
   // ===== RUN EXTRACTION =====
 
   runBtn.addEventListener('click', runExtraction);
@@ -552,6 +672,62 @@
         });
         UIManager.setProgress(100, 'Done!');
         UIManager.renderMergeResult(res, state.files, state.mergeOrder);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Sort & Merge ─────────────────────────────────────────────────────
+      if (state.mode === 'sortmergemode') {
+        if (state.sortGroups.length === 0) throw new Error('Scan or add at least one type before running.');
+
+        UIManager.setProgress(5, 'Preparing Sort & Merge…');
+        await new Promise(r => setTimeout(r, 30));
+
+        const selectedGroups = state.sortGroups.filter(g => state.sortSelectedIds.has(g.id) && g.files.length > 0);
+        const mergedOutputs  = [];
+        const totalGroups    = selectedGroups.length;
+
+        for (let gi = 0; gi < selectedGroups.length; gi++) {
+          const group = selectedGroups[gi];
+          const baseProgress = 5 + Math.round((gi / Math.max(totalGroups, 1)) * 70);
+          UIManager.setProgress(baseProgress, `Merging "${group.label}" (${gi + 1}/${totalGroups})…`);
+          const res = await PDFMerge.merge(group.files, group.files.map((_, i) => i), (rendered, total, fname) => {
+            const groupProgress = baseProgress + Math.round((rendered / total) * (70 / Math.max(totalGroups, 1)));
+            UIManager.setProgress(groupProgress, `Merging "${group.label}": ${fname}…`);
+          });
+          const safeLabel = RenameHandler.sanitizeFilename(group.label) || `type_${gi + 1}`;
+          mergedOutputs.push({
+            groupLabel: group.label,
+            blob:       res.blob,
+            filename:   `${safeLabel}_merged.pdf`,
+            totalPages: res.totalPages,
+          });
+        }
+
+        UIManager.setProgress(80, 'Preparing rename for remaining files…');
+        await new Promise(r => setTimeout(r, 30));
+
+        // Files not claimed by any SELECTED group go through the rename flow
+        const unassignedFiles = TypeSorter.getUnassignedFiles(state.sortGroups, state.files, [...state.sortSelectedIds]);
+        let renameInfo = null;
+        if (unassignedFiles.length > 0) {
+          const renameKeyword = (document.getElementById('smRenameKeywordInput')?.value || '').trim();
+          let renameMap = new Map(); // empty map → RenameHandler keeps original filenames
+          if (renameKeyword) {
+            const unassignedPdfData = await PDFProcessor.extractAll(unassignedFiles);
+            const searchFn = (window.KeywordHandler?.searchEnhanced)
+              ? KeywordHandler.searchEnhanced.bind(KeywordHandler)
+              : KeywordHandler.search.bind(KeywordHandler);
+            const results = searchFn(unassignedPdfData, [renameKeyword], {});
+            renameMap = RenameHandler.buildRenameMap(results);
+          }
+          renameInfo = {
+            count: unassignedFiles.length,
+            onDownload: () => RenameHandler.downloadRenamed(unassignedFiles, renameMap, () => {}),
+          };
+        }
+
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderSortMergeResult(mergedOutputs, renameInfo);
         setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
       }
 
@@ -895,7 +1071,7 @@
     if (banner && age) {
       const noKwModes = ['extractall','tablemode','compressmode','splitmode','toexcel',
                          'toword','toppt','tojpg','enhancemode','lockmode','mergemode',
-                         'watermarkmode','wordtopdf','exceltopdf','ppttopdf'];
+                         'watermarkmode','wordtopdf','exceltopdf','ppttopdf','sortmergemode'];
       const kwInfo = savedKws?.length && !noKwModes.includes(savedMode)
         ? ` · ${savedKws.length} keyword(s)`
         : '';

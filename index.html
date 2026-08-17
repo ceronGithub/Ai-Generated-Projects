@@ -222,6 +222,11 @@
                 <span class="mode-name">Lock PDF</span>
                 <span class="mode-desc">Password-protect your PDF files. Set a password before downloading.</span>
               </button>
+              <button class="mode-btn mode-btn--sortmerge" id="modeSortMerge" data-mode="sortmergemode">
+                <span class="mode-icon">🗂️</span>
+                <span class="mode-name">Sort &amp; Merge</span>
+                <span class="mode-desc">Group your uploaded PDFs by type, pick which types to merge, and rename the rest.</span>
+              </button>
             </div>
           </div>
 
@@ -363,6 +368,79 @@
           <span style="margin-left:auto;font-size:.7rem;color:var(--text-mid);font-family:var(--font-mono)">Drag ⠿ or use ↑↓ to reorder</span>
         </div>
         <div id="mergeOrderList" class="merge-order-list"></div>
+      </div>
+
+      <!-- SORT & MERGE PANEL (shown only in sortmergemode) -->
+      <div id="sortMergePanel" style="display:none" class="card sort-merge-card">
+        <div class="card-glow-top" style="background:linear-gradient(90deg,transparent,var(--gold),transparent)"></div>
+        <div class="step-label">
+          <span style="background:linear-gradient(135deg,var(--gold),var(--ink-mid));color:#000;border-radius:5px;font-size:.58rem;font-weight:900;padding:3px 9px;letter-spacing:.08em;">03.2</span>
+          Sort &amp; Merge
+        </div>
+
+        <!-- Mode toggle: Auto-Detect / Manual -->
+        <div class="sm-toggle-row" id="smToggleRow">
+          <button class="sm-toggle-btn sm-toggle-btn--active" id="smToggleAuto" data-sm-mode="auto">
+            ⬡ Auto-Detect
+          </button>
+          <button class="sm-toggle-btn" id="smToggleManual" data-sm-mode="manual">
+            ✎ Manual
+          </button>
+        </div>
+
+        <!-- Auto-Detect pane -->
+        <div class="sm-pane sm-pane--active" id="smPaneAuto">
+          <p class="sm-pane-hint">
+            Scans every uploaded PDF and groups files that share the same label pattern
+            (e.g. "Invoice #:", "Total", "Signature") into a detected type.
+          </p>
+          <button class="btn btn-accent" id="smScanBtn">⬡ Scan &amp; Detect Types</button>
+        </div>
+
+        <!-- Manual pane -->
+        <div class="sm-pane" id="smPaneManual">
+          <p class="sm-pane-hint">
+            Type a keyword or phrase. Any uploaded PDF whose text contains it becomes part of this group.
+          </p>
+          <div class="sm-manual-input-row">
+            <input
+              type="text"
+              id="smManualKeywordInput"
+              class="keyword-input"
+              placeholder="e.g. Invoice #:  or  Tin:"
+              autocomplete="off"
+            />
+            <button class="btn btn-accent" id="smAddManualGroupBtn">+ Add Group</button>
+          </div>
+        </div>
+
+        <!-- Detected / defined groups (auto + manual share this list) -->
+        <div class="sm-groups-wrap" id="smGroupsWrap" style="display:none">
+          <div class="sm-groups-header">
+            <span class="sm-groups-title">Types Found</span>
+            <span class="sm-groups-subtitle">Check the type(s) you want to merge. Unchecked files will be renamed instead.</span>
+          </div>
+          <div class="sm-groups-list" id="smGroupsList"></div>
+        </div>
+
+        <!-- Rename config for files NOT part of any selected group -->
+        <div class="sm-rename-wrap" id="smRenameWrap" style="display:none">
+          <div class="sm-groups-header">
+            <span class="sm-groups-title">Rename the Rest</span>
+            <span class="sm-groups-subtitle">Optional — type a keyword found in the remaining files to rename them by its captured value. Leave blank to keep original filenames.</span>
+          </div>
+          <input
+            type="text"
+            id="smRenameKeywordInput"
+            class="keyword-input"
+            placeholder="e.g. Invoice #:  (optional)"
+            autocomplete="off"
+          />
+        </div>
+
+        <p class="sm-empty-hint" id="smEmptyHint">
+          No types yet — use Auto-Detect or add a Manual group above.
+        </p>
       </div>
 
       <!-- STEP 4: Run & Results -->
@@ -863,6 +941,7 @@
     <!-- JS modules (order matters) -->
     <script src="js/core/pdf-processor.js"></script>
     <script src="js/core/label-detector.js"></script>
+    <script src="js/core/type-sorter.js"></script>
     <script src="js/core/keyword-handler.js"></script>
     <script src="js/core/table-engine.js"></script>
     <script src="js/core/table-parser.js"></script>

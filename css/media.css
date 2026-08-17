@@ -120,6 +120,8 @@
 
   /* ── Keywords ── */
   .keyword-input-row { flex-direction: column; gap: 0.5rem; }
+  .sm-manual-input-row { flex-direction: column; gap: 0.5rem; }
+  .sm-toggle-row { flex-direction: column; }
   .keyword-input     { font-size: 0.75rem; padding: 0.55rem 0.8rem; }
   .keyword-chip      { font-size: 0.68rem; }
   .keyword-hint      { font-size: 0.62rem; }
