@@ -98,7 +98,12 @@ const UIManager = (() => {
   }
 
   function setModeButtonsVisible(show) {
-    document.querySelector('.mode-buttons').style.display = show ? 'grid' : 'none';
+    // .mode-buttons is a flex column (stacked categories) in styles.css —
+    // forcing 'grid' here was overriding that layout and, on wider
+    // screens, also activating a leftover grid-template-columns rule in
+    // media.css meant for .mode-category-grid, breaking the mode picker's
+    // layout every time the user changed or re-opened mode selection.
+    document.querySelector('.mode-buttons').style.display = show ? 'flex' : 'none';
     document.getElementById('modeDisplay').style.display  = show ? 'none' : 'flex';
   }
 

@@ -489,7 +489,7 @@
   .file-count { font-size: 0.67rem; }
 
   /* ── Mode buttons — 3-col wider ── */
-  .mode-buttons { grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+  .mode-category-grid { grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
   .mode-btn   { padding: 1.7rem 1.2rem; }
   .mode-icon  { font-size: 2rem; }
   .mode-name  { font-size: 0.74rem; letter-spacing: 0.13em; }
