@@ -588,6 +588,51 @@ body {
 .keyword-input::placeholder { color: var(--ink-dim); }
 .keyword-input:focus { border-color: var(--gold); }
 
+/* === DETECTED LABELS (Single Keyword mode auto-suggest) === */
+.detected-labels-wrap {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: var(--border-light);
+}
+.detected-labels-title {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  margin: 0 0 0.5rem;
+}
+.detected-labels-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.detected-label-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--surface2);
+  border: var(--border-light);
+  color: var(--ink-mid);
+  font-size: 0.72rem;
+  padding: 0.28rem 0.7rem 0.28rem 0.55rem;
+  border-radius: 40px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.detected-label-chip:hover {
+  border-color: var(--gold);
+}
+.detected-label-chip input[type="checkbox"] {
+  accent-color: var(--gold);
+  margin: 0;
+  cursor: pointer;
+}
+.detected-label-chip--active {
+  background: var(--deep);
+  color: var(--text);
+  border-color: var(--gold);
+}
+
 .keyword-chips {
   display: flex;
   flex-wrap: wrap;

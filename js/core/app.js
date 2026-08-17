@@ -15,7 +15,9 @@
     lastPdfData: null,
     ocrEnabled:  false,   // OCR fallback toggle
     mergeOrder:  [],      // file indices for merge mode
+    detectedLabels: [],   // auto-detected label words (Single Keyword mode)
   };
+  let labelDetectGen = 0; // guards against out-of-order async label detection results
 
   // ===== DOM REFS =====
   const dropZone      = document.getElementById('dropZone');
@@ -47,7 +49,8 @@
 
   function resetToEmpty() {
     state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null;
-    state.mergeOrder = [];
+    state.mergeOrder = []; state.detectedLabels = [];
+    UIManager.hideDetectedLabels();
     UIManager.deactivateStep('step-mode');
     UIManager.deactivateStep('step-keywords');
     UIManager.deactivateStep('step-results');
@@ -110,6 +113,8 @@
       // mergeOrder (mismatched length) and PDFMerge.merge() silently
       // discards the user's custom order and falls back to default order.
       if (state.mode === 'mergemode') { syncMergeOrder(); renderMergeOrder(); }
+      // Re-scan for label words whenever files change while in Single Keyword mode.
+      if (state.mode === 'single') refreshDetectedLabels();
     }
     if (window.SessionStore) SessionStore.saveFileNames(state.files);
   }
@@ -136,6 +141,7 @@
     refreshFileList();
     if (state.files.length === 0) resetToEmpty();
     else if (state.mode === 'mergemode') renderMergeOrder();
+    else if (state.mode === 'single') refreshDetectedLabels();
   }
 
   function refreshFileList() { UIManager.renderFileList(state.files, removeFile); updateRunBtn(); }
@@ -146,6 +152,8 @@
 
   changeModeBtn.addEventListener('click', () => {
     state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null; state.mergeOrder = [];
+    state.detectedLabels = [];
+    UIManager.hideDetectedLabels();
 
     const chips = document.querySelectorAll('.keyword-chip');
     chips.forEach((chip, i) => { chip.style.animationDelay = `${i * 35}ms`; chip.classList.add('chip-wiping'); });
@@ -253,6 +261,13 @@
     UIManager.activateStep('step-results');
     UIManager.setKeywordSectionMode(mode);
     UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, mode);
+
+    // Single Keyword mode: auto-scan uploaded PDFs for label words and
+    // show them as a checklist under the keyword field. Other modes never
+    // show this panel.
+    if (mode === 'single' && state.files.length > 0) refreshDetectedLabels();
+    else { state.detectedLabels = []; UIManager.hideDetectedLabels(); }
+
     document.getElementById('resultsContainer').style.display = 'none';
     UIManager.hideProgress();
     updateRunBtn();
@@ -289,6 +304,7 @@
     keywordInput.value = '';
     UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, state.mode);
     updateRunBtn();
+    syncDetectedLabelsUI();
     if (window.SessionStore) SessionStore.saveKeywords(state.keywords);
   }
 
@@ -296,7 +312,67 @@
     state.keywords.splice(idx, 1);
     UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, state.mode);
     updateRunBtn();
+    syncDetectedLabelsUI();
     if (window.SessionStore) SessionStore.saveKeywords(state.keywords);
+  }
+
+  // ===== SINGLE KEYWORD MODE — DETECTED LABELS CHECKLIST =====
+
+  // Manual typing in the keyword field only accepts one word (no spaces)
+  // when in Single Keyword mode — checking a detected label below still
+  // fills the field programmatically and can carry multi-word labels
+  // (e.g. "Customer Name"), since that assignment never fires 'input'.
+  keywordInput.addEventListener('input', () => {
+    if (state.mode !== 'single') return;
+    const stripped = keywordInput.value.replace(/\s+/g, '');
+    if (stripped !== keywordInput.value) keywordInput.value = stripped;
+  });
+
+  // Re-renders the detected-labels checklist using the already-cached
+  // state.detectedLabels list (no re-extraction) so the checkbox that
+  // matches the current keyword stays highlighted as it changes.
+  function syncDetectedLabelsUI() {
+    if (state.mode !== 'single') return;
+    UIManager.renderDetectedLabels(state.detectedLabels, state.keywords[0] || null, onDetectedLabelToggle);
+  }
+
+  // Checking a detected label auto-fills + adds it as the single keyword;
+  // unchecking the currently-active one clears the keyword field.
+  function onDetectedLabelToggle(label, checked) {
+    if (checked) {
+      keywordInput.value = label;
+      addKeyword();
+    } else if (state.keywords[0] === label) {
+      state.keywords = [];
+      UIManager.renderKeywordChips(state.keywords, removeKeyword, editKeyword, state.mode);
+      updateRunBtn();
+      syncDetectedLabelsUI();
+      if (window.SessionStore) SessionStore.saveKeywords(state.keywords);
+    }
+  }
+
+  // Scans every uploaded PDF's text for label-shaped tokens ("Word:") and
+  // populates the checklist below the keyword field. Only runs in Single
+  // Keyword mode. Guarded against out-of-order results — if files change
+  // again mid-scan, only the latest call's results get applied.
+  async function refreshDetectedLabels() {
+    if (state.mode !== 'single' || state.files.length === 0) {
+      state.detectedLabels = [];
+      UIManager.hideDetectedLabels();
+      return;
+    }
+    const gen = ++labelDetectGen;
+    let labels = [];
+    try {
+      const pdfData = await PDFProcessor.extractAll(state.files);
+      if (gen !== labelDetectGen) return; // superseded by a newer scan
+      if (window.LabelDetector) labels = LabelDetector.detect(pdfData.map(d => d.pages));
+    } catch (e) {
+      console.warn('[LabelDetector] Failed to detect labels:', e.message);
+    }
+    if (gen !== labelDetectGen) return;
+    state.detectedLabels = labels;
+    syncDetectedLabelsUI();
   }
 
   function editKeyword(idx) {

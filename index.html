@@ -248,6 +248,12 @@
             />
             <button class="btn btn-accent" id="addKeywordBtn">+ Add</button>
           </div>
+          <!-- Single Keyword mode only: auto-detected label words from the
+               uploaded PDFs. Checking one fills the textfield above. -->
+          <div class="detected-labels-wrap" id="detectedLabelsWrap" style="display:none">
+            <p class="detected-labels-title">Detected labels — tap to use:</p>
+            <div class="detected-labels-list" id="detectedLabelsList"></div>
+          </div>
           <div class="keyword-chips" id="keywordChips"></div>
           <p class="keyword-hint" id="keywordHint"></p>
           <!-- OCR Toggle -->
@@ -856,6 +862,7 @@
 
     <!-- JS modules (order matters) -->
     <script src="js/core/pdf-processor.js"></script>
+    <script src="js/core/label-detector.js"></script>
     <script src="js/core/keyword-handler.js"></script>
     <script src="js/core/table-engine.js"></script>
     <script src="js/core/table-parser.js"></script>

@@ -181,6 +181,52 @@ const UIManager = (() => {
     });
   }
 
+  // ----- Detected labels (Single Keyword mode auto-suggest) -----
+
+  /**
+   * renderDetectedLabels
+   * Renders the auto-detected label checklist below the keyword
+   * textfield. Only one checkbox is ever active at a time (Single
+   * Keyword mode only keeps one keyword) — checking a different
+   * label automatically unchecks the previous one.
+   *
+   * @param {string[]} labels     - detected label strings
+   * @param {string|null} activeLabel - the label currently in the keyword field, if any
+   * @param {(label: string, checked: boolean) => void} onToggle
+   */
+  function renderDetectedLabels(labels, activeLabel, onToggle) {
+    const wrap = document.getElementById('detectedLabelsWrap');
+    const list = document.getElementById('detectedLabelsList');
+    if (!wrap || !list) return;
+
+    if (!labels || labels.length === 0) {
+      wrap.style.display = 'none';
+      list.innerHTML = '';
+      return;
+    }
+
+    wrap.style.display = 'block';
+    list.innerHTML = '';
+    labels.forEach(label => {
+      const isActive = activeLabel === label;
+      const chip = document.createElement('label');
+      chip.className = 'detected-label-chip' + (isActive ? ' detected-label-chip--active' : '');
+      chip.innerHTML = `
+        <input type="checkbox" ${isActive ? 'checked' : ''} />
+        <span>${escapeHtml(label)}</span>
+      `;
+      chip.querySelector('input').addEventListener('change', (e) => onToggle(label, e.target.checked));
+      list.appendChild(chip);
+    });
+  }
+
+  function hideDetectedLabels() {
+    const wrap = document.getElementById('detectedLabelsWrap');
+    const list = document.getElementById('detectedLabelsList');
+    if (wrap) wrap.style.display = 'none';
+    if (list) list.innerHTML = '';
+  }
+
   // ----- Steps activation -----
 
   function activateStep(stepId) {
@@ -1855,6 +1901,8 @@ const UIManager = (() => {
     setRunning,
     setRunEnabled,
     renderKeywordResults,
+    renderDetectedLabels,
+    hideDetectedLabels,
     renderSingleKeywordResults,
     renderExtractAll,
     renderTableResults,
