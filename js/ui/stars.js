@@ -11,6 +11,16 @@
 const StarField = (() => {
 
   const canvas = document.getElementById('starCanvas');
+
+  // The "Deep Space Cosmic" theme's <canvas id="starCanvas"> was removed when
+  // the site moved to the restaurant editorial design, but this script was
+  // never updated to match — it used to crash here on every page load
+  // (canvas was null → .getContext threw), which silently broke script
+  // execution for this file. Now it safely no-ops instead.
+  if (!canvas) {
+    return { init() {}, startWarp() {}, stopWarp() {} };
+  }
+
   const ctx = canvas.getContext('2d');
 
   // ---------- CONFIG ----------

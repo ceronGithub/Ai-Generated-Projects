@@ -588,51 +588,6 @@ body {
 .keyword-input::placeholder { color: var(--ink-dim); }
 .keyword-input:focus { border-color: var(--gold); }
 
-/* === DETECTED LABELS (Single Keyword mode auto-suggest) === */
-.detected-labels-wrap {
-  margin-top: 0.65rem;
-  padding-top: 0.65rem;
-  border-top: var(--border-light);
-}
-.detected-labels-title {
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  color: var(--ink-dim);
-  margin: 0 0 0.5rem;
-}
-.detected-labels-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-.detected-label-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: var(--surface2);
-  border: var(--border-light);
-  color: var(--ink-mid);
-  font-size: 0.72rem;
-  padding: 0.28rem 0.7rem 0.28rem 0.55rem;
-  border-radius: 40px;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
-}
-.detected-label-chip:hover {
-  border-color: var(--gold);
-}
-.detected-label-chip input[type="checkbox"] {
-  accent-color: var(--gold);
-  margin: 0;
-  cursor: pointer;
-}
-.detected-label-chip--active {
-  background: var(--deep);
-  color: var(--text);
-  border-color: var(--gold);
-}
-
 .keyword-chips {
   display: flex;
   flex-wrap: wrap;
@@ -1006,6 +961,53 @@ body {
 }
 .btn-excel:hover,
 .btn-rename:hover { background: var(--surface3); border-color: var(--gold); }
+
+/*
+ * .btn-clear-all
+ * Rendered by makeClearAllBtn() in ui-manager.js on every results view but
+ * never had a matching rule, so it fell back to unstyled default browser
+ * button chrome. Styled to match .btn-excel/.btn-rename, with a red/danger
+ * accent (destructive action) instead of the neutral gold hover.
+ */
+.btn-clear-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid #c8bfae;
+  color: var(--ink-mid);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.38rem 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.btn-clear-all:hover:not(:disabled) {
+  background: rgba(214, 69, 69, 0.08);
+  border-color: var(--danger, #d64545);
+  color: var(--danger, #d64545);
+}
+.btn-clear-all:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/*
+ * .no-results--cleared
+ * Empty-state message shown after Clear All finishes removing every card.
+ */
+.no-results--cleared {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--ink-dim);
+}
+.no-results--cleared .no-results-icon { font-size: 1.4rem; }
+.no-results--cleared .no-results-sub { font-size: 0.72rem; opacity: 0.75; }
 
 .results-list {
   display: flex;
@@ -1873,6 +1875,24 @@ body {
   text-transform: uppercase;
   padding: 0.32rem 0.65rem;
 }
+/*
+ * .pvm-btn--nav / .pvm-btn--zoom
+ * Icon-only square buttons (prev/next page, zoom in/out) inside the PDF
+ * viewer toolbar. These reused the base .pvm-btn text-button padding with
+ * no modifier of their own, so their 14x14 icons sat off-center in an
+ * oversized/misshapen box. Fixed size + centered icon layout below.
+ */
+.pvm-btn--nav,
+.pvm-btn--zoom {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
+}
+.pvm-btn--nav svg,
+.pvm-btn--zoom svg {
+  display: block;
+}
 .pvm-page-indicator {
   display: flex;
   align-items: center;
@@ -1923,6 +1943,53 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .card { animation: fadeInUp 0.3s ease both; }
+
+/*
+ * .result-item--popping / .chip-wiping / .step-folding / .results-folding /
+ * .step-settling
+ *
+ * These classes were already being added/removed by app.js and ui-manager.js
+ * (Clear All button, keyword-chip removal, and the "table detected" reset
+ * flow) but had no matching @keyframes anywhere in the stylesheet. Since
+ * nothing was actually animating, the browser never fired the
+ * `animationend` event those scripts wait for — so the code that removes
+ * the element and updates counts/state never ran. That's why "Clear All"
+ * (and the related reset flows) looked like they did nothing.
+ */
+@keyframes resultPopOut {
+  from { opacity: 1; transform: scale(1); max-height: 300px; margin-bottom: var(--space-md, 0.75rem); }
+  to   { opacity: 0; transform: scale(0.9); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; }
+}
+.result-item--popping {
+  animation: resultPopOut 0.28s ease forwards;
+  overflow: hidden;
+}
+
+@keyframes chipWipeOut {
+  from { opacity: 1; transform: scale(1); max-width: 260px; margin-right: 0.4rem; }
+  to   { opacity: 0; transform: scale(0.85); max-width: 0; margin-right: 0; padding-left: 0; padding-right: 0; overflow: hidden; }
+}
+.chip-wiping {
+  animation: chipWipeOut 0.22s ease forwards;
+  overflow: hidden;
+}
+
+@keyframes cardFoldOut {
+  from { opacity: 1; transform: scaleY(1); max-height: 800px; }
+  to   { opacity: 0; transform: scaleY(0.96); max-height: 0; overflow: hidden; }
+}
+.step-folding,
+.results-folding {
+  animation: cardFoldOut 0.3s ease forwards;
+  transform-origin: top center;
+  overflow: hidden;
+}
+
+@keyframes cardSettleIn {
+  from { opacity: 0.5; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.step-settling { animation: cardSettleIn 0.25s ease both; }
 
 /* === SCROLLBAR GLOBAL === */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

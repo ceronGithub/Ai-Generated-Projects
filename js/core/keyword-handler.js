@@ -889,9 +889,13 @@ const KeywordHandler = (() => {
               const key = val.toLowerCase().replace(/[\s,$]/g, '').slice(0, 60);
               if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [val], closestContext: val }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1])); // sentinel: whole-page scan, no regex positions
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1])); // sentinel: whole-page scan, no regex positions
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           if (isTimeKw(kwNorm)) {
@@ -901,9 +905,13 @@ const KeywordHandler = (() => {
               const tk = t.toLowerCase().replace(/[\s]/g, '');
               if (!seen.has(tk)) { seen.add(tk); r1.push({ page, filename, keyword, contexts: [t], closestContext: t }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           if (isZoneKw(kwNorm)) {
@@ -916,9 +924,13 @@ const KeywordHandler = (() => {
               const key = z.toLowerCase();
               if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [z], closestContext: z }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           if (isEntryKw(kwNorm)) {
@@ -928,9 +940,13 @@ const KeywordHandler = (() => {
               const key = v.toLowerCase();
               if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           if (isExitKw(kwNorm)) {
@@ -940,9 +956,13 @@ const KeywordHandler = (() => {
               const key = v.toLowerCase();
               if (!seen.has(key)) { seen.add(key); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           if (isRefNoKw(kwNorm)) {
@@ -951,9 +971,13 @@ const KeywordHandler = (() => {
             for (const v of vals) {
               if (!seen.has(v)) { seen.add(v); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           if (isIerNoKw(kwNorm)) {
@@ -962,9 +986,13 @@ const KeywordHandler = (() => {
             for (const v of vals) {
               if (!seen.has(v)) { seen.add(v); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           if (isEsiNoKw(kwNorm)) {
@@ -973,9 +1001,13 @@ const KeywordHandler = (() => {
             for (const v of vals) {
               if (!seen.has(v)) { seen.add(v); r1.push({ page, filename, keyword, contexts: [v], closestContext: v }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           // ── SMC invoice: Sales Invoice Number ───────────────────────────
@@ -987,9 +1019,13 @@ const KeywordHandler = (() => {
               const val = extractSalesInvoiceNo(text, sm.index + sm[0].length);
               if (val && !seen.has(val)) { seen.add(val); r1.push({ page, filename, keyword, contexts: [val], closestContext: val }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           // ── SMC invoice: Vatable Sales (1st decimal in tax block) ───────
@@ -1001,9 +1037,13 @@ const KeywordHandler = (() => {
               const val = extractVatableSales(text, sm.index + sm[0].length);
               if (val && !seen.has(val)) { seen.add(val); r1.push({ page, filename, keyword, contexts: [val], closestContext: val }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           // ── SMC invoice: bare VAT (4th/last decimal before Total Amount) ─
@@ -1017,9 +1057,13 @@ const KeywordHandler = (() => {
               const val = extractVatAmount(text, sm.index + sm[0].length);
               if (val && !seen.has(val)) { seen.add(val); r1.push({ page, filename, keyword, contexts: [val], closestContext: val }); }
             }
-            run1Results.set(mapKey, r1);
-            run1Positions.set(mapKey, new Set([-1]));
-            continue;
+            if (r1.length > 0) {
+              run1Results.set(mapKey, r1);
+              run1Positions.set(mapKey, new Set([-1]));
+              continue;
+            }
+            // Specialized extractor found nothing on this page — fall through to
+            // the normal label:value regex engine below instead of returning empty.
           }
 
           // Normal regex-based keywords — scout pass
