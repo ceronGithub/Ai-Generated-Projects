@@ -105,7 +105,11 @@
     if (state.files.length > 0) {
       UIManager.activateStep('step-mode');
       if (state.mode === 'splitmode') updateSplitPreview();
-      if (state.mode === 'mergemode') renderMergeOrder();
+      // Keep mergeOrder in sync with newly-added files before re-rendering,
+      // otherwise files added after entering merge mode are missing from
+      // mergeOrder (mismatched length) and PDFMerge.merge() silently
+      // discards the user's custom order and falls back to default order.
+      if (state.mode === 'mergemode') { syncMergeOrder(); renderMergeOrder(); }
     }
     if (window.SessionStore) SessionStore.saveFileNames(state.files);
   }
@@ -349,10 +353,23 @@
 
   // ===== MERGE ORDER PANEL =====
 
+  // Reconciles state.mergeOrder against the current state.files array:
+  // drops indices for files that no longer exist, and appends indices
+  // for files that were added after merge mode was already entered
+  // (in the order they were added). Existing order/positions for
+  // already-tracked files are preserved untouched.
+  function syncMergeOrder() {
+    state.mergeOrder = state.mergeOrder.filter(i => i < state.files.length);
+    const tracked = new Set(state.mergeOrder);
+    for (let i = 0; i < state.files.length; i++) {
+      if (!tracked.has(i)) state.mergeOrder.push(i);
+    }
+  }
+
   function renderMergeOrder() {
     const panel = document.getElementById('mergeOrderList');
     if (!panel) return;
-    if (state.mergeOrder.length === 0) state.mergeOrder = state.files.map((_, i) => i);
+    syncMergeOrder();
     panel.innerHTML = '';
     state.mergeOrder.forEach((fileIdx, orderPos) => {
       const file = state.files[fileIdx];

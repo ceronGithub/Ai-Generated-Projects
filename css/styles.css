@@ -225,6 +225,11 @@ body {
   border-radius: var(--radius-lg);
   padding: 1.75rem 2rem;
   position: relative;
+  /* Lets the blur/opacity toggle on .disabled-card (added below) animate
+     smoothly in both directions — clearing follows the same JS sequence
+     that already adds/removes .disabled-card via activateStep/deactivateStep. */
+  filter: blur(0);
+  transition: filter 0.35s ease, opacity 0.35s ease;
 }
 /* Left gold accent line */
 .card::before {
@@ -247,10 +252,12 @@ body {
   background: #fdfcfa;
   border-color: #ede8de;
   opacity: 0.55;
+  filter: blur(4px);
   pointer-events: none;
 }
 .disabled-card.active-card {
   opacity: 1;
+  filter: blur(0);
   pointer-events: auto;
 }
 
