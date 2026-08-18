@@ -6,6 +6,10 @@
 
 (() => {
 
+  // Disable the right-click context menu across the whole app —
+  // prevents casual inspection via the browser's context menu.
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
   // ===== STATE =====
   const state = {
     files:       [],      // File objects
