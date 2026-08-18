@@ -1857,12 +1857,30 @@ const UIManager = (() => {
     const orderedFiles = (order || files.map((_,i)=>i)).map(i => files[i]).filter(Boolean);
     summaryCard.innerHTML = `
       <div class="tm-summary-grid">
-        <div class="tm-stat"><span class="tm-stat-val">${orderedFiles.length}</span><span class="tm-stat-lbl">Files Merged</span></div>
+        <div class="tm-stat"><span class="tm-stat-val">${orderedFiles.length - (result.skippedFiles?.length || 0)}</span><span class="tm-stat-lbl">Files Merged</span></div>
         <div class="tm-stat"><span class="tm-stat-val">${result.totalPages}</span><span class="tm-stat-lbl">Total Pages</span></div>
         <div class="tm-stat tm-stat--fee"><span class="tm-stat-val">${_fmtBytes(result.blob.size)}</span><span class="tm-stat-lbl">Output Size</span></div>
       </div>
     `;
     list.appendChild(summaryCard);
+
+    // Skipped/unreadable files (e.g. "Invalid Root reference") are called
+    // out explicitly — with large batches, silently dropping a bad file
+    // would leave the user unable to tell why the page count looks short.
+    if (result.skippedFiles && result.skippedFiles.length > 0) {
+      const warnCard = document.createElement('div');
+      warnCard.className = 'tm-summary-card merge-skipped-card';
+      warnCard.style.borderColor = 'var(--danger)';
+      warnCard.innerHTML = `
+        <div style="color:var(--danger); font-weight:600; margin-bottom:6px;">
+          ⚠ ${result.skippedFiles.length} file${result.skippedFiles.length > 1 ? 's' : ''} skipped (could not be read):
+        </div>
+        <div class="merge-skipped-list" style="font-size:0.85em; opacity:0.85;">
+          ${result.skippedFiles.map(f => `<div>• ${escapeHtml(f.name)} — ${escapeHtml(f.reason)}</div>`).join('')}
+        </div>
+      `;
+      list.appendChild(warnCard);
+    }
 
     // Show merge order
     orderedFiles.forEach((file, i) => {

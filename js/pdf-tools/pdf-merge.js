@@ -107,19 +107,46 @@ const PDFMerge = (() => {
     const allPages  = [];
     let   rendered  = 0;
 
-    // Count total pages for progress
-    const pageCounts = [];
-    for (const idx of seq) {
-      const buf = await files[idx].arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-      pageCounts.push(pdf.numPages);
+    // Files that fail to open (corrupted/invalid PDF, e.g. "Invalid Root
+    // reference") are skipped rather than aborting the entire batch —
+    // with hundreds of uploaded files, one bad PDF should not block the
+    // rest from merging. Each skip is recorded with its filename + reason
+    // so the caller can tell the user exactly which file to fix/remove.
+    const skippedFiles = [];
+
+    // Pre-pass: count total pages for progress, skipping unreadable files.
+    // A parallel "readable" flag array keeps this pass's skip decisions in
+    // sync with the render pass below, so a file is only attempted once.
+    const readable    = seq.map(() => true);
+    const pageCounts  = seq.map(() => 0);
+    for (let si = 0; si < seq.length; si++) {
+      const idx  = seq[si];
+      const file = files[idx];
+      try {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        pageCounts[si] = pdf.numPages;
+      } catch (err) {
+        readable[si] = false;
+        skippedFiles.push({ name: file?.name ?? `file ${idx}`, reason: err?.message || String(err) });
+      }
     }
     const totalPages = pageCounts.reduce((s, n) => s + n, 0);
 
     for (let fi = 0; fi < seq.length; fi++) {
+      if (!readable[fi]) continue; // already recorded in skippedFiles above
+
       const file = files[seq[fi]];
-      const buf  = await file.arrayBuffer();
-      const pdf  = await pdfjsLib.getDocument({ data: buf }).promise;
+      let pdf;
+      try {
+        const buf = await file.arrayBuffer();
+        pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      } catch (err) {
+        // File failed here despite passing the pre-pass (e.g. transient
+        // read error) — skip it the same way instead of aborting the batch.
+        skippedFiles.push({ name: file?.name ?? 'unknown file', reason: err?.message || String(err) });
+        continue;
+      }
 
       for (let pi = 1; pi <= pdf.numPages; pi++) {
         const page     = await pdf.getPage(pi);
@@ -141,12 +168,21 @@ const PDFMerge = (() => {
       }
     }
 
+    if (allPages.length === 0) {
+      throw new Error(
+        skippedFiles.length
+          ? `None of the uploaded files could be read. First error — "${skippedFiles[0].name}": ${skippedFiles[0].reason}`
+          : 'No pages found to merge.'
+      );
+    }
+
     const pdfBytes   = buildPDF(allPages);
     const blob       = new Blob([pdfBytes], { type: 'application/pdf' });
-    const firstName  = files[seq[0]]?.name.replace(/\.pdf$/i, '') ?? 'merged';
+    const firstOkIdx = seq.find((_, si) => readable[si]);
+    const firstName  = files[firstOkIdx]?.name.replace(/\.pdf$/i, '') ?? 'merged';
     const filename   = `${firstName}_merged.pdf`;
 
-    return { blob, filename, totalPages: allPages.length };
+    return { blob, filename, totalPages: allPages.length, skippedFiles };
   }
 
   return { merge };
