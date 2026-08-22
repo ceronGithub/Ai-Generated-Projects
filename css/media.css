@@ -490,6 +490,7 @@
 
   /* ── Mode buttons — 3-col wider ── */
   .mode-category-grid { grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+  .mode-category-grid--convert { grid-template-columns: repeat(2, 1fr); }
   .mode-btn   { padding: 1.7rem 1.2rem; }
   .mode-icon  { font-size: 2rem; }
   .mode-name  { font-size: 0.74rem; letter-spacing: 0.13em; }
