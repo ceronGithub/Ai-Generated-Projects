@@ -22,7 +22,9 @@
     detectedLabels: [],   // auto-detected label words (Single Keyword mode)
     sortGroups:      [],  // Sort & Merge: detected/manual groups (TypeSorter.Group[])
     sortSelectedIds: new Set(), // Sort & Merge: group ids checked for merging
-    sortMode:        'auto', // Sort & Merge: 'auto' | 'manual' toggle
+    sortMode:        'auto', // Sort & Merge PDF: 'auto' | 'manual' | 'filename' toggle
+    sortFilenameMatches:   [], // Sort & Merge PDF (By Filename): matched File objects, in the order typed
+    sortFilenameUnmatched: [], // Sort & Merge PDF (By Filename): typed filenames that had no match
   };
   let labelDetectGen = 0; // guards against out-of-order async label detection results
 
@@ -54,10 +56,22 @@
 
   // ===== RESET =====
 
+  // Clears everything the Sort & Merge PDF panel accumulated (groups,
+  // selections, and the By Filename match list/textarea) — shared by
+  // resetToEmpty() and changeModeBtn so both fully reset the panel.
+  function resetSortMergeState() {
+    state.sortGroups = []; state.sortSelectedIds = new Set(); state.sortMode = 'auto';
+    state.sortFilenameMatches = []; state.sortFilenameUnmatched = [];
+    const smft = document.getElementById('smFilenameTextarea');
+    if (smft) smft.value = '';
+    const smfr = document.getElementById('smFilenameResults');
+    if (smfr) smfr.style.display = 'none';
+  }
+
   function resetToEmpty() {
     state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null;
     state.mergeOrder = []; state.detectedLabels = [];
-    state.sortGroups = []; state.sortSelectedIds = new Set(); state.sortMode = 'auto';
+    resetSortMergeState();
     UIManager.hideDetectedLabels();
     UIManager.deactivateStep('step-mode');
     UIManager.deactivateStep('step-keywords');
@@ -155,6 +169,11 @@
       state.sortGroups = state.sortGroups.map(g => ({ ...g, files: g.files.filter(f => f !== removed) }));
       if (state.mode === 'sortmergemode') renderSortMergeGroups();
     }
+    // Purge the removed file from the By Filename match list too
+    if (removed && state.sortFilenameMatches.length > 0) {
+      state.sortFilenameMatches = state.sortFilenameMatches.filter(f => f !== removed);
+      if (state.mode === 'sortmergemode') renderSortFilenameResults();
+    }
     refreshFileList();
     if (state.files.length === 0) resetToEmpty();
     else if (state.mode === 'mergemode') renderMergeOrder();
@@ -170,7 +189,7 @@
   changeModeBtn.addEventListener('click', () => {
     state.mode = null; state.keywords = []; state.lastResults = null; state.lastPdfData = null; state.mergeOrder = [];
     state.detectedLabels = [];
-    state.sortGroups = []; state.sortSelectedIds = new Set(); state.sortMode = 'auto';
+    resetSortMergeState();
     UIManager.hideDetectedLabels();
 
     const chips = document.querySelectorAll('.keyword-chip');
@@ -517,26 +536,91 @@
 
   // ===== SORT & MERGE PANEL =====
 
-  const smToggleAuto   = document.getElementById('smToggleAuto');
-  const smToggleManual = document.getElementById('smToggleManual');
+  const smToggleAuto    = document.getElementById('smToggleAuto');
+  const smToggleManual  = document.getElementById('smToggleManual');
+  const smToggleFilename= document.getElementById('smToggleFilename');
   const smPaneAuto      = document.getElementById('smPaneAuto');
   const smPaneManual    = document.getElementById('smPaneManual');
+  const smPaneFilename  = document.getElementById('smPaneFilename');
   const smScanBtn       = document.getElementById('smScanBtn');
   const smAddManualBtn  = document.getElementById('smAddManualGroupBtn');
   const smManualInput   = document.getElementById('smManualKeywordInput');
+  const smFilenameTextarea = document.getElementById('smFilenameTextarea');
+  const smMatchFilenamesBtn = document.getElementById('smMatchFilenamesBtn');
 
-  // Toggle between Auto-Detect and Manual panes — purely visual, does not
-  // clear any groups already found, so switching back and forth keeps
-  // everything the user has built up so far.
+  // Toggle between Auto-Detect, Manual, and By Filename panes — purely
+  // visual, does not clear any groups/matches already found, so switching
+  // back and forth keeps everything the user has built up so far.
   function setSortMergeToggle(mode) {
     state.sortMode = mode;
-    if (smToggleAuto)   smToggleAuto.classList.toggle('sm-toggle-btn--active', mode === 'auto');
-    if (smToggleManual) smToggleManual.classList.toggle('sm-toggle-btn--active', mode === 'manual');
-    if (smPaneAuto)      smPaneAuto.classList.toggle('sm-pane--active', mode === 'auto');
-    if (smPaneManual)    smPaneManual.classList.toggle('sm-pane--active', mode === 'manual');
+    if (smToggleAuto)     smToggleAuto.classList.toggle('sm-toggle-btn--active', mode === 'auto');
+    if (smToggleManual)   smToggleManual.classList.toggle('sm-toggle-btn--active', mode === 'manual');
+    if (smToggleFilename) smToggleFilename.classList.toggle('sm-toggle-btn--active', mode === 'filename');
+    if (smPaneAuto)     smPaneAuto.classList.toggle('sm-pane--active', mode === 'auto');
+    if (smPaneManual)   smPaneManual.classList.toggle('sm-pane--active', mode === 'manual');
+    if (smPaneFilename) smPaneFilename.classList.toggle('sm-pane--active', mode === 'filename');
   }
-  if (smToggleAuto)   smToggleAuto.addEventListener('click', () => setSortMergeToggle('auto'));
-  if (smToggleManual) smToggleManual.addEventListener('click', () => setSortMergeToggle('manual'));
+  if (smToggleAuto)     smToggleAuto.addEventListener('click', () => setSortMergeToggle('auto'));
+  if (smToggleManual)   smToggleManual.addEventListener('click', () => setSortMergeToggle('manual'));
+  if (smToggleFilename) smToggleFilename.addEventListener('click', () => setSortMergeToggle('filename'));
+
+  // Matches each line the user typed against the uploaded files' names
+  // (case-insensitive, exact match). Builds an ordered match list — the
+  // merge order follows the order the filenames were typed, not the
+  // upload order — plus a list of typed names that had no match, so the
+  // user gets a clear warning instead of a silently short merge.
+  function matchSortFilenames() {
+    const raw = (smFilenameTextarea?.value || '');
+    const typedNames = raw.split('\n').map(l => l.trim()).filter(Boolean);
+
+    const matched   = [];
+    const unmatched = [];
+    typedNames.forEach(name => {
+      const found = state.files.find(f => f.name.toLowerCase() === name.toLowerCase());
+      if (found) matched.push(found);
+      else unmatched.push(name);
+    });
+
+    state.sortFilenameMatches   = matched;
+    state.sortFilenameUnmatched = unmatched;
+    renderSortFilenameResults();
+  }
+
+  function escapeSmFilename(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderSortFilenameResults() {
+    const resultsWrap = document.getElementById('smFilenameResults');
+    const matchedEl   = document.getElementById('smFilenameMatched');
+    const warningEl   = document.getElementById('smFilenameWarning');
+    if (!resultsWrap || !matchedEl || !warningEl) return;
+
+    const matched   = state.sortFilenameMatches;
+    const unmatched = state.sortFilenameUnmatched;
+
+    if (matched.length === 0 && unmatched.length === 0) {
+      resultsWrap.style.display = 'none';
+      return;
+    }
+    resultsWrap.style.display = 'block';
+    matchedEl.textContent = `✓ ${matched.length} of ${matched.length + unmatched.length} filename${matched.length + unmatched.length !== 1 ? 's' : ''} matched.`;
+
+    if (unmatched.length > 0) {
+      warningEl.style.display = 'block';
+      warningEl.innerHTML = `
+        <div class="sm-filename-warning-title">⚠ ${unmatched.length} filename${unmatched.length > 1 ? 's' : ''} not found among uploaded files:</div>
+        <div class="sm-filename-warning-list">${unmatched.map(n => `• ${escapeSmFilename(n)}`).join('<br>')}</div>
+      `;
+    } else {
+      warningEl.style.display = 'none';
+      warningEl.innerHTML = '';
+    }
+  }
+
+  if (smMatchFilenamesBtn) smMatchFilenamesBtn.addEventListener('click', matchSortFilenames);
 
   // Re-renders the shared group checklist from current state — called
   // after every scan, add, rename, remove, or checkbox toggle.
@@ -679,7 +763,27 @@
         setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
       }
 
-      // ── Sort & Merge ─────────────────────────────────────────────────────
+      // ── Sort & Merge PDF — By Filename ──────────────────────────────────
+      if (state.mode === 'sortmergemode' && state.sortMode === 'filename') {
+        if (state.sortFilenameMatches.length === 0) {
+          throw new Error('Type at least one filename and click "Match Files" before running.');
+        }
+        UIManager.setProgress(5, 'Preparing merge…');
+        await new Promise(r => setTimeout(r, 30));
+
+        const matchedFiles = state.sortFilenameMatches;
+        const order = matchedFiles.map((_, i) => i);
+        const res = await PDFMerge.merge(matchedFiles, order, (rendered, total, fname) => {
+          const progress = 5 + Math.round((rendered / total) * 90);
+          UIManager.setProgress(progress, `Merging: ${fname}…`);
+        });
+
+        UIManager.setProgress(100, 'Done!');
+        UIManager.renderMergeResult(res, matchedFiles, order);
+        setTimeout(() => stepResults.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200); return;
+      }
+
+      // ── Sort & Merge PDF — Auto-Detect / Manual ─────────────────────────
       if (state.mode === 'sortmergemode') {
         if (state.sortGroups.length === 0) throw new Error('Scan or add at least one type before running.');
 

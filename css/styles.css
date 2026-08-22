@@ -983,6 +983,48 @@ body {
 }
 .sm-group-remove:hover { color: var(--danger); }
 
+/* By Filename pane */
+.sm-filename-textarea {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  padding: 0.7rem 0.85rem;
+  background: var(--surface2);
+  border: var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  outline: none;
+  margin-bottom: 0.7rem;
+}
+.sm-filename-textarea:focus { border-color: var(--gold); }
+.sm-filename-results { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.sm-filename-matched {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+.sm-filename-warning {
+  padding: 0.6rem 0.85rem;
+  background: #fdf3f2;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+}
+.sm-filename-warning-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--danger);
+  margin-bottom: 0.3rem;
+}
+.sm-filename-warning-list {
+  font-size: 0.68rem;
+  color: var(--ink-mid);
+  line-height: 1.6;
+}
+
 .sm-empty-hint {
   font-size: 0.7rem;
   color: var(--ink-dim);

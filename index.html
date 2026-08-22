@@ -224,7 +224,7 @@
               </button>
               <button class="mode-btn mode-btn--sortmerge" id="modeSortMerge" data-mode="sortmergemode">
                 <span class="mode-icon">🗂️</span>
-                <span class="mode-name">Sort &amp; Merge</span>
+                <span class="mode-name">Sort &amp; Merge PDF</span>
                 <span class="mode-desc">Group your uploaded PDFs by type, pick which types to merge, and rename the rest.</span>
               </button>
             </div>
@@ -375,16 +375,19 @@
         <div class="card-glow-top" style="background:linear-gradient(90deg,transparent,var(--gold),transparent)"></div>
         <div class="step-label">
           <span style="background:linear-gradient(135deg,var(--gold),var(--ink-mid));color:#000;border-radius:5px;font-size:.58rem;font-weight:900;padding:3px 9px;letter-spacing:.08em;">03.2</span>
-          Sort &amp; Merge
+          Sort &amp; Merge PDF
         </div>
 
-        <!-- Mode toggle: Auto-Detect / Manual -->
+        <!-- Mode toggle: Auto-Detect / Manual / By Filename -->
         <div class="sm-toggle-row" id="smToggleRow">
           <button class="sm-toggle-btn sm-toggle-btn--active" id="smToggleAuto" data-sm-mode="auto">
             ⬡ Auto-Detect
           </button>
           <button class="sm-toggle-btn" id="smToggleManual" data-sm-mode="manual">
             ✎ Manual
+          </button>
+          <button class="sm-toggle-btn" id="smToggleFilename" data-sm-mode="filename">
+            📄 By Filename
           </button>
         </div>
 
@@ -411,6 +414,27 @@
               autocomplete="off"
             />
             <button class="btn btn-accent" id="smAddManualGroupBtn">+ Add Group</button>
+          </div>
+        </div>
+
+        <!-- By Filename pane -->
+        <div class="sm-pane" id="smPaneFilename">
+          <p class="sm-pane-hint">
+            Type or paste the exact filenames you want to merge — one filename per line.
+            Only the uploaded PDFs that match will be merged, in the order you list them here.
+          </p>
+          <textarea
+            id="smFilenameTextarea"
+            class="sm-filename-textarea"
+            placeholder="invoice-0231.pdf&#10;invoice-0455.pdf&#10;invoice-0902.pdf"
+            spellcheck="false"
+            autocomplete="off"
+          ></textarea>
+          <button class="btn btn-accent" id="smMatchFilenamesBtn">🔎 Match Files</button>
+
+          <div class="sm-filename-results" id="smFilenameResults" style="display:none">
+            <div class="sm-filename-matched" id="smFilenameMatched"></div>
+            <div class="sm-filename-warning" id="smFilenameWarning" style="display:none"></div>
           </div>
         </div>
 
