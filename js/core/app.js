@@ -569,6 +569,13 @@
   // merge order follows the order the filenames were typed, not the
   // upload order — plus a list of typed names that had no match, so the
   // user gets a clear warning instead of a silently short merge.
+  // Strips the trailing extension (if any) so "SI_123.pdf" and "SI_123"
+  // are treated as the same filename — the user shouldn't have to type
+  // the ".pdf" for the match to work.
+  function stripExtension(name) {
+    return name.replace(/\.[a-z0-9]+$/i, '');
+  }
+
   function matchSortFilenames() {
     const raw = (smFilenameTextarea?.value || '');
     const typedNames = raw.split('\n').map(l => l.trim()).filter(Boolean);
@@ -576,7 +583,8 @@
     const matched   = [];
     const unmatched = [];
     typedNames.forEach(name => {
-      const found = state.files.find(f => f.name.toLowerCase() === name.toLowerCase());
+      const typedKey = stripExtension(name).toLowerCase();
+      const found = state.files.find(f => stripExtension(f.name).toLowerCase() === typedKey);
       if (found) matched.push(found);
       else unmatched.push(name);
     });
