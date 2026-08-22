@@ -382,38 +382,56 @@
         <div class="sm-toggle-row" id="smToggleRow">
           <button class="sm-toggle-btn sm-toggle-btn--active" id="smToggleAuto" data-sm-mode="auto">
             ⬡ Auto-Detect
+            <span class="sm-dev-badge">Under Development</span>
           </button>
           <button class="sm-toggle-btn" id="smToggleManual" data-sm-mode="manual">
             ✎ Manual
+            <span class="sm-dev-badge">Under Development</span>
           </button>
           <button class="sm-toggle-btn" id="smToggleFilename" data-sm-mode="filename">
             📄 By Filename
           </button>
         </div>
 
-        <!-- Auto-Detect pane -->
+        <!-- Auto-Detect pane (under development — content blurred + watermarked) -->
         <div class="sm-pane sm-pane--active" id="smPaneAuto">
-          <p class="sm-pane-hint">
-            Scans every uploaded PDF and groups files that share the same label pattern
-            (e.g. "Invoice #:", "Total", "Signature") into a detected type.
-          </p>
-          <button class="btn btn-accent" id="smScanBtn">⬡ Scan &amp; Detect Types</button>
+          <div class="sm-dev-wrap">
+            <div class="sm-dev-content" aria-hidden="true" inert>
+              <p class="sm-pane-hint">
+                Scans every uploaded PDF and groups files that share the same label pattern
+                (e.g. "Invoice #:", "Total", "Signature") into a detected type.
+              </p>
+              <button class="btn btn-accent" id="smScanBtn" disabled tabindex="-1">⬡ Scan &amp; Detect Types</button>
+            </div>
+            <div class="sm-dev-overlay">
+              <span class="sm-dev-watermark">Under Development</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Manual pane -->
+        <!-- Manual pane (under development — content blurred + watermarked) -->
         <div class="sm-pane" id="smPaneManual">
-          <p class="sm-pane-hint">
-            Type a keyword or phrase. Any uploaded PDF whose text contains it becomes part of this group.
-          </p>
-          <div class="sm-manual-input-row">
-            <input
-              type="text"
-              id="smManualKeywordInput"
-              class="keyword-input"
-              placeholder="e.g. Invoice #:  or  Tin:"
-              autocomplete="off"
-            />
-            <button class="btn btn-accent" id="smAddManualGroupBtn">+ Add Group</button>
+          <div class="sm-dev-wrap">
+            <div class="sm-dev-content" aria-hidden="true" inert>
+              <p class="sm-pane-hint">
+                Type a keyword or phrase. Any uploaded PDF whose text contains it becomes part of this group.
+              </p>
+              <div class="sm-manual-input-row">
+                <input
+                  type="text"
+                  id="smManualKeywordInput"
+                  class="keyword-input"
+                  placeholder="e.g. Invoice #:  or  Tin:"
+                  autocomplete="off"
+                  disabled
+                  tabindex="-1"
+                />
+                <button class="btn btn-accent" id="smAddManualGroupBtn" disabled tabindex="-1">+ Add Group</button>
+              </div>
+            </div>
+            <div class="sm-dev-overlay">
+              <span class="sm-dev-watermark">Under Development</span>
+            </div>
           </div>
         </div>
 

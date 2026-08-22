@@ -1308,6 +1308,55 @@ const UIManager = (() => {
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   }
 
+  /**
+   * _stripPdfExt / _withPdfExt
+   * Small helpers so the filename <input> only ever shows the base name
+   * (no ".pdf") while the actual download always gets ".pdf" re-appended —
+   * users shouldn't have to type the extension themselves.
+   */
+  function _stripPdfExt(filename) {
+    return (filename || '').replace(/\.pdf$/i, '');
+  }
+  function _withPdfExt(base) {
+    const clean = (RenameHandler?.sanitizeFilename ? RenameHandler.sanitizeFilename(base) : (base || '').trim()) || 'output';
+    return clean.toLowerCase().endsWith('.pdf') ? clean : `${clean}.pdf`;
+  }
+
+  /**
+   * _buildFilenameField
+   * Renders a small "Filename:" label + editable <input> + ".pdf" suffix,
+   * used right before a download button so the user can rename the output
+   * before it's saved to disk. Returns the wrapper element; call
+   * getFilename() at download time to read the current sanitized value.
+   *
+   * @param {string} defaultFilename - original filename (with or without .pdf)
+   * @returns {{el:HTMLElement, getFilename:()=>string}}
+   */
+  function _buildFilenameField(defaultFilename) {
+    const wrap = document.createElement('div');
+    wrap.className = 'dl-filename-row';
+
+    const label = document.createElement('span');
+    label.className = 'dl-filename-label';
+    label.textContent = 'Filename:';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'dl-filename-input';
+    input.value = _stripPdfExt(defaultFilename);
+    input.spellcheck = false;
+    input.autocomplete = 'off';
+    input.title = 'Rename the file before downloading';
+
+    const suffix = document.createElement('span');
+    suffix.className = 'dl-filename-suffix';
+    suffix.textContent = '.pdf';
+
+    wrap.append(label, input, suffix);
+
+    return { el: wrap, getFilename: () => _withPdfExt(input.value) };
+  }
+
   async function _downloadAllCompressed(results) {
     const valid = results.filter(r => r.blob && !r.error);
     if (!valid.length) return;
@@ -1842,12 +1891,18 @@ const UIManager = (() => {
     list.innerHTML    = '';
     actions.innerHTML = '';
 
+    // Editable filename — the user can rename the merged output before
+    // downloading it. Shared by both the top action-row button and the
+    // output card's button below, so renaming once updates both.
+    const filenameField = _buildFilenameField(result.filename);
+
     const actionsRow = document.createElement('div');
     actionsRow.className = 'results-actions-row';
     const dlBtn = document.createElement('button');
     dlBtn.className   = 'btn-excel merge-dl-btn';
     dlBtn.textContent = '⬇ Download Merged PDF';
-    dlBtn.addEventListener('click', () => _downloadBlob(result.blob, result.filename));
+    dlBtn.addEventListener('click', () => _downloadBlob(result.blob, filenameField.getFilename()));
+    actionsRow.appendChild(filenameField.el);
     actionsRow.appendChild(dlBtn);
     actionsRow.appendChild(makeClearAllBtn(list));
     actions.appendChild(actionsRow);
@@ -1906,7 +1961,7 @@ const UIManager = (() => {
       </div>
       <button class="cm-dl-btn btn btn-accent merge-dl-card-btn">⬇ Download</button>
     `;
-    outCard.querySelector('.merge-dl-card-btn').addEventListener('click', () => _downloadBlob(result.blob, result.filename));
+    outCard.querySelector('.merge-dl-card-btn').addEventListener('click', () => _downloadBlob(result.blob, filenameField.getFilename()));
     list.appendChild(outCard);
     capResultsHeight(list);
   }
@@ -2024,9 +2079,16 @@ const UIManager = (() => {
           <span class="result-filename">${escapeHtml(out.filename)}</span>
           <span class="merge-file-size">${out.totalPages} page${out.totalPages !== 1 ? 's' : ''} · ${formatBytes(out.blob.size)}</span>
         </div>
-        <button class="cm-dl-btn btn btn-accent merge-dl-card-btn">⬇ Download</button>
       `;
-      card.querySelector('.merge-dl-card-btn').addEventListener('click', () => _downloadBlob(out.blob, out.filename));
+      // Editable filename — each merged type gets its own field so the
+      // user can rename every group's output independently before saving.
+      const filenameField = _buildFilenameField(out.filename);
+      const dlBtn = document.createElement('button');
+      dlBtn.className = 'cm-dl-btn btn btn-accent merge-dl-card-btn';
+      dlBtn.textContent = '⬇ Download';
+      dlBtn.addEventListener('click', () => _downloadBlob(out.blob, filenameField.getFilename()));
+      card.appendChild(filenameField.el);
+      card.appendChild(dlBtn);
       list.appendChild(card);
     });
 
